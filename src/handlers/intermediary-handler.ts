@@ -4,7 +4,7 @@ import { SelectActiveCardResponseMessage } from '../messages/response/index.js';
 import { AttackResponseMessage } from '../messages/response/attack-response-message.js';
 import { PlayCardResponseMessage } from '../messages/response/play-card-response-message.js';
 import { EndTurnResponseMessage } from '../messages/response/end-turn-response-message.js';
-import { SetupCompleteResponseMessage, EvolveResponseMessage } from '../messages/response/index.js';
+import { SetupCompleteResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage } from '../messages/response/index.js';
 import { Intermediary, Message } from '@cards-ts/core';
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { Controllers } from '../controllers/controllers.js';
@@ -25,6 +25,8 @@ const handleAction = async (intermediary: Intermediary, handlerData: HandlerData
     const actionOptions = [
         { name: 'Attack', value: 'attack' },
         { name: 'Play a card', value: 'play' },
+        { name: 'Evolve Creature', value: 'evolve' },
+        { name: 'Attach Energy', value: 'attachEnergy' },
         { name: 'End turn', value: 'endTurn' }
     ];
     
@@ -41,6 +43,10 @@ const handleAction = async (intermediary: Intermediary, handlerData: HandlerData
         await handleAttack(intermediary, handlerData, responsesQueue, cardRepository);
     } else if (actionType === 'play') {
         await handlePlayCard(intermediary, handlerData, responsesQueue, cardRepository);
+    } else if (actionType === 'evolve') {
+        await handleEvolve(intermediary, handlerData, responsesQueue, cardRepository);
+    } else if (actionType === 'attachEnergy') {
+        await handleAttachEnergy(intermediary, handlerData, responsesQueue, cardRepository);
     } else if (actionType === 'endTurn') {
         // Inform the player
         await intermediary.form({ 
@@ -64,11 +70,12 @@ const handleAttack = async (intermediary: Intermediary, handlerData: HandlerData
         return;
     }
     
-    // Get attacks from card
+    // Get attacks from creature with energy requirements
     const attackOptions = cardData.attacks.map((attack: CreatureAttack, index: number) => {
-        const damage = typeof attack.damage === 'number' ? attack.damage : 20;
+        const energyText = ` [${attack.energyRequirements.map(req => `${req.amount} ${req.type}`).join(', ')}]`;
+        
         return {
-            name: `${attack.name} (${damage} damage)`,
+            name: `${attack.name} (${attack.damage} damage)${energyText}`,
             value: index
         };
     });
@@ -76,9 +83,17 @@ const handleAttack = async (intermediary: Intermediary, handlerData: HandlerData
     // Add back option
     attackOptions.push({ name: 'Back', value: -1 });
     
+    // Show current energy on active card
+    const attachedEnergy = handlerData.energy.attachedEnergy[currentPlayer][0];
+    const energyCount = attachedEnergy ? attachedEnergy.length : 0;
+    const energyTypes = attachedEnergy ? attachedEnergy.map(e => e.type).join(', ') : 'None';
+    
     const [sent, received] = intermediary.form({ 
         type: 'list', 
-        message: [`Player ${currentPlayer + 1}, choose your attack with ${cardData ? cardData.name : 'your card'}:`],
+        message: [
+            `Player ${currentPlayer + 1}, choose your attack with ${cardData ? cardData.name : 'your creature'}:`,
+            `Current Energy: ${energyCount} (${energyTypes})`
+        ],
         choices: attackOptions
     });
     
@@ -230,6 +245,65 @@ const handlePlayCard = async (intermediary: Intermediary, handlerData: HandlerDa
     const card = handlerData.hand[cardIndex];
     const cardType = card.type === 'tool' ? 'item' : card.type;
     responsesQueue.push(new PlayCardResponseMessage(card.cardId, cardType, targetPlayerId, targetFieldIndex));
+};
+
+const handleEvolve = async (intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, cardRepository: CardRepository) => {
+    // Placeholder for evolve functionality
+    await intermediary.form({ type: 'print', message: ['Evolution not yet implemented'] });
+    await handleAction(intermediary, handlerData, responsesQueue, cardRepository);
+};
+
+const handleAttachEnergy = async (intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, cardRepository: CardRepository) => {
+    const currentPlayer = handlerData.turn;
+    
+    const isFirstTurnRestricted = handlerData.energy.isAbsoluteFirstTurn;
+    
+    if (handlerData.energy.energyAttachedThisTurn[currentPlayer] || isFirstTurnRestricted) {
+        const message = isFirstTurnRestricted ? 
+            'Cannot attach energy on first turn as first player.' : 
+            'Cannot attach energy this turn.';
+        await intermediary.form({ type: 'print', message: [message] });
+        await handleAction(intermediary, handlerData, responsesQueue, cardRepository);
+        return;
+    }
+    
+    const currentEnergy = handlerData.energy.currentEnergy[currentPlayer];
+    const creatureOptions = [];
+    
+    // Add active creature
+    const activeCreature = handlerData.field.activeCards[currentPlayer];
+    const activeCreatureData = cardRepository.getCreature(activeCreature.cardId);
+    creatureOptions.push({
+        name: `${activeCreatureData?.name || 'Active Creature'} (Active)`,
+        value: 0
+    });
+    
+    // Add benched creatures
+    const benchedCreatures = handlerData.field.benchedCards[currentPlayer];
+    benchedCreatures.forEach((creature: any, index: number) => {
+        const creatureData = cardRepository.getCreature(creature.cardId);
+        creatureOptions.push({
+            name: `${creatureData?.name || 'Creature'} (Bench)`,
+            value: index + 1
+        });
+    });
+    
+    creatureOptions.push({ name: 'Back', value: -1 });
+    
+    const [sent, received] = intermediary.form({
+        type: 'list',
+        message: [`Attach ${currentEnergy} energy to which creature?`],
+        choices: creatureOptions
+    });
+    
+    const creaturePosition = (await received)[0] as number;
+    
+    if (creaturePosition === -1) {
+        await handleAction(intermediary, handlerData, responsesQueue, cardRepository);
+        return;
+    }
+    
+    responsesQueue.push(new AttachEnergyResponseMessage(creaturePosition));
 };
 
 export class IntermediaryHandler extends GameHandler {
@@ -492,11 +566,21 @@ export class IntermediaryHandler extends GameHandler {
         });
         
         const globalTurn = handlerData.turnCounter?.turnNumber || 0;
+        const currentEnergy = handlerData.energy.currentEnergy[playerId];
+        const nextEnergy = handlerData.energy.nextEnergy[playerId];
+        const energyAttached = handlerData.energy.energyAttachedThisTurn[playerId];
+        
+        // Show attached energy on active creature
+        const attachedEnergy = handlerData.energy.attachedEnergy[playerId][0];
+        const energyCount = attachedEnergy ? attachedEnergy.length : 0;
+        const energyTypes = attachedEnergy ? attachedEnergy.map(e => e.type).join(', ') : 'None';
         
         const statusLines = [
             `=== Your Turn (Turn: ${globalTurn}) ===`,
-            `Active Card: ${cardName} (${cardHp} HP)`,
-            `Bench: ${benchedCards.length}/3 Cards`,
+            `Active Creature: ${cardName} (${cardHp} HP)`,
+            `Bench: ${benchedCards.length}/3 Creatures`,
+            `Energy Zone: ${currentEnergy} (Next: ${nextEnergy}) - Attached this turn: ${energyAttached ? 'Yes' : 'No'}`,
+            `Active Creature Energy: ${energyCount} (${energyTypes})`,
             `Hand (${hand.length} cards): ${handSummary.join(', ')}`,
             `Supporter played this turn: ${supporterPlayed ? 'Yes' : 'No'}`,
             `================`

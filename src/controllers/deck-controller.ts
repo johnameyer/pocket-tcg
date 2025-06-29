@@ -1,6 +1,7 @@
-import { AbstractController, GenericControllerProvider } from '@cards-ts/core';
+import { AbstractController, GenericControllerProvider, IndexedControllers } from '@cards-ts/core';
 import { GameCard } from './card-types.js';
 import { CardRepositoryController } from './card-repository-controller.js';
+import { EnergyType } from './energy-controller.js';
 
 // Dependencies for this controller
 type DeckDependencies = {
@@ -55,10 +56,24 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
             return;
         }
         
-        // Otherwise, create empty decks
+        // Define energy types for each player based on their creatures
+        const playerEnergyTypes = [
+            ['lightning', 'fire', 'colorless'], // Player 1: Electric/Fire
+            ['water', 'grass', 'colorless'], // Player 2: Water/Grass
+        ];
+        
         for (let i = 0; i < playerCount; i++) {
             this.state[i] = [];
         }
+    }
+    
+    // Get energy types for a player
+    getPlayerEnergyTypes(playerId: number): EnergyType[] {
+        const playerEnergyTypes: EnergyType[][] = [
+            ['lightning', 'fire'], // Player 1: Electric/Fire
+            ['water', 'grass'], // Player 2: Water/Grass
+        ];
+        return playerEnergyTypes[playerId] || ['fire'];
     }
     
     // Get player count

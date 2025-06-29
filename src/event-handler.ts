@@ -1,7 +1,7 @@
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
 import { EventHandler, buildEventHandler } from '@cards-ts/core';
-import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage } from './messages/response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage } from './messages/response/index.js';
 import { AttackResultMessage, HealResultMessage, EvolutionMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 
@@ -69,6 +69,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const playerCard = controllers.field.getActiveCard(source);
                     const cardData = controllers.cardRepository.getCreature(playerCard.cardId);
                     return message.attackIndex < 0 || message.attackIndex >= cardData.attacks.length;
+                }),
+                EventHandler.validate('Insufficient energy for attack', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
+                    const playerCard = controllers.field.getActiveCard(source);
+                    const { attacks } = controllers.cardRepository.getCreature(playerCard.cardId);
+                    const attack = attacks[message.attackIndex];
+                    
+                    return !controllers.energy.canUseAttack(source, 0, attack.energyRequirements);
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttackResponseMessage) => {
@@ -248,6 +255,40 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 name,
                 `Player ${sourceHandler + 1}`
             ));
+            
+            controllers.turnState.setShouldEndTurn(false);
+        }
+    },
+    'attach-energy-response': {
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Energy already attached this turn', (controllers: Controllers, source: any, message: AttachEnergyResponseMessage) => {
+                    return !controllers.energy.canAttachEnergy(source);
+                }),
+                EventHandler.validate('No energy available', (controllers: Controllers, source: any, message: AttachEnergyResponseMessage) => {
+                    return !controllers.energy.canAttachEnergy(source);
+                }),
+                EventHandler.validate('First turn restriction', (controllers: Controllers, source: any, message: AttachEnergyResponseMessage) => {
+                    return controllers.energy.isFirstTurnRestricted();
+                }),
+            ],
+            fallback: (controllers: Controllers, source: any, message: AttachEnergyResponseMessage) => {
+                return new AttachEnergyResponseMessage(0);
+            },
+        },
+        merge: (controllers: Controllers, sourceHandler: any, message: AttachEnergyResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
+            
+            const currentPlayer = sourceHandler;
+            const energyType = controllers.energy.getCurrentEnergy(currentPlayer);
+            const success = controllers.energy.attachEnergy(currentPlayer, message.fieldPosition);
+            
+            if (success) {
+                controllers.players.messageAll({
+                    type: 'energy-attached',
+                    components: [`Player ${currentPlayer + 1} attached ${energyType} energy!`]
+                });
+            }
             
             controllers.turnState.setShouldEndTurn(false);
         }

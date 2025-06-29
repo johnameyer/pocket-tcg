@@ -8,19 +8,25 @@ mockCreatureData.set('test-creature-0', {
     id: 'test-creature-0',
     name: 'Test Creature 0',
     maxHp: 100,
-    attacks: [{ name: 'Test Attack', damage: 20 }]
+    attacks: [{ name: 'Test Attack', damage: 20, energyRequirements: [{ type: 'colorless', amount: 1 }] }]
+});
+mockCreatureData.set('test-no-energy-creature', {
+    id: 'test-no-energy-creature',
+    name: 'Test No Energy Creature',
+    maxHp: 80,
+    attacks: [{ name: 'Free Attack', damage: 10, energyRequirements: [] }]
 });
 mockCreatureData.set('test-creature-1', {
     id: 'test-creature-1',
     name: 'Test Creature 1',
     maxHp: 120,
-    attacks: [{ name: 'Test Attack', damage: 30 }]
+    attacks: [{ name: 'Test Attack', damage: 30, energyRequirements: [{ type: 'colorless', amount: 2 }] }]
 });
 mockCreatureData.set('test-evolution', {
     id: 'test-evolution',
     name: 'Test Evolution',
     maxHp: 180,
-    attacks: [{ name: 'Evolved Attack', damage: 50 }],
+    attacks: [{ name: 'Evolved Attack', damage: 50, energyRequirements: [{ type: 'fire', amount: 2 }] }],
     evolvesFrom: 'test-creature-0'
 });
 

@@ -197,12 +197,41 @@ const gameTurn = loop<Controllers>({
         {
             name: 'resetTurnState',
             run: (controllers: Controllers) => {
+                const currentPlayer = controllers.turn.get();
                 controllers.turnState.resetTurnState();
+                controllers.energy.resetTurnFlags(currentPlayer);
             }
         },
         
-        // Draw a card and show turn summary
-        drawCardAndShowSummary,
+        // Generate energy and draw card
+        {
+            name: 'generateEnergyAndDrawCard',
+            run: (controllers: Controllers) => {
+                const currentPlayer = controllers.turn.get();
+                
+                // Generate energy for current player
+                controllers.energy.generateEnergy(currentPlayer);
+                
+                // Draw card and show summary
+                const opponentId = (currentPlayer + 1) % controllers.players.count;
+                const cardRepo = controllers.cardRepository;
+                
+                const card = controllers.hand.drawCard(currentPlayer);
+                
+                const myActive = controllers.field.getActiveCard(currentPlayer);
+                const opponentActive = controllers.field.getActiveCard(opponentId);
+                const myBench = controllers.field.getBenchedCards(currentPlayer);
+                const opponentBench = controllers.field.getBenchedCards(opponentId);
+                
+                const handCards = controllers.hand.getHand(currentPlayer)
+                    .map(card => cardRepo.getCard(card.cardId).data.name)
+                    .join(', ');
+                
+                const drawnCardName = card ? cardRepo.getCard(card.cardId).data.name : undefined;
+                
+                controllers.players.message(currentPlayer, new TurnSummaryMessage(myActive, opponentActive, myBench, opponentBench, handCards, drawnCardName));
+            }
+        },
         
         // Handle player actions until a card is knocked out or turn ends
         handlePlayerActions,
@@ -212,6 +241,11 @@ const gameTurn = loop<Controllers>({
             name: 'nextTurn',
             run: (controllers: Controllers) => {
                 if (!isGameOver(controllers)) {
+                    // Mark first turn complete after first player's turn
+                    if (controllers.energy.isFirstTurnRestricted()) {
+                        controllers.energy.markFirstTurnComplete();
+                    }
+                    
                     controllers.turn.next();
                     // Only advance turn counter after both players have played
                     if (controllers.turn.get() === 0) {
@@ -235,6 +269,12 @@ export const stateMachine = game<Controllers>(
         } else {
             // Otherwise initialize with empty decks
             controllers.deck.initialize(controllers.players.count);
+        }
+        
+        // Set energy types for each player based on their deck
+        for (let i = 0; i < controllers.players.count; i++) {
+            const energyTypes = controllers.deck.getPlayerEnergyTypes(i);
+            controllers.energy.setAvailableTypes(i, energyTypes);
         }
         
         // Initialize hands once for all players

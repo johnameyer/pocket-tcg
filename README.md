@@ -9,7 +9,7 @@ This is an implementation of a trading card game battle system in Typescript wri
 
 Developed mainly though generative AI so even with test coverage there is a chance of bugs.
 
-## Implemented Features
+## Features
 
 ### Core Battle System
 - ✅ Card battles with HP and damage tracking
@@ -39,13 +39,11 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Bot opponents for single-player games
 - ✅ Turn counter and state tracking
 
-## Not Yet Implemented
-
 ### Energy System
-- ❌ Energy Zone with automatic generation
-- ❌ Energy attachment mechanics
-- ❌ Energy-based attack requirements
-- ❌ Multi-type Energy generation
+- ✅ Energy Zone with automatic generation
+- ✅ Energy attachment mechanics
+- ✅ Energy-based attack requirements
+- ✅ Multi-type Energy generation
 - ❌ Energy accelerator effects
 
 ### Special Conditions
@@ -59,7 +57,7 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ❌ Card abilities (passive effects)
 - ❌ Retreating with Energy costs
 - ❌ Weakness (+20 damage) system
-- ❌ First turn restrictions
+- ✅ First turn restrictions
 - ❌ Turn limits (30/50 turns)
 
 ### Battle Features

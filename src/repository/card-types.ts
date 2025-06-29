@@ -1,6 +1,14 @@
+export type EnergyType = 'grass' | 'fire' | 'water' | 'lightning' | 'psychic' | 'fighting' | 'darkness' | 'metal';
+
+export interface EnergyRequirement {
+    type: EnergyType | 'colorless';
+    amount: number;
+}
+
 export interface CreatureAttack {
     name: string;
     damage: number;
+    energyRequirements: EnergyRequirement[];
 }
 
 export interface CreatureData {

@@ -10,6 +10,7 @@ import { CardRepository } from "../repository/card-repository.js";
 import { TurnStateControllerProvider } from './turn-state-controller.js';
 import { TurnCounterControllerProvider } from './turn-counter-controller.js';
 import { SetupControllerProvider } from './setup-controller.js';
+import { EnergyControllerProvider } from './energy-controller.js';
 
 type TypedDefaultControllers = DefaultControllers<GameParams, typeof STANDARD_STATES, ResponseMessage, GameHandlerParams & SystemHandlerParams>;
 
@@ -24,6 +25,7 @@ export const buildProviders = (cardRepository: CardRepository) => {
         turnState: new TurnStateControllerProvider(),
         turnCounter: new TurnCounterControllerProvider(),
         setup: new SetupControllerProvider(),
+        energy: new EnergyControllerProvider(),
     };
     return providers as Omit<ValidatedProviders<typeof providers & ControllersProviders<TypedDefaultControllers>>, DefaultControllerKeys> & {};
 };

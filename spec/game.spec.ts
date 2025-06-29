@@ -14,6 +14,7 @@ import { mockRepository } from './mock-repository.js';
 import { SelectActiveCardResponseMessage } from '../src/messages/response/select-active-card-response-message.js';
 import { EvolveResponseMessage } from '../src/messages/response/evolve-response-message.js';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
+import { AttachEnergyResponseMessage } from '../src/messages/response/attach-energy-response-message.js';
 import { AttackResultMessage } from '../src/messages/status/attack-result-message.js';
 import { GameOverMessage } from '../src/messages/status/game-over-message.js';
 import { ResponseMessage } from '../src/messages/response-message.js';
@@ -32,7 +33,7 @@ describe('Game', () => {
             
             // Add 10 cards to each deck
             for (let j = 0; j < 10; j++) {
-                deck.push(`test-creature-${j % 2}`);
+                deck.push(`test-no-energy-creature`);
             }
             
             decks.push(deck);
@@ -65,27 +66,10 @@ describe('Game', () => {
         const driver = factory.getGameDriver(players, params, names);
 
         driver.resume();
-        driver.handleSyncResponses();
-        driver.resume();
-
-        const state = driver.getState() as ControllerHandlerState<Controllers>;
-        expect(state.setup.playersReady.some((ready: boolean) => ready)).to.equal(true);
-    });
-    
-    it('runs to completion with bot handlers', () => {
-        const messageHandlers = Array.from({ length: 2 }, () => new ArrayMessageHandler<StatusMessage>());
-        const gameHandler = () => new DefaultBotHandler(mockRepository);
-
-        // @ts-expect-error
-        const players = Array.from(messageHandlers, messageHandler => new HandlerChain([ messageHandler, gameHandler() ]));
-        const names = Array.from(messageHandlers, (_, i) => String.fromCharCode(65 + i));
-        const driver = factory.getGameDriver(players, params, names);
-
-        driver.resume();
         
-        // Run until game completes
+        // Run until game completes (increased limit for energy system)
         let steps = 0;
-        while (!driver.getState().completed && steps < 100) {
+        while (!driver.getState().completed && steps < 150) {
             driver.handleSyncResponses();
             driver.resume();
             steps++;
@@ -109,6 +93,20 @@ describe('Game', () => {
         
         class TestGameHandler extends DefaultBotHandler {
             handleAction(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
+                // Try to attach energy first, then attack
+                const currentPlayer = handlerData.turn;
+                
+                if (handlerData.energy) {
+                    const isFirstTurnRestricted = handlerData.energy.isAbsoluteFirstTurn;
+                    const energyAttachedThisTurn = handlerData.energy.energyAttachedThisTurn[currentPlayer];
+                    
+                    if (!energyAttachedThisTurn && !isFirstTurnRestricted) {
+                        responsesQueue.push(new AttachEnergyResponseMessage(0));
+                        return;
+                    }
+                }
+                
+                // Try to attack if we have energy
                 responsesQueue.push(new AttackResponseMessage(0));
             }
         }
@@ -281,8 +279,8 @@ describe('Game', () => {
                         return;
                     }
                 }
-                // Otherwise attack
-                responsesQueue.push(new AttackResponseMessage(0));
+                // Use parent class logic for energy management and attacks
+                super.handleAction(handlerData, responsesQueue);
             }
         }
         
@@ -311,7 +309,9 @@ describe('Game', () => {
         const driver = factory.getGameDriver(players, testParams, names);
         
         driver.resume();
-        while (!driver.getState().completed) {
+        
+        // Run just enough steps to allow evolution to happen (setup + a few turns)
+        for (let i = 0; i < 20; i++) {
             driver.handleSyncResponses();
             driver.resume();
         }

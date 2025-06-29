@@ -1,6 +1,5 @@
 import { CreatureData, SupporterData, ItemData, ToolData, CardData } from "./card-types.js";
 
-
 export class CardRepository {
     constructor(
         private creatureData: Map<string, CreatureData> = new Map(),
