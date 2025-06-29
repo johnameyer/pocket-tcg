@@ -23,6 +23,7 @@ export class DeckControllerProvider implements GenericControllerProvider<GameCar
 
 export class DeckController extends AbstractController<GameCard[][], DeckDependencies, GameCard[]> {
     private playerCount: number = 0;
+    private nextCardInstanceId: number = 1;
     
     initialize(playerCount: number, initialDecks?: GameCard[][] | string[][]): void {
         this.playerCount = playerCount;

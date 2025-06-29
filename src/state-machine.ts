@@ -149,10 +149,10 @@ const drawCardAndShowSummary = {
         const opponentBench = controllers.field.getBenchedCards(opponentId);
         
         const handCards = controllers.hand.getHand(currentPlayer)
-            .map(card => cardRepo.getCardName(card.cardId, card.type))
+            .map(card => cardRepo.getCard(card.cardId).data.name)
             .join(', ');
         
-        const drawnCardName = card ? cardRepo.getCardName(card.cardId, card.type) : undefined;
+        const drawnCardName = card ? cardRepo.getCard(card.cardId).data.name : undefined;
         
         controllers.players.message(currentPlayer, new TurnSummaryMessage(myCard, opponentCard, myBench, opponentBench, handCards, drawnCardName));
     }
@@ -213,6 +213,10 @@ const gameTurn = loop<Controllers>({
             run: (controllers: Controllers) => {
                 if (!isGameOver(controllers)) {
                     controllers.turn.next();
+                    // Only advance turn counter after both players have played
+                    if (controllers.turn.get() === 0) {
+                        controllers.turnCounter.advanceTurn();
+                    }
                 }
             }
         }
@@ -241,18 +245,28 @@ export const stateMachine = game<Controllers>(
             controllers.hand.drawInitialHand(i);
         }
         
-        // Set up initial active cards from deck
-        for (let i = 0; i < controllers.players.count; i++) {
-            const firstCard = controllers.hand.drawCard(i);
-            if (firstCard && firstCard.type === 'creature') {
-                controllers.field.setActiveCard(i, firstCard.cardId);
-            }
-        }
-        
-        // Reset points
-        controllers.points.reset();
+        // Players will set up their cards during setup phase
     },
-    gameTurn,
+    sequence<Controllers>([
+        // Setup phase - each player sets up their cards
+        loop<Controllers>({
+            id: 'setupLoop',
+            breakingIf: (controllers: Controllers) => controllers.setup.isSetupComplete(),
+            run: handleSingle({
+                handler: 'setup',
+                position: (controllers: Controllers) => controllers.turn.get()
+            }),
+            afterEach: (controllers: Controllers) => {
+                if (!controllers.setup.isSetupComplete()) {
+                    controllers.turn.next();
+                }
+            },
+            afterAll: () => { },
+        }),
+        
+        // Main game turns
+        gameTurn
+    ]),
     (controllers: Controllers) => {
         // Game over logic is handled in the turn handler
     },

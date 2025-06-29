@@ -5,6 +5,7 @@ export interface TurnStateData {
     
     shouldEndTurn: boolean;
     supporterPlayedThisTurn: boolean;
+    evolvedPositionsThisTurn: number[];
 }
 
 type TurnStateDependencies = {};
@@ -17,7 +18,8 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
     initialState(): TurnStateData {
         return {
             shouldEndTurn: false,
-            supporterPlayedThisTurn: false
+            supporterPlayedThisTurn: false,
+            evolvedPositionsThisTurn: []
         };
     }
     
@@ -50,5 +52,16 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     public resetTurnState(): void {
         this.state.shouldEndTurn = false;
         this.state.supporterPlayedThisTurn = false;
+        this.state.evolvedPositionsThisTurn = [];
+    }
+    
+    public markPositionEvolved(position: number): void {
+        if (!this.state.evolvedPositionsThisTurn.includes(position)) {
+            this.state.evolvedPositionsThisTurn.push(position);
+        }
+    }
+    
+    public hasPositionEvolvedThisTurn(position: number): boolean {
+        return this.state.evolvedPositionsThisTurn.includes(position);
     }
 }

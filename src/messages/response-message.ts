@@ -1,3 +1,3 @@
-import { SelectActiveCardResponseMessage, ActionResponseMessage } from './response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage } from './response/index.js';
 
-export type ResponseMessage = ActionResponseMessage | SelectActiveCardResponseMessage;
+export type ResponseMessage = AttackResponseMessage | PlayCardResponseMessage | EndTurnResponseMessage | SelectActiveCardResponseMessage | SetupCompleteResponseMessage | EvolveResponseMessage;

@@ -1,8 +1,8 @@
 import { GameHandler, HandlerData } from '../game-handler.js';
-import { SelectActiveCardResponseMessage, ActionResponseMessage } from '../messages/response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage } from '../messages/response/index.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { HandlerResponsesQueue } from '@cards-ts/core';
-import { CardRepository } from '../card-repository.js';
+import { CardRepository } from "../repository/card-repository.js";
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -11,70 +11,59 @@ export class DefaultBotHandler extends GameHandler {
         super();
         this.cardRepository = cardRepository || new CardRepository();
     }
-    handleAction(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
+    
+    handleEvolve(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
+        // Bot always evolves the first available creature
         const currentPlayer = handlerData.turn;
-        
-        // Get the player's hand
         const hand = handlerData.hand;
         
-        // First try to play a field card to the bench if possible
-        const fieldCards = hand.filter(card => card.type === 'creature');
-        const benchSize = handlerData.field.benchedCards[currentPlayer].length;
+        // Find evolution cards in hand
+        const evolutionCards = hand.filter(card => card.type === 'creature');
         
-        if (fieldCards.length > 0 && benchSize < 3) {
-            // Find the first field card
-            const cardIndex = hand.findIndex(card => card.type === 'creature');
+        if (evolutionCards.length > 0) {
+            // Get the first evolution card
+            const evolutionCard = evolutionCards[0];
             
-            // Play the field card
-            responsesQueue.push(new ActionResponseMessage({
-                type: 'play',
-                cardIndex: cardIndex
-            }));
-            return;
+            // Evolve the active creature by default
+            responsesQueue.push(new EvolveResponseMessage(
+                evolutionCard.cardId,
+                true // isActive
+            ));
         }
-        
-        // If no field card can be played, try to use a supporter card if none has been played this turn
-        if (!handlerData.turnState.supporterPlayedThisTurn) {
-            const supporterCards = hand.filter(card => card.type === 'supporter');
-            
-            if (supporterCards.length > 0) {
-                // Find the first supporter card
-                const cardIndex = hand.findIndex(card => card.type === 'supporter');
-                
-                // Play the supporter card
-                responsesQueue.push(new ActionResponseMessage({
-                    type: 'play',
-                    cardIndex: cardIndex
-                }));
-                return;
-            }
-        }
-        
-        // If no supporter can be played, try to use an item card
-        const itemCards = hand.filter(card => card.type === 'item');
-        
-        if (itemCards.length > 0) {
-            // Find the first item card
-            const cardIndex = hand.findIndex(card => card.type === 'item');
-            
-            // Play the item card on self
-            responsesQueue.push(new ActionResponseMessage({
-                type: 'play',
-                cardIndex: cardIndex,
-                targetPlayerId: currentPlayer
-            }));
-            return;
-        }
-        
-        // If no cards can be played, attack
-        responsesQueue.push(new ActionResponseMessage({
-            type: 'attack',
-            attackIndex: 0 // Always use the first attack
-        }));
+    }
+    
+    handleAction(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
+        // Bot always attacks to cause damage and eventually knockouts
+        responsesQueue.push(new AttackResponseMessage(0));
     }
     
     handleSelectActiveCard(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
         // Bot always selects the first benched card
         responsesQueue.push(new SelectActiveCardResponseMessage(0));
+    }
+    
+    handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
+        const hand = handlerData.hand;
+        
+        // Find all creature cards in hand
+        const creatureCards = hand.filter(card => card.type === 'creature');
+        
+        if (creatureCards.length > 0) {
+            // Bot selects first creature as active, others for bench (max 3 bench)
+            const activeCard = creatureCards[0];
+            const benchCards = creatureCards.slice(1, 4);
+            
+            // Create a setup complete message with the selected cards
+            responsesQueue.push(new SetupCompleteResponseMessage(
+                activeCard.cardId,
+                benchCards.map(card => card.cardId)
+            ));
+        } else {
+            // No creature cards in hand, just complete setup with default
+            responsesQueue.push(new SetupCompleteResponseMessage(
+                'basic-creature', // Use a default creature ID
+                []
+            ));
+        }
     }
 }

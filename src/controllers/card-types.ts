@@ -1,11 +1,11 @@
 import { Serializable } from "@cards-ts/core";
 
 export interface Card {
-    // TODO why is this needed?
+    // TODO why is this needed
     [index: string]: Serializable;
-    id: string;
+    id: string; // Unique instance ID for this specific card copy
     type: 'creature' | 'supporter' | 'item' | 'tool';
-    cardId: string; // Common ID field for all card types
+    cardId: string; // Card template ID for the card
 }
 
 export interface CreatureCard extends Card {

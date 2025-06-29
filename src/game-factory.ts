@@ -6,7 +6,7 @@ import { buildProviders } from './controllers/controllers.js';
 import { stateMachine } from './state-machine.js';
 import { buildGameFactory } from '@cards-ts/core';
 import { adapt } from '@cards-ts/state-machine';
-import { CardRepository } from './card-repository.js';
+import { CardRepository } from "./repository/card-repository.js";
 
 export const gameFactory = (cardRepository?: CardRepository) => {
     const repository = cardRepository || new CardRepository();

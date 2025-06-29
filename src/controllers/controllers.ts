@@ -6,13 +6,12 @@ import { CardRepositoryControllerProvider } from './card-repository-controller.j
 import { DeckControllerProvider } from './deck-controller.js';
 import { HandControllerProvider } from './hand-controller.js';
 import { DefaultControllerKeys, DefaultControllers, SystemHandlerParams, ControllersProviders, UnwrapProviders, ValidatedProviders, STANDARD_STATES, TurnControllerProvider, PointsControllerProvider } from '@cards-ts/core';
-import { CardRepository } from '../card-repository.js';
+import { CardRepository } from "../repository/card-repository.js";
+import { TurnStateControllerProvider } from './turn-state-controller.js';
+import { TurnCounterControllerProvider } from './turn-counter-controller.js';
+import { SetupControllerProvider } from './setup-controller.js';
 
 type TypedDefaultControllers = DefaultControllers<GameParams, typeof STANDARD_STATES, ResponseMessage, GameHandlerParams & SystemHandlerParams>;
-
-import { TurnStateControllerProvider } from './turn-state-controller.js';
-
-
 
 export const buildProviders = (cardRepository: CardRepository) => {
     const providers = {
@@ -23,6 +22,8 @@ export const buildProviders = (cardRepository: CardRepository) => {
         deck: new DeckControllerProvider(),
         hand: new HandControllerProvider(),
         turnState: new TurnStateControllerProvider(),
+        turnCounter: new TurnCounterControllerProvider(),
+        setup: new SetupControllerProvider(),
     };
     return providers as Omit<ValidatedProviders<typeof providers & ControllersProviders<TypedDefaultControllers>>, DefaultControllerKeys> & {};
 };

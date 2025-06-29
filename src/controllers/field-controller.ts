@@ -276,4 +276,54 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         // Set as active
         this.state.activeCards[playerId] = card;
     }
+    
+    // Evolve the active card for a player
+    public evolveActiveCard(playerId: number, evolutionCardId: string): boolean {
+        if (playerId < 0 || playerId >= this.state.activeCards.length) {
+            throw new Error(`Invalid player ID: ${playerId}`);
+        }
+        
+        const cardData = this.controllers.cardRepository.getCreature(evolutionCardId);
+        if (!cardData) {
+            throw new Error(`Card not found: ${evolutionCardId}`);
+        }
+        
+        // Keep the damage taken from the previous card
+        const damageTaken = this.state.activeCards[playerId].damageTaken;
+        
+        // Replace the card ID but keep the damage
+        this.state.activeCards[playerId] = {
+            ...this.state.activeCards[playerId],
+            cardId: evolutionCardId
+        };
+        
+        return true;
+    }
+    
+    // Evolve a benched card for a player
+    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionCardId: string): boolean {
+        if (playerId < 0 || playerId >= this.state.benchedCards.length) {
+            throw new Error(`Invalid player ID: ${playerId}`);
+        }
+        
+        if (benchIndex < 0 || benchIndex >= this.state.benchedCards[playerId].length) {
+            throw new Error(`Invalid bench index: ${benchIndex}`);
+        }
+        
+        const cardData = this.controllers.cardRepository.getCreature(evolutionCardId);
+        if (!cardData) {
+            throw new Error(`Card not found: ${evolutionCardId}`);
+        }
+        
+        // Keep the damage taken from the previous card
+        const damageTaken = this.state.benchedCards[playerId][benchIndex].damageTaken;
+        
+        // Replace the card ID but keep the damage
+        this.state.benchedCards[playerId][benchIndex] = {
+            ...this.state.benchedCards[playerId][benchIndex],
+            cardId: evolutionCardId
+        };
+        
+        return true;
+    }
 }

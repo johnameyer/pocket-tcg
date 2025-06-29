@@ -1,4 +1,5 @@
-import { CardRepository, CreatureData, ItemData, SupporterData, ToolData } from '../src/card-repository.js';
+import { CreatureData, ItemData, SupporterData, ToolData } from '../src/repository/card-types.js';
+import { CardRepository } from '../src/repository/card-repository.js';
 
 // TODO just create as a const object instead of using a Map
 // Create mock data for the CardRepository
@@ -14,6 +15,13 @@ mockCreatureData.set('test-creature-1', {
     name: 'Test Creature 1',
     maxHp: 120,
     attacks: [{ name: 'Test Attack', damage: 30 }]
+});
+mockCreatureData.set('test-evolution', {
+    id: 'test-evolution',
+    name: 'Test Evolution',
+    maxHp: 180,
+    attacks: [{ name: 'Evolved Attack', damage: 50 }],
+    evolvesFrom: 'test-creature-0'
 });
 
 const mockSupporterData = new Map<string, SupporterData>();

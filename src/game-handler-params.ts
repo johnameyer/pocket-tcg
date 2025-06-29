@@ -1,4 +1,6 @@
 export type GameHandlerParams = {
     action: [],
-    selectActiveCard: []
+    selectActiveCard: [],
+    setup: [],
+    evolve: []
 };

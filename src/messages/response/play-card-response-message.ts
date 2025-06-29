@@ -4,8 +4,11 @@ export class PlayCardResponseMessage extends Message {
     readonly type = 'play-card-response';
 
     constructor(
-        public readonly cardIndex: number
+        public readonly cardId: string,
+        public readonly cardType: 'creature' | 'item' | 'supporter',
+        public readonly targetPlayerId?: number,
+        public readonly targetFieldIndex?: number
     ) {
-        super(['Played a card from hand']);
+        super([`Chose to play card ${cardId}`]);
     }
 }

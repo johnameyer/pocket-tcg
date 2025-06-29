@@ -1,48 +1,5 @@
-export interface CreatureAttack {
-    name: string;
-    damage: number;
-}
+import { CreatureData, SupporterData, ItemData, ToolData, CardData } from "./card-types.js";
 
-export interface CreatureData {
-    id: string;
-    name: string;
-    maxHp: number;
-    attacks: CreatureAttack[];
-    evolvesFrom?: string;
-}
-
-export interface SupporterAction {
-    name: string;
-    effect: string;
-}
-
-export interface SupporterData {
-    id: string;
-    name: string;
-    actions: SupporterAction[];
-}
-
-export interface ItemEffect {
-    type: 'heal' | 'damage' | 'draw';
-    amount: number;
-    target: 'self' | 'opponent' | 'any';
-}
-
-export interface ItemData {
-    id: string;
-    name: string;
-    effect: string;
-    effects: ItemEffect[];
-}
-
-export interface ToolData {
-    id: string;
-    name: string;
-    effect: string;
-    effects: string[];
-}
-
-export type CardData = CreatureData | SupporterData | ItemData | ToolData;
 
 export class CardRepository {
     constructor(
@@ -53,7 +10,7 @@ export class CardRepository {
     ) {
         // No initialization here - data will be provided by the caller
     }
-    
+
     public getCreature(id: string): CreatureData {
         const creature = this.creatureData.get(id);
         if (!creature) {
@@ -61,16 +18,11 @@ export class CardRepository {
         }
         return creature;
     }
-    
-    public getCreatureName(id: string): string {
-        // getCreature now throws an error if not found, so we don't need to check
-        return this.getCreature(id).name;
-    }
-    
+
     public getAllCreatureIds(): string[] {
         return Array.from(this.creatureData.keys());
     }
-    
+
     public getSupporter(id: string): SupporterData {
         const supporter = this.supporterData.get(id);
         if (!supporter) {
@@ -78,7 +30,7 @@ export class CardRepository {
         }
         return supporter;
     }
-    
+
     public getItem(id: string): ItemData {
         const item = this.itemData.get(id);
         if (!item) {
@@ -86,7 +38,7 @@ export class CardRepository {
         }
         return item;
     }
-    
+
     public getTool(id: string): ToolData {
         const tool = this.toolData.get(id);
         if (!tool) {
@@ -94,41 +46,27 @@ export class CardRepository {
         }
         return tool;
     }
-    
-    
-    public getAllToolIds(): string[] {
-        return Array.from(this.toolData.keys());
-    }
-    
-    public getCardName(cardId: string, cardType: string): string {
-        if (cardType === 'creature') {
-            return this.getCreatureName(cardId);
-        } else if (cardType === 'supporter') {
-            return this.getSupporter(cardId).name;
-        } else if (cardType === 'item') {
-            return this.getItem(cardId).name;
-        } else if (cardType === 'tool') {
-            return this.getTool(cardId).name;
-        }
-        throw new Error(`Unknown card type: ${cardType}`);
-    }
-    
+
     public getAllSupporterIds(): string[] {
         return Array.from(this.supporterData.keys());
     }
-    
+
     public getAllItemIds(): string[] {
         return Array.from(this.itemData.keys());
     }
-    
+
+    public getAllToolIds(): string[] {
+        return Array.from(this.toolData.keys());
+    }
+
     /**
      * Gets a card by ID, trying all card types.
-     * 
+     *
      * @param id The ID of the card to get
      * @returns The card data and its type
      * @throws Error if the card is not found in any collection
      */
-    public getCard(id: string): { data: CardData; type: string } {
+    public getCard(id: string): { data: CardData; type: string; } {
         try {
             return { data: this.getCreature(id), type: 'creature' };
         } catch (e) {
@@ -147,22 +85,22 @@ export class CardRepository {
             }
         }
     }
-    
+
     /**
      * Determines the evolution stage of a Creature.
-     * 
+     *
      * @param creatureId The ID of the Creature to check
      * @returns 0 for Basic, 1 for Stage 1, 2 for Stage 2, or -1 if not found
      */
     public getEvolutionStage(creatureId: string): number {
         try {
             const creature = this.getCreature(creatureId);
-            
+
             // Basic creatures have no evolvesFrom property
             if (!creature.evolvesFrom) {
                 return 0; // Basic creature
             }
-            
+
             // Check if the creature it evolves from is also an evolution creature
             try {
                 const preCreature = this.getCreature(creature.evolvesFrom);
