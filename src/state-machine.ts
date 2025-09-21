@@ -9,6 +9,15 @@ const isCardKnockedOut = (controllers: Controllers) => {
         if (controllers.field.isKnockedOut(i)) {
             return true;
         }
+        
+        // Check bench card knockouts
+        const benchCards = controllers.field.getCards(i).slice(1); // Skip active card
+        for (const benchCard of benchCards) {
+            const { maxHp } = controllers.cardRepository.getCreature(benchCard.templateId);
+            if (benchCard.damageTaken >= maxHp) {
+                return true;
+            }
+        }
     }
     return false;
 };
@@ -55,15 +64,46 @@ const processKnockouts = {
     run: (controllers: Controllers) => {
         // Check each player
         for (let i = 0; i < controllers.players.count; i++) {
-            // If this player's card is knocked out
+            // Check active card knockout
             if (controllers.field.isKnockedOut(i)) {
                 // Send knockout message
-                const targetCard = controllers.field.getActiveCard(i);
-                controllers.players.messageAll(new KnockedOutMessage(targetCard.name));
+                const targetCard = controllers.field.getCardByPosition(i, 0);
+                if (targetCard) {
+                    const cardData = controllers.cardRepository.getCreature(targetCard.templateId);
+                    controllers.players.messageAll(new KnockedOutMessage(cardData.name));
+                    
+                    // Clean up energy attached to the knocked out card
+                    controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
+                    
+                    // Award points to the opponent (2 for ex cards, 1 for regular)
+                    const opponentId = (i + 1) % controllers.players.count;
+                    const pointsToAward = cardData.attributes?.ex ? 2 : 1;
+                    controllers.points.increaseScore(opponentId, pointsToAward);
+                }
+            }
+            
+            // Check bench card knockouts
+            const benchCards = controllers.field.getCards(i).slice(1); // Skip active card
+            for (let benchIndex = 0; benchIndex < benchCards.length; benchIndex++) {
+                const benchCard = benchCards[benchIndex];
+                const { maxHp } = controllers.cardRepository.getCreature(benchCard.templateId);
                 
-                // Add a point to the opponent
-                const opponentId = (i + 1) % controllers.players.count;
-                controllers.points.increaseScore(opponentId, 1);
+                if (benchCard.damageTaken >= maxHp) {
+                    // Send knockout message
+                    const cardData = controllers.cardRepository.getCreature(benchCard.templateId);
+                    controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
+                    
+                    // Clean up energy attached to the knocked out card
+                    controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
+                    
+                    // Award points to the opponent (2 for ex cards, 1 for regular)
+                    const opponentId = (i + 1) % controllers.players.count;
+                    const pointsToAward = cardData.attributes?.ex ? 2 : 1;
+                    controllers.points.increaseScore(opponentId, pointsToAward);
+                    
+                    // Remove the knocked out bench card
+                    controllers.field.removeBenchCard(i, benchIndex);
+                }
             }
         }
     }
@@ -143,29 +183,50 @@ const drawCardAndShowSummary = {
         
         const card = controllers.hand.drawCard(currentPlayer);
         
-        const myCard = controllers.field.getActiveCard(currentPlayer);
-        const opponentCard = controllers.field.getActiveCard(opponentId);
-        const myBench = controllers.field.getBenchedCards(currentPlayer);
-        const opponentBench = controllers.field.getBenchedCards(opponentId);
+        const myCard = controllers.field.getCardByPosition(currentPlayer, 0);
+        const opponentCard = controllers.field.getCardByPosition(opponentId, 0);
+        const myBench = controllers.field.getPlayedCards(currentPlayer).slice(1);
+        const opponentBench = controllers.field.getPlayedCards(opponentId).slice(1);
+        
+        // Convert to CreatureInfo format
+        const myCardInfo = myCard ? {
+            name: cardRepo.getCreature(myCard.templateId).name,
+            hp: Math.max(0, cardRepo.getCreature(myCard.templateId).maxHp - myCard.damageTaken),
+            maxHp: cardRepo.getCreature(myCard.templateId).maxHp
+        } : { name: 'None', hp: 0, maxHp: 0 };
+        
+        const opponentCardInfo = opponentCard ? {
+            name: cardRepo.getCreature(opponentCard.templateId).name,
+            hp: Math.max(0, cardRepo.getCreature(opponentCard.templateId).maxHp - opponentCard.damageTaken),
+            maxHp: cardRepo.getCreature(opponentCard.templateId).maxHp
+        } : { name: 'None', hp: 0, maxHp: 0 };
+        
+        const myBenchInfo = myBench.map(card => ({
+            name: cardRepo.getCreature(card.templateId).name,
+            hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
+            maxHp: cardRepo.getCreature(card.templateId).maxHp
+        }));
+        
+        const opponentBenchInfo = opponentBench.map(card => ({
+            name: cardRepo.getCreature(card.templateId).name,
+            hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
+            maxHp: cardRepo.getCreature(card.templateId).maxHp
+        }));
         
         const handCards = controllers.hand.getHand(currentPlayer)
-            .map(card => cardRepo.getCard(card.cardId).data.name)
+            .map(card => cardRepo.getCreature(card.templateId).name)
             .join(', ');
         
-        const drawnCardName = card ? cardRepo.getCard(card.cardId).data.name : undefined;
+        const drawnCardName = card ? cardRepo.getCreature(card.templateId).name : undefined;
         
-        controllers.players.message(currentPlayer, new TurnSummaryMessage(myCard, opponentCard, myBench, opponentBench, handCards, drawnCardName));
+        controllers.players.message(currentPlayer, new TurnSummaryMessage(myCardInfo, opponentCardInfo, myBenchInfo, opponentBenchInfo, handCards, drawnCardName));
     }
 };
-
-// This is no longer used as the logic is moved to the action handler
 
 // Handle player actions
 const handlePlayerActions = loop<Controllers>({
     id: 'actionLoop',
-    breakingIf: (controllers: Controllers) => {
-        return controllers.turnState.getShouldEndTurn();
-    },
+    breakingIf: (controllers: Controllers) => controllers.turnState.getShouldEndTurn(),
     run: sequence<Controllers>([
         // Handle player action
         handleSingle({
@@ -218,23 +279,86 @@ const gameTurn = loop<Controllers>({
                 
                 const card = controllers.hand.drawCard(currentPlayer);
                 
-                const myActive = controllers.field.getActiveCard(currentPlayer);
-                const opponentActive = controllers.field.getActiveCard(opponentId);
-                const myBench = controllers.field.getBenchedCards(currentPlayer);
-                const opponentBench = controllers.field.getBenchedCards(opponentId);
+                const myActive = controllers.field.getCardByPosition(currentPlayer, 0);
+                const opponentActive = controllers.field.getCardByPosition(opponentId, 0);
+                const myBench = controllers.field.getPlayedCards(currentPlayer).slice(1);
+                const opponentBench = controllers.field.getPlayedCards(opponentId).slice(1);
+                
+                // Convert to CreatureInfo format
+                const myActiveInfo = myActive ? {
+                    name: cardRepo.getCreature(myActive.templateId).name,
+                    hp: Math.max(0, cardRepo.getCreature(myActive.templateId).maxHp - myActive.damageTaken),
+                    maxHp: cardRepo.getCreature(myActive.templateId).maxHp
+                } : { name: 'None', hp: 0, maxHp: 0 };
+                
+                const opponentActiveInfo = opponentActive ? {
+                    name: cardRepo.getCreature(opponentActive.templateId).name,
+                    hp: Math.max(0, cardRepo.getCreature(opponentActive.templateId).maxHp - opponentActive.damageTaken),
+                    maxHp: cardRepo.getCreature(opponentActive.templateId).maxHp
+                } : { name: 'None', hp: 0, maxHp: 0 };
+                
+                const myBenchInfo = myBench.map(card => ({
+                    name: cardRepo.getCreature(card.templateId).name,
+                    hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
+                    maxHp: cardRepo.getCreature(card.templateId).maxHp
+                }));
+                
+                const opponentBenchInfo = opponentBench.map(card => ({
+                    name: cardRepo.getCreature(card.templateId).name,
+                    hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
+                    maxHp: cardRepo.getCreature(card.templateId).maxHp
+                }));
                 
                 const handCards = controllers.hand.getHand(currentPlayer)
-                    .map(card => cardRepo.getCard(card.cardId).data.name)
+                    .map(card => {
+                        // Handle different card types
+                        if (card.type === 'creature') {
+                            return cardRepo.getCreature(card.templateId).name;
+                        } else if (card.type === 'supporter') {
+                            return cardRepo.getSupporter(card.templateId).name;
+                        } else if (card.type === 'item') {
+                            return cardRepo.getItem(card.templateId).name;
+                        } else {
+                            return (card as { templateId?: string }).templateId || 'unknown'; // fallback
+                        }
+                    })
                     .join(', ');
                 
-                const drawnCardName = card ? cardRepo.getCard(card.cardId).data.name : undefined;
+                const drawnCardName = card ? (() => {
+                    // Handle different card types for drawn card
+                    if (card.type === 'creature') {
+                        return cardRepo.getCreature(card.templateId).name;
+                    } else if (card.type === 'supporter') {
+                        return cardRepo.getSupporter(card.templateId).name;
+                    } else if (card.type === 'item') {
+                        return cardRepo.getItem(card.templateId).name;
+                    } else {
+                        return (card as { templateId?: string }).templateId || 'unknown'; // fallback
+                    }
+                })() : undefined;
                 
-                controllers.players.message(currentPlayer, new TurnSummaryMessage(myActive, opponentActive, myBench, opponentBench, handCards, drawnCardName));
+                controllers.players.message(currentPlayer, new TurnSummaryMessage(myActiveInfo, opponentActiveInfo, myBenchInfo, opponentBenchInfo, handCards, drawnCardName));
             }
         },
         
         // Handle player actions until a card is knocked out or turn ends
         handlePlayerActions,
+        
+        // Checkup Phase - simplified without status effects
+        {
+            name: 'checkupPhase',
+            run: (controllers: Controllers) => {
+                // Clear persistent effects at end of turn (they last "during opponent's next turn")
+                controllers.turnState.clearPersistentEffects();
+            }
+        },
+        
+        // Check for knockouts after checkup phase
+        conditionalState({
+            id: 'checkKnockoutsAfterCheckup',
+            condition: isCardKnockedOut,
+            truthy: handleKnockout,
+        }),
         
         // Advance to the next player's turn
         { 

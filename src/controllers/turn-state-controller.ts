@@ -1,11 +1,17 @@
 import { AbstractController, GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
+import { PendingTargetSelection } from '../effects/pending-target-selection.js';
+import { Condition } from '../repository/condition-types.js';
+import { Target } from '../repository/target-types.js';
 
 export interface TurnStateData {
     [key: string]: Serializable;
     
     shouldEndTurn: boolean;
     supporterPlayedThisTurn: boolean;
-    evolvedPositionsThisTurn: number[];
+    retreatedThisTurn: boolean;
+    evolvedInstancesThisTurn: string[]; // Track evolved creatures by instance ID
+    pendingTargetSelection?: Serializable;
+    // TODO: Rare candy should immediately require selection of the card to evolve so shouldn't be kept long term - pending effect?
 }
 
 type TurnStateDependencies = {};
@@ -19,7 +25,9 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
         return {
             shouldEndTurn: false,
             supporterPlayedThisTurn: false,
-            evolvedPositionsThisTurn: []
+            retreatedThisTurn: false,
+            evolvedInstancesThisTurn: [],
+            pendingTargetSelection: undefined,
         };
     }
     
@@ -52,16 +60,41 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     public resetTurnState(): void {
         this.state.shouldEndTurn = false;
         this.state.supporterPlayedThisTurn = false;
-        this.state.evolvedPositionsThisTurn = [];
+        this.state.evolvedInstancesThisTurn = [];
+        this.state.retreatedThisTurn = false;
     }
     
-    public markPositionEvolved(position: number): void {
-        if (!this.state.evolvedPositionsThisTurn.includes(position)) {
-            this.state.evolvedPositionsThisTurn.push(position);
+    public markEvolvedThisTurn(instanceId: string): void {
+        if (!this.state.evolvedInstancesThisTurn.includes(instanceId)) {
+            this.state.evolvedInstancesThisTurn.push(instanceId);
         }
     }
     
-    public hasPositionEvolvedThisTurn(position: number): boolean {
-        return this.state.evolvedPositionsThisTurn.includes(position);
+    public hasEvolvedThisTurn(instanceId: string): boolean {
+        return this.state.evolvedInstancesThisTurn.includes(instanceId);
+    }
+    
+    public setRetreatedThisTurn(value: boolean): void {
+        this.state.retreatedThisTurn = value;
+    }
+    
+    public hasRetreatedThisTurn(): boolean {
+        return this.state.retreatedThisTurn;
+    }
+
+    public clearPersistentEffects(): void {
+        // No persistent effects to clear
+    }
+
+    public setPendingTargetSelection(selection: PendingTargetSelection): void {
+        this.state.pendingTargetSelection = selection as unknown as Serializable;
+    }
+
+    public getPendingTargetSelection(): PendingTargetSelection | null {
+        return this.state.pendingTargetSelection as unknown as PendingTargetSelection || null;
+    }
+
+    public clearPendingTargetSelection(): void {
+        this.state.pendingTargetSelection = undefined;
     }
 }

@@ -1,55 +1,90 @@
-export type EnergyType = 'grass' | 'fire' | 'water' | 'lightning' | 'psychic' | 'fighting' | 'darkness' | 'metal';
+import { Effect, PendingTargetEffect } from './effect-types.js';
+import { EffectValue } from './effect-value-types.js';
 
-export interface EnergyRequirement {
-    type: EnergyType | 'colorless';
-    amount: number;
-}
+/**
+ * Type for operation types in effects.
+ */
+export type OperationType = 'heal' | 'damage' | 'attach' | 'discard';
 
-export interface CreatureAttack {
+/**
+ * Represents a trigger condition that determines when an effect should activate.
+ */
+export type Trigger = 
+    | { type: 'manual', unlimited: boolean }
+    | { type: 'end-of-turn' }
+    | { type: 'damaged' };
+
+/**
+ * Represents a creature attack.
+ */
+export type CreatureAttack = {
     name: string;
-    damage: number;
+    damage: number | EffectValue;
     energyRequirements: EnergyRequirement[];
-}
+    effects?: Effect[];
+};
 
-export interface CreatureData {
-    id: string;
+/**
+ * Represents an ability that a creature can have.
+ */
+export type CreatureAbility = {
+    name: string;
+    trigger: Trigger;
+    effects: Effect[];
+};
+
+/**
+ * Represents energy requirements for attacks or abilities.
+ */
+export type EnergyRequirement = {
+    type: string;
+    amount: number;
+};
+
+/**
+ * Represents a creature card.
+ */
+export type CreatureData = {
+    templateId: string;
     name: string;
     maxHp: number;
+    type: string;
+    weakness?: string;
+    retreatCost: number;
     attacks: CreatureAttack[];
+    abilities?: CreatureAbility[];
+    stage?: number;
     evolvesFrom?: string;
-}
+    attributes?: {
+        ex?: boolean;
+        ultraBeast?: boolean;
+    };
+};
 
-export interface SupporterAction {
+/**
+ * Represents a supporter card.
+ */
+export type SupporterData = {
+    templateId: string;
     name: string;
-    effect: string;
-}
+    effects: Effect[];
+};
 
-export interface SupporterData {
-    id: string;
+/**
+ * Represents an item card.
+ */
+export type ItemData = {
+    templateId: string;
     name: string;
-    actions: SupporterAction[];
-}
+    effects: Effect[];
+};
 
-export interface ItemEffect {
-    type: 'heal' | 'damage' | 'draw';
-    amount: number;
-    target: 'self' | 'opponent' | 'any';
-}
-
-export interface ItemData {
-    id: string;
+/**
+ * Represents a tool card.
+ */
+export type ToolData = {
+    templateId: string;
     name: string;
-    effect: string;
-    effects: ItemEffect[];
-}
-
-export interface ToolData {
-    id: string;
-    name: string;
-    effect: string;
-    effects: string[];
-}
-
-export type CardData = CreatureData | SupporterData | ItemData | ToolData;
-
-
+    effects: Effect[];
+    trigger?: Trigger;
+};

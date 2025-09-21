@@ -1,7 +1,7 @@
 import { AbstractController, GenericControllerProvider, IndexedControllers } from '@cards-ts/core';
 import { Card, CreatureCard, SupporterCard, ItemCard, GameCard } from './card-types.js';
 import { DeckController } from './deck-controller.js';
-import { CardRepository } from "../repository/card-repository.js";
+import { CardRepository } from '../repository/card-repository.js';
 
 type HandDependencies = {
     deck: DeckController;
@@ -109,7 +109,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     removeCards(playerId: number, cardsToRemove: GameCard[]): void {
         for (const cardToRemove of cardsToRemove) {
             const index = this.state[playerId].findIndex(card => 
-                card.cardId === cardToRemove.cardId && card.type === cardToRemove.type
+                card.templateId === cardToRemove.templateId && card.type === cardToRemove.type
             );
             if (index !== -1) {
                 this.state[playerId].splice(index, 1);
@@ -120,7 +120,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     // Check if player has specific card
     hasCard(cardToCheck: GameCard, playerId: number): boolean {
         return this.state[playerId].some(card => 
-            card.cardId === cardToCheck.cardId && card.type === cardToCheck.type
+            card.templateId === cardToCheck.templateId && card.type === cardToCheck.type
         );
     }
     

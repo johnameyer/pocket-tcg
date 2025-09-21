@@ -1,9 +1,7 @@
 import { GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
-import { CardRepository } from "../repository/card-repository.js";
+import { CardRepository } from '../repository/card-repository.js';
 
-export interface CardRepositoryState {
-    [key: string]: Serializable;
-}
+export type CardRepositoryState = {};
 
 export class CardRepositoryControllerProvider implements GenericControllerProvider<CardRepositoryState, {}, CardRepositoryController> {
     constructor(private repository: CardRepository) {}
@@ -24,12 +22,16 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
         super(state, controllers);
     }
     
-    getCard(id: string) { return this.repository.getCard(id); }
+    get cardRepository(): CardRepository {
+        return this.repository;
+    }
+
     getCreature(id: string) { return this.repository.getCreature(id); }
     getSupporter(id: string) { return this.repository.getSupporter(id); }
     getItem(id: string) { return this.repository.getItem(id); }
-    getTool(id: string) { return this.repository.getTool(id); }
+    // Tools removed - no longer supported
     getAllCreatureIds() { return this.repository.getAllCreatureIds(); }
     getAllSupporterIds() { return this.repository.getAllSupporterIds(); }
     getAllItemIds() { return this.repository.getAllItemIds(); }
+    getCard(id: string) { return this.repository.getCard(id); }
 }

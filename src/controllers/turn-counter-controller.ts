@@ -1,10 +1,8 @@
 import { AbstractController, GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
 
-export interface TurnCounterState {
-    [key: string]: Serializable;
-    
+export type TurnCounterState = {
     turnNumber: number;
-}
+};
 
 type TurnCounterDependencies = {};
 

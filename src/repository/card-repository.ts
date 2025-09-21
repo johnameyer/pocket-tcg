@@ -1,71 +1,63 @@
-import { CreatureData, SupporterData, ItemData, ToolData, CardData } from "./card-types.js";
+import { CreatureData, SupporterData, ItemData, ToolData } from './card-types.js';
 
 export class CardRepository {
     constructor(
         private creatureData: Map<string, CreatureData> = new Map(),
         private supporterData: Map<string, SupporterData> = new Map(),
         private itemData: Map<string, ItemData> = new Map(),
-        private toolData: Map<string, ToolData> = new Map()
+        // Tools removed - no longer supported
     ) {
-        // No initialization here - data will be provided by the caller
+        // Data provided via constructor injection - no hard-coded imports
     }
 
-    public getCreature(id: string): CreatureData {
-        const creature = this.creatureData.get(id);
-        if (!creature) {
-            throw new Error(`Creature not found: ${id}`);
+    public getCreature(templateId: string): CreatureData {
+        const fieldCard = this.creatureData.get(templateId);
+        if (!fieldCard) {
+            throw new Error(`FieldCard not found: ${templateId}`);
         }
-        return creature;
+        return fieldCard;
     }
-
+    
     public getAllCreatureIds(): string[] {
         return Array.from(this.creatureData.keys());
     }
-
-    public getSupporter(id: string): SupporterData {
-        const supporter = this.supporterData.get(id);
+    
+    public getSupporter(templateId: string): SupporterData {
+        const supporter = this.supporterData.get(templateId);
         if (!supporter) {
-            throw new Error(`Supporter not found: ${id}`);
+            throw new Error(`Supporter not found: ${templateId}`);
         }
         return supporter;
     }
-
-    public getItem(id: string): ItemData {
-        const item = this.itemData.get(id);
+    
+    public getItem(templateId: string): ItemData {
+        const item = this.itemData.get(templateId);
         if (!item) {
-            throw new Error(`Item not found: ${id}`);
+            throw new Error(`Item not found: ${templateId}`);
         }
         return item;
     }
-
-    public getTool(id: string): ToolData {
-        const tool = this.toolData.get(id);
-        if (!tool) {
-            throw new Error(`Tool not found: ${id}`);
-        }
-        return tool;
-    }
-
+    
+    // Tools removed - no longer supported
+    
     public getAllSupporterIds(): string[] {
         return Array.from(this.supporterData.keys());
     }
-
+    
     public getAllItemIds(): string[] {
         return Array.from(this.itemData.keys());
     }
-
-    public getAllToolIds(): string[] {
-        return Array.from(this.toolData.keys());
-    }
-
+    
+    // Tools removed - no longer supported
+    
     /**
      * Gets a card by ID, trying all card types.
-     *
+     * 
      * @param id The ID of the card to get
      * @returns The card data and its type
      * @throws Error if the card is not found in any collection
      */
-    public getCard(id: string): { data: CardData; type: string; } {
+    public getCard(id: string): { data: CreatureData | SupporterData | ItemData | ToolData; type: string } {
         try {
             return { data: this.getCreature(id), type: 'creature' };
         } catch (e) {
@@ -76,7 +68,7 @@ export class CardRepository {
                     return { data: this.getItem(id), type: 'item' };
                 } catch (e) {
                     try {
-                        return { data: this.getTool(id), type: 'tool' };
+                        throw new Error(`Card not found: ${id}`);
                     } catch (e) {
                         throw new Error(`Card not found: ${id}`);
                     }
@@ -84,36 +76,36 @@ export class CardRepository {
             }
         }
     }
-
+    
     /**
-     * Determines the evolution stage of a Creature.
-     *
-     * @param creatureId The ID of the Creature to check
+     * Determines the evolution stage of a FieldCard.
+     * 
+     * @param fieldCardId The ID of the FieldCard to check
      * @returns 0 for Basic, 1 for Stage 1, 2 for Stage 2, or -1 if not found
      */
-    public getEvolutionStage(creatureId: string): number {
+    public getEvolutionStage(fieldCardId: string): number {
         try {
-            const creature = this.getCreature(creatureId);
-
-            // Basic creatures have no evolvesFrom property
-            if (!creature.evolvesFrom) {
-                return 0; // Basic creature
+            const fieldCard = this.getCreature(fieldCardId);
+            
+            // Basic FieldCard have no evolvesFrom property
+            if (!fieldCard.evolvesFrom) {
+                return 0; // Basic FieldCard
             }
-
-            // Check if the creature it evolves from is also an evolution creature
+            
+            // Check if the FieldCard it evolves from is also an evolution FieldCard
             try {
-                const preCreature = this.getCreature(creature.evolvesFrom);
-                if (!preCreature.evolvesFrom) {
-                    return 1; // Stage 1 creature (evolves from Basic)
+                const preFieldCard = this.getCreature(fieldCard.evolvesFrom);
+                if (!preFieldCard.evolvesFrom) {
+                    return 1; // Stage 1 FieldCard (evolves from Basic)
                 } else {
-                    return 2; // Stage 2 creature (evolves from Stage 1)
+                    return 2; // Stage 2 FieldCard (evolves from Stage 1)
                 }
             } catch (error) {
                 // If we can't find the pre-evolution, assume it's a Stage 1
                 return 1;
             }
         } catch (error) {
-            return -1; // Creature not found
+            return -1; // FieldCard not found
         }
     }
 }

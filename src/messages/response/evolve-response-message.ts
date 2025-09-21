@@ -5,9 +5,8 @@ export class EvolveResponseMessage extends Message {
 
     constructor(
         public readonly evolutionId: string,
-        public readonly isActive: boolean,
-        public readonly benchIndex?: number
+        public readonly position: number // 0 = active, 1-3 = bench positions
     ) {
-        super([`Evolving creature to ${evolutionId}`]);
+        super([`Evolving creature at position ${position} to ${evolutionId}`]);
     }
 }

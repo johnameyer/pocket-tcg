@@ -1,6 +1,6 @@
 import { GameParams } from './game-params.js';
 import { GenericGameSetup, Intermediary } from '@cards-ts/core';
-import { CardRepository } from "./repository/card-repository.js";
+import { CardRepository } from './repository/card-repository.js';
 
 export class GameSetup implements GenericGameSetup<GameParams> {
     constructor(private cardRepository?: CardRepository) {}
@@ -32,7 +32,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         } satisfies {[key: string]: import('yargs').Options};
     }
 
-    setupForYargs(params: any): GameParams {
+    setupForYargs(params: Record<string, unknown>): GameParams {
         return {
             initialDecks: []
         };

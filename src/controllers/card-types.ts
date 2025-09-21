@@ -1,31 +1,27 @@
-import { Serializable } from "@cards-ts/core";
-
-export interface Card {
-    // TODO why is this needed
-    [index: string]: Serializable;
-    id: string; // Unique instance ID for this specific card copy
+export type Card = {
+    instanceId: string; // Unique instance ID for this specific card copy
     type: 'creature' | 'supporter' | 'item' | 'tool';
-    cardId: string; // Card template ID for the card
+    templateId: string; // Card template ID for the card
 }
 
-export interface CreatureCard extends Card {
+export type CreatureCard = Card & {
     type: 'creature';
-    cardId: string;
+    templateId: string;
 }
 
-export interface SupporterCard extends Card {
+export type SupporterCard = Card & {
     type: 'supporter';
-    cardId: string;
+    templateId: string;
 }
 
-export interface ItemCard extends Card {
+export type ItemCard = Card & {
     type: 'item';
-    cardId: string;
+    templateId: string;
 }
 
-export interface ToolCard extends Card {
+export type ToolCard = Card & {
     type: 'tool';
-    cardId: string;
+    templateId: string;
 }
 
 export type GameCard = CreatureCard | SupporterCard | ItemCard | ToolCard;

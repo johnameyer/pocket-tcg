@@ -2,7 +2,7 @@ import { GameHandler, HandlerData } from '../game-handler.js';
 import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage } from '../messages/response/index.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { HandlerResponsesQueue } from '@cards-ts/core';
-import { CardRepository } from "../repository/card-repository.js";
+import { CardRepository } from '../repository/card-repository.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -26,8 +26,8 @@ export class DefaultBotHandler extends GameHandler {
             
             // Evolve the active creature by default
             responsesQueue.push(new EvolveResponseMessage(
-                evolutionCard.cardId,
-                true // isActive
+                evolutionCard.templateId,
+                0 // active position
             ));
         }
     }
@@ -40,12 +40,12 @@ export class DefaultBotHandler extends GameHandler {
         
         // First try to play a creature card to the bench if possible
         const creatureCards = hand.filter(card => card.type === 'creature');
-        const benchSize = handlerData.field.benchedCards[currentPlayer].length;
+        const benchSize = handlerData.field.creatures[currentPlayer].length;
         
         if (creatureCards.length > 0 && benchSize < 3) {
             const cardIndex = hand.findIndex(card => card.type === 'creature');
             const card = hand[cardIndex];
-            responsesQueue.push(new PlayCardResponseMessage(card.cardId, 'creature'));
+            responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'creature'));
             return;
         }
         
@@ -55,7 +55,7 @@ export class DefaultBotHandler extends GameHandler {
             if (supporterCards.length > 0) {
                 const cardIndex = hand.findIndex(card => card.type === 'supporter');
                 const card = hand[cardIndex];
-                responsesQueue.push(new PlayCardResponseMessage(card.cardId, 'supporter'));
+                responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'supporter'));
                 return;
             }
         }
@@ -65,21 +65,21 @@ export class DefaultBotHandler extends GameHandler {
         if (itemCards.length > 0) {
             const cardIndex = hand.findIndex(card => card.type === 'item');
             const card = hand[cardIndex];
-            responsesQueue.push(new PlayCardResponseMessage(card.cardId, 'item', currentPlayer, 0));
+            responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'item', currentPlayer, 0));
             return;
         }
         
         // Try to evolve active creature if possible
         if (handlerData.field.canEvolveActive && (handlerData.field.canEvolveActive as boolean[])[currentPlayer]) {
-            const activeCreature = handlerData.field.activeCards[currentPlayer];
+            const activeCreature = handlerData.field.creatures[currentPlayer][0]; // Get active creature at position 0
             const allCreatures = this.cardRepository.getAllCreatureIds();
             const evolution = allCreatures.find((id: string) => {
                 const data = this.cardRepository.getCreature(id);
-                return data?.evolvesFrom === activeCreature.cardId;
+                return data?.evolvesFrom === activeCreature.templateId;
             });
             
             if (evolution) {
-                responsesQueue.push(new EvolveResponseMessage(evolution, true));
+                responsesQueue.push(new EvolveResponseMessage(evolution, 0));
                 return;
             }
         }
@@ -96,37 +96,44 @@ export class DefaultBotHandler extends GameHandler {
         }
         
         // Try to attack if we have sufficient energy
-        const activeCard = handlerData.field.activeCards[currentPlayer];
+        const activeCard = handlerData.field.creatures[currentPlayer][0]; // Get active card at position 0
         if (activeCard && handlerData.energy) {
-            const creatureData = this.cardRepository.getCreature(activeCard.cardId);
+            const creatureData = this.cardRepository.getCreature(activeCard.templateId);
             const attack = creatureData?.attacks[0];
             
             if (attack) {
-                const attachedEnergy = handlerData.energy.attachedEnergy[currentPlayer][0];
-                const totalEnergy = attachedEnergy ? attachedEnergy.length : 0;
+                // Use the new energy system - attachedEnergyByInstance
+                const instanceId = activeCard.instanceId;
+                const attachedEnergy = handlerData.energy.attachedEnergyByInstance?.[instanceId];
                 
-                // Use exact same logic as controllers.energy.canUseAttack()
-                let canAttack = true;
-                for (const requirement of attack.energyRequirements) {
-                    if (requirement.type === 'colorless') {
-                        if (totalEnergy < requirement.amount) {
-                            canAttack = false;
-                            break;
-                        }
-                    } else {
-                        // Count specific energy type
-                        const typeCount = attachedEnergy ? 
-                            attachedEnergy.filter(e => e.type === requirement.type).length : 0;
-                        if (typeCount < requirement.amount) {
-                            canAttack = false;
-                            break;
+                if (attachedEnergy) {
+                    // Calculate total energy
+                    const totalEnergy = Object.values(attachedEnergy).reduce((sum: number, count: unknown) => 
+                        sum + (typeof count === 'number' ? count : 0), 0);
+                    
+                    // Check if we can use the attack
+                    let canAttack = true;
+                    for (const requirement of attack.energyRequirements) {
+                        if (requirement.type === 'any' || requirement.type === 'colorless') {
+                            if (totalEnergy < requirement.amount) {
+                                canAttack = false;
+                                break;
+                            }
+                        } else {
+                            // Count specific energy type
+                            const energyCount = attachedEnergy[requirement.type as keyof typeof attachedEnergy];
+                            const typeCount = typeof energyCount === 'number' ? energyCount : 0;
+                            if (typeCount < requirement.amount) {
+                                canAttack = false;
+                                break;
+                            }
                         }
                     }
-                }
-                
-                if (canAttack) {
-                    responsesQueue.push(new AttackResponseMessage(0));
-                    return;
+                    
+                    if (canAttack) {
+                        responsesQueue.push(new AttackResponseMessage(0));
+                        return;
+                    }
                 }
             }
         }
@@ -153,8 +160,8 @@ export class DefaultBotHandler extends GameHandler {
             
             // Create a setup complete message with the selected cards
             responsesQueue.push(new SetupCompleteResponseMessage(
-                activeCard.cardId,
-                benchCards.map(card => card.cardId)
+                activeCard.templateId,
+                benchCards.map(card => card.templateId)
             ));
         } else {
             // No creature cards in hand, just complete setup with default
