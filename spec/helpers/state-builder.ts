@@ -49,18 +49,12 @@ export class StateBuilder {
                 shouldEndTurn: false,
                 supporterPlayedThisTurn: false,
                 retreatedThisTurn: false,
-                evolvedPositionsThisTurn: [],
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
-                pendingTargetSelection: null,
-                retreatCostReduction: 0,
-                damageBoosts: {},
-                damageReductions: {},
-                retreatPreventions: [],
-                retreatPreventionDurations: {},
-                damagePrevention: {},
-                evolutionAcceleration: {},
-                evolutionFlexibility: {}
+                pendingTargetSelection: undefined,
+            },
+            statusEffects: {
+                activeStatusEffects: [[], []]  // No status effects for either player
             },
             coinFlip: {
                 nextFlipGuaranteedHeads: false,
@@ -80,6 +74,9 @@ export class StateBuilder {
                 energyAttachedThisTurn: [false, false],
                 isAbsoluteFirstTurn: false,
                 attachedEnergyByInstance: {} as Record<string, EnergyDictionary>
+            },
+            tools: {
+                attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
             },
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
@@ -122,7 +119,7 @@ export class StateBuilder {
         };
     }
 
-    static withHand(player: number, cards: Array<{templateId: string, type?: 'creature' | 'supporter' | 'item'}>) {
+    static withHand(player: number, cards: Array<{templateId: string, type?: GameCard['type']}>) {
         return (state: ControllerState<Controllers>) => {
             state.hand[player] = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-hand-${index}`,
@@ -163,6 +160,23 @@ export class StateBuilder {
         };
     }
 
+    static withStatusEffect(player: number, effect: string) {
+        return (state: ControllerState<Controllers>) => {
+            // Convert string to StatusEffectType enum
+            const statusEffectMap: Record<string, string> = {
+                'sleep': 'sleep',
+                'burn': 'burn', 
+                'confusion': 'confusion',
+                'paralysis': 'paralysis',
+                'poison': 'poison'
+            };
+            
+            const effectType = statusEffectMap[effect] || effect;
+            // Include appliedTurn property with a default value of 1
+            state.statusEffects.activeStatusEffects[player] = [{ type: effectType, appliedTurn: 1 }];
+        };
+    }
+
     static withTurnNumber(turnNumber: number) {
         return (state: ControllerState<Controllers>) => {
             state.turnCounter.turnNumber = turnNumber;
@@ -187,13 +201,23 @@ export class StateBuilder {
         };
     }
 
-    static withDeck(player: number, cards: Array<{templateId: string, type?: 'creature' | 'supporter' | 'item'}>) {
+    static withDeck(player: number, cards: Array<{templateId: string, type?: GameCard['type']}>) {
         return (state: ControllerState<Controllers>) => {
             state.deck[player] = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-deck-${index}`,
                 templateId: card.templateId,
                 type: card.type || 'creature'
             }));
+        };
+    }
+
+    static withTool(creatureInstanceId: string, toolCardId: string) {
+        return (state: ControllerState<Controllers>) => {
+            this.validateInstanceIdWithError(state, creatureInstanceId);
+            state.tools.attachedTools[creatureInstanceId] = { 
+                templateId: toolCardId, 
+                instanceId: `${toolCardId}-1` 
+            };
         };
     }
 

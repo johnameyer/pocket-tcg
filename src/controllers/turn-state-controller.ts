@@ -1,17 +1,13 @@
-import { AbstractController, GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
+import { GlobalController, GenericControllerProvider } from '@cards-ts/core';
 import { PendingTargetSelection } from '../effects/pending-target-selection.js';
-import { Condition } from '../repository/condition-types.js';
-import { Target } from '../repository/target-types.js';
 
-export interface TurnStateData {
-    [key: string]: Serializable;
-    
+export type TurnStateData = {
     shouldEndTurn: boolean;
     supporterPlayedThisTurn: boolean;
     retreatedThisTurn: boolean;
     evolvedInstancesThisTurn: string[]; // Track evolved creatures by instance ID
-    pendingTargetSelection?: Serializable;
-    // TODO: Rare candy should immediately require selection of the card to evolve so shouldn't be kept long term - pending effect?
+    usedAbilitiesThisTurn: string[]; // Track ability usage by "instanceId-abilityName"
+    pendingTargetSelection?: PendingTargetSelection;
 }
 
 type TurnStateDependencies = {};
@@ -27,6 +23,7 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
             supporterPlayedThisTurn: false,
             retreatedThisTurn: false,
             evolvedInstancesThisTurn: [],
+            usedAbilitiesThisTurn: [],
             pendingTargetSelection: undefined,
         };
     }
@@ -38,30 +35,31 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
 
 export class TurnStateController extends GlobalController<TurnStateData, TurnStateDependencies> {
     validate() {
-        // No validation needed
+        return true;
     }
-    
+
     public setShouldEndTurn(value: boolean): void {
         this.state.shouldEndTurn = value;
     }
-    
+
     public getShouldEndTurn(): boolean {
         return this.state.shouldEndTurn;
     }
-    
+
     public setSupporterPlayedThisTurn(value: boolean): void {
         this.state.supporterPlayedThisTurn = value;
     }
-    
+
     public hasSupporterBeenPlayedThisTurn(): boolean {
         return this.state.supporterPlayedThisTurn;
     }
-    
-    public resetTurnState(): void {
+
+    public startTurn(): void {
         this.state.shouldEndTurn = false;
         this.state.supporterPlayedThisTurn = false;
-        this.state.evolvedInstancesThisTurn = [];
         this.state.retreatedThisTurn = false;
+        this.state.evolvedInstancesThisTurn = [];
+        this.state.usedAbilitiesThisTurn = [];
     }
     
     public markEvolvedThisTurn(instanceId: string): void {
@@ -74,6 +72,21 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         return this.state.evolvedInstancesThisTurn.includes(instanceId);
     }
     
+    public markAbilityUsed(instanceId: string, abilityName: string): void {
+        const abilityKey = `${instanceId}-${abilityName}`;
+        if (!this.state.usedAbilitiesThisTurn) {
+            this.state.usedAbilitiesThisTurn = [];
+        }
+        if (!this.state.usedAbilitiesThisTurn.includes(abilityKey)) {
+            this.state.usedAbilitiesThisTurn.push(abilityKey);
+        }
+    }
+    
+    public hasAbilityBeenUsedThisTurn(instanceId: string, abilityName: string): boolean {
+        const abilityKey = `${instanceId}-${abilityName}`;
+        return this.state.usedAbilitiesThisTurn?.includes(abilityKey) || false;
+    }
+
     public setRetreatedThisTurn(value: boolean): void {
         this.state.retreatedThisTurn = value;
     }
@@ -82,18 +95,14 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         return this.state.retreatedThisTurn;
     }
 
-    public clearPersistentEffects(): void {
-        // No persistent effects to clear
+    public setPendingTargetSelection(selection: PendingTargetSelection | undefined): void {
+        this.state.pendingTargetSelection = selection;
     }
-
-    public setPendingTargetSelection(selection: PendingTargetSelection): void {
-        this.state.pendingTargetSelection = selection as unknown as Serializable;
+    
+    public getPendingTargetSelection(): PendingTargetSelection | undefined {
+        return this.state.pendingTargetSelection;
     }
-
-    public getPendingTargetSelection(): PendingTargetSelection | null {
-        return this.state.pendingTargetSelection as unknown as PendingTargetSelection || null;
-    }
-
+    
     public clearPendingTargetSelection(): void {
         this.state.pendingTargetSelection = undefined;
     }

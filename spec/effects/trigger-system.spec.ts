@@ -9,6 +9,89 @@ import { MockCardRepository } from '../mock-repository.js';
 import { CreatureData } from '../../src/repository/card-types.js';
 
 describe('Trigger System', () => {
+    describe('Tool Triggers', () => {
+        it('should trigger healing tool only on owner turn', () => {
+            const testRepository = new MockCardRepository({
+                creatures: new Map<string, CreatureData>([
+                    ['basic-creature', {
+                        templateId: 'basic-creature',
+                        name: 'Basic Creature',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }]
+                    }]
+                ]),
+                tools: new Map([
+                    ['healing-tool', {
+                        templateId: 'healing-tool',
+                        name: 'Healing Tool',
+                        effects: [{ 
+                            type: 'hp', 
+                            amount: { type: 'constant', value: 10 }, 
+                            target: { type: 'fixed', player: 'self', position: 'source' }, 
+                            operation: 'heal' 
+                        }],
+                        trigger: { type: 'end-of-turn', ownTurnOnly: true }
+                    }]
+                ])
+            });
+
+            const { state } = runTestGame({
+                actions: [new EndTurnResponseMessage()],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withTool('basic-creature-0', 'healing-tool'),
+                    StateBuilder.withDamage('basic-creature-0', 30)
+                )
+            });
+
+            expect(state.field.creatures[0][0].damageTaken).to.equal(20, 'Should heal 10 HP on owner turn');
+        });
+
+        it('should not trigger healing tool on opponent turn', () => {
+            const testRepository = new MockCardRepository({
+                creatures: new Map<string, CreatureData>([
+                    ['basic-creature', {
+                        templateId: 'basic-creature',
+                        name: 'Basic Creature',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }]
+                    }]
+                ]),
+                tools: new Map([
+                    ['healing-tool', {
+                        templateId: 'healing-tool',
+                        name: 'Healing Tool',
+                        effects: [{ 
+                            type: 'hp', 
+                            amount: { type: 'constant', value: 10 }, 
+                            target: { type: 'fixed', player: 'self', position: 'source' }, 
+                            operation: 'heal' 
+                        }],
+                        trigger: { type: 'end-of-turn', ownTurnOnly: true }
+                    }]
+                ])
+            });
+
+            const { state } = runTestGame({
+                actions: [new EndTurnResponseMessage()],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withTool('basic-creature-0', 'healing-tool'),
+                    StateBuilder.withDamage('basic-creature-0', 30),
+                    StateBuilder.withTurn(1)
+                )
+            });
+
+            expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should not heal on opponent turn');
+        });
+    });
+
     describe('Creature Ability Triggers', () => {
         it('should trigger end-of-turn ability', () => {
             const testRepository = new MockCardRepository({
@@ -87,7 +170,6 @@ describe('Trigger System', () => {
                 )
             });
 
-            // Should take 30 damage but heal 10 from ability = 20 net damage
             expect(state.field.creatures[1][0].damageTaken).to.equal(20, 'Should heal 10 HP after taking damage');
         });
 
@@ -116,12 +198,12 @@ describe('Trigger System', () => {
             });
 
             const { state } = runTestGame({
-                actions: [new UseAbilityResponseMessage(0, 0)], // Use ability on active creature
+                actions: [new UseAbilityResponseMessage(0, 0)],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'manual-heal-creature'), // Set up as active creature
-                    StateBuilder.withcreature(1, 'basic-creature'), // Set up opponent active
-                    StateBuilder.withDamage('manual-heal-creature-0', 40) // Damage to active creature
+                    StateBuilder.withcreature(0, 'manual-heal-creature'),
+                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withDamage('manual-heal-creature-0', 40)
                 )
             });
 
@@ -130,6 +212,108 @@ describe('Trigger System', () => {
     });
 
     describe('Trigger Timing', () => {
+        it('should process multiple end-of-turn triggers', () => {
+            const testRepository = new MockCardRepository({
+                creatures: new Map<string, CreatureData>([
+                    ['healing-creature', {
+                        templateId: 'healing-creature',
+                        name: 'Healing Creature',
+                        maxHp: 100,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
+                        abilities: [{
+                            name: 'End Turn Heal',
+                            effects: [{ 
+                                type: 'hp', 
+                                amount: { type: 'constant', value: 10 }, 
+                                target: { type: 'fixed', player: 'self', position: 'source' },
+                                operation: 'heal'
+                            }],
+                            trigger: { type: 'end-of-turn' }
+                        }]
+                    }]
+                ]),
+                tools: new Map([
+                    ['healing-tool', {
+                        templateId: 'healing-tool',
+                        name: 'Healing Tool',
+                        effects: [{ 
+                            type: 'hp', 
+                            amount: { type: 'constant', value: 5 }, 
+                            target: { type: 'fixed', player: 'self', position: 'source' }, 
+                            operation: 'heal' 
+                        }],
+                        trigger: { type: 'end-of-turn', ownTurnOnly: true }
+                    }]
+                ])
+            });
+
+            const { state } = runTestGame({
+                actions: [new EndTurnResponseMessage()],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withcreature(0, 'healing-creature'),
+                    StateBuilder.withTool('healing-creature-0', 'healing-tool'),
+                    StateBuilder.withDamage('healing-creature-0', 50)
+                )
+            });
+
+            expect(state.field.creatures[0][0].damageTaken).to.equal(35, 'Should heal 15 HP total (10 from ability + 5 from tool)');
+        });
+
+        it('should respect ownTurnOnly restriction', () => {
+            const testRepository = new MockCardRepository({
+                creatures: new Map<string, CreatureData>([
+                    ['basic-creature', {
+                        templateId: 'basic-creature',
+                        name: 'Basic Creature',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }]
+                    }]
+                ]),
+                tools: new Map([
+                    ['owner-only-tool', {
+                        templateId: 'owner-only-tool',
+                        name: 'Owner Only Tool',
+                        effects: [{ 
+                            type: 'hp', 
+                            amount: { type: 'constant', value: 10 }, 
+                            target: { type: 'fixed', player: 'self', position: 'source' }, 
+                            operation: 'heal' 
+                        }],
+                        trigger: { type: 'end-of-turn', ownTurnOnly: true }
+                    }],
+                    ['any-turn-tool', {
+                        templateId: 'any-turn-tool',
+                        name: 'Any Turn Tool',
+                        effects: [{ 
+                            type: 'hp', 
+                            amount: { type: 'constant', value: 5 }, 
+                            target: { type: 'fixed', player: 'self', position: 'source' }, 
+                            operation: 'heal' 
+                        }],
+                        trigger: { type: 'end-of-turn', ownTurnOnly: false }
+                    }]
+                ])
+            });
+
+            const { state } = runTestGame({
+                actions: [new EndTurnResponseMessage()],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withcreature(0, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withTool('basic-creature-0', 'owner-only-tool'),
+                    StateBuilder.withTool('basic-creature-0-0', 'any-turn-tool'),
+                    StateBuilder.withDamage('basic-creature-0', 30)
+                )
+            });
+
+            expect(state.field.creatures[0][0].damageTaken).to.equal(20, 'Should heal 10 HP from owner-only tool on active creature');
+        });
+
         it('should handle unlimited manual triggers', () => {
             const testRepository = new MockCardRepository({
                 creatures: new Map<string, CreatureData>([
@@ -156,13 +340,13 @@ describe('Trigger System', () => {
 
             const { state } = runTestGame({
                 actions: [
-                    new UseAbilityResponseMessage(0, 0), // Use ability first time
-                    new UseAbilityResponseMessage(0, 0)  // Use ability second time
+                    new UseAbilityResponseMessage(0, 0),
+                    new UseAbilityResponseMessage(0, 0)
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'unlimited-creature'), // Set up as active
-                    StateBuilder.withcreature(1, 'basic-creature'), // Set up opponent active
+                    StateBuilder.withcreature(0, 'unlimited-creature'),
+                    StateBuilder.withcreature(1, 'basic-creature'),
                     StateBuilder.withDamage('unlimited-creature-0', 50)
                 )
             });

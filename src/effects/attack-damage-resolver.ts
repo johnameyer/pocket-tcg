@@ -67,8 +67,6 @@ export class AttackDamageResolver {
             baseDamage = this.resolveDynamicDamage(attack, controllers, context);
         }
         
-        // Damage boosts removed
-        
         let totalDamage = baseDamage;
         
         // Apply weakness bonus (+20 damage if target is weak to attacker's type)
@@ -81,8 +79,6 @@ export class AttackDamageResolver {
                 totalDamage += 20; // +20 weakness damage
             }
         }
-        
-        // Apply damage reductions removed
         
         return totalDamage;
     }
@@ -126,5 +122,47 @@ export class AttackDamageResolver {
         return 0;
     }
     
-    // Damage boost validation removed
+    /**
+     * Validate if a damage boost target condition is met by the target creature.
+     */
+    private static validateDamageBoostTarget(
+        damageBoost: { target?: Target; condition?: any },
+        targetcreature: FieldCard, 
+        controllers: Controllers,
+        context: EffectContext
+    ): boolean {
+        // Check condition first (applies to target)
+        if (damageBoost.condition) {
+            const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
+            
+            // Check evolvesFrom condition
+            if (damageBoost.condition.evolvesFrom) {
+                return targetData.evolvesFrom === damageBoost.condition.evolvesFrom;
+            }
+            
+            // Check attributes condition (e.g., ex)
+            if (damageBoost.condition.attributes) {
+                if (damageBoost.condition.attributes.ex === true) {
+                    return targetData.attributes?.ex === true;
+                }
+            }
+        }
+        
+        // If no target specified, applies to all
+        if (!damageBoost.target) return true;
+        
+        // Simple validation for common target patterns
+        if (damageBoost.target.type === 'all-matching' && damageBoost.target.criteria) {
+            const criteria = damageBoost.target.criteria;
+            
+            // Check ex condition
+            if (criteria.condition?.attributes?.ex === true) {
+                const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
+                return targetData.attributes?.ex === true;
+            }
+        }
+        
+        // Default to true for unhandled cases
+        return true;
+    }
 }

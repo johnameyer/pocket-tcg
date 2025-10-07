@@ -7,6 +7,11 @@ import { EffectValue } from './effect-value-types.js';
 export type TriggerType = 'on-play' | 'on-attack' | 'on-damage' | 'on-knockout' | 'between-turns' | 'on-evolve' | 'damaged' | 'end-of-turn' | 'energy-attachment' | 'manual';
 
 /**
+ * Represents status conditions that can be applied to creatures.
+ */
+export type StatusCondition = 'sleep' | 'burn' | 'confusion' | 'paralysis' | 'poison';
+
+/**
  * Represents an effect that modifies a creature's HP (healing or damage).
  * @property {string} type - Always 'hp' to identify this effect type
  * @property {EffectValue} amount - The amount of HP to heal or damage
@@ -23,10 +28,22 @@ export type HpEffect = {
 };
 
 /**
+ * Represents an effect that applies a status condition to a target.
+ * @property {string} type - Always 'status' to identify this effect type
+ * @property {StatusCondition} condition - The status condition to apply
+ * @property {Target} target - The target(s) to apply the status to
+ */
+export type StatusEffect = {
+    type: 'status';
+    condition: StatusCondition;
+    target: Target;
+};
+
+/**
  * Union type representing all possible effects that can be applied in the game.
  * This is used to define what an effect can do, from dealing damage to drawing cards.
  */
-export type Effect = HpEffect;
+export type Effect = HpEffect | StatusEffect;
 
 /**
  * Represents an effect that requires target selection before it can be applied.
@@ -34,4 +51,4 @@ export type Effect = HpEffect;
  * @property {number} sourcePlayer - The player who initiated the effect
  * @property {string} effectName - The name of the effect (for display purposes)
  */
-export type PendingTargetEffect = (HpEffect) & { sourcePlayer: number; effectName: string };
+export type PendingTargetEffect = (HpEffect | StatusEffect) & { sourcePlayer: number; effectName: string };

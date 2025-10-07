@@ -101,28 +101,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const creatureData = controllers.cardRepository.getCreature(playerCard.templateId);
             const attack = creatureData.attacks[message.attackIndex];
             
-            // Process damage boost effects BEFORE the attack
-            // Check both attack effects and passive abilities
-            let damageBoostEffects: Effect[] = [];
-            let damageReductionEffects: Effect[] = [];
-            
-            // Add damage boost effects from the attack itself
-            if (attack.effects) {
-                const attackDamageBoosts = attack.effects.filter(effect => effect.type === 'damage-boost');
-                damageBoostEffects.push(...attackDamageBoosts);
-            }
-            
-            // Add damage boost effects from passive abilities
-            if (creatureData.abilities) {
-                for (const ability of creatureData.abilities) {
-                    if (ability.trigger.type === 'passive' && ability.effects) {
-                        const abilityDamageBoosts = ability.effects.filter(effect => effect.type === 'damage-boost');
-                        damageBoostEffects.push(...abilityDamageBoosts);
-                    }
+            // Check for confusion before attacking
+            const confusionResult = controllers.statusEffects.handleConfusionAttack(sourceHandler);
+            if (!confusionResult.canAttack) {
+                // Attack fails due to confusion, apply self-damage
+                if (confusionResult.selfDamage > 0) {
+                    controllers.field.applyDamage(sourceHandler, confusionResult.selfDamage, 0);
                 }
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [`${playerCard.templateId} is confused and hurt itself in its confusion!`]
+                });
+                controllers.turnState.setShouldEndTurn(true);
+                return;
             }
             
-            // Process damage reduction effects from target creature's passive abilities
+            // Process damage boost effects BEFORE the attack
+            // No damage boost or reduction effects to handle
+            let damageBoostEffects: never[] = [];
+            let damageReductionEffects: never[] = [];
             const targetId = (sourceHandler + 1) % controllers.players.count;
             const targetCard = controllers.field.getCardByPosition(targetId, 0);
             if (targetCard) {
@@ -162,6 +159,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             const attackResult = controllers.field.attack(sourceHandler, message.attackIndex, resolvedDamage);
             
+            // Trigger when-damaged effects for tools (Rocky Helmet, Poison Barb, etc.)
             if (attackResult.damage > 0 && attackResult.target.instanceId) {
                 // Determine the player ID from the field
                 let targetPlayerId = -1;
@@ -189,11 +187,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const effectName = `${playerCard.templateId}'s ${attack.name}`;
                 const context = EffectContextFactory.createAttackContext(sourceHandler, effectName, playerCard.instanceId);
                 
-                // Filter out damage boost effects that were already applied
-                const nonDamageBoostEffects = attack.effects.filter(effect => effect.type !== 'damage-boost');
-                
-                if (nonDamageBoostEffects.length > 0) {
-                    EffectApplier.applyEffects(nonDamageBoostEffects, controllers, context);
+                // Apply all attack effects (no damage boost effects to filter)
+                if (attack.effects && attack.effects.length > 0) {
+                    EffectApplier.applyEffects(attack.effects, controllers, context);
                 }
             }
             
@@ -227,8 +223,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return false;
                 }),
                 EventHandler.validate('Bench is full', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
-                    const benchSize = controllers.field.getCards(source).length - 1;
+                    const benchSize = controllers.field.getCards(source).slice(1).length;
                     return message.cardType === 'creature' && benchSize >= 3;
+                }),
+                EventHandler.validate('Cannot attach tool when creature already has one', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                    if (message.cardType !== 'tool') return false;
+                    const targetPlayerId = message.targetPlayerId ?? source;
+                    const targetFieldIndex = message.targetFieldIndex ?? 0;
+                    const targetCards = controllers.field.getCards(targetPlayerId);
+                    const targetCard = targetCards[targetFieldIndex];
+                    if (!targetCard) return true;
+                    return !controllers.tools.canAttachTool(targetCard.instanceId);
                 }),
                 EventHandler.validate('Item effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     if (message.cardType !== 'item') return false;
@@ -303,6 +308,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 
                 EffectApplier.applyEffects(itemData.effects, controllers, context);
+            } else if (message.cardType === 'tool') {
+                // Attach tool to target creature
+                const toolData = controllers.cardRepository.getTool(message.templateId);
+                const targetPlayerId = message.targetPlayerId ?? sourceHandler;
+                const targetFieldIndex = message.targetFieldIndex ?? 0;
+                
+                // Get the target creature
+                const targetCards = controllers.field.getCards(targetPlayerId);
+                const targetCard = targetCards[targetFieldIndex];
+                
+                if (targetCard) {
+                    // Generate a unique tool instance ID
+                    const toolInstanceId = `${message.templateId}-${Date.now()}`;
+                    controllers.tools.attachTool(targetCard.instanceId, message.templateId, toolInstanceId);
+                    controllers.players.messageAll({
+                        type: 'card-played',
+                        components: [`Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!`]
+                    });
+                }
             }
         }
     },
@@ -311,6 +335,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: EndTurnResponseMessage) => {
             const currentPlayer = sourceHandler;
             
+            // Trigger end-of-turn effects for active card (tools + abilities)
             const activeCard = controllers.field.getCardByPosition(currentPlayer, 0);
             if (activeCard) {
                 TriggerProcessor.processEndOfTurn(
@@ -425,11 +450,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         const currentData = controllers.cardRepository.getCreature(targetCard.templateId);
                         
                         const isValidEvolution = evolutionData.evolvesFrom === targetCard.templateId;
-                        const hasFlexibility = false;
-                        
-                        if (!isValidEvolution && hasFlexibility) {
-                            return false;
-                        }
                         
                         return !isValidEvolution;
                     }
@@ -452,6 +472,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
+                    controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                 }
                 controllers.field.evolveActiveCard(sourceHandler, message.evolutionId);
             } else {
@@ -510,6 +531,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     type: 'energy-attached',
                     components: [`Player ${currentPlayer + 1} attached ${energyType} energy!`]
                 });
+                
+                // Process energy-attachment triggers for all field cards
+                const allFieldCards = controllers.field.getPlayedCards(currentPlayer);
+                for (const card of allFieldCards) {
+                }
             }
             
         }
@@ -542,7 +568,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         return false;
                     }
                     
-                    return false; // Abilities removed
+                    return controllers.turnState.hasAbilityBeenUsedThisTurn(fieldCard.instanceId, ability.name);
                 })
             ],
             fallback: (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
@@ -562,7 +588,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 if (ability && ability.effects) {
                     // Mark ability as used this turn
-                    // Ability tracking removed
+                    controllers.turnState.markAbilityUsed(fieldCard.instanceId, ability.name);
                     
                     const effectName = `${cardData.name}'s ${ability.name}`;
                     const context = EffectContextFactory.createAbilityContext(
@@ -604,10 +630,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     
                     return totalEnergy < retreatCost;
                 }),
-                EventHandler.validate('Cannot retreat due to prevention effect', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
-                    const activeCard = controllers.field.getCardByPosition(source, 0);
-                    if (!activeCard) return false;
-                    return false;
+                EventHandler.validate('Cannot retreat while paralyzed', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
+                    return controllers.statusEffects.hasStatusEffect(source, 0, 'paralyzed');
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
@@ -636,6 +660,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 energyToRemove -= toRemove;
             }
             
+            // Clear status effects on retreat
+            controllers.statusEffects.clearAllStatusEffects(sourceHandler, 0);
             
             // Switch active creature with bench creature
             controllers.field.retreat(sourceHandler, message.benchIndex);

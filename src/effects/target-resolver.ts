@@ -596,9 +596,9 @@ export class TargetResolver {
             // If target resolution requires selection, set up pending target selection
             if (resolution.type === 'requires-selection') {
                 controllers.turnState.setPendingTargetSelection({
+                    type: 'target',
                     effect: effect,
-                    originalContext: context,
-                    type: 'target'
+                    originalContext: context
                 });
                 return true;
             }

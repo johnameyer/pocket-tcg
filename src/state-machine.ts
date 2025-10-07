@@ -1,6 +1,7 @@
 import { Controllers } from './controllers/controllers.js';
 import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messages/status/index.js';
 import { sequence, loop, game, conditionalState, handleSingle, named } from '@cards-ts/state-machine';
+import { TriggerProcessor } from './effects/trigger-processor.js';
 
 // Check if any card was knocked out (has 0 HP)
 const isCardKnockedOut = (controllers: Controllers) => {
@@ -259,7 +260,7 @@ const gameTurn = loop<Controllers>({
             name: 'resetTurnState',
             run: (controllers: Controllers) => {
                 const currentPlayer = controllers.turn.get();
-                controllers.turnState.resetTurnState();
+                controllers.turnState.startTurn();
                 controllers.energy.resetTurnFlags(currentPlayer);
             }
         },
@@ -318,6 +319,8 @@ const gameTurn = loop<Controllers>({
                             return cardRepo.getSupporter(card.templateId).name;
                         } else if (card.type === 'item') {
                             return cardRepo.getItem(card.templateId).name;
+                        } else if (card.type === 'tool') {
+                            return cardRepo.getTool(card.templateId).name;
                         } else {
                             return (card as { templateId?: string }).templateId || 'unknown'; // fallback
                         }
@@ -332,6 +335,8 @@ const gameTurn = loop<Controllers>({
                         return cardRepo.getSupporter(card.templateId).name;
                     } else if (card.type === 'item') {
                         return cardRepo.getItem(card.templateId).name;
+                    } else if (card.type === 'tool') {
+                        return cardRepo.getTool(card.templateId).name;
                     } else {
                         return (card as { templateId?: string }).templateId || 'unknown'; // fallback
                     }
@@ -344,12 +349,46 @@ const gameTurn = loop<Controllers>({
         // Handle player actions until a card is knocked out or turn ends
         handlePlayerActions,
         
-        // Checkup Phase - simplified without status effects
+        // Checkup Phase - process status effects
         {
             name: 'checkupPhase',
             run: (controllers: Controllers) => {
+                const currentPlayer = controllers.turn.get();
+                
+                // Process between-turn damage for both players
+                for (let playerId = 0; playerId < 2; playerId++) {
+                    const damageResult = controllers.statusEffects.processBetweenTurnEffects(playerId);
+                    
+                    try {
+                        // Make sure the card exists before applying damage
+                        const activeCard = controllers.field.getCardByPosition(playerId, 0);
+                    if (activeCard) {
+                        if (damageResult.poisonDamage > 0) {
+                            const actualDamage = controllers.field.applyDamage(playerId, damageResult.poisonDamage);
+                            controllers.players.messageAll({
+                                type: 'status-effect-damage',
+                                components: [`Player ${playerId + 1}'s card takes ${damageResult.poisonDamage} poison damage!`]
+                            });
+                        }
+                        
+                        if (damageResult.burnDamage > 0) {
+                            const actualDamage = controllers.field.applyDamage(playerId, damageResult.burnDamage);
+                            controllers.players.messageAll({
+                                type: 'status-effect-damage', 
+                                components: [`Player ${playerId + 1}'s card takes ${damageResult.burnDamage} burn damage!`]
+                            });
+                        }
+                    }
+                } catch (error) {
+                    // If the card doesn't exist (e.g., knocked out), log the error but don't crash
+                    console.error(`Error applying status effect damage to player ${playerId}:`, error);
+                }
+                }
+                
+                // Process end-of-turn status effect checks for current player
+                const endOfTurnResult = controllers.statusEffects.processEndOfTurnChecks(currentPlayer);
+                
                 // Clear persistent effects at end of turn (they last "during opponent's next turn")
-                controllers.turnState.clearPersistentEffects();
             }
         },
         

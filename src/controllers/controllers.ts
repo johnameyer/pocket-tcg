@@ -11,7 +11,9 @@ import { TurnStateControllerProvider } from './turn-state-controller.js';
 import { TurnCounterControllerProvider } from './turn-counter-controller.js';
 import { SetupControllerProvider } from './setup-controller.js';
 import { EnergyControllerProvider } from './energy-controller.js';
+import { StatusEffectControllerProvider } from './status-effect-controller.js';
 import { CoinFlipControllerProvider } from './coinflip-controller.js';
+import { ToolControllerProvider } from './tool-controller.js';
 
 type TypedDefaultControllers = DefaultControllers<GameParams, typeof STANDARD_STATES, ResponseMessage, GameHandlerParams & SystemHandlerParams>;
 
@@ -27,7 +29,9 @@ export const buildProviders = (cardRepository: CardRepository) => {
         turnCounter: new TurnCounterControllerProvider(),
         setup: new SetupControllerProvider(),
         energy: new EnergyControllerProvider(),
+        statusEffects: new StatusEffectControllerProvider(),
         coinFlip: new CoinFlipControllerProvider(),
+        tools: new ToolControllerProvider(cardRepository),
     };
     return providers as Omit<ValidatedProviders<typeof providers & ControllersProviders<TypedDefaultControllers>>, DefaultControllerKeys> & {};
 };

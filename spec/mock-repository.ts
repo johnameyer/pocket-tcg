@@ -1,10 +1,8 @@
 import { CardRepository } from '../src/repository/card-repository.js';
-import { CreatureData, ItemData, SupporterData } from '../src/repository/card-types.js';
+import { CreatureData, ItemData, SupporterData, ToolData } from '../src/repository/card-types.js';
 
-// Create mock data for the CardRepository
 const mockCreatureData = new Map<string, CreatureData>();
 
-// Basic creatures for general testing
 mockCreatureData.set('basic-creature', {
     templateId: 'basic-creature',
     name: 'Basic Creature',
@@ -58,6 +56,18 @@ mockSupporterData.set('basic-supporter', {
     }]
 });
 
+mockSupporterData.set('draw-supporter', {
+    templateId: 'draw-supporter',
+    name: 'Draw Supporter',
+    effects: []
+});
+
+mockSupporterData.set('coin-flip-supporter', {
+    templateId: 'coin-flip-supporter',
+    name: 'Coin Flip Supporter',
+    effects: []
+});
+
 const mockItemData = new Map<string, ItemData>();
 mockItemData.set('basic-item', {
     templateId: 'basic-item',
@@ -65,10 +75,37 @@ mockItemData.set('basic-item', {
     effects: [{ type: 'hp', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' }]
 });
 
+mockItemData.set('shuffle-item', {
+    templateId: 'shuffle-item',
+    name: 'Shuffle Item',
+    effects: []
+});
+
+const mockToolData = new Map<string, ToolData>();
+mockToolData.set('basic-tool', {
+    templateId: 'basic-tool',
+    name: 'Basic Tool',
+    effects: []
+});
+
+mockToolData.set('power-enhancer', {
+    templateId: 'power-enhancer',
+    name: 'Power Enhancer',
+    effects: []
+});
+
+mockToolData.set('leftovers', {
+    templateId: 'leftovers',
+    name: 'Leftovers',
+    effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' } }],
+    trigger: { type: 'end-of-turn' }
+});
+
 export interface MockRepositoryExtensions {
     creatures?: Map<string, CreatureData>;
     supporters?: Map<string, SupporterData>;
     items?: Map<string, ItemData>;
+    tools?: Map<string, ToolData>;
 }
 
 export class MockCardRepository extends CardRepository {
@@ -76,8 +113,9 @@ export class MockCardRepository extends CardRepository {
         const allCreatures = new Map([...Array.from(mockCreatureData), ...Array.from(extensions.creatures || new Map())]);
         const allSupporters = new Map([...Array.from(mockSupporterData), ...Array.from(extensions.supporters || new Map())]);
         const allItems = new Map([...Array.from(mockItemData), ...Array.from(extensions.items || new Map())]);
+        const allTools = new Map([...Array.from(mockToolData), ...Array.from(extensions.tools || new Map())]);
         
-        super(allCreatures, allSupporters, allItems);
+        super(allCreatures, allSupporters, allItems, allTools);
     }
 }
 

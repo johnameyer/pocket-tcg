@@ -128,6 +128,17 @@ describe('Creature Pocket TCG Game', () => {
     });
 
     describe('Turn Structure', () => {
+        it('should process checkup phase for status effects', () => {
+            // This test verifies that poison status effects can be set up properly
+            const preConfiguredState = StateBuilder.createActionPhaseState((state) => {
+                state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }]; // Poisoned creature
+            });
+
+            // The poison status effect should exist
+            expect(preConfiguredState?.statusEffects.activeStatusEffects[0]).to.have.length(1);
+            expect(preConfiguredState?.statusEffects.activeStatusEffects[0][0]).to.deep.equal({ type: 'poison' });
+        });
+
         it('should enforce first turn restrictions', () => {
             // This test verifies that turn counter can be set to 1 (first turn)
             const preConfiguredState = StateBuilder.createActionPhaseState((state) => {

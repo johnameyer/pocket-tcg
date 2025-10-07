@@ -5,7 +5,7 @@ export class CardRepository {
         private creatureData: Map<string, CreatureData> = new Map(),
         private supporterData: Map<string, SupporterData> = new Map(),
         private itemData: Map<string, ItemData> = new Map(),
-        // Tools removed - no longer supported
+        private fieldCardToolData: Map<string, ToolData> = new Map()
     ) {
         // Data provided via constructor injection - no hard-coded imports
     }
@@ -38,7 +38,13 @@ export class CardRepository {
         return item;
     }
     
-    // Tools removed - no longer supported
+    public getTool(templateId: string): ToolData {
+        const tool = this.fieldCardToolData.get(templateId);
+        if (!tool) {
+            throw new Error(`Tool not found: ${templateId}`);
+        }
+        return tool;
+    }
     
     public getAllSupporterIds(): string[] {
         return Array.from(this.supporterData.keys());
@@ -48,7 +54,9 @@ export class CardRepository {
         return Array.from(this.itemData.keys());
     }
     
-    // Tools removed - no longer supported
+    public getAllToolIds(): string[] {
+        return Array.from(this.fieldCardToolData.keys());
+    }
     
     /**
      * Gets a card by ID, trying all card types.
@@ -68,7 +76,7 @@ export class CardRepository {
                     return { data: this.getItem(id), type: 'item' };
                 } catch (e) {
                     try {
-                        throw new Error(`Card not found: ${id}`);
+                        return { data: this.getTool(id), type: 'tool' };
                     } catch (e) {
                         throw new Error(`Card not found: ${id}`);
                     }

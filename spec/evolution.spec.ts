@@ -10,7 +10,7 @@ describe('Evolution Mechanics', () => {
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withcreature(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]), // Need evolution card in hand
+                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                 StateBuilder.withDamage('basic-creature-0', 20),
                 StateBuilder.withCanEvolve(0, 0)
             )
@@ -34,9 +34,9 @@ describe('Evolution Mechanics', () => {
     it('should prevent same creature instance from evolving twice per turn even with retreats', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new EvolveResponseMessage('evolution-creature', 0), // Evolve active creature
-                new RetreatResponseMessage(0), // Retreat to bench (now at bench position 0)
-                new EvolveResponseMessage('evolution-creature', 0+1) // Try to evolve the same creature again (now on bench)
+                new EvolveResponseMessage('evolution-creature', 0),
+                new RetreatResponseMessage(0),
+                new EvolveResponseMessage('evolution-creature', 0+1)
             ],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
@@ -49,20 +49,19 @@ describe('Evolution Mechanics', () => {
                 (state) => {
                     const creatureData = state.field.creatures[0][0];
                     if (creatureData) {
-                        creatureData.turnPlayed = 0; // Ensure it can evolve
+                        creatureData.turnPlayed = 0;
                     }
                 }
             ),
             maxSteps: 15
         });
 
-        // Verify that the creature evolved once but not twice
         expect(state.field.creatures[0].slice(1)[0].templateId).to.equal('evolution-creature', 'Creature should have evolved once');
         expect(state.hand[0].length).to.equal(1, 'Second evolution card should remain in hand (blocked)');
     });
 
     describe('Evolution and Status Effects', () => {
-        it('should preserve damage when evolving', () => {
+        it('should clear all status effects when creature evolves', () => {
             const { state } = runTestGame({
                 actions: [
                     new EvolveResponseMessage('evolution-creature', 0)
@@ -72,10 +71,36 @@ describe('Evolution Mechanics', () => {
                     StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
+                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
                         const creatureData = state.field.creatures[0][0];
                         if (creatureData) {
                             creatureData.turnPlayed = 0;
-                            creatureData.damageTaken = 60; // Add damage to preserve
+                        }
+                    }
+                ),
+                maxSteps: 10
+            });
+
+            const statusEffects = state.statusEffects.activeStatusEffects[0];
+            expect(statusEffects).to.have.length(0, 'Status effects should be cleared after evolution');
+            expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Creature should be evolved');
+        });
+
+        it('should preserve damage when evolving with status effects', () => {
+            const { state } = runTestGame({
+                actions: [
+                    new EvolveResponseMessage('evolution-creature', 0)
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withCanEvolve(0, 0),
+                    (state) => {
+                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                        const creatureData = state.field.creatures[0][0];
+                        if (creatureData) {
+                            creatureData.turnPlayed = 0;
+                            creatureData.damageTaken = 60;
                         }
                     }
                 ),
@@ -83,15 +108,51 @@ describe('Evolution Mechanics', () => {
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(60, 'Damage should be preserved during evolution');
+            expect((state.statusEffects.activeStatusEffects[0] as any[]).length).to.equal(0, 'Status effects should be cleared');
             expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Creature should be evolved');
         });
 
-        it('should handle benched creature promotion', () => {
+        it('should clear status effects when retreating', () => {
+            const { state } = runTestGame({
+                actions: [new RetreatResponseMessage(0)],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withDamage('basic-creature-0', 20),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                    (state) => {
+                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                    }
+                ),
+                maxSteps: 10
+            });
+
+            const statusEffects = state.statusEffects.activeStatusEffects[0] as any[];
+            expect(statusEffects).to.have.length(0, 'Retreat should clear status effects');
+            expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'Should have retreated successfully');
+        });
+
+        it('should maintain poison/burn effects through non-clearing actions', () => {
+            const { state } = runTestGame({
+                actions: [],
+                stateCustomizer: (state) => {
+                    state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }, { type: 'burn' }];
+                },
+                maxSteps: 3
+            });
+
+            const effects = state.statusEffects.activeStatusEffects[0] as any[];
+            expect(effects.length).to.be.at.least(1, 'Status effects should persist through normal actions');
+        });
+
+        it('should handle status effects on benched creature promotion', () => {
             const { state } = runTestGame({
                 actions: [],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withcreature(0, 'high-hp-creature', ['basic-creature']),
-                    StateBuilder.withDamage('high-hp-creature-0', 90)
+                    StateBuilder.withDamage('high-hp-creature-0', 90),
+                    (state) => {
+                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                    }
                 ),
                 maxSteps: 5
             });

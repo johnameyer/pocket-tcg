@@ -29,7 +29,7 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
     getCreature(id: string) { return this.repository.getCreature(id); }
     getSupporter(id: string) { return this.repository.getSupporter(id); }
     getItem(id: string) { return this.repository.getItem(id); }
-    // Tools removed - no longer supported
+    getTool(id: string) { return this.repository.getTool(id); }
     getAllCreatureIds() { return this.repository.getAllCreatureIds(); }
     getAllSupporterIds() { return this.repository.getAllSupporterIds(); }
     getAllItemIds() { return this.repository.getAllItemIds(); }

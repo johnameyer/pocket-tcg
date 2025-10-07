@@ -49,7 +49,11 @@ export function buildEnergyOptions(energyTypes: string[]): any[] {
  * @returns Status display text
  */
 export function getStatusDisplayText(handlerData: HandlerData, playerId: number): string {
-    return '';
+    const statusEffects = handlerData.statusEffects;
+    return statusEffects ? 
+        (statusEffects.activeStatusEffects[playerId] as any[])?.length > 0 ? 
+            ` [${(statusEffects.activeStatusEffects[playerId] as any[]).map((e: { type: string }) => e.type.toUpperCase()).join(', ')}]` : '' 
+        : '';
 }
 
 /**
@@ -61,6 +65,24 @@ export function getStatusDisplayText(handlerData: HandlerData, playerId: number)
  */
 export async function handleAttack(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
     const currentPlayer = handlerData.turn;
+    
+    // Check if FieldCard can attack using ActionValidator
+    // Get status effects for the current player
+    const statusEffects = handlerData.statusEffects ? 
+        (handlerData.statusEffects.activeStatusEffects[currentPlayer] as any[]) : 
+        [];
+    const isAsleep = statusEffects.some((e: { type: string }) => e.type === 'asleep');
+    const isParalyzed = statusEffects.some((e: { type: string }) => e.type === 'paralyzed');
+    
+    if (isAsleep || isParalyzed) {
+        const condition = isAsleep ? 'asleep' : 'paralyzed';
+        await intermediary.form({ 
+            type: 'print', 
+            message: [`Your FieldCard is ${condition} and cannot attack!`] 
+        });
+        await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
+        return;
+    }
     
     // Get the active FieldCard for the current player
     const activeFieldCard = handlerData.field.creatures[currentPlayer][0]; // Position 0 is active
@@ -303,7 +325,7 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     const allFieldCards = handlerData.field.creatures[currentPlayer] || [];
     
     allFieldCards.forEach((fieldCard, position) => {
-        if (ActionValidator.canEvolvecreature(handlerData, cardRepository, currentPlayer, position)) {
+        if (ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
             const evolution = allFieldCard.find(id => {
                 const data = cardRepository.getCreature(id);
                 return data.evolvesFrom === fieldCard.templateId;
@@ -559,7 +581,7 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     ].filter(Boolean);
     
     const canEvolve = allFieldCards.some((_, position) => 
-        ActionValidator.canEvolvecreature(handlerData, cardRepository, currentPlayer, position)
+        ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)
     );
     
     if (canEvolve) {
@@ -675,6 +697,13 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
         return `${name} (${hp}/${maxHp})${energyDisplay}`;
     }).join(', ');
     
+    // Get status effects display using computed field
+    const statusEffectsData = handlerData.statusEffects;
+    const statusText = statusEffectsData ? 
+        (statusEffectsData.activeStatusEffects[playerId] as any[])?.length > 0 ? 
+            ` [${(statusEffectsData.activeStatusEffects[playerId] as any[]).map((e: { type: string }) => e.type.toUpperCase()).join(', ')}]` : '' 
+        : '';
+    
     // Get hand summary
     const handSummary = hand.map((card) => {
         if (card.type === 'creature') {
@@ -711,7 +740,7 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     
     const statusLines = [
         `=== Your Turn (Turn: ${globalTurn}) ===`,
-        `Active: ${fieldCardName} (${fieldCardHp}/${maxHp})${activeEnergyDisplay}`,
+        `Active: ${fieldCardName} (${fieldCardHp}/${maxHp})${activeEnergyDisplay}${statusText}`,
         `Bench (${benchedFieldCards.length}/3): ${benchInfo || 'None'}`,
         `Energy Zone: ${currentEnergy} (Next: ${nextEnergy}) - Attached this turn: ${energyAttached ? 'Yes' : 'No'}`,
         `Hand (${hand.length} cards): ${handSummary.join(', ')}`,

@@ -1,5 +1,6 @@
 import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable } from '@cards-ts/core';
 import { CardRepositoryController } from './card-repository-controller.js';
+import { ToolController } from './tool-controller.js';
 import { CreatureData } from '../repository/card-types.js';
 import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
 
@@ -21,7 +22,8 @@ export type FieldState = {
 
 type FieldDependencies = { 
     players: GenericHandlerController<any, any>,
-    cardRepository: CardRepositoryController
+    cardRepository: CardRepositoryController,
+    tools: ToolController
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -39,7 +41,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true } as const;
+        return { players: true, cardRepository: true, tools: true } as const;
     }
 }
 
@@ -92,8 +94,12 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         
         const { maxHp } = this.controllers.cardRepository.getCreature(card.templateId);
         
+        // Get HP bonus from attached tools
+        const hpBonus = this.controllers.tools.getHpBonus(card.instanceId);
+        const totalMaxHp = maxHp + hpBonus;
+        
         // Cap damage to prevent health from going negative
-        const actualDamage = Math.min(maxHp - card.damageTaken, damage);
+        const actualDamage = Math.min(totalMaxHp - card.damageTaken, damage);
         if (actualDamage > 0) {
             this.state.creatures[playerId][position].damageTaken += actualDamage;
         }
@@ -239,6 +245,11 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             if (!success) {
                 return false;
             }
+        }
+        
+        // Clear status effects on retreat
+        if (allControllers && allControllers.statusEffects) {
+            allControllers.statusEffects.clearAllStatusEffects(playerId);
         }
         
         // Swap active and bench creature

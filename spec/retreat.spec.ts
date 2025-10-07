@@ -38,7 +38,8 @@ describe('Creature Retreat System', () => {
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
-                StateBuilder.withDamage('basic-creature-0', 10)
+                StateBuilder.withDamage('basic-creature-0', 10),
+                StateBuilder.withStatusEffect(0, 'poison')
             )
         });
         
@@ -192,6 +193,4 @@ describe('Creature Retreat System', () => {
             expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
         });
     });
-
-
 });

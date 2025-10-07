@@ -42,12 +42,12 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Energy accelerator effects
 
 ### Special Conditions
-- ❌ Asleep, Burned, Confused, Paralyzed, Poisoned
-- ❌ Special condition interactions and removal
-- ❌ Status effect damage between turns
+- ✅ Asleep, Burned, Confused, Paralyzed, Poisoned
+- ✅ Special condition interactions and removal
+- ✅ Status effect damage between turns
 
 ### Advanced Mechanics
-- ❌ Tool attachment system
+- ✅ Tool attachment system
 - ✅ Card abilities (passive effects)
 - ✅ Retreating with Energy costs
 - ✅ Weakness (+20 damage) system
@@ -57,7 +57,7 @@ Developed mainly though generative AI so even with test coverage there is a chan
 ### Battle Features
 - ✅ Special cards (2 points when knocked out)
 - ✅ Coin flip mechanics for attacks/effects
-- ❌ Special condition checkup phase
+- ✅ Special condition checkup phase
 
 ## Development
 
