@@ -75,24 +75,19 @@ export class IntermediaryHandler extends GameHandler {
     
     async handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
         const currentPlayer = handlerData.turn;
-        const pendingEffect = handlerData.turnState.pendingTargetSelection as any;
+        const pendingEffect = handlerData.turnState.pendingTargetSelection;
         
         if (!pendingEffect) {
             return;
         }
         
-        // Create a context for the target resolution
-        const context = {
-            type: pendingEffect.originalContext ? pendingEffect.originalContext.type : 'trainer',
-            sourcePlayer: pendingEffect.sourcePlayer,
-            effectName: pendingEffect.effectName ? pendingEffect.effectName : 'Unknown Effect',
-            cardType: pendingEffect.originalContext ? pendingEffect.originalContext.cardType : 'item'
-        };
+        // Use the original context directly
+        const context = pendingEffect.originalContext;
         
-        // Get the target from the effect
-        const target = pendingEffect.switchWith || pendingEffect.target;
+        // Get the target from the effect (if it has one)
+        const target = 'target' in pendingEffect.effect ? pendingEffect.effect.target : undefined;
         
-        if (!target) {
+        if (!target || typeof target === 'string') {
             return;
         }
         
@@ -113,7 +108,7 @@ export class IntermediaryHandler extends GameHandler {
         
         // Determine the appropriate message based on the effect type
         let effectMessage = 'Choose target for the effect:';
-        if (pendingEffect.type === 'switch') {
+        if (pendingEffect.effect.type === 'switch') {
             if (target.type === 'single-choice' && target.chooser === 'opponent') {
                 effectMessage = 'Choose which of your FieldCard to switch in:';
             } else {

@@ -61,8 +61,8 @@ describe('Weakness System', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [new AttackResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'fire-attacker'), // Fire type
-                StateBuilder.withcreature(1, 'grass-defender'), // Grass type (weak to fire)
+                StateBuilder.withCreatures(0, 'fire-attacker'), // Fire type
+                StateBuilder.withCreatures(1, 'grass-defender'), // Grass type (weak to fire)
                 StateBuilder.withEnergy('fire-attacker-0', { fire: 1 })
             ),
             maxSteps: 10,
@@ -78,8 +78,8 @@ describe('Weakness System', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [new AttackResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'fire-attacker'), // Fire type
-                StateBuilder.withcreature(1, 'water-defender'), // Water type (weak to lightning, not fire)
+                StateBuilder.withCreatures(0, 'fire-attacker'), // Fire type
+                StateBuilder.withCreatures(1, 'water-defender'), // Water type (weak to lightning, not fire)
                 StateBuilder.withEnergy('fire-attacker-0', { fire: 1 })
             ),
             maxSteps: 10,
@@ -94,8 +94,8 @@ describe('Weakness System', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [new AttackResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'zero-damage-attacker'), // Psychic type with 0-damage attack
-                StateBuilder.withcreature(1, 'psychic-defender'), // Fighting type (weak to psychic)
+                StateBuilder.withCreatures(0, 'zero-damage-attacker'), // Psychic type with 0-damage attack
+                StateBuilder.withCreatures(1, 'psychic-defender'), // Fighting type (weak to psychic)
                 StateBuilder.withEnergy('zero-damage-attacker-0', { psychic: 1 }) // Use psychic energy instead of colorless
             ),
             maxSteps: 10,

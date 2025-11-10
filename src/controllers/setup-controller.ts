@@ -1,12 +1,15 @@
-import { AbstractController, GenericControllerProvider, GenericHandlerController, GlobalController, Serializable } from '@cards-ts/core';
+import { AbstractController, GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
+import { FieldController } from './field-controller.js';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 
 export type SetupState = {
     playersReady: boolean[];
 };
 
 type SetupDependencies = {
-    players: GenericHandlerController<any, any>,
-    field: any
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>,
+    field: FieldController
 };
 
 export class SetupControllerProvider implements GenericControllerProvider<SetupState, SetupDependencies, SetupController> {
@@ -39,7 +42,7 @@ export class SetupController extends GlobalController<SetupState, SetupDependenc
         // Player must have at least one creature (active)
         try {
             const activeCard = controllers.field.getCardByPosition(playerId, 0);
-            return activeCard && activeCard.templateId !== 'basic-creature';
+            return activeCard !== undefined && activeCard.templateId !== 'basic-creature';
         } catch {
             return false;
         }

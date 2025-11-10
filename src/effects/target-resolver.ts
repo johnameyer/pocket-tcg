@@ -81,8 +81,10 @@ export class TargetResolver {
             if (result.targets.length > 0) {
                 return {
                     type: 'resolved',
-                    playerId: result.targets[0].playerId,
-                    fieldIndex: result.targets[0].fieldIndex
+                    targets: [{
+                        playerId: result.targets[0].playerId,
+                        fieldIndex: result.targets[0].fieldIndex
+                    }]
                 };
             }
             // If no targets, return no-valid-targets
@@ -141,8 +143,10 @@ export class TargetResolver {
         if (context.targetPlayerId !== undefined && context.targetCreatureIndex !== undefined) {
             return { 
                 type: 'resolved', 
-                playerId: context.targetPlayerId, 
-                fieldIndex: context.targetCreatureIndex 
+                targets: [{
+                    playerId: context.targetPlayerId, 
+                    fieldIndex: context.targetCreatureIndex 
+                }]
             };
         }
         
@@ -155,8 +159,10 @@ export class TargetResolver {
                 typeof target.fieldIndex === 'number') {
                 return { 
                     type: 'resolved', 
-                    playerId: target.playerId, 
-                    fieldIndex: target.fieldIndex 
+                    targets: [{
+                        playerId: target.playerId, 
+                        fieldIndex: target.fieldIndex 
+                    }]
                 };
             }
             
@@ -189,8 +195,10 @@ export class TargetResolver {
             
             return {
                 type: 'resolved',
-                playerId,
-                fieldIndex
+                targets: [{
+                    playerId,
+                    fieldIndex
+                }]
             };
         }
         
@@ -219,8 +227,10 @@ export class TargetResolver {
             
             return {
                 type: 'resolved',
-                playerId: availableTargets[0].playerId,
-                fieldIndex: availableTargets[0].fieldIndex
+                targets: [{
+                    playerId: availableTargets[0].playerId,
+                    fieldIndex: availableTargets[0].fieldIndex
+                }]
             };
         }
         

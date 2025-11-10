@@ -10,7 +10,7 @@ describe('Energy System', () => {
             const { getExecutedCount } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 )
             });
@@ -22,7 +22,7 @@ describe('Energy System', () => {
             const { getExecutedCount } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'high-hp-creature'),
                     StateBuilder.withEnergy('high-hp-creature-0', { fighting: 1 }) // Needs 2 fighting
                 )
             });
@@ -34,8 +34,8 @@ describe('Energy System', () => {
             const { state } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'), // Fire creature
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'), // Fire creature
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { water: 2 }) // Wrong energy type for fire attack
                 )
             });
@@ -50,7 +50,7 @@ describe('Energy System', () => {
             const { state } = runTestGame({
                 actions: [new AttachEnergyResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTurnNumber(1),
                     StateBuilder.withFirstTurnRestriction(true),
                     StateBuilder.withNoEnergy(0)
@@ -71,7 +71,7 @@ describe('Energy System', () => {
                     new AttachEnergyResponseMessage(0)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTurnNumber(2)
                 ),
                 maxSteps: 10
@@ -89,8 +89,8 @@ describe('Energy System', () => {
             const { state, getExecutedCount } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'evolution-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'evolution-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 2 })
                 ),
                 maxSteps: 10
@@ -104,8 +104,8 @@ describe('Energy System', () => {
             const { state, getExecutedCount } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'evolution-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'evolution-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 5 })
                 ),
                 maxSteps: 10
@@ -119,8 +119,8 @@ describe('Energy System', () => {
             const { state, getExecutedCount } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 ),
                 maxSteps: 10

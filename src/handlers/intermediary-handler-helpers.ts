@@ -7,6 +7,14 @@ import { EnergyController } from '../controllers/energy-controller.js';
 import { ActionValidator } from '../effects/action-validator.js';
 import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, RetreatResponseMessage, UseAbilityResponseMessage } from '../messages/response/index.js';
 import { GameCard } from '../controllers/card-types.js';
+import { FieldCard } from '../controllers/field-controller.js';
+import { StatusEffect } from '../controllers/status-effect-controller.js';
+import { EnergyDictionary } from '../controllers/energy-controller.js';
+
+interface SelectionOption {
+    name: string;
+    value: string | number;
+}
 
 /**
  * Builds options for FieldCard selection.
@@ -15,7 +23,7 @@ import { GameCard } from '../controllers/card-types.js';
  * @param prefix Prefix for option IDs
  * @returns Array of options for selection
  */
-export function buildFieldCardOptions(cardRepository: CardRepository, field: any[], prefix: string): any[] {
+export function buildFieldCardOptions(cardRepository: CardRepository, field: FieldCard[], prefix: string): SelectionOption[] {
     return field.map((p, i) => {
         const fieldCardData = cardRepository.getCreature(p.templateId);
         const hp = Math.max(0, fieldCardData.maxHp - p.damageTaken);
@@ -34,7 +42,7 @@ export function buildFieldCardOptions(cardRepository: CardRepository, field: any
  * @param energyTypes Array of energy types
  * @returns Array of options for selection
  */
-export function buildEnergyOptions(energyTypes: string[]): any[] {
+export function buildEnergyOptions(energyTypes: string[]): SelectionOption[] {
     return energyTypes.map(type => ({
         name: `${type.charAt(0).toUpperCase() + type.slice(1)} Energy`,
         value: type
@@ -51,8 +59,8 @@ export function buildEnergyOptions(energyTypes: string[]): any[] {
 export function getStatusDisplayText(handlerData: HandlerData, playerId: number): string {
     const statusEffects = handlerData.statusEffects;
     return statusEffects ? 
-        (statusEffects.activeStatusEffects[playerId] as any[])?.length > 0 ? 
-            ` [${(statusEffects.activeStatusEffects[playerId] as any[]).map((e: { type: string }) => e.type.toUpperCase()).join(', ')}]` : '' 
+        (statusEffects.activeStatusEffects[playerId] as unknown as StatusEffect[])?.length > 0 ? 
+            ` [${(statusEffects.activeStatusEffects[playerId] as unknown as StatusEffect[]).map((e: StatusEffect) => e.type.toUpperCase()).join(', ')}]` : '' 
         : '';
 }
 
@@ -69,10 +77,10 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     // Check if FieldCard can attack using ActionValidator
     // Get status effects for the current player
     const statusEffects = handlerData.statusEffects ? 
-        (handlerData.statusEffects.activeStatusEffects[currentPlayer] as any[]) : 
+        (handlerData.statusEffects.activeStatusEffects[currentPlayer] as unknown as StatusEffect[]) : 
         [];
-    const isAsleep = statusEffects.some((e: { type: string }) => e.type === 'asleep');
-    const isParalyzed = statusEffects.some((e: { type: string }) => e.type === 'paralyzed');
+    const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
+    const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
     
     if (isAsleep || isParalyzed) {
         const condition = isAsleep ? 'asleep' : 'paralyzed';
@@ -219,8 +227,23 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             } else if (supporterData.effects && supporterData.effects.length > 0) {
                 cardDescription = ` - ${supporterData.effects[0].type}`;
             }
+        } else if (card.type === 'tool') {
+            const toolData = cardRepository.getTool(card.templateId);
+            if (!toolData) {
+                throw new Error(`Tool not found: ${card.templateId}`);
+            }
+            cardName = toolData.name;
+            
+            // Check if card can be played using ActionValidator
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                cardDescription = ' (Cannot attach tool now)';
+            } else if (toolData.effects && toolData.effects.length > 0) {
+                cardDescription = ` - ${toolData.effects[0].type}`;
+            }
         } else {
-            throw new Error(`Unknown card type: ${(card as any).type}`);
+            // This should never happen if all card types are handled above
+            const exhaustiveCheck: never = card;
+            throw new Error(`Unknown card type: ${(exhaustiveCheck as GameCard).type}`);
         }
         
         return {
@@ -364,14 +387,17 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
         choices: fieldCardOptions
     });
     
-    const selection = (await received)[0] as any;
+    const selection = (await received)[0] as { evolutionId: string; isActive: boolean; benchIndex?: number } | null;
     
     if (!selection) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
     
-    responsesQueue.push(new EvolveResponseMessage(selection.evolutionId, selection.position));
+    // Calculate position: 0 for active, 1+ for bench
+    const position = selection.isActive ? 0 : (selection.benchIndex! + 1);
+    
+    responsesQueue.push(new EvolveResponseMessage(selection.evolutionId, position));
 }
 
 /**
@@ -700,8 +726,8 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     // Get status effects display using computed field
     const statusEffectsData = handlerData.statusEffects;
     const statusText = statusEffectsData ? 
-        (statusEffectsData.activeStatusEffects[playerId] as any[])?.length > 0 ? 
-            ` [${(statusEffectsData.activeStatusEffects[playerId] as any[]).map((e: { type: string }) => e.type.toUpperCase()).join(', ')}]` : '' 
+        (statusEffectsData.activeStatusEffects[playerId] as unknown as StatusEffect[])?.length > 0 ? 
+            ` [${(statusEffectsData.activeStatusEffects[playerId] as unknown as StatusEffect[]).map((e: StatusEffect) => e.type.toUpperCase()).join(', ')}]` : '' 
         : '';
     
     // Get hand summary
@@ -725,7 +751,7 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     const energyAttached = handlerData.energy.energyAttachedThisTurn[playerId];
     
     // Format energy dictionary for display
-    const formatEnergyDict = (energyDict: any) => {
+    const formatEnergyDict = (energyDict: EnergyDictionary) => {
         const energyTypes = Object.entries(energyDict)
             .filter(([_, count]) => (count as number) > 0)
             .map(([type, count]) => `${count}${type.charAt(0).toUpperCase()}`)

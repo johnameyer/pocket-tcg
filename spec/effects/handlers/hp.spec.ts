@@ -1,10 +1,10 @@
 import { expect } from 'chai';
-import { runTestGame } from '../helpers/test-helpers.js';
-import { StateBuilder } from '../helpers/state-builder.js';
-import { PlayCardResponseMessage } from '../../src/messages/response/play-card-response-message.js';
-import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
-import { MockCardRepository } from '../mock-repository.js';
-import { ItemData, SupporterData } from '../../src/repository/card-types.js';
+import { runTestGame } from '../../helpers/test-helpers.js';
+import { StateBuilder } from '../../helpers/state-builder.js';
+import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
+import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
+import { MockCardRepository } from '../../mock-repository.js';
+import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
 
 describe('HP Effect', () => {
     it('should heal 20 HP (basic operation)', () => {
@@ -30,7 +30,7 @@ describe('HP Effect', () => {
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'heal-item', type: 'item' }]),
                 StateBuilder.withDamage('basic-creature-0', 30)
             ),
@@ -60,8 +60,8 @@ describe('HP Effect', () => {
             actions: [new PlayCardResponseMessage('damage-supporter', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'damage-supporter', type: 'supporter' }])
             ),
             maxSteps: 10
@@ -90,7 +90,7 @@ describe('HP Effect', () => {
             actions: [new PlayCardResponseMessage('big-heal', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'big-heal', type: 'supporter' }]),
                 StateBuilder.withDamage('basic-creature-0', 50)
             ),
@@ -123,7 +123,7 @@ describe('HP Effect', () => {
             actions: [new PlayCardResponseMessage('mass-heal', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['basic-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
                 StateBuilder.withHand(0, [{ templateId: 'mass-heal', type: 'supporter' }]),
                 StateBuilder.withDamage('basic-creature-0', 30),
                 StateBuilder.withDamage('basic-creature-0-0', 25)
@@ -155,7 +155,7 @@ describe('HP Effect', () => {
             actions: [new PlayCardResponseMessage('small-heal', 'item')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'small-heal', type: 'item' }]),
                 StateBuilder.withDamage('basic-creature-0', 10)
             ),
@@ -185,8 +185,8 @@ describe('HP Effect', () => {
             actions: [new PlayCardResponseMessage('overkill', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'overkill', type: 'supporter' }]),
                 StateBuilder.withDamage('basic-creature-1', 20)
             ),

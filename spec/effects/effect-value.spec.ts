@@ -27,7 +27,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('constant-20', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'constant-20', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30)
                 ),
@@ -57,7 +57,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('constant-50', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'constant-50', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 40)
                 ),
@@ -89,7 +89,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('hand-size-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [
                         { templateId: 'hand-size-heal', type: 'supporter' },
                         { templateId: 'basic-creature', type: 'creature' },
@@ -124,7 +124,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('opp-hand-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opp-hand-heal', type: 'supporter' }]),
                     StateBuilder.withHand(1, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
                     StateBuilder.withDamage('basic-creature-0', 30)
@@ -155,7 +155,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('points-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'points-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                     (state) => { state.points = [2, 1]; }
@@ -186,7 +186,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('points-to-win-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'points-to-win-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                     (state) => { state.points = [1, 0]; }
@@ -223,7 +223,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('multiply-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'multiply-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30)
                 ),
@@ -257,7 +257,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('hand-multiply', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [
                         { templateId: 'hand-multiply', type: 'supporter' },
                         { templateId: 'basic-creature', type: 'creature' },
@@ -299,7 +299,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('addition-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'addition-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30)
                 ),
@@ -335,7 +335,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('mixed-addition', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [
                         { templateId: 'mixed-addition', type: 'supporter' },
                         { templateId: 'basic-creature', type: 'creature' },
@@ -372,8 +372,8 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('opponent-hand-damage', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-hand-damage', type: 'supporter' }]),
                     StateBuilder.withHand(1, [
                         { templateId: 'basic-creature', type: 'creature' },
@@ -408,7 +408,7 @@ describe('Effect Value Calculation', () => {
                 actions: [new PlayCardResponseMessage('points-heal', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'points-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                     (state) => { state.points = [1, 0]; } // Player has 1 point, needs 2 more to win

@@ -28,8 +28,8 @@ describe('Target Matching', () => {
                 actions: [new PlayCardResponseMessage('self-target', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'self-target', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 40),
                     StateBuilder.withDamage('basic-creature-1', 40)
@@ -61,8 +61,8 @@ describe('Target Matching', () => {
                 actions: [new PlayCardResponseMessage('opponent-target', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-target', type: 'supporter' }])
                 ),
                 maxSteps: 10
@@ -101,7 +101,7 @@ describe('Target Matching', () => {
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
                     StateBuilder.withHand(0, [{ templateId: 'choice-target', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                     StateBuilder.withDamage('basic-creature-0-0', 25) // Damage to first bench creature
@@ -140,8 +140,8 @@ describe('Target Matching', () => {
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-choice', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20)
                 ),
@@ -176,7 +176,7 @@ describe('Target Matching', () => {
                 actions: [new PlayCardResponseMessage('all-target', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'all-target', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
@@ -219,7 +219,7 @@ describe('Target Matching', () => {
                 actions: [new PlayCardResponseMessage('damaged-only', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'damaged-only', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
@@ -264,8 +264,8 @@ describe('Target Matching', () => {
                 actions: [new PlayCardResponseMessage('self-scope', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'self-scope', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                     StateBuilder.withDamage('basic-creature-1', 20)
@@ -300,8 +300,8 @@ describe('Target Matching', () => {
                 actions: [new PlayCardResponseMessage('opponent-scope', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-scope', type: 'supporter' }]),
                     (state) => {
                         state.field.creatures[1].push({

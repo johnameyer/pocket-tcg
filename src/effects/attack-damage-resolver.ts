@@ -80,6 +80,66 @@ export class AttackDamageResolver {
             }
         }
         
+        // Apply damage boosts from turn state (with condition checking)
+        const damageBoosts = controllers.turnState.getDamageBoosts();
+        for (const boost of damageBoosts) {
+            console.log(`DEBUG: Checking damage boost: ${boost.effectName}, amount: ${boost.amount}`);
+            // Check if this boost should apply to the current target
+            if (this.shouldApplyDamageBoost(boost, targetcreature, controllers, context)) {
+                console.log(`DEBUG: Applying damage boost: ${boost.amount}`);
+                totalDamage += boost.amount;
+            } else {
+                console.log(`DEBUG: Skipping damage boost: ${boost.effectName}`);
+            }
+        }
+        
+        // Apply damage boosts from attack effects (with condition checking)
+        if (attack.effects) {
+            for (const effect of attack.effects) {
+                if (effect.type === 'damage-boost') {
+                    // Check if the condition is met
+                    let conditionMet = true;
+                    if (effect.condition) {
+                        // Get the attacking creature for condition evaluation
+                        const attackingCreature = controllers.field.getRawCardByPosition(currentPlayer, 0);
+                        if (attackingCreature?.instanceId === playercreatureInstanceId) {
+                            // Use the attacking creature for condition evaluation
+                            conditionMet = this.evaluateAttackCondition(effect.condition, attackingCreature, controllers, context);
+                        } else {
+                            // Find the attacking creature on bench
+                            const benchedCreature = controllers.field.getCards(currentPlayer).find(c => c?.instanceId === playercreatureInstanceId);
+                            if (benchedCreature) {
+                                conditionMet = this.evaluateAttackCondition(effect.condition, benchedCreature, controllers, context);
+                            }
+                        }
+                    }
+                    
+                    if (conditionMet) {
+                        const boostAmount = getEffectValue(effect.amount, controllers, context);
+                        totalDamage += boostAmount;
+                    }
+                }
+            }
+        }
+        
+        // Apply damage reductions from turn state
+        const damageReductions = controllers.turnState.getDamageReductions();
+        for (const reduction of damageReductions) {
+            totalDamage -= reduction.amount;
+        }
+        
+        // Apply damage prevention from turn state (with source checking)
+        const damagePreventions = controllers.turnState.getDamagePrevention();
+        for (const prevention of damagePreventions) {
+            if (this.shouldPreventDamage(prevention, playercreature, controllers, context)) {
+                totalDamage = 0;
+                break; // One prevention is enough to block all damage
+            }
+        }
+        
+        // Ensure damage is not negative
+        totalDamage = Math.max(0, totalDamage);
+        
         return totalDamage;
     }
     
@@ -123,46 +183,82 @@ export class AttackDamageResolver {
     }
     
     /**
-     * Validate if a damage boost target condition is met by the target creature.
+     * Check if a damage boost should apply to the current target.
      */
-    private static validateDamageBoostTarget(
-        damageBoost: { target?: Target; condition?: any },
-        targetcreature: FieldCard, 
+    private static shouldApplyDamageBoost(
+        boost: { sourcePlayer: number; amount: number; effectName: string },
+        targetcreature: FieldCard | undefined,
         controllers: Controllers,
         context: EffectContext
     ): boolean {
-        // Check condition first (applies to target)
-        if (damageBoost.condition) {
-            const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
-            
-            // Check evolvesFrom condition
-            if (damageBoost.condition.evolvesFrom) {
-                return targetData.evolvesFrom === damageBoost.condition.evolvesFrom;
-            }
-            
-            // Check attributes condition (e.g., ex)
-            if (damageBoost.condition.attributes) {
-                if (damageBoost.condition.attributes.ex === true) {
-                    return targetData.attributes?.ex === true;
-                }
-            }
+        if (!targetcreature) return false;
+        
+        // Find the original effect that created this boost to check its conditions
+        // For now, we'll use a simple heuristic based on the effect name
+        const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
+        
+        // Check if this is an evolution-based boost
+        if (boost.effectName.includes('Evolution Boost')) {
+            // Only apply to creatures that evolve from something (have evolvesFrom property)
+            return !!targetData.evolvesFrom;
         }
         
-        // If no target specified, applies to all
-        if (!damageBoost.target) return true;
-        
-        // Simple validation for common target patterns
-        if (damageBoost.target.type === 'all-matching' && damageBoost.target.criteria) {
-            const criteria = damageBoost.target.criteria;
-            
-            // Check ex condition
-            if (criteria.condition?.attributes?.ex === true) {
-                const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
-                return targetData.attributes?.ex === true;
-            }
+        // Check Red Supporter - only applies to ex Pokemon
+        if (boost.effectName === 'Red') {
+            return targetData.attributes?.ex === true;
         }
         
-        // Default to true for unhandled cases
+        // Check if this is an ex-based boost
+        if (boost.effectName.includes('EX Boost')) {
+            // Only apply to ex creatures
+            return targetData.attributes?.ex === true;
+        }
+        
+        // Default: apply the boost (no conditions)
         return true;
+    }
+    
+    /**
+     * Check if damage should be prevented based on the source creature.
+     */
+    private static shouldPreventDamage(
+        prevention: { sourcePlayer: number; effectName: string },
+        sourcecreature: FieldCard | undefined,
+        controllers: Controllers,
+        context: EffectContext
+    ): boolean {
+        if (!sourcecreature) return false;
+        
+        // Find the original effect that created this prevention to check its source restrictions
+        // For now, we'll use a simple heuristic based on the effect name
+        const sourceData = controllers.cardRepository.getCreature(sourcecreature.templateId);
+        
+        // Check if this prevention only applies to ex sources
+        if (prevention.effectName.includes('Prevent Ex')) {
+            // Only prevent damage from ex creatures
+            return sourceData.attributes?.ex === true;
+        }
+        
+        // Default: prevent all damage (no source restrictions)
+        return true;
+    }
+    
+    /**
+     * Evaluate attack-specific conditions (like hasDamage) on the attacking creature.
+     */
+    private static evaluateAttackCondition(
+        condition: Condition,
+        attackingCreature: FieldCard,
+        controllers: Controllers,
+        context: EffectContext
+    ): boolean {
+        // Check hasDamage condition
+        if (condition.hasDamage === true) {
+            return attackingCreature.damageTaken > 0;
+        }
+        
+        // Check other conditions using the standard evaluator
+        const creatureData = controllers.cardRepository.getCreature(attackingCreature.templateId);
+        return evaluateConditionWithContext(condition, controllers, context);
     }
 }

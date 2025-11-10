@@ -9,8 +9,8 @@ describe('Knockout System', () => {
         const { state } = runTestGame({
             actions: [new AttackResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
-                StateBuilder.withcreature(1, 'high-hp-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withDamage('high-hp-creature-1', 160), // 180 HP - 160 damage = 20 HP, attack does 20 damage = KO
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => { state.points = [0, 0]; }
@@ -28,8 +28,8 @@ describe('Knockout System', () => {
                 new SelectActiveCardResponseMessage(0)
             ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
-                StateBuilder.withcreature(1, 'evolution-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withCreatures(1, 'evolution-creature', ['high-hp-creature']),
                 StateBuilder.withDamage('evolution-creature-1', 180), // Close to KO
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
             ),

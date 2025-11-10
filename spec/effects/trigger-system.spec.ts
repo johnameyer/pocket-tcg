@@ -41,7 +41,7 @@ describe('Trigger System', () => {
                 actions: [new EndTurnResponseMessage()],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTool('basic-creature-0', 'healing-tool'),
                     StateBuilder.withDamage('basic-creature-0', 30)
                 )
@@ -81,7 +81,7 @@ describe('Trigger System', () => {
                 actions: [new EndTurnResponseMessage()],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTool('basic-creature-0', 'healing-tool'),
                     StateBuilder.withDamage('basic-creature-0', 30),
                     StateBuilder.withTurn(1)
@@ -121,7 +121,7 @@ describe('Trigger System', () => {
                 actions: [new EndTurnResponseMessage()],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'healing-creature'),
+                    StateBuilder.withCreatures(0, 'healing-creature'),
                     StateBuilder.withDamage('healing-creature-0', 50)
                 )
             });
@@ -165,8 +165,8 @@ describe('Trigger System', () => {
                 actions: [new AttackResponseMessage(0)],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-attacker'),
-                    StateBuilder.withcreature(1, 'damage-reactive-creature')
+                    StateBuilder.withCreatures(0, 'basic-attacker'),
+                    StateBuilder.withCreatures(1, 'damage-reactive-creature')
                 )
             });
 
@@ -201,8 +201,8 @@ describe('Trigger System', () => {
                 actions: [new UseAbilityResponseMessage(0, 0)],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'manual-heal-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'manual-heal-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withDamage('manual-heal-creature-0', 40)
                 )
             });
@@ -253,7 +253,7 @@ describe('Trigger System', () => {
                 actions: [new EndTurnResponseMessage()],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'healing-creature'),
+                    StateBuilder.withCreatures(0, 'healing-creature'),
                     StateBuilder.withTool('healing-creature-0', 'healing-tool'),
                     StateBuilder.withDamage('healing-creature-0', 50)
                 )
@@ -304,7 +304,7 @@ describe('Trigger System', () => {
                 actions: [new EndTurnResponseMessage()],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
                     StateBuilder.withTool('basic-creature-0', 'owner-only-tool'),
                     StateBuilder.withTool('basic-creature-0-0', 'any-turn-tool'),
                     StateBuilder.withDamage('basic-creature-0', 30)
@@ -345,8 +345,8 @@ describe('Trigger System', () => {
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'unlimited-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'unlimited-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withDamage('unlimited-creature-0', 50)
                 )
             });

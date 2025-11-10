@@ -37,7 +37,7 @@ describe('StateBuilder Validation', () => {
             return;
         }
         
-        StateBuilder.withcreature(0, 'basic-creature')(state as ControllerState<Controllers>);
+        StateBuilder.withCreatures(0, 'basic-creature')(state as ControllerState<Controllers>);
         
         const attachEnergy = () => {
             StateBuilder.withEnergy('basic-creature-0', { fire: 1 })(state as ControllerState<Controllers>);
@@ -50,7 +50,7 @@ describe('StateBuilder Validation', () => {
     it('should successfully attach a tool to existing creature', () => {
         const state = StateBuilder.createActionPhaseState();
         
-        StateBuilder.withcreature(0, 'basic-creature')(state as ControllerState<Controllers>);
+        StateBuilder.withCreatures(0, 'basic-creature')(state as ControllerState<Controllers>);
         
         const attachTool = () => {
             StateBuilder.withTool('basic-creature-0', 'giant-cape')(state as ControllerState<Controllers>);

@@ -10,7 +10,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 StateBuilder.withDamage('basic-creature-0', 10)
             )
@@ -23,7 +23,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('basic-creature-0', {}),
                 StateBuilder.withDamage('basic-creature-0', 10)
             )
@@ -36,7 +36,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 StateBuilder.withDamage('basic-creature-0', 10),
                 StateBuilder.withStatusEffect(0, 'poison')
@@ -50,7 +50,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'evolution-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'evolution-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('evolution-creature-0', { fire: 2 })
             )
         });
@@ -62,7 +62,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'evolution-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'evolution-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }) // Fire energy can pay colorless retreat cost
             )
         });
@@ -74,7 +74,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(1)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 StateBuilder.withDamage('basic-creature-0', 10)
             )
@@ -90,7 +90,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 2 })
             )
         });
@@ -105,7 +105,7 @@ describe('Creature Retreat System', () => {
         const { state } = runTestGame({
             actions: [new RetreatResponseMessage(1)], // Select middle creature (Squirtle)
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature', 'basic-creature', 'high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature', 'high-hp-creature']),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
             )
         });
@@ -124,7 +124,7 @@ describe('Creature Retreat System', () => {
             const { state } = runTestGame({
                 actions: [new RetreatResponseMessage(-1)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 )
             });
@@ -136,7 +136,7 @@ describe('Creature Retreat System', () => {
             const { state } = runTestGame({
                 actions: [new RetreatResponseMessage(5)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 )
             });
@@ -148,7 +148,7 @@ describe('Creature Retreat System', () => {
             const { state } = runTestGame({
                 actions: [new RetreatResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', []),
+                    StateBuilder.withCreatures(0, 'basic-creature', []),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 )
             });
@@ -163,7 +163,7 @@ describe('Creature Retreat System', () => {
                     new RetreatResponseMessage(1)  // Should fail: blocked by once-per-turn rule
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     StateBuilder.withEnergy('high-hp-creature-0-0', { lightning: 1 }),
                     StateBuilder.withEnergy('basic-creature-0-1', { water: 1 })
@@ -181,7 +181,7 @@ describe('Creature Retreat System', () => {
                     new RetreatResponseMessage(1)  // Try Snorlax -> Froakie (blocked)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     StateBuilder.withEnergy('high-hp-creature-0-0', { lightning: 1 }),
                     StateBuilder.withEnergy('basic-creature-0-1', { water: 1 })

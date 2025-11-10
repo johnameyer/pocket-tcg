@@ -1,8 +1,12 @@
-import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
 import { CardRepositoryController } from './card-repository-controller.js';
 import { ToolController } from './tool-controller.js';
+import { EnergyController } from './energy-controller.js';
+import { StatusEffectController } from './status-effect-controller.js';
 import { CreatureData } from '../repository/card-types.js';
 import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
@@ -21,9 +25,11 @@ export type FieldState = {
 };
 
 type FieldDependencies = { 
-    players: GenericHandlerController<any, any>,
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>,
     cardRepository: CardRepositoryController,
-    tools: ToolController
+    tools: ToolController,
+    energy: EnergyController,
+    statusEffects: StatusEffectController
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -41,7 +47,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true, tools: true } as const;
+        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true } as const;
     }
 }
 
@@ -223,7 +229,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     }
 
     // Retreat active creature with a bench creature
-    public retreat(playerId: number, benchIndex: number, allControllers?: any): boolean {
+    public retreat(playerId: number, benchIndex: number): boolean {
         const activeCard = this.getRawCardByPosition(playerId, 0);
         const benchCards = this.state.creatures[playerId].slice(1); // Get raw bench cards
         
@@ -236,21 +242,10 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             return false;
         }
         
-        // Get retreat cost and pay energy
-        const cardData = this.controllers.cardRepository.getCreature(activeCard.templateId);
-        const retreatCost = cardData.retreatCost;
-        
-        if (retreatCost > 0 && allControllers) {
-            const success = allControllers.energy.payRetreatCost(activeCard.instanceId, retreatCost);
-            if (!success) {
-                return false;
-            }
-        }
+        // Note: Energy payment is handled by the event handler
         
         // Clear status effects on retreat
-        if (allControllers && allControllers.statusEffects) {
-            allControllers.statusEffects.clearAllStatusEffects(playerId);
-        }
+        this.controllers.statusEffects.clearAllStatusEffects(playerId);
         
         // Swap active and bench creature
         this.state.creatures[playerId][0] = benchCard;

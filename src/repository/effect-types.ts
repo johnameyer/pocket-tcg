@@ -1,5 +1,7 @@
 import { Target } from './target-types.js';
 import { EffectValue } from './effect-value-types.js';
+import { AttachableEnergyType } from './energy-types.js';
+import { Condition } from './condition-types.js';
 
 /**
  * Represents when an effect can be triggered.
@@ -39,11 +41,139 @@ export type StatusEffect = {
     target: Target;
 };
 
+export type DrawEffect = {
+    type: 'draw';
+    amount: EffectValue;
+};
+
+export type EnergyEffect = {
+    type: 'energy';
+    energyType: AttachableEnergyType;
+    amount: EffectValue;
+    target: Target;
+    operation: 'attach' | 'discard';
+};
+
+export type SearchEffect = {
+    type: 'search';
+    criteria?: string;
+    cardType?: string;
+    target?: string;
+    amount: EffectValue;
+    destination?: string;
+};
+
+export type ShuffleEffect = {
+    type: 'shuffle';
+    target: string;
+    shuffleHand?: boolean;
+    drawAfter?: EffectValue;
+};
+
+export type HandDiscardEffect = {
+    type: 'hand-discard';
+    amount: EffectValue;
+    target: string;
+    shuffleIntoDeck?: boolean;
+};
+
+export type SwitchEffect = {
+    type: 'switch';
+    target: Target;
+    switchWith: Target;
+};
+
+export type EnergyTransferEffect = {
+    type: 'energy-transfer';
+    source: Target;
+    target: Target;
+    amount: EffectValue;
+    energyTypes: AttachableEnergyType[];
+};
+
+export type PreventDamageEffect = {
+    type: 'prevent-damage';
+    target?: Target;
+    source?: string;
+};
+
+export type DamageReductionEffect = {
+    type: 'damage-reduction';
+    amount: EffectValue;
+    target: Target;
+    duration?: string;
+};
+
+export type RetreatPreventionEffect = {
+    type: 'retreat-prevention';
+    target: Target;
+    duration: string;
+};
+
+export type EvolutionAccelerationEffect = {
+    type: 'evolution-acceleration';
+    target: Target;
+    skipStages: number;
+    restrictions?: string[];
+};
+
+export type EvolutionFlexibilityEffect = {
+    type: 'evolution-flexibility';
+    target: string;
+    baseForm: string;
+};
+
+export type EndTurnEffect = {
+    type: 'end-turn';
+};
+
+export type CoinFlipManipulationEffect = {
+    type: 'coin-flip-manipulation';
+    guaranteeNextHeads: boolean;
+};
+
+export type DamageBoostEffect = {
+    type: 'damage-boost';
+    amount: EffectValue;
+    target?: Target;
+    condition?: Condition;
+    duration?: string;
+};
+
+export type HpBonusEffect = {
+    type: 'hp-bonus';
+    amount: EffectValue;
+};
+
+export type RetreatCostReductionEffect = {
+    type: 'retreat-cost-reduction';
+    amount: EffectValue;
+};
+
 /**
  * Union type representing all possible effects that can be applied in the game.
  * This is used to define what an effect can do, from dealing damage to drawing cards.
  */
-export type Effect = HpEffect | StatusEffect;
+export type Effect = 
+    | HpEffect 
+    | StatusEffect 
+    | DrawEffect 
+    | EnergyEffect 
+    | SearchEffect 
+    | ShuffleEffect 
+    | HandDiscardEffect 
+    | SwitchEffect 
+    | EnergyTransferEffect 
+    | PreventDamageEffect 
+    | DamageReductionEffect 
+    | RetreatPreventionEffect 
+    | EvolutionAccelerationEffect 
+    | EvolutionFlexibilityEffect 
+    | EndTurnEffect 
+    | CoinFlipManipulationEffect 
+    | DamageBoostEffect 
+    | HpBonusEffect 
+    | RetreatCostReductionEffect;
 
 /**
  * Represents an effect that requires target selection before it can be applied.

@@ -27,7 +27,7 @@ describe('Effect Targeting', () => {
                 actions: [new PlayCardResponseMessage('self-heal-supporter', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'self-heal-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 50)
                 ),
@@ -55,8 +55,8 @@ describe('Effect Targeting', () => {
                 actions: [new PlayCardResponseMessage('opponent-damage-supporter', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-damage-supporter', type: 'supporter' }])
                 ),
                 maxSteps: 10
@@ -94,7 +94,7 @@ describe('Effect Targeting', () => {
                 actions: [new UseAbilityResponseMessage(0, 1)],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['bench-healer']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['bench-healer']),
                     StateBuilder.withDamage('bench-healer-0-0', 40)
                 )
             });
@@ -129,7 +129,7 @@ describe('Effect Targeting', () => {
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
                     StateBuilder.withHand(0, [{ templateId: 'choice-heal-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0-0', 40) // Damage to first bench creature
                 ),
@@ -163,7 +163,7 @@ describe('Effect Targeting', () => {
                 actions: [new PlayCardResponseMessage('mass-heal-supporter', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'mass-heal-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                     // Add damaged bench creature
@@ -207,8 +207,8 @@ describe('Effect Targeting', () => {
                 actions: [new PlayCardResponseMessage('self-field-supporter', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'self-field-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => { state.field.creatures[1][0].damageTaken = 30; }
@@ -241,8 +241,8 @@ describe('Effect Targeting', () => {
                 actions: [new PlayCardResponseMessage('opponent-field-supporter', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-field-supporter', type: 'supporter' }])
                 ),
                 maxSteps: 10
@@ -276,8 +276,8 @@ describe('Effect Targeting', () => {
                 actions: [new PlayCardResponseMessage('all-bench-damage-supporter', 'supporter')],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature', 'basic-creature']),
                     StateBuilder.withHand(0, [{ templateId: 'all-bench-damage-supporter', type: 'supporter' }])
                 ),
                 maxSteps: 10

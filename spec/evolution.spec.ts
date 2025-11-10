@@ -9,7 +9,7 @@ describe('Evolution Mechanics', () => {
         const { getExecutedCount } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                 StateBuilder.withDamage('basic-creature-0', 20),
                 StateBuilder.withCanEvolve(0, 0)
@@ -23,7 +23,7 @@ describe('Evolution Mechanics', () => {
         const { state } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'basic-creature'),
                 (state) => state.turn = 1
             )
         });
@@ -39,7 +39,7 @@ describe('Evolution Mechanics', () => {
                 new EvolveResponseMessage('evolution-creature', 0+1)
             ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                 StateBuilder.withHand(0, [
                     {templateId: 'evolution-creature', type: 'creature'},
                     {templateId: 'evolution-creature', type: 'creature'}
@@ -67,7 +67,7 @@ describe('Evolution Mechanics', () => {
                     new EvolveResponseMessage('evolution-creature', 0)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
@@ -92,7 +92,7 @@ describe('Evolution Mechanics', () => {
                     new EvolveResponseMessage('evolution-creature', 0)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
@@ -116,7 +116,7 @@ describe('Evolution Mechanics', () => {
             const { state } = runTestGame({
                 actions: [new RetreatResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                     StateBuilder.withDamage('basic-creature-0', 20),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     (state) => {
@@ -148,7 +148,7 @@ describe('Evolution Mechanics', () => {
             const { state } = runTestGame({
                 actions: [],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'high-hp-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'high-hp-creature', ['basic-creature']),
                     StateBuilder.withDamage('high-hp-creature-0', 90),
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];

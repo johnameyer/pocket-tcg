@@ -14,7 +14,7 @@ describe('Supporters', () => {
             ],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [basicSupporter, basicSupporter]),
-                StateBuilder.withcreature(0, 'basic-creature'), // Add active creature for HP effect target
+                StateBuilder.withCreatures(0, 'basic-creature'), // Add active creature for HP effect target
                 StateBuilder.withDamage('basic-creature-0', 30), // Add damage so healing can work
                 StateBuilder.withDeck(0, [
                     { templateId: 'basic-creature', type: 'creature' }, 

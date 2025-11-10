@@ -73,22 +73,4 @@ export abstract class AbstractEffectHandler<T extends Effect> implements EffectH
     abstract getResolutionRequirements(effect: T): ResolutionRequirement[];
     abstract apply(controllers: Controllers, effect: T, context: EffectContext): void;
     
-    /**
-     * Helper method to get the resolved targets from an effect property.
-     * This assumes the property has been resolved to ResolvedTarget or ResolvedTarget[] by EffectApplier.
-     * 
-     * @param effect The effect with resolved targets
-     * @param property The property name containing the targets
-     * @returns Array of resolved targets
-     */
-    protected getResolvedTargets(effect: T, property: keyof T): any[] {
-        const value = effect[property];
-        if (Array.isArray(value)) {
-            return value;
-        } else if (value) {
-            return [value];
-        } else {
-            return [];
-        }
-    }
 }

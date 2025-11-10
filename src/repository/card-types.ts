@@ -11,8 +11,11 @@ export type OperationType = 'heal' | 'damage' | 'attach' | 'discard';
  */
 export type Trigger = 
     | { type: 'manual', unlimited: boolean }
-    | { type: 'end-of-turn' }
-    | { type: 'damaged' };
+    | { type: 'end-of-turn', ownTurnOnly?: boolean, firstTurnOnly?: boolean }
+    | { type: 'damaged', position?: string }
+    | { type: 'passive' }
+    | { type: 'energy-attachment', energyType?: string }
+    | { type: 'on-evolution' };
 
 /**
  * Represents a creature attack.

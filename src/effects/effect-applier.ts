@@ -58,19 +58,8 @@ export class EffectApplier {
                 return;
             }
 
-            // Check if this is a multi-target effect (all-matching)
-            const hasMultiTarget = requirements.some(req => {
-                const target = req.target;
-                return target && (target.type === 'all-matching' || target.type === 'multi-choice');
-            });
-
-            if (hasMultiTarget) {
-                // Apply effect multiple times for each target
-                EffectApplier.applyMultiTargetEffect(resolvedEffect, handler, controllers, context);
-            } else {
-                // Apply with fully resolved effect using Controllers (for mutations)
-                handler.apply(controllers, resolvedEffect, context);
-            }
+            // Apply effect directly - handlers are responsible for their own multi-target logic
+            handler.apply(controllers, resolvedEffect, context);
         }
     }
     
@@ -101,7 +90,7 @@ export class EffectApplier {
             
             // Determine if this is a single or multi target
             const target = requirement.target;
-            let resolvedTarget: ResolvedTarget | ResolvedTarget[] | undefined;
+            let resolvedTarget: ResolvedTarget | undefined;
             
             if (!target) {
                 // No target specified
@@ -131,44 +120,6 @@ export class EffectApplier {
     }
 
     /**
-     * Apply an effect multiple times for multi-target effects (all-matching).
-     * 
-     * @param resolvedEffect The effect with resolved targets (may contain arrays)
-     * @param handler The effect handler
-     * @param controllers Game controllers
-     * @param context Effect context
-     */
-    private static applyMultiTargetEffect(
-        resolvedEffect: Effect,
-        handler: EffectHandler<Effect>,
-        controllers: Controllers,
-        context: EffectContext
-    ): void {
-        // Find the target property that contains an array
-        const targetProperty = Object.keys(resolvedEffect).find(key => 
-            Array.isArray((resolvedEffect as any)[key]) && 
-            (resolvedEffect as Effect & { [key: string]: Target[] })[key].every((t: Target) => t.type === 'resolved')
-        );
-
-        if (!targetProperty) {
-            // No multi-target found, apply normally
-            handler.apply(controllers, resolvedEffect, context);
-            return;
-        }
-
-        const targets = (resolvedEffect as any)[targetProperty] as ResolvedTarget[];
-        
-        // Apply the effect once for each target
-        for (const target of targets) {
-            const singleTargetEffect = {
-                ...resolvedEffect,
-                [targetProperty]: target
-            };
-            handler.apply(controllers, singleTargetEffect, context);
-        }
-    }
-
-    /**
      * Converts a single target resolution result to a ResolvedTarget.
      * 
      * @param resolution The single target resolution result
@@ -181,16 +132,14 @@ export class EffectApplier {
     ): ResolvedTarget | undefined {
         switch (resolution.type) {
             case 'resolved':
-                return {
-                    type: 'resolved',
-                    playerId: resolution.playerId,
-                    fieldIndex: resolution.fieldIndex
-                };
+                return resolution; // Already a ResolvedTarget with targets array
             case 'auto-resolved':
                 return {
                     type: 'resolved',
-                    playerId: resolution.playerId,
-                    fieldIndex: resolution.fieldIndex
+                    targets: [{
+                        playerId: resolution.playerId,
+                        fieldIndex: resolution.fieldIndex
+                    }]
                 };
                 
             default:
@@ -209,25 +158,33 @@ export class EffectApplier {
     private static convertResolutionToResolvedTargets(
         resolution: TargetResolutionResult,
         context: EffectContext
-    ): ResolvedTarget[] {
+    ): ResolvedTarget {
         switch (resolution.type) {
             case 'resolved':
+                return resolution; // Already a ResolvedTarget with targets array
             case 'auto-resolved':
-                return [{
+                return {
                     type: 'resolved',
-                    playerId: resolution.playerId,
-                    fieldIndex: resolution.fieldIndex
-                }];
+                    targets: [{
+                        playerId: resolution.playerId,
+                        fieldIndex: resolution.fieldIndex
+                    }]
+                };
                 
             case 'all-matching':
-                return resolution.targets.map(t => ({
+                return {
                     type: 'resolved',
-                    playerId: t.playerId,
-                    fieldIndex: t.fieldIndex
-                }));
+                    targets: resolution.targets.map(t => ({
+                        playerId: t.playerId,
+                        fieldIndex: t.fieldIndex
+                    }))
+                };
                 
             default:
-                return [];
+                return {
+                    type: 'resolved',
+                    targets: []
+                };
         }
     }
     
@@ -250,8 +207,10 @@ export class EffectApplier {
         // Create a resolved target from the selection
         const resolvedTarget = {
             type: 'resolved' as const,
-            playerId: targetPlayerId,
-            fieldIndex: targetCreatureIndex
+            targets: [{
+                playerId: targetPlayerId,
+                fieldIndex: targetCreatureIndex
+            }]
         };
         
         // TODO: Replace deep copy hack with proper effect cloning mechanism
@@ -295,7 +254,28 @@ export class EffectApplier {
             return false;
         }
         
-        // Apply the effect with the original context
+        // Check if there are still unresolved targets that need selection
+        for (const requirement of requirements) {
+            const currentTarget = resolvedEffect[requirement.targetProperty];
+            const target = requirement.target;
+            
+            // Check if this requirement is still unresolved and needs selection
+            if (target && typeof target === 'object' && 
+                (target.type === 'single-choice' || target.type === 'multi-choice') &&
+                (!currentTarget || currentTarget.type !== 'resolved')) {
+                // There's still another target that needs selection
+                // Set up pending selection for the next target
+                const pendingSelection: PendingTargetSelection = {
+                    effect: resolvedEffect,
+                    originalContext,
+                    type: 'target'
+                };
+                controllers.turnState.setPendingTargetSelection(pendingSelection);
+                return true; // Indicate that a new pending selection was set up
+            }
+        }
+        
+        // All targets are resolved, apply the effect
         handler.apply(controllers, resolvedEffect, originalContext);
         
         return false; // Indicate that no new pending selection was set up

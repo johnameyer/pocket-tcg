@@ -32,8 +32,10 @@ export type FixedTarget = {
  */
 export type ResolvedTarget = {
     type: 'resolved';
-    playerId: number;
-    fieldIndex: number;
+    targets: Array<{
+        playerId: number;
+        fieldIndex: number;
+    }>;
 };
 
 /**

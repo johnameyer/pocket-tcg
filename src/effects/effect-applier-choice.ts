@@ -2,7 +2,7 @@ import { Controllers } from '../controllers/controllers.js';
 import { Effect } from '../repository/effect-types.js';
 import { EffectApplier } from './effect-applier.js';
 import { effectHandlers, EffectHandler } from './effect-handler.js';
-import { PendingChoiceSelection } from './pending-choice-selection.js';
+import { PendingChoiceSelection, ChoiceEffectContext } from './pending-choice-selection.js';
 
 /**
  * Extension of EffectApplier to handle choice effects.
@@ -32,6 +32,6 @@ export class EffectApplierChoice {
         EffectApplier.applyEffects([selectedEffect], controllers, {
             ...originalContext,
             selectedChoiceIndex: selectedIndex
-        } as any);
+        } as ChoiceEffectContext);
     }
 }

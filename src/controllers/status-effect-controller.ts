@@ -1,4 +1,6 @@
-import { AbstractHandsController, Card, GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, TurnController } from '@cards-ts/core';
+import { AbstractHandsController, Card, GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, TurnController, SystemHandlerParams } from '@cards-ts/core';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 import { StatusCondition } from '../repository/effect-types.js';
 
 export enum StatusEffectType {
@@ -15,16 +17,16 @@ export interface StatusEffect {
 }
 
 export type StatusEffectState = {
-    // Status effects for active FieldCard [playerId] - stored as serializable arrays
+    // Status effects for active FieldCard [playerId] - stored as arrays
+    // TODO properly strongly type this
     activeStatusEffects: Serializable[];
 };
 
 import { TurnCounterController } from './turn-counter-controller.js';
 import { CoinFlipController } from './coinflip-controller.js';
-import { FieldController } from './field-controller.js';
 
 type StatusEffectDependencies = { 
-    players: GenericHandlerController<any, any>,
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>,
     turnCounter: TurnCounterController,
     coinFlip: CoinFlipController,
 };
@@ -36,7 +38,7 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
 
     initialState(controllers: StatusEffectDependencies): StatusEffectState {
         return {
-            activeStatusEffects: new Array(controllers.players.count).fill(undefined).map(() => []) as Serializable[]
+            activeStatusEffects: new Array(controllers.players.count).fill(null).map(() => [] as Serializable)
         };
     }
     

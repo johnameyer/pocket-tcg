@@ -1,5 +1,7 @@
-import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
 import { CardRepository } from '../repository/card-repository.js';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 
 export type ToolState = {
     // Map of FieldCard instance ID to attached tool info
@@ -7,7 +9,7 @@ export type ToolState = {
 };
 
 type ToolDependencies = {
-    players: GenericHandlerController<any, any>;
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>;
 };
 
 export class ToolControllerProvider implements GenericControllerProvider<ToolState, ToolDependencies, ToolController> {
@@ -83,10 +85,19 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
         if (!tool) return 0;
         
         const toolData = this.cardRepository.getTool(tool.templateId);
-        if (!toolData) return 0;
+        if (!toolData || !toolData.effects) return 0;
         
-        // No hp-bonus effects supported
         let hpBonus = 0;
+        
+        // Calculate HP bonus from tool effects
+        for (const effect of toolData.effects) {
+            if (effect.type === 'hp-bonus') {
+                if (effect.amount.type === 'constant') {
+                    hpBonus += effect.amount.value;
+                }
+                // TODO: Add support for other amount types if needed
+            }
+        }
         
         return hpBonus;
     }

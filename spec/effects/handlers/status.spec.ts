@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { runTestGame } from '../helpers/test-helpers.js';
-import { StateBuilder } from '../helpers/state-builder.js';
-import { AttackResponseMessage } from '../../src/messages/response/attack-response-message.js';
-import { EndTurnResponseMessage } from '../../src/messages/response/end-turn-response-message.js';
-import { MockCardRepository } from '../mock-repository.js';
+import { runTestGame } from '../../helpers/test-helpers.js';
+import { StateBuilder } from '../../helpers/state-builder.js';
+import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
+import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
+import { MockCardRepository } from '../../mock-repository.js';
 
 describe('Status Effect', () => {
     it('should apply poison status (basic condition)', () => {
@@ -34,8 +34,8 @@ describe('Status Effect', () => {
             actions: [new AttackResponseMessage(0)],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'poison-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'poison-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('poison-creature-0', { grass: 1 })
             ),
             maxSteps: 10
@@ -74,8 +74,8 @@ describe('Status Effect', () => {
             actions: [new AttackResponseMessage(0)],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'burn-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'burn-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('burn-creature-0', { fire: 1 })
             ),
             maxSteps: 10
@@ -114,8 +114,8 @@ describe('Status Effect', () => {
             actions: [new AttackResponseMessage(0)],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'self-status-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'self-status-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('self-status-creature-0', { psychic: 1 })
             ),
             maxSteps: 10
@@ -161,8 +161,8 @@ describe('Status Effect', () => {
             actions: [new AttackResponseMessage(0)],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'multi-status-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'multi-status-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('multi-status-creature-0', { psychic: 1 }),
                 StateBuilder.withStatusEffect(1, 'paralysis')
             ),
@@ -209,8 +209,8 @@ describe('Status Effect', () => {
             actions: [new AttackResponseMessage(0)],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'toxic-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'toxic-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('toxic-creature-0', { grass: 2 })
             ),
             maxSteps: 10
@@ -261,8 +261,8 @@ describe('Status Effect', () => {
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withcreature(0, 'toxic-creature'),
-                StateBuilder.withcreature(1, 'basic-creature'),
+                StateBuilder.withCreatures(0, 'toxic-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('toxic-creature-0', { grass: 2 })
             ),
             maxSteps: 15

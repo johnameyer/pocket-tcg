@@ -1,8 +1,11 @@
-import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 
 // TODO: Energy system needs user choice for energy discard (retreat, attack effects)
 // Can we create a string const array and define off that as typeof?
 import { AttachableEnergyType, EnergyRequirementType } from '../repository/energy-types.js';
+import { TurnCounterController } from './turn-counter-controller.js';
 
 export { AttachableEnergyType };
 
@@ -35,8 +38,8 @@ export type EnergyState = {
 }
 
 type EnergyDependencies = { 
-    players: GenericHandlerController<any, any>,
-    turnCounter: any
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>,
+    turnCounter: TurnCounterController
 };
 
 export class EnergyControllerProvider implements GenericControllerProvider<EnergyState, EnergyDependencies, EnergyController> {
@@ -71,17 +74,17 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     }
 
     // Static helper functions for handlers to work with energy state directly
-    static getTotalEnergyByInstance(energyState: any, instanceId: string): number {
+    static getTotalEnergyByInstance(energyState: EnergyState, instanceId: string): number {
         const attached = energyState.attachedEnergyByInstance[instanceId];
         if (!attached) return 0;
         return Object.values(attached as EnergyDictionary).reduce((sum, count) => sum + count, 0);
     }
 
-    static getAttachedEnergyByInstance(energyState: any, instanceId: string): any {
+    static getAttachedEnergyByInstance(energyState: EnergyState, instanceId: string): EnergyDictionary {
         return energyState.attachedEnergyByInstance[instanceId] || EnergyController.emptyEnergyDict();
     }
 
-    static canUseAttackByInstance(energyState: any, instanceId: string, requiredEnergy: { type: string, amount: number }[]): boolean {
+    static canUseAttackByInstance(energyState: EnergyState, instanceId: string, requiredEnergy: { type: string, amount: number }[]): boolean {
         const attached = EnergyController.getAttachedEnergyByInstance(energyState, instanceId);
         const totalEnergy = EnergyController.getTotalEnergyByInstance(energyState, instanceId);
         
@@ -91,7 +94,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
                     return false;
                 }
             } else {
-                if ((attached[requirement.type] || 0) < requirement.amount) {
+                if ((attached[requirement.type as AttachableEnergyType] || 0) < requirement.amount) {
                     return false;
                 }
             }
@@ -99,7 +102,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return true;
     }
 
-    static getAvailableEnergyTypes(energyState: any, playerId: number): string[] {
+    static getAvailableEnergyTypes(energyState: EnergyState, playerId: number): string[] {
         const currentEnergy = energyState.currentEnergy[playerId];
         if (!currentEnergy) return [];
         return Object.entries(currentEnergy)

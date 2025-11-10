@@ -59,8 +59,8 @@ describe('Creature Pocket TCG Game', () => {
             const { state } = runTestGame({
                 actions: [new AttackResponseMessage(-1)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 ),
                 maxSteps: 5
@@ -74,8 +74,8 @@ describe('Creature Pocket TCG Game', () => {
             const { state } = runTestGame({
                 actions: [new AttackResponseMessage(5)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
                 ),
                 maxSteps: 5
@@ -91,7 +91,7 @@ describe('Creature Pocket TCG Game', () => {
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('basic-supporter', 'supporter')],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [])
                 ),
                 maxSteps: 5
@@ -104,7 +104,7 @@ describe('Creature Pocket TCG Game', () => {
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('basic-creature', 'creature')],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['basic-creature', 'high-hp-creature', 'evolution-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature', 'high-hp-creature', 'evolution-creature']),
                     StateBuilder.withHand(0, [{templateId: 'basic-creature', type: 'creature' as const}])
                 ),
                 maxSteps: 5
@@ -117,7 +117,7 @@ describe('Creature Pocket TCG Game', () => {
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('evolution-creature', 'creature')],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature' as const}])
                 ),
                 maxSteps: 5

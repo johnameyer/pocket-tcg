@@ -52,6 +52,12 @@ export class StateBuilder {
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
                 pendingTargetSelection: undefined,
+                damageBoosts: [],
+                damageReductions: [],
+                retreatCostReductions: [],
+                retreatPreventions: [],
+                damagePrevention: [],
+                evolutionFlexibility: [],
             },
             statusEffects: {
                 activeStatusEffects: [[], []]  // No status effects for either player
@@ -85,14 +91,14 @@ export class StateBuilder {
         
         // Apply customization if provided
         if (customizer) {
-            customizer(state as any as ControllerState<Controllers>);
+            customizer(state as unknown as ControllerState<Controllers>);
         }
         
         return state;
     }
 
     // TODO: StateBuilder should use CreatureRepository to validate creature IDs exist before creating instances
-    static withcreature(player: number, active: string, bench: string[] = []) {
+    static withCreatures(player: number, active: string, bench: string[] = []) {
         return (state: ControllerState<Controllers>) => {
             // Create array with active creature at position 0, bench at 1+
             state.field.creatures[player] = [

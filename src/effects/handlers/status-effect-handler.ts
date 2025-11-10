@@ -1,6 +1,7 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { StatusEffectType } from '../../controllers/status-effect-controller.js';
 import { StatusEffect } from '../../repository/effect-types.js';
+import { ResolvedTarget } from '../../repository/target-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getCreatureFromTarget } from '../effect-utils.js';
@@ -52,20 +53,21 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: StatusEffect, context: EffectContext): void {
-        // Get resolved targets
-        const targetsFromEffect = this.getResolvedTargets(effect, 'target');
+        if (effect.target.type !== 'resolved') {
+            throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
+        }
         
-        // Make sure targets is always an array
-        const targets = Array.isArray(targetsFromEffect) ? targetsFromEffect : [targetsFromEffect];
+        // Get resolved targets directly
+        const targets = effect.target.targets;
         
         if (targets.length === 0) {
             return;
         }
         
         // Process each target
-        for (const target of targets) {
-            const playerId = target.playerId!;
-            const fieldIndex = target.fieldIndex!;
+        for (const targetInfo of targets) {
+            const playerId = targetInfo.playerId;
+            const fieldIndex = targetInfo.fieldIndex;
             
             // For status effects, we only care about active creature (index 0)
             if (fieldIndex !== 0) {

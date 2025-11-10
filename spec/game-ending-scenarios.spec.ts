@@ -9,8 +9,8 @@ describe('Game-Ending Scenarios', () => {
             const { state } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'evolution-creature'),
-                    StateBuilder.withcreature(1, 'high-hp-creature', []),
+                    StateBuilder.withCreatures(0, 'evolution-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature', []),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }),
                     StateBuilder.withDamage('high-hp-creature-1', 130) // 180 HP - 130 damage = 50 HP, attack does 50 damage = KO
                 ),
@@ -29,8 +29,8 @@ describe('Game-Ending Scenarios', () => {
             const { state } = runTestGame({
                 actions: [],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'high-hp-creature'),
-                    StateBuilder.withcreature(1, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'high-hp-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withDeck(0, []),
                     StateBuilder.withHand(0, [])
                 ),
@@ -48,8 +48,8 @@ describe('Game-Ending Scenarios', () => {
             const { state } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'evolution-creature'),
-                    StateBuilder.withcreature(1, 'evolution-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'evolution-creature'),
+                    StateBuilder.withCreatures(1, 'evolution-creature', ['high-hp-creature']),
                     StateBuilder.withDamage('evolution-creature-0', 160),
                     StateBuilder.withDamage('evolution-creature-1', 170),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 3 }),
@@ -77,8 +77,8 @@ describe('Game-Ending Scenarios', () => {
             const { state } = runTestGame({
                 actions: [new AttackResponseMessage(0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
-                    StateBuilder.withcreature(1, 'evolution-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'evolution-creature', ['high-hp-creature']),
                     StateBuilder.withDamage('evolution-creature-1', 160),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     (state) => {

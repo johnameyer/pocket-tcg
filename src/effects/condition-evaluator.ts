@@ -42,7 +42,7 @@ export class ConditionEvaluator {
             const energyType = Object.keys(condition.hasEnergy)[0] as AttachableEnergyType;
             const requiredCount = condition.hasEnergy[energyType] || 1; // Default to 1 if undefined
             
-            if ((creatureEnergy as any)[energyType] < requiredCount) {
+            if ((creatureEnergy[energyType] || 0) < requiredCount) {
                 return false;
             }
         }

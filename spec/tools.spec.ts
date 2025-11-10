@@ -71,7 +71,7 @@ describe('Creature Tools', () => {
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'flame-sprite'),
+                    StateBuilder.withCreatures(0, 'flame-sprite'),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
                     StateBuilder.withTool('flame-sprite-0', 'power-enhancer')
                 ),
@@ -89,7 +89,7 @@ describe('Creature Tools', () => {
                     new PlayCardResponseMessage('leftovers', 'tool', 0, 1)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'flame-sprite', ['stone-wall']),
+                    StateBuilder.withCreatures(0, 'flame-sprite', ['stone-wall']),
                     StateBuilder.withHand(0, [
                         { templateId: 'leftovers', type: 'tool' as const },
                         { templateId: 'leftovers', type: 'tool' as const }
@@ -107,7 +107,7 @@ describe('Creature Tools', () => {
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'flame-sprite'),
+                    StateBuilder.withCreatures(0, 'flame-sprite'),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }])
                 ),
                 customRepository: toolTestRepository
@@ -124,7 +124,7 @@ describe('Creature Tools', () => {
                     new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }])
                 ),
                 customRepository: mockRepository
@@ -139,7 +139,7 @@ describe('Creature Tools', () => {
                     new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature'),
+                    StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
                     StateBuilder.withTool('basic-creature-0', 'leftovers')
                 ),
@@ -155,7 +155,7 @@ describe('Creature Tools', () => {
                     new PlayCardResponseMessage('power-enhancer', 'tool', 0, 1)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withcreature(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
                     StateBuilder.withTool('basic-creature-0', 'leftovers')
                 ),

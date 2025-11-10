@@ -42,23 +42,12 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
     apply(controllers: Controllers, effect: HpEffect, context: EffectContext): void {
         const amount = getEffectValue(effect.amount, controllers, context);
         
-        // Ensure we have a resolved target
-        // TODO effect.target.type === 'resolved'?
-        if (!effect.target || typeof effect.target !== 'object') {
-            throw new Error(`Expected resolved target, got ${effect.target}`);
+        if (effect.target.type !== 'resolved') {
+            throw new Error(`Expected resolved target, got ${effect.target.type}`);
         }
         
-        // Handle all-matching targets generically
-        if (effect.target.type === 'all-matching') {
-            this.handleAllMatchingTargets(controllers, effect, context, amount);
-            return;
-        }
-        
-        // Get resolved targets using the helper method from AbstractEffectHandler
-        const targetsFromEffect = this.getResolvedTargets(effect, 'target');
-        
-        // Make sure targets is always an array
-        const targets = Array.isArray(targetsFromEffect) ? targetsFromEffect : [targetsFromEffect];
+        // Get resolved targets directly
+        const targets = effect.target.targets;
         
         if (targets.length === 0) {
             controllers.players.messageAll({
@@ -68,12 +57,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             return;
         }
         
-        for (const target of targets as ResolvedTarget[]) {
-            // Type narrowing: ensure we have a resolved target
-            if (target.type !== 'resolved') {
-                throw new Error(`Expected resolved target, got ${target.type}`);
-            }
-            
+        for (const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // For healing effects, we can only target our own creature
@@ -105,135 +89,6 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
     }
     
     /**
-     * Handle all-matching targets for HP effects
-     * 
-     * @param controllers Game controllers
-     * @param effect The HP effect to apply
-     * @param context Effect context
-     * @param amount The amount to heal or damage
-     */
-    private handleAllMatchingTargets(
-        controllers: Controllers,
-        effect: HpEffect,
-        context: EffectContext,
-        amount: number
-    ): void {
-        if (!effect.target || effect.target.type !== 'all-matching' || !effect.target.criteria) {
-            throw new Error('Invalid all-matching target');
-        }
-        
-        const criteria = effect.target.criteria;
-        
-        // For healing effects, we can only target our own creature
-        if (effect.operation === 'heal' && criteria.player === 'opponent') {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [`${context.effectName} cannot heal opponent's creature!`]
-            });
-            return;
-        }
-        
-        // Determine which players to check based on criteria
-        const playerIds = [];
-        if (!criteria.player || criteria.player === 'self') {
-            playerIds.push(context.sourcePlayer);
-        }
-        if ((!criteria.player || criteria.player === 'opponent') && effect.operation !== 'heal') {
-            playerIds.push((context.sourcePlayer + 1) % 2); // Assuming 2 players
-        }
-        
-        let targetsFound = false;
-        
-        // Process each player's creature
-        for (const playerId of playerIds) {
-            // Process active creature first (if not bench-only scope)
-            // Check if we should process active creature based on position criteria
-            if (!criteria.position || criteria.position !== 'bench') {
-                const activecreature = controllers.field.getCardByPosition(playerId, 0);
-                if (activecreature) {
-                    // Check if the creature matches the criteria directly
-                    // For all-matching targets, we can evaluate simple conditions directly
-                    // TODO generify appropriately - is TargetResolver not working?
-                    if (criteria.condition && criteria.condition.hasEnergy && typeof criteria.condition.hasEnergy === 'object') {
-                        // Get the energy type and required count
-                        const energyType = Object.keys(criteria.condition.hasEnergy)[0] as AttachableEnergyType;
-                        const requiredCount = criteria.condition.hasEnergy[energyType] || 1;
-                        
-                        // Check if the creature has enough energy of the specified type
-                        const energyCount = controllers.energy.countEnergyTypeByInstance(activecreature.instanceId, energyType);
-                        if (energyCount >= requiredCount) {
-                            targetsFound = true;
-                            if (effect.operation === 'heal') {
-                                if (activecreature.damageTaken > 0) {
-                                    this.applyHealing(controllers, activecreature, playerId, 0, amount, context.effectName);
-                                }
-                            } else {
-                                this.applyDamage(controllers, activecreature, playerId, 0, amount, context);
-                            }
-                        }
-                    } else {
-                        // For other conditions, assume they match
-                        targetsFound = true;
-                        if (effect.operation === 'heal') {
-                            if (activecreature.damageTaken > 0) {
-                                this.applyHealing(controllers, activecreature, playerId, 0, amount, context.effectName);
-                            }
-                        } else {
-                            this.applyDamage(controllers, activecreature, playerId, 0, amount, context);
-                        }
-                    }
-                }
-            }
-            
-            // Process benched creature
-            const benchedcreature = controllers.field.getCards(playerId).slice(1);
-            for (let i = 0; i < benchedcreature.length; i++) {
-                const creature = benchedcreature[i];
-                if (!creature) continue;
-                
-                // Check if the creature matches the criteria directly
-                // For all-matching targets, we can evaluate simple conditions directly
-                if (criteria.condition && typeof criteria.condition === 'object' && 
-                    criteria.condition.hasEnergy && typeof criteria.condition.hasEnergy === 'object' &&
-                    criteria.condition.hasEnergy.water) {
-                    // Check if the creature has Water energy
-                    const requiredCount = criteria.condition.hasEnergy.water || 1;
-                    const waterEnergyCount = controllers.energy.countEnergyTypeByInstance(creature.instanceId, 'water');
-                    if (waterEnergyCount >= requiredCount) {
-                        targetsFound = true;
-                        if (effect.operation === 'heal') {
-                            if (creature.damageTaken > 0) {
-                                // Bench positions start at 1 in the controller
-                                this.applyHealing(controllers, creature, playerId, i + 1, amount, context.effectName);
-                            }
-                        } else {
-                            // Bench positions start at 1 in the controller
-                            this.applyDamage(controllers, creature, playerId, i + 1, amount, context);
-                        }
-                    }
-                } else {
-                    // For other conditions, assume they match
-                    targetsFound = true;
-                    if (effect.operation === 'heal') {
-                        if (creature.damageTaken > 0) {
-                            // Bench positions start at 1 in the controller
-                            this.applyHealing(controllers, creature, playerId, i + 1, amount, context.effectName);
-                        }
-                    } else {
-                        // Bench positions start at 1 in the controller
-                        this.applyDamage(controllers, creature, playerId, i + 1, amount, context);
-                    }
-                }
-            }
-        }
-        
-        if (!targetsFound) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [`${context.effectName} found no matching creature!`]
-            });
-        }
-    }
     
     /**
      * Optional validation method to check if an HP effect can be applied.
@@ -280,18 +135,6 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         }
         
         return result;
-    }
-    
-    /**
-     * Helper method to check if a target is a fixed or all-matching target
-     * 
-     * @param target The target to check
-     * @returns True if the target is a fixed or all-matching target
-     */
-    private isFixedOrAllMatchingTarget(target: Target): boolean {
-        return target && typeof target === 'object' && 
-               'type' in target && 
-               (target.type === 'fixed' || target.type === 'all-matching');
     }
     
     /**

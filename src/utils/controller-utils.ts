@@ -2,6 +2,17 @@ import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { reconstruct } from '@cards-ts/core';
 
+type ControllerWithGetFor = {
+    getFor(position: number): unknown;
+};
+
+function hasGetFor(controller: unknown): controller is ControllerWithGetFor {
+    return typeof controller === 'object' && 
+           controller !== null && 
+           'getFor' in controller && 
+           typeof (controller as ControllerWithGetFor).getFor === 'function';
+}
+
 /**
  * Utility functions for working with Controllers and HandlerData
  */
@@ -28,9 +39,8 @@ export class ControllerUtils {
                     return [key, value];
                 }
                 
-                // Call getFor on each controller to get its HandlerData view
-                // We need to use any here because the controllers don't have a common interface
-                const handlerData = (value as any).getFor ? (value as any).getFor(position) : value;
+                // Call getFor on controllers that have this method
+                const handlerData = hasGetFor(value) ? value.getFor(position) : value;
                 
                 // Deep clone the handler data to avoid modifying the original
                 return [key, reconstruct(handlerData)];
@@ -45,8 +55,12 @@ export class ControllerUtils {
      * @returns True if the object is HandlerData, false if it's Controllers
      */
     static isHandlerData(obj: HandlerData | Controllers): obj is HandlerData {
-        return 'creature' in obj && 
-               'turn' in obj &&
-               !('getPlayedCards' in (obj as any).fieldCard);
+        const hasExpectedProps = 'creature' in obj && 'turn' in obj;
+        const hasControllerMethods = 'fieldCard' in obj && 
+                                    typeof (obj as Record<string, unknown>).fieldCard === 'object' &&
+                                    (obj as Record<string, unknown>).fieldCard !== null &&
+                                    'getPlayedCards' in ((obj as Record<string, unknown>).fieldCard as Record<string, unknown>);
+        
+        return hasExpectedProps && !hasControllerMethods;
     }
 }

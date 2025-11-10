@@ -8,6 +8,7 @@ import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
 import { EffectContextFactory } from './effects/effect-context.js';
 import { TriggerProcessor } from './effects/trigger-processor.js';
+import { AttachableEnergyType } from './controllers/energy-controller.js';
 import { AttackDamageResolver } from './effects/attack-damage-resolver.js';
 import { ActionValidator } from './effects/action-validator.js';
 import { ControllerUtils } from './utils/controller-utils.js';
@@ -116,37 +117,23 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 return;
             }
             
-            // Process damage boost effects BEFORE the attack
-            // No damage boost or reduction effects to handle
-            let damageBoostEffects: never[] = [];
-            let damageReductionEffects: never[] = [];
+            // Get target information
             const targetId = (sourceHandler + 1) % controllers.players.count;
             const targetCard = controllers.field.getCardByPosition(targetId, 0);
+            
+            // Process passive abilities for damage reduction BEFORE the attack
             if (targetCard) {
                 const targetCreatureData = controllers.cardRepository.getCreature(targetCard.templateId);
                 if (targetCreatureData.abilities) {
                     for (const ability of targetCreatureData.abilities) {
                         if (ability.trigger.type === 'passive' && ability.effects) {
-                            const abilityDamageReductions = ability.effects.filter(effect => effect.type === 'damage-reduction');
-                            damageReductionEffects.push(...abilityDamageReductions);
+                            const effectName = `${targetCreatureData.name}'s ${ability.name}`;
+                            const context = EffectContextFactory.createAttackContext(targetId, effectName, targetCard.instanceId);
+                            
+                            EffectApplier.applyEffects(ability.effects, controllers, context);
                         }
                     }
                 }
-            }
-            
-            if (damageBoostEffects.length > 0) {
-                const effectName = `${playerCard.templateId}'s ${attack.name}`;
-                const context = EffectContextFactory.createAttackContext(sourceHandler, effectName, playerCard.instanceId);
-                
-                EffectApplier.applyEffects(damageBoostEffects, controllers, context);
-            }
-            
-            if (damageReductionEffects.length > 0) {
-                const targetCreatureData = controllers.cardRepository.getCreature(targetCard.templateId);
-                const effectName = `${targetCreatureData.name}'s passive ability`;
-                const context = EffectContextFactory.createAttackContext(targetId, effectName, targetCard.instanceId);
-                
-                EffectApplier.applyEffects(damageReductionEffects, controllers, context);
             }
             
             // Use AttackDamageResolver to calculate damage including coin flips
@@ -349,6 +336,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Clear guaranteed coin flip heads at end of turn (Will supporter effect)
             controllers.coinFlip.clearGuaranteedHeads();
             
+            // Clear retreat preventions that expire at end of turn
+            // TODO: Implement proper duration tracking instead of clearing all
+            controllers.turnState.clearRetreatPreventions();
+
             controllers.players.messageAll({
                 type: 'turn-ended',
                 components: [`Player ${sourceHandler + 1} ended their turn.`]
@@ -532,9 +523,31 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     components: [`Player ${currentPlayer + 1} attached ${energyType} energy!`]
                 });
                 
-                // Process energy-attachment triggers for all field cards
-                const allFieldCards = controllers.field.getPlayedCards(currentPlayer);
-                for (const card of allFieldCards) {
+                // Process energy-attachment triggers for all field cards (all players)
+                for (let playerId = 0; playerId < controllers.players.count; playerId++) {
+                    const fieldCards = controllers.field.getPlayedCards(playerId);
+                    for (const card of fieldCards) {
+                        const cardData = controllers.cardRepository.getCreature(card.templateId);
+                        if (cardData.abilities) {
+                            for (const ability of cardData.abilities) {
+                                if (ability.trigger?.type === 'energy-attachment' && 
+                                    (!ability.trigger.energyType || ability.trigger.energyType === energyType)) {
+                                    
+                                    const context = EffectContextFactory.createAbilityContext(
+                                        playerId,
+                                        `${cardData.name}'s ${ability.name}`,
+                                        card.instanceId
+                                    );
+                                    
+                                    EffectApplier.applyEffects(
+                                        ability.effects,
+                                        controllers,
+                                        context
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
             
@@ -633,6 +646,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot retreat while paralyzed', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     return controllers.statusEffects.hasStatusEffect(source, 0, 'paralyzed');
                 }),
+                EventHandler.validate('Cannot retreat - retreat prevented', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
+                    const activeCard = controllers.field.getCardByPosition(source, 0);
+                    if (!activeCard) return false;
+                    
+                    return controllers.turnState.isRetreatPrevented(activeCard.instanceId);
+                }),
             ],
             fallback: (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                 return undefined as any;
@@ -656,7 +675,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             for (const [energyType, amount] of Object.entries(attachedEnergy)) {
                 if (energyToRemove <= 0) break;
                 const toRemove = Math.min(amount, energyToRemove);
-                controllers.energy.discardSpecificEnergyFromInstance(activeCard.instanceId, energyType as any, toRemove);
+                controllers.energy.discardSpecificEnergyFromInstance(activeCard.instanceId, energyType as AttachableEnergyType, toRemove);
                 energyToRemove -= toRemove;
             }
             
@@ -688,8 +707,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     let targetToValidate: Target | undefined = undefined;
                     
                     // Get resolution requirements to determine which target needs validation
-                    const handler = effectHandlers[effect.type] as any;
-                    if (handler && handler.getResolutionRequirements) {
+                    const handler = effectHandlers[effect.type];
+                    if (handler && 'getResolutionRequirements' in handler) {
                         const requirements = handler.getResolutionRequirements(effect);
                         
                         // Find the first unresolved requirement that needs selection

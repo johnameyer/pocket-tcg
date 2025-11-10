@@ -5,6 +5,7 @@ import { EffectValidator } from './effect-validator.js';
 import { EffectContextFactory } from './effect-context.js';
 import { TargetResolver } from './target-resolver.js';
 import { Effect } from '../repository/effect-types.js';
+import { StatusEffect } from '../controllers/status-effect-controller.js';
 
 /**
  * ActionValidator provides HandlerData-based validation methods for game actions.
@@ -66,9 +67,9 @@ export class ActionValidator {
         const retreatCost = creatureData.retreatCost || 0;
         const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, activeCreature.instanceId);
         
-        const statusEffects = (handlerData.statusEffects?.activeStatusEffects[playerId] as any[]) || [];
-        const isAsleep = statusEffects.some((e: { type: string }) => e.type === 'asleep');
-        const isParalyzed = statusEffects.some((e: { type: string }) => e.type === 'paralyzed');
+        const statusEffects = (handlerData.statusEffects?.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
+        const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
+        const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
         
         if (isAsleep || isParalyzed) {
             return false;
@@ -84,9 +85,9 @@ export class ActionValidator {
         const activeCreature = handlerData.field.creatures[playerId]?.[0];
         if (!activeCreature) return false;
         
-        const statusEffects = (handlerData.statusEffects?.activeStatusEffects[playerId] as any[]) || [];
-        const isAsleep = statusEffects.some((e: { type: string }) => e.type === 'asleep');
-        const isParalyzed = statusEffects.some((e: { type: string }) => e.type === 'paralyzed');
+        const statusEffects = (handlerData.statusEffects?.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
+        const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
+        const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
         
         if (isAsleep || isParalyzed) {
             return false;
