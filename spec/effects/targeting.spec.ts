@@ -76,7 +76,7 @@ describe('Effect Targeting', () => {
                         weakness: 'fighting',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
-                        abilities: [{
+                        ability: {
                             name: 'Self Heal',
                             trigger: { type: 'manual', unlimited: true },
                             effects: [{
@@ -85,13 +85,13 @@ describe('Effect Targeting', () => {
                                 target: { type: 'fixed', player: 'self', position: 'source' },
                                 operation: 'heal'
                             }]
-                        }]
+                        }
                     }]
                 ])
             });
 
             const { state } = runTestGame({
-                actions: [new UseAbilityResponseMessage(0, 1)],
+                actions: [new UseAbilityResponseMessage(1)],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature', ['bench-healer']),

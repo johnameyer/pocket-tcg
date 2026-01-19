@@ -103,7 +103,7 @@ describe('Trigger System', () => {
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                        abilities: [{
+                        ability: {
                             name: 'End Turn Heal',
                             effects: [{ 
                                 type: 'hp', 
@@ -112,7 +112,7 @@ describe('Trigger System', () => {
                                 operation: 'heal'
                             }],
                             trigger: { type: 'end-of-turn' }
-                        }]
+                        }
                     }]
                 ])
             });
@@ -139,7 +139,7 @@ describe('Trigger System', () => {
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                        abilities: [{
+                        ability: {
                             name: 'Damage Response',
                             effects: [{ 
                                 type: 'hp', 
@@ -148,7 +148,7 @@ describe('Trigger System', () => {
                                 operation: 'heal'
                             }],
                             trigger: { type: 'damaged' }
-                        }]
+                        }
                     }],
                     ['basic-attacker', {
                         templateId: 'basic-attacker',
@@ -183,7 +183,7 @@ describe('Trigger System', () => {
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                        abilities: [{
+                        ability: {
                             name: 'Manual Heal',
                             effects: [{ 
                                 type: 'hp', 
@@ -192,13 +192,13 @@ describe('Trigger System', () => {
                                 operation: 'heal'
                             }],
                             trigger: { type: 'manual', unlimited: true }
-                        }]
+                        }
                     }]
                 ])
             });
 
             const { state } = runTestGame({
-                actions: [new UseAbilityResponseMessage(0, 0)],
+                actions: [new UseAbilityResponseMessage(0)],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'manual-heal-creature'),
@@ -222,7 +222,7 @@ describe('Trigger System', () => {
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                        abilities: [{
+                        ability: {
                             name: 'End Turn Heal',
                             effects: [{ 
                                 type: 'hp', 
@@ -231,7 +231,7 @@ describe('Trigger System', () => {
                                 operation: 'heal'
                             }],
                             trigger: { type: 'end-of-turn' }
-                        }]
+                        }
                     }]
                 ]),
                 tools: new Map([
@@ -324,7 +324,7 @@ describe('Trigger System', () => {
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                        abilities: [{
+                        ability: {
                             name: 'Unlimited Heal',
                             effects: [{ 
                                 type: 'hp', 
@@ -333,15 +333,15 @@ describe('Trigger System', () => {
                                 operation: 'heal'
                             }],
                             trigger: { type: 'manual', unlimited: true }
-                        }]
+                        }
                     }]
                 ])
             });
 
             const { state } = runTestGame({
                 actions: [
-                    new UseAbilityResponseMessage(0, 0),
-                    new UseAbilityResponseMessage(0, 0)
+                    new UseAbilityResponseMessage(0),
+                    new UseAbilityResponseMessage(0)
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(

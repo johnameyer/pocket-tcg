@@ -37,18 +37,17 @@ export class TriggerProcessor {
 
         // Process ability triggers
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        if (creatureData && creatureData.abilities) {
-            for (const ability of creatureData.abilities) {
-                if (ability.trigger?.type === 'damaged' && ability.effects) {
-                    const context = EffectContextFactory.createTriggerContext(
-                        playerId,
-                        `${creatureData.name}'s ${ability.name}`,
-                        'damaged',
-                        creatureInstanceId
-                    );
-                    
-                    EffectApplier.applyEffects(ability.effects, controllers, context);
-                }
+        if (creatureData && creatureData.ability) {
+            const ability = creatureData.ability;
+            if (ability.trigger?.type === 'damaged' && ability.effects) {
+                const context = EffectContextFactory.createTriggerContext(
+                    playerId,
+                    `${creatureData.name}'s ${ability.name}`,
+                    'damaged',
+                    creatureInstanceId
+                );
+                
+                EffectApplier.applyEffects(ability.effects, controllers, context);
             }
         }
     }
@@ -79,24 +78,23 @@ export class TriggerProcessor {
         
         // Process ability triggers
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        if (creatureData && creatureData.abilities) {
-            for (const ability of creatureData.abilities) {
-                if (ability.trigger?.type === 'end-of-turn' && ability.effects) {
-                    
-                    // Check firstTurnOnly restriction
-                    if (ability.trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
-                        continue; // Skip this ability if it's not the first turn (turn 0)
-                    }
-                    
-                    const context = EffectContextFactory.createTriggerContext(
-                        playerId,
-                        `${creatureData.name}'s ${ability.name}`,
-                        'end-of-turn',
-                        creatureInstanceId
-                    );
-                    
-                    EffectApplier.applyEffects(ability.effects, controllers, context);
+        if (creatureData && creatureData.ability) {
+            const ability = creatureData.ability;
+            if (ability.trigger?.type === 'end-of-turn' && ability.effects) {
+                
+                // Check firstTurnOnly restriction
+                if (ability.trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
+                    return; // Skip this ability if it's not the first turn (turn 0)
                 }
+                
+                const context = EffectContextFactory.createTriggerContext(
+                    playerId,
+                    `${creatureData.name}'s ${ability.name}`,
+                    'end-of-turn',
+                    creatureInstanceId
+                );
+                
+                EffectApplier.applyEffects(ability.effects, controllers, context);
             }
         }
     }
