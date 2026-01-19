@@ -1,2 +1,3 @@
 overrides:
   '@cards-ts/core': link:../../cards-ts/libs/core
+  '@cards-ts/state-machine': link:../../cards-ts/libs/state-machine

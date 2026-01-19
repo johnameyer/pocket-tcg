@@ -37,7 +37,7 @@ import { effectHandlers } from './effects/handlers/effect-handlers-map.js';
  * - SelectActivecreatureResponseMessage: Corrects invalid bench index to valid one
  * - SetupCompleteResponseMessage: Provides fallback creature selection
  * - EndTurnResponseMessage: Always valid, no correction needed
- */
+ */ 
 export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
     'select-active-card-response': {
         validateEvent: {
@@ -322,6 +322,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: EndTurnResponseMessage) => {
             const currentPlayer = sourceHandler;
             
+            // Remove waiting position - MISSING: This was causing stuck turn issue
+            controllers.waiting.removePosition(sourceHandler);
+            
             // Trigger end-of-turn effects for active card (tools + abilities)
             const activeCard = controllers.field.getCardByPosition(currentPlayer, 0);
             if (activeCard) {
@@ -382,13 +385,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, source: number, message: SetupCompleteResponseMessage) => {
             controllers.waiting.removePosition(source);
             
-            const hand = controllers.hand.getHand(source);
-            const activeCardToRemove = { id: message.activeCardId, cardId: message.activeCardId, type: 'creature' as const };
+            const activeCardToRemove = { templateId: message.activeCardId, type: 'creature' as const };
             controllers.hand.removeCards(source, [activeCardToRemove]);
             controllers.field.setActiveCard(source, message.activeCardId);
             
             for (const cardId of message.benchCardIds) {
-                const benchCardToRemove = { id: cardId, cardId, type: 'creature' as const };
+                const benchCardToRemove = { templateId: cardId, type: 'creature' as const };
                 controllers.hand.removeCards(source, [benchCardToRemove]);
                 controllers.field.addToBench(source, cardId);
             }

@@ -12,26 +12,6 @@ export class DefaultBotHandler extends GameHandler {
         this.cardRepository = cardRepository || new CardRepository();
     }
     
-    handleEvolve(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
-        // Bot always evolves the first available creature
-        const currentPlayer = handlerData.turn;
-        const hand = handlerData.hand;
-        
-        // Find evolution cards in hand
-        const evolutionCards = hand.filter(card => card.type === 'creature');
-        
-        if (evolutionCards.length > 0) {
-            // Get the first evolution card
-            const evolutionCard = evolutionCards[0];
-            
-            // Evolve the active creature by default
-            responsesQueue.push(new EvolveResponseMessage(
-                evolutionCard.templateId,
-                0 // active position
-            ));
-        }
-    }
-    
     handleAction(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
         const currentPlayer = handlerData.turn;
         
@@ -87,9 +67,9 @@ export class DefaultBotHandler extends GameHandler {
         // Try to attach energy if available and not first turn restricted
         if (handlerData.energy) {
             const isFirstTurnRestricted = handlerData.energy.isAbsoluteFirstTurn;
-            const energyAttachedThisTurn = handlerData.energy.energyAttachedThisTurn[currentPlayer];
+            const energyAvailable = handlerData.energy.currentEnergy[currentPlayer] !== null;
             
-            if (!energyAttachedThisTurn && !isFirstTurnRestricted) {
+            if (energyAvailable && !isFirstTurnRestricted) {
                 responsesQueue.push(new AttachEnergyResponseMessage(0));
                 return;
             }
@@ -164,11 +144,9 @@ export class DefaultBotHandler extends GameHandler {
                 benchCards.map(card => card.templateId)
             ));
         } else {
-            // No creature cards in hand, just complete setup with default
-            responsesQueue.push(new SetupCompleteResponseMessage(
-                'basic-creature', // Use a default creature ID
-                []
-            ));
+            // No creature cards in hand - this shouldn't happen in normal gameplay
+            // But if it does, we need to handle it gracefully
+            throw new Error('No creature cards available for setup');
         }
     }
 }

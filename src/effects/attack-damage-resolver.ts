@@ -83,13 +83,9 @@ export class AttackDamageResolver {
         // Apply damage boosts from turn state (with condition checking)
         const damageBoosts = controllers.turnState.getDamageBoosts();
         for (const boost of damageBoosts) {
-            console.log(`DEBUG: Checking damage boost: ${boost.effectName}, amount: ${boost.amount}`);
             // Check if this boost should apply to the current target
             if (this.shouldApplyDamageBoost(boost, targetcreature, controllers, context)) {
-                console.log(`DEBUG: Applying damage boost: ${boost.amount}`);
                 totalDamage += boost.amount;
-            } else {
-                console.log(`DEBUG: Skipping damage boost: ${boost.effectName}`);
             }
         }
         

@@ -55,6 +55,7 @@ export type CreatureData = {
     weakness?: string;
     retreatCost: number;
     attacks: CreatureAttack[];
+    // TODO only one ability possible
     abilities?: CreatureAbility[];
     stage?: number;
     evolvesFrom?: string;

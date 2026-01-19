@@ -6,26 +6,106 @@ import { AttackResponseMessage } from '../src/messages/response/attack-response-
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
+import { mockRepository, MockCardRepository } from './mock-repository.js';
+import { SupporterData } from '../src/repository/card-types.js';
 
 describe('Creature Pocket TCG Game', () => {
-    const factory = gameFactory();
+    const factory = gameFactory(mockRepository);
     const params: GameParams = {
         ...new GameSetup().getDefaultParams(),
     };
 
+    it('should not allow drawing beyond 10-card hand limit', () => {
+        // Create draw supporters that draw many cards
+        const testRepository = new MockCardRepository({
+            supporters: new Map<string, SupporterData>([
+                ['research-supporter', {
+                    templateId: 'research-supporter',
+                    name: 'Research Supporter',
+                    effects: [{ type: 'draw', amount: { type: 'constant', value: 7 } }]
+                }],
+                ['massive-draw', {
+                    templateId: 'massive-draw', 
+                    name: 'Massive Draw',
+                    effects: [{ type: 'draw', amount: { type: 'constant', value: 15 } }]
+                }]
+            ])
+        });
+
+        // Test with hand at 9 cards, trying to draw 7 (should only draw 1)
+        const { state: state1 } = runTestGame({
+            actions: [new PlayCardResponseMessage('research-supporter', 'supporter')],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withHand(0, [
+                    { templateId: 'research-supporter', type: 'supporter' },
+                    ...Array(8).fill({ templateId: 'basic-creature', type: 'creature' })
+                ]),
+                StateBuilder.withDeck(0, Array(20).fill({ templateId: 'high-hp-creature', type: 'creature' }))
+            ),
+            maxSteps: 10
+        });
+
+        expect(state1.hand[0].length).to.be.at.most(10, 'Hand should not exceed 10 cards');
+        expect(state1.hand[0].length).to.equal(10, 'Should draw exactly to 10-card limit');
+
+        // Test with hand at 5 cards, trying to draw 15 (should only draw 5)
+        const { state: state2 } = runTestGame({
+            actions: [new PlayCardResponseMessage('massive-draw', 'supporter')],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withHand(0, [
+                    { templateId: 'massive-draw', type: 'supporter' },
+                    ...Array(4).fill({ templateId: 'basic-creature', type: 'creature' })
+                ]),
+                StateBuilder.withDeck(0, Array(20).fill({ templateId: 'high-hp-creature', type: 'creature' }))
+            ),
+            maxSteps: 10
+        });
+
+        expect(state2.hand[0].length).to.be.at.most(10, 'Hand should not exceed 10 cards');
+        expect(state2.hand[0].length).to.equal(10, 'Should draw exactly to 10-card limit');
+
+        // Test with hand already at 10 cards (should draw 0)
+        const { state: state3 } = runTestGame({
+            actions: [new PlayCardResponseMessage('research-supporter', 'supporter')],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withHand(0, [
+                    { templateId: 'research-supporter', type: 'supporter' },
+                    ...Array(9).fill({ templateId: 'basic-creature', type: 'creature' })
+                ]),
+                StateBuilder.withDeck(0, Array(20).fill({ templateId: 'high-hp-creature', type: 'creature' }))
+            ),
+            maxSteps: 10
+        });
+
+        expect(state3.hand[0].length).to.be.at.most(10, 'Hand should not exceed 10 cards');
+        expect(state3.hand[0].length).to.equal(10, 'Should draw 1 card to reach limit after playing supporter');
+    });
+
     it('should create and run a basic game with bot handlers', () => {
+        // Provide proper decks with creature cards for setup
+        const testParams: GameParams = {
+            initialDecks: [
+                ['basic-creature', 'basic-creature', 'basic-creature', 'basic-creature', 'basic-creature'],
+                ['basic-creature', 'basic-creature', 'basic-creature', 'basic-creature', 'basic-creature']
+            ]
+        };
+        
         const handlers = Array.from({ length: 2 }, () => 
             factory.getDefaultBotHandlerChain()
         );
         
         const names = ['Player1', 'Player2'];
-        const driver = factory.getGameDriver(handlers, params, names);
+        const driver = factory.getGameDriver(handlers, testParams, names);
 
         driver.resume();
         
         expect(driver.getState().completed).to.be.false;
 
-        for (let i = 0; i < 5; i++) {
+        // Run more iterations to ensure setup completes
+        for (let i = 0; i < 50; i++) {
             driver.handleSyncResponses();
             driver.resume();
             
@@ -37,6 +117,9 @@ describe('Creature Pocket TCG Game', () => {
         const finalState = driver.getState();
         expect(finalState).to.exist;
         expect(typeof finalState.completed).to.equal('boolean');
+        
+        // Game should progress past setup phase
+        expect(finalState.setup?.playersReady?.every(ready => ready)).to.be.true;
     });
 
     it('should have proper game factory methods', () => {

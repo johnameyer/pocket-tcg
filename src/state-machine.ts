@@ -67,6 +67,7 @@ const processKnockouts = {
         for (let i = 0; i < controllers.players.count; i++) {
             // Check active card knockout
             if (controllers.field.isKnockedOut(i)) {
+                
                 // Send knockout message
                 const targetCard = controllers.field.getCardByPosition(i, 0);
                 if (targetCard) {
@@ -80,6 +81,14 @@ const processKnockouts = {
                     const opponentId = (i + 1) % controllers.players.count;
                     const pointsToAward = cardData.attributes?.ex ? 2 : 1;
                     controllers.points.increaseScore(opponentId, pointsToAward);
+                    
+                    const currentPoints = controllers.points.get();
+                    
+                    // ========================================
+                    // POST-ACTION INTERNAL STATE LOGGING
+                    // ========================================
+                    const internalHP = controllers.field.getRawCardByPosition(i, 0)?.damageTaken;
+                    const internalPoints = controllers.points.get();
                 }
             }
             
@@ -227,7 +236,10 @@ const drawCardAndShowSummary = {
 // Handle player actions
 const handlePlayerActions = loop<Controllers>({
     id: 'actionLoop',
-    breakingIf: (controllers: Controllers) => controllers.turnState.getShouldEndTurn(),
+    breakingIf: (controllers: Controllers) => {
+        const shouldEndTurn = controllers.turnState.getShouldEndTurn();
+        return shouldEndTurn;
+    },
     run: sequence<Controllers>([
         // Handle player action
         handleSingle({
@@ -237,13 +249,18 @@ const handlePlayerActions = loop<Controllers>({
         {
             // TODO why is this needed?
             name: 'noop',
-            run: () => {},
+            run: (controllers: Controllers) => {
+                const shouldEndTurn = controllers.turnState.getShouldEndTurn();
+                const isWaiting = controllers.waiting.isWaitingOnPlayer();
+                const currentTurn = controllers.turn.get();
+            },
         }, 
         // Check for knockouts after each action
         conditionalState({
             id: 'checkKnockouts',
             condition: isCardKnockedOut,
             truthy: handleKnockout,
+            falsey: () => {},
         })
     ]),
     // TODO Condition is not re-evaluated for some reason without afterEach...
@@ -261,7 +278,6 @@ const gameTurn = loop<Controllers>({
             run: (controllers: Controllers) => {
                 const currentPlayer = controllers.turn.get();
                 controllers.turnState.startTurn();
-                controllers.energy.resetTurnFlags(currentPlayer);
             }
         },
         
@@ -404,6 +420,9 @@ const gameTurn = loop<Controllers>({
             name: 'nextTurn',
             run: (controllers: Controllers) => {
                 if (!isGameOver(controllers)) {
+                    // End the current turn (reset shouldEndTurn flag)
+                    controllers.turnState.endTurn();
+                    
                     // Mark first turn complete after first player's turn
                     if (controllers.energy.isFirstTurnRestricted()) {
                         controllers.energy.markFirstTurnComplete();

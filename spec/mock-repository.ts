@@ -44,6 +44,19 @@ mockCreatureData.set('tank-creature', {
     attacks: [{ name: 'Body Slam', damage: 50, energyRequirements: [{ type: 'colorless', amount: 3 }] }]
 });
 
+mockCreatureData.set('multi-attack-creature', {
+    templateId: 'multi-attack-creature',
+    name: 'Multi Attack Creature',
+    maxHp: 100,
+    type: 'fire',
+    weakness: 'water',
+    retreatCost: 2,
+    attacks: [
+        { name: 'Quick Strike', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] },
+        { name: 'Power Blast', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }
+    ]
+});
+
 const mockSupporterData = new Map<string, SupporterData>();
 mockSupporterData.set('basic-supporter', {
     templateId: 'basic-supporter',

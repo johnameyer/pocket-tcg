@@ -74,10 +74,9 @@ export class StateBuilder {
                 ]
             },
             energy: {
-                currentEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
-                nextEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
+                currentEnergy: [null, null],
+                nextEnergy: [null, null],
                 availableTypes: [['fire'], ['fire']],
-                energyAttachedThisTurn: [false, false],
                 isAbsoluteFirstTurn: false,
                 attachedEnergyByInstance: {} as Record<string, EnergyDictionary>
             },
@@ -85,13 +84,13 @@ export class StateBuilder {
                 attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
             },
             cardRepository: {},
-            deck: [[], []], // Array of card arrays for each player
-            hand: [[], []]  // Array of card arrays for each player
+            deck: [[], []] as GameCard[][], // Array of card arrays for each player
+            hand: [[], []] as GameCard[][]  // Array of card arrays for each player
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided
         if (customizer) {
-            customizer(state as unknown as ControllerState<Controllers>);
+            customizer(state);
         }
         
         return state;
@@ -209,7 +208,8 @@ export class StateBuilder {
 
     static withDeck(player: number, cards: Array<{templateId: string, type?: GameCard['type']}>) {
         return (state: ControllerState<Controllers>) => {
-            state.deck[player] = cards.map((card, index) => ({
+            // TODO remove cast by fixing union
+            (state.deck as GameCard[][])[player] = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-deck-${index}`,
                 templateId: card.templateId,
                 type: card.type || 'creature'
@@ -227,22 +227,16 @@ export class StateBuilder {
         };
     }
 
-    static withCurrentEnergy(player: number, energyTypes: PartialEnergyDict) {
+    static withCurrentEnergy(player: number, energyType: AttachableEnergyType) {
         return (state: ControllerState<Controllers>) => {
-            const energyDict = createEmptyEnergyDict();
-            Object.entries(energyTypes).forEach(([type, count]) => {
-                if (type in energyDict && count !== undefined) {
-                    energyDict[type as AttachableEnergyType] = count;
-                }
-            });
-            state.energy.currentEnergy[player] = energyDict;
+            state.energy.currentEnergy[player] = energyType;
         };
     }
 
     static withNoEnergy(player: number) {
         return (state: ControllerState<Controllers>) => {
-            state.energy.currentEnergy[player] = createEmptyEnergyDict();
-            state.energy.nextEnergy[player] = createEmptyEnergyDict();
+            state.energy.currentEnergy[player] = null;
+            state.energy.nextEnergy[player] = null;
             state.energy.availableTypes[player] = [];
         };
     }

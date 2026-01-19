@@ -67,7 +67,7 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     }
 
     public startTurn(): void {
-        this.state.shouldEndTurn = false;
+        // Don't reset shouldEndTurn here - it should persist until turn actually ends
         this.state.supporterPlayedThisTurn = false;
         this.state.retreatedThisTurn = false;
         this.state.evolvedInstancesThisTurn = [];
@@ -78,6 +78,11 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         // Note: retreatPreventions are cleared based on duration, not every turn
         this.state.damagePrevention = [];
         this.state.evolutionFlexibility = [];
+    }
+
+    public endTurn(): void {
+        // Reset shouldEndTurn only when turn actually ends
+        this.state.shouldEndTurn = false;
     }
     
     public markEvolvedThisTurn(instanceId: string): void {

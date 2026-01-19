@@ -30,6 +30,11 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Draw a card from deck to hand
     drawCard(playerId: number): GameCard | undefined {
+        // Check hand limit (10 cards max)
+        if (this.state[playerId].length >= 10) {
+            return undefined; // Cannot draw when at hand limit
+        }
+        
         const card = this.controllers.deck.drawCard(playerId);
         if (card) {
             this.state[playerId].push(card);

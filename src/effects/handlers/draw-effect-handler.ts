@@ -93,26 +93,45 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
             return;
         }
         
-        // Calculate the actual number of cards to draw (limited by deck size)
-        const actualAmount = Math.min(amount, deckSize);
+        // Check current hand size and enforce 10-card limit
+        const currentHandSize = controllers.hand.getHand(context.sourcePlayer).length;
+        const maxHandSize = 10;
+        
+        if (currentHandSize >= maxHandSize) {
+            controllers.players.messageAll({
+                type: 'status',
+                components: [`${context.effectName} couldn't draw any cards because hand is at maximum size (${maxHandSize})!`]
+            });
+            return;
+        }
+        
+        // Calculate the actual number of cards to draw (limited by deck size and hand limit)
+        const maxDrawable = Math.min(amount, deckSize, maxHandSize - currentHandSize);
         
         // Draw the cards
-        for (let i = 0; i < actualAmount; i++) {
+        for (let i = 0; i < maxDrawable; i++) {
             controllers.hand.drawCard(context.sourcePlayer);
         }
         
         // Send a message about the cards drawn
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} drew ${actualAmount} card${actualAmount !== 1 ? 's' : ''}!`]
+            components: [`${context.effectName} drew ${maxDrawable} card${maxDrawable !== 1 ? 's' : ''}!`]
         });
         
-        // If we couldn't draw all the requested cards, show a message
-        if (actualAmount < amount) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [`${context.effectName} couldn't draw all ${amount} cards because the deck only had ${deckSize} cards!`]
-            });
+        // If we couldn't draw all the requested cards, show appropriate message
+        if (maxDrawable < amount) {
+            if (deckSize < amount && currentHandSize + deckSize <= maxHandSize) {
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [`${context.effectName} couldn't draw all ${amount} cards because the deck only had ${deckSize} cards!`]
+                });
+            } else if (currentHandSize + maxDrawable >= maxHandSize) {
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [`${context.effectName} couldn't draw all ${amount} cards because hand would exceed maximum size!`]
+                });
+            }
         }
     }
 }

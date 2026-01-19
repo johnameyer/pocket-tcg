@@ -13,7 +13,4 @@ export abstract class GameHandler implements Handler<GameHandlerParams, HandlerD
     
     // Method to handle setup phase
     abstract handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void | Promise<void>;
-    
-    // Method to handle evolving a creature
-    abstract handleEvolve(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void | Promise<void>;
 }

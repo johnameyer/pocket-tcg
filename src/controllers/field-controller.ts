@@ -197,6 +197,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         // Check if knocked out
         const isKnockedOut = this.isKnockedOut(targetId);
         
+        
         // Return the result of the attack
         return {
             attacker: this.getCardByPosition(attackerId, 0),
@@ -216,8 +217,10 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         }
         
         const { maxHp } = this.controllers.cardRepository.getCreature(card.templateId);
+        const isKO = card.damageTaken >= maxHp;
+        
 
-        return card.damageTaken >= maxHp;
+        return isKO;
     }
 
     // Remove a card from the bench (for knockouts)

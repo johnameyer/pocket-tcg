@@ -34,7 +34,7 @@ export class ActionValidator {
      * Checks if energy can be attached.
      */
     static canAttachEnergy(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, energyType?: string): boolean {
-        if (handlerData.energy.energyAttachedThisTurn[playerId]) return false;
+        if (handlerData.energy.currentEnergy[playerId] === null) return false;
         
         if (handlerData.energy.isAbsoluteFirstTurn) return false;
         

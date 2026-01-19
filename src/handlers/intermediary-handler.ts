@@ -201,9 +201,4 @@ export class IntermediaryHandler extends GameHandler {
         
         responsesQueue.push(new SetupCompleteResponseMessage(activeCardId, benchCardIds));
     }
-    
-    async handleEvolve(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
-        // Delegate to the helper function
-        await helpers.handleEvolve(this.cardRepository, this.intermediary, handlerData, responsesQueue);
-    }
 }
