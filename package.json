@@ -32,8 +32,8 @@
     "url": "https://github.com/johnameyer/pocket-tcg/issues"
   },
   "dependencies": {
-    "@cards-ts/core": "^0.8.1",
-    "@cards-ts/state-machine": "^0.8.1",
+    "@cards-ts/core": "^0.8.2",
+    "@cards-ts/state-machine": "^0.8.2",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
