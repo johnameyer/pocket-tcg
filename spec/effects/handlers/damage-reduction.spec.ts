@@ -16,7 +16,7 @@ describe('Damage Reduction Effect', () => {
                 weakness: 'water', // Changed from 'fire' to avoid weakness with fire attacker
                 retreatCost: 2,
                 attacks: [{ name: 'Steel Strike', damage: 30, energyRequirements: [{ type: 'metal', amount: 2 }] }],
-                abilities: [{
+                ability: {
                     name: 'Steel Armor',
                     trigger: { type: 'passive' },
                     effects: [{
@@ -24,7 +24,7 @@ describe('Damage Reduction Effect', () => {
                         amount: { type: 'constant', value: 20 },
                         target: { type: 'fixed', player: 'self', position: 'active' }
                     }]
-                }]
+                }
             }],
             ['high-hp-defensive-creature', {
                 templateId: 'high-hp-defensive-creature',
@@ -34,7 +34,7 @@ describe('Damage Reduction Effect', () => {
                 weakness: 'water',
                 retreatCost: 3,
                 attacks: [{ name: 'Heavy Strike', damage: 40, energyRequirements: [{ type: 'metal', amount: 3 }] }],
-                abilities: [{
+                ability: {
                     name: 'Reinforced Armor',
                     trigger: { type: 'passive' },
                     effects: [{
@@ -42,7 +42,7 @@ describe('Damage Reduction Effect', () => {
                         amount: { type: 'constant', value: 20 },
                         target: { type: 'fixed', player: 'self', position: 'active' }
                     }]
-                }]
+                }
             }],
             ['variable-defense-creature', {
                 templateId: 'variable-defense-creature',
@@ -52,7 +52,7 @@ describe('Damage Reduction Effect', () => {
                 weakness: 'psychic',
                 retreatCost: 1,
                 attacks: [{ name: 'Counter', damage: 20, energyRequirements: [{ type: 'fighting', amount: 1 }] }],
-                abilities: [{
+                ability: {
                     name: 'Adaptive Defense',
                     trigger: { type: 'passive' },
                     effects: [{
@@ -60,7 +60,7 @@ describe('Damage Reduction Effect', () => {
                         amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
                         target: { type: 'fixed', player: 'self', position: 'active' }
                     }]
-                }]
+                }
             }],
             ['high-hp-creature', {
                 templateId: 'high-hp-creature',

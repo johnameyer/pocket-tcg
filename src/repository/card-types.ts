@@ -55,7 +55,7 @@ export type CreatureData = {
     weakness?: string;
     retreatCost: number;
     attacks: CreatureAttack[];
-    abilities?: CreatureAbility[];
+    ability?: CreatureAbility;
     stage?: number;
     evolvesFrom?: string;
     attributes?: {

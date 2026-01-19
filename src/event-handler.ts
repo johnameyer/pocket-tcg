@@ -124,14 +124,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Process passive abilities for damage reduction BEFORE the attack
             if (targetCard) {
                 const targetCreatureData = controllers.cardRepository.getCreature(targetCard.templateId);
-                if (targetCreatureData.abilities) {
-                    for (const ability of targetCreatureData.abilities) {
-                        if (ability.trigger.type === 'passive' && ability.effects) {
-                            const effectName = `${targetCreatureData.name}'s ${ability.name}`;
-                            const context = EffectContextFactory.createAttackContext(targetId, effectName, targetCard.instanceId);
-                            
-                            EffectApplier.applyEffects(ability.effects, controllers, context);
-                        }
+                if (targetCreatureData.ability) {
+                    const ability = targetCreatureData.ability;
+                    if (ability.trigger.type === 'passive' && ability.effects) {
+                        const effectName = `${targetCreatureData.name}'s ${ability.name}`;
+                        const context = EffectContextFactory.createAttackContext(targetId, effectName, targetCard.instanceId);
+                        
+                        EffectApplier.applyEffects(ability.effects, controllers, context);
                     }
                 }
             }
@@ -528,23 +527,22 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const fieldCards = controllers.field.getPlayedCards(playerId);
                     for (const card of fieldCards) {
                         const cardData = controllers.cardRepository.getCreature(card.templateId);
-                        if (cardData.abilities) {
-                            for (const ability of cardData.abilities) {
-                                if (ability.trigger?.type === 'energy-attachment' && 
-                                    (!ability.trigger.energyType || ability.trigger.energyType === energyType)) {
-                                    
-                                    const context = EffectContextFactory.createAbilityContext(
-                                        playerId,
-                                        `${cardData.name}'s ${ability.name}`,
-                                        card.instanceId
-                                    );
-                                    
-                                    EffectApplier.applyEffects(
-                                        ability.effects,
-                                        controllers,
-                                        context
-                                    );
-                                }
+                        if (cardData.ability) {
+                            const ability = cardData.ability;
+                            if (ability.trigger?.type === 'energy-attachment' && 
+                                (!ability.trigger.energyType || ability.trigger.energyType === energyType)) {
+                                
+                                const context = EffectContextFactory.createAbilityContext(
+                                    playerId,
+                                    `${cardData.name}'s ${ability.name}`,
+                                    card.instanceId
+                                );
+                                
+                                EffectApplier.applyEffects(
+                                    ability.effects,
+                                    controllers,
+                                    context
+                                );
                             }
                         }
                     }
@@ -561,19 +559,19 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const fieldCards = controllers.field.getPlayedCards(source);
                     return message.fieldCardPosition < 0 || message.fieldCardPosition >= fieldCards.length;
                 }),
-                EventHandler.validate('Cannot use ability - invalid ability index', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
+                EventHandler.validate('Cannot use ability - no ability', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                     const fieldCards = controllers.field.getPlayedCards(source);
                     const fieldCard = fieldCards[message.fieldCardPosition];
                     if (!fieldCard) return true;
                     const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
-                    return !cardData.abilities || message.abilityIndex < 0 || message.abilityIndex >= cardData.abilities.length;
+                    return !cardData.ability;
                 }),
                 EventHandler.validate('Cannot use ability - already used this turn', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                     const fieldCards = controllers.field.getPlayedCards(source);
                     const fieldCard = fieldCards[message.fieldCardPosition];
                     if (!fieldCard) return false;
                     const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
-                    const ability = cardData.abilities?.[message.abilityIndex];
+                    const ability = cardData.ability;
                     if (!ability) return false;
                     
                     // Allow unlimited abilities to be used multiple times
@@ -597,7 +595,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             if (fieldCard) {
                 const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
-                const ability = cardData.abilities?.[message.abilityIndex];
+                const ability = cardData.ability;
                 
                 if (ability && ability.effects) {
                     // Mark ability as used this turn

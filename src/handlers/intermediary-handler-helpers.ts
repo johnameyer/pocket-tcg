@@ -560,16 +560,13 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
 export async function handleAbility(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, actionType: string): Promise<void> {
     const parts = actionType.split('-');
     const position = parts[1]; // 'active' or 'bench'
-    const abilityIndex = parseInt(parts[parts.length - 1]);
     
     let fieldCardPosition = 0;
     if (position === 'bench') {
         fieldCardPosition = parseInt(parts[2]) + 1; // bench index + 1
     }
     
-    // For now, ability functionality is not fully implemented
-    await intermediary.form({ type: 'print', message: ['Ability functionality coming soon!'] });
-    await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
+    responsesQueue.push(new UseAbilityResponseMessage(fieldCardPosition));
 }
 
 /**
@@ -616,24 +613,20 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     
     // Check for usable abilities on active FieldCard
     const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
-    if (activeCreatureData && activeCreatureData.abilities) {
-        activeCreatureData.abilities.forEach((ability, index) => {
-            if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0, index)) {
-                actionOptions.push({ name: `Use ${ability.name} (Active)`, value: `ability-active-${index}` });
-            }
-        });
+    if (activeCreatureData && activeCreatureData.ability) {
+        if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0)) {
+            actionOptions.push({ name: `Use ${activeCreatureData.ability.name} (Active)`, value: `ability-active` });
+        }
     }
     
     // Check bench FieldCard for abilities
     const benchFieldCards = handlerData.field.creatures[currentPlayer].slice(1); // Positions 1+ are benched
     benchFieldCards.forEach((fieldCard, benchIndex: number) => {
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
-        if (fieldCardData && fieldCardData.abilities) {
-            fieldCardData.abilities.forEach((ability, abilityIndex) => {
-                if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1, abilityIndex)) {
-                    actionOptions.push({ name: `Use ${ability.name} (${fieldCardData.name})`, value: `ability-bench-${benchIndex}-${abilityIndex}` });
-                }
-            });
+        if (fieldCardData && fieldCardData.ability) {
+            if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
+                actionOptions.push({ name: `Use ${fieldCardData.ability.name} (${fieldCardData.name})`, value: `ability-bench-${benchIndex}` });
+            }
         }
     });
     

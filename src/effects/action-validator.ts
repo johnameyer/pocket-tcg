@@ -171,14 +171,14 @@ export class ActionValidator {
     /**
      * Checks if a creature can use an ability.
      */
-    static canUseAbility(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, position: number, abilityIndex: number): boolean {
+    static canUseAbility(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, position: number): boolean {
         const creature = handlerData.field.creatures[playerId]?.[position];
         if (!creature) return false;
         
         const creatureData = cardRepository.getCreature(creature.templateId);
-        if (!creatureData.abilities || abilityIndex >= creatureData.abilities.length) return false;
+        if (!creatureData.ability) return false;
         
-        const ability = creatureData.abilities[abilityIndex];
+        const ability = creatureData.ability;
         
         if (ability.effects && ability.effects.length > 0) {
             return EffectValidator.canApplyCardEffects(ability.effects, handlerData, playerId, `${creatureData.name}'s ${ability.name}`, undefined, cardRepository);
