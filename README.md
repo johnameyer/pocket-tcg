@@ -33,6 +33,7 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Hand and deck management
 - ✅ Bot opponents for single-player games
 - ✅ Turn counter and state tracking
+- ✅ Customizable game parameters (hand size, turn limits)
 
 ### Energy System
 - ✅ Energy Zone with automatic generation
@@ -52,7 +53,8 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Retreating with Energy costs
 - ✅ Weakness (+20 damage) system
 - ✅ First turn restrictions
-- ❌ Turn limits (30/50 turns)
+- ✅ Turn limits (default 30 turns, customizable)
+- ✅ Hand size limits (default 10 cards, customizable)
 
 ### Battle Features
 - ✅ Special cards (2 points when knocked out)
@@ -60,6 +62,21 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Special condition checkup phase
 
 ## Development
+
+### Game Configuration
+
+The game supports customizable parameters via command line:
+
+```bash
+# Set custom hand size limit (default: 10)
+pnpm start --maxHandSize 7
+
+# Set custom turn limit (default: 30)
+pnpm start --maxTurns 20
+
+# Combine multiple parameters
+pnpm start --maxHandSize 7 --maxTurns 20
+```
 
 ### Building
 
