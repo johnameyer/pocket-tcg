@@ -64,7 +64,7 @@ Developed mainly though generative AI so even with test coverage there is a chan
 ### Building
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### Testing
