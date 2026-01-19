@@ -161,9 +161,11 @@ const handleKnockout = sequence<Controllers>([
 
 // Get the winner of the game
 const getWinner = (controllers: Controllers): string => {
+    const TIE_RESULT = 'Tie';
+    
     // Check for turn limit tie
     if (controllers.turnCounter.isMaxTurnsReached()) {
-        return 'Tie';
+        return TIE_RESULT;
     }
     
     // Check if Controllers player is defeated

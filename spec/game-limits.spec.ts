@@ -7,6 +7,15 @@ import { GameSetup } from '../src/game-setup.js';
 import { gameFactory } from '../src/game-factory.js';
 import { mockRepository } from './mock-repository.js';
 import { buildProviders } from '../src/controllers/controllers.js';
+import { GameParams } from '../src/game-params.js';
+import { ParamsController } from '@cards-ts/core';
+
+// Helper to create a mock params controller
+function createMockParamsController(params: GameParams): ParamsController<GameParams> {
+    return {
+        get: () => params
+    } as ParamsController<GameParams>;
+}
 
 describe('Game Limits', () => {
     describe('Hand Size Limit', () => {
@@ -15,9 +24,7 @@ describe('Game Limits', () => {
             const providers = buildProviders(mockRepository);
             const handController = providers.hand.controller([], { 
                 deck: providers.deck.controller([], {}),
-                params: {
-                    get: () => ({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
-                } as any
+                params: createMockParamsController({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
             });
             
             // Initialize the hand controller with test data
@@ -58,9 +65,7 @@ describe('Game Limits', () => {
             
             const handController = providers.hand.controller([], { 
                 deck: deckController,
-                params: {
-                    get: () => ({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
-                } as any
+                params: createMockParamsController({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
             });
             
             // Initialize the hand controller with test data
@@ -97,9 +102,7 @@ describe('Game Limits', () => {
             
             const handController = providers.hand.controller([], { 
                 deck: deckController,
-                params: {
-                    get: () => ({ maxHandSize: 5, maxTurns: 30, initialDecks: [] })
-                } as any
+                params: createMockParamsController({ maxHandSize: 5, maxTurns: 30, initialDecks: [] })
             });
             
             // Initialize the hand controller
@@ -130,9 +133,7 @@ describe('Game Limits', () => {
             const turnCounterController = providers.turnCounter.controller(
                 { turnNumber: 30 },
                 {
-                    params: {
-                        get: () => ({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
-                    } as any
+                    params: createMockParamsController({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
                 }
             );
             
@@ -146,9 +147,7 @@ describe('Game Limits', () => {
             const turnCounterController = providers.turnCounter.controller(
                 { turnNumber: 15 },
                 {
-                    params: {
-                        get: () => ({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
-                    } as any
+                    params: createMockParamsController({ maxHandSize: 10, maxTurns: 30, initialDecks: [] })
                 }
             );
             
@@ -162,9 +161,7 @@ describe('Game Limits', () => {
             const turnCounterController = providers.turnCounter.controller(
                 { turnNumber: 10 },
                 {
-                    params: {
-                        get: () => ({ maxHandSize: 10, maxTurns: 10, initialDecks: [] })
-                    } as any
+                    params: createMockParamsController({ maxHandSize: 10, maxTurns: 10, initialDecks: [] })
                 }
             );
             
