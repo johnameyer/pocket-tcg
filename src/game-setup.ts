@@ -8,7 +8,9 @@ export class GameSetup implements GenericGameSetup<GameParams> {
     getDefaultParams(): GameParams {
         return {
             // Default empty params
-            initialDecks: []
+            initialDecks: [],
+            maxHandSize: 10,
+            maxTurns: 30
         };
     }
     
@@ -16,7 +18,9 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         // In a real implementation, we would ask the user to select decks or cards
         // For now, we'll just return empty initialDecks
         return {
-            initialDecks: []
+            initialDecks: [],
+            maxHandSize: 10,
+            maxTurns: 30
         };
     }
     
@@ -28,13 +32,24 @@ export class GameSetup implements GenericGameSetup<GameParams> {
 
     getYargs() {
         return {
-            // No command line arguments needed for now
+            maxHandSize: {
+                type: 'number',
+                description: 'Maximum hand size (default: 10)',
+                default: 10
+            },
+            maxTurns: {
+                type: 'number',
+                description: 'Maximum turns before tie (default: 30)',
+                default: 30
+            }
         } satisfies {[key: string]: import('yargs').Options};
     }
 
     setupForYargs(params: Record<string, unknown>): GameParams {
         return {
-            initialDecks: []
+            initialDecks: [],
+            maxHandSize: typeof params.maxHandSize === 'number' ? params.maxHandSize : 10,
+            maxTurns: typeof params.maxTurns === 'number' ? params.maxTurns : 30
         };
     }
 }

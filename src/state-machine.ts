@@ -33,8 +33,13 @@ const hasWonByPoints = (controllers: Controllers, playerId: number) => {
     return controllers.points.get(playerId) >= 3;
 };
 
-// Check if the game is over (a player is defeated or has 3 points)
+// Check if the game is over (a player is defeated or has 3 points or max turns reached)
 const isGameOver = (controllers: Controllers) => {
+    // Check turn limit
+    if (controllers.turnCounter.isMaxTurnsReached()) {
+        return true;
+    }
+    
     for (let i = 0; i < controllers.players.count; i++) {
         // Check if this player is defeated
         if (isPlayerDefeated(controllers, i)) {
@@ -156,6 +161,11 @@ const handleKnockout = sequence<Controllers>([
 
 // Get the winner of the game
 const getWinner = (controllers: Controllers): string => {
+    // Check for turn limit tie
+    if (controllers.turnCounter.isMaxTurnsReached()) {
+        return 'Tie';
+    }
+    
     // Check if Controllers player is defeated
     for (let i = 0; i < controllers.players.count; i++) {
         if (isPlayerDefeated(controllers, i)) {

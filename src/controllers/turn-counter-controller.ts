@@ -1,10 +1,13 @@
-import { AbstractController, GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
+import { AbstractController, GenericControllerProvider, GlobalController, Serializable, ParamsController } from '@cards-ts/core';
+import { GameParams } from '../game-params.js';
 
 export type TurnCounterState = {
     turnNumber: number;
 };
 
-type TurnCounterDependencies = {};
+type TurnCounterDependencies = {
+    params: ParamsController<GameParams>;
+};
 
 export class TurnCounterControllerProvider implements GenericControllerProvider<TurnCounterState, TurnCounterDependencies, TurnCounterController> {
     controller(state: TurnCounterState, controllers: TurnCounterDependencies): TurnCounterController {
@@ -18,7 +21,7 @@ export class TurnCounterControllerProvider implements GenericControllerProvider<
     }
     
     dependencies() {
-        return {} as const;
+        return { params: true } as const;
     }
 }
 
@@ -33,5 +36,11 @@ export class TurnCounterController extends GlobalController<TurnCounterState, Tu
     
     public advanceTurn(): void {
         this.state.turnNumber++;
+    }
+    
+    public isMaxTurnsReached(): boolean {
+        const params = this.controllers.params.get();
+        const maxTurns = params.maxTurns ?? 30;
+        return this.state.turnNumber >= maxTurns;
     }
 }
