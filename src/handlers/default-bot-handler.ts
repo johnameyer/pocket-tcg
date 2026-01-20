@@ -12,26 +12,6 @@ export class DefaultBotHandler extends GameHandler {
         this.cardRepository = cardRepository || new CardRepository();
     }
     
-    handleEvolve(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
-        // Bot always evolves the first available creature
-        const currentPlayer = handlerData.turn;
-        const hand = handlerData.hand;
-        
-        // Find evolution cards in hand
-        const evolutionCards = hand.filter(card => card.type === 'creature');
-        
-        if (evolutionCards.length > 0) {
-            // Get the first evolution card
-            const evolutionCard = evolutionCards[0];
-            
-            // Evolve the active creature by default
-            responsesQueue.push(new EvolveResponseMessage(
-                evolutionCard.templateId,
-                0 // active position
-            ));
-        }
-    }
-    
     handleAction(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
         const currentPlayer = handlerData.turn;
         

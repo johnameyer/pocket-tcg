@@ -16,7 +16,6 @@ export function createTestPlayers(actionHandler: (handlerData: any, responses: a
         handleSelectTarget: actionHandler,
         handleSelectMultiTarget: actionHandler,
         handleSetup: actionHandler,
-        handleEvolve: actionHandler,
         handleMessage: messageHandler || (() => {})
     });
 
@@ -38,7 +37,6 @@ export function createTestPlayersWithDifferentHandlers(
         handleSelectTarget: handler,
         handleSelectMultiTarget: handler,
         handleSetup: handler,
-        handleEvolve: handler,
         handleMessage: messageHandler || (() => {})
     });
 
