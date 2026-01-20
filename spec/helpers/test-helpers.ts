@@ -121,3 +121,28 @@ export function runTestGame(config: TestGameConfig) {
         state
     };
 }
+
+/**
+ * Helper function to resume a game driver for a specified number of steps
+ * @param driver The game driver to resume
+ * @param maxSteps Maximum number of steps to run
+ * @returns The final state after running
+ */
+export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['getGameDriver']>, maxSteps: number) {
+    driver.resume();
+    for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+        for(const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+            if(message) {
+                let payload, data;
+                if(Array.isArray(message)) {
+                    ([ payload, data ] = message);
+                } else {
+                    payload = message;
+                }
+                driver.handleEvent(position, payload, data);
+            }
+        }
+        driver.resume();
+    }
+    return driver.getState() as ControllerState<Controllers>;
+}

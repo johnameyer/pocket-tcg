@@ -39,7 +39,8 @@ export class StateBuilder {
                 playersReady: [true, true]
             },
             params: {
-                // No maxBattles property needed
+                maxHandSize: 10,
+                maxTurns: 30
             },
             data: [],
             turnCounter: {
@@ -97,6 +98,51 @@ export class StateBuilder {
         return state;
     }
 
+    /**
+     * Customize the game state (e.g., to set a specific starting state in the state machine)
+     * @param stateName The name of the state to start at (e.g., 'generateEnergyAndDrawCard', 'START_GAME', 'checkupPhase')
+     * @returns A customizer function that sets the game state
+     * 
+     * Common state names for unit tests:
+     * - 'START_GAME' - Beginning of game before setup
+     * - 'generateEnergyAndDrawCard' - Start of turn before actions
+     * - 'checkupPhase' - Checkup phase at end of turn
+     * - 'ACTIONLOOP_ACTION_ACTION' - Main action phase (default for createActionPhaseState)
+     * - 'nextTurn' - Transition between turns
+     * 
+     * Note: State names may change if the state machine is modified.
+     * Run `console.log(Object.keys(flattened.states))` in @cards-ts/state-machine's adapt.js to see all available states.
+     */
+    static withGameState(stateName: string) {
+        return (state: ControllerState<Controllers>) => {
+            state.state = stateName as any;
+            
+            // Adjust setup based on state
+            if (stateName === 'START_GAME') {
+                state.setup.playersReady = [false, false];
+                state.turnCounter.turnNumber = 0;
+                state.field.creatures = [[], []];
+                state.energy.isAbsoluteFirstTurn = true;
+            } else {
+                state.setup.playersReady = [true, true];
+                if (state.turnCounter.turnNumber === 0) {
+                    state.turnCounter.turnNumber = 2;
+                }
+                // Ensure creatures exist if not in START_GAME
+                if (state.field.creatures[0].length === 0) {
+                    state.field.creatures = [
+                        [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-1', turnPlayed: 0 }],
+                        [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-2', turnPlayed: 0 }]
+                    ];
+                }
+            }
+            
+            if (stateName === 'generateEnergyAndDrawCard') {
+                state.energy.isAbsoluteFirstTurn = true;
+            }
+        };
+    }
+
     // TODO: StateBuilder should use CreatureRepository to validate creature IDs exist before creating instances
     static withCreatures(player: number, active: string, bench: string[] = []) {
         return (state: ControllerState<Controllers>) => {
@@ -120,7 +166,7 @@ export class StateBuilder {
 
     static withEnergy(creatureInstanceId: string, energyTypes: PartialEnergyDict) {
         return (state: ControllerState<Controllers>) => {
-            this.validateInstanceIdWithError(state, creatureInstanceId);
+            StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
             state.energy.attachedEnergyByInstance[creatureInstanceId] = {...createEmptyEnergyDict(), ...energyTypes};
         };
     }
@@ -162,7 +208,7 @@ export class StateBuilder {
             }
             
             // If we get here, the creature instance wasn't found
-            this.validateInstanceIdWithError(state, creatureInstanceId);
+            StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
         };
     }
 
@@ -219,7 +265,7 @@ export class StateBuilder {
 
     static withTool(creatureInstanceId: string, toolCardId: string) {
         return (state: ControllerState<Controllers>) => {
-            this.validateInstanceIdWithError(state, creatureInstanceId);
+            StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
             state.tools.attachedTools[creatureInstanceId] = { 
                 templateId: toolCardId, 
                 instanceId: `${toolCardId}-1` 

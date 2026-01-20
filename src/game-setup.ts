@@ -7,34 +7,75 @@ export class GameSetup implements GenericGameSetup<GameParams> {
     
     getDefaultParams(): GameParams {
         return {
-            // Default empty params
-            initialDecks: []
+            initialDecks: [],
+            maxHandSize: 10,
+            maxTurns: 30
         };
     }
     
     async setupForIntermediary(host: Intermediary): Promise<GameParams> {
-        // In a real implementation, we would ask the user to select decks or cards
-        // For now, we'll just return empty initialDecks
+        const defaults = this.getDefaultParams();
+        
+        const [ _, resultsPromise ] = host.form(
+            { type: 'input', message: [ `Maximum hand size? (default ${defaults.maxHandSize})` ] },
+            { type: 'input', message: [ `Maximum turns before tie? (default ${defaults.maxTurns})` ] },
+        );
+
+        const results = await resultsPromise;
+
+        const maxHandSize = Number(results[0]) || defaults.maxHandSize;
+        const maxTurns = Number(results[1]) || defaults.maxTurns;
+
         return {
-            initialDecks: []
+            initialDecks: [],
+            maxHandSize,
+            maxTurns,
         };
     }
     
-    verifyParams(params: GameParams): { readonly initialDecks?: string; } {
-        const errors: { initialDecks?: string | undefined; } = {};
-        // No validation needed for now
+    verifyParams(params: GameParams): { readonly initialDecks?: string; readonly maxHandSize?: string; readonly maxTurns?: string; } {
+        const errors: { initialDecks?: string; maxHandSize?: string; maxTurns?: string; } = {};
+        
+        try {
+            if(!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
+                throw new Error();
+            }
+        } catch (e) {
+            errors.maxHandSize = 'Max hand size must be a number greater than 0';
+        }
+        
+        try {
+            if(!Number(params.maxTurns) || Number(params.maxTurns) <= 0) {
+                throw new Error();
+            }
+        } catch (e) {
+            errors.maxTurns = 'Max turns must be a number greater than 0';
+        }
+        
         return errors;
     }
 
     getYargs() {
         return {
-            // No command line arguments needed for now
+            maxHandSize: {
+                type: 'number',
+                description: 'Maximum hand size (default: 10)',
+                default: 10
+            },
+            maxTurns: {
+                type: 'number',
+                description: 'Maximum turns before tie (default: 30)',
+                default: 30
+            }
         } satisfies {[key: string]: import('yargs').Options};
     }
 
     setupForYargs(params: Record<string, unknown>): GameParams {
+        const defaults = this.getDefaultParams();
         return {
-            initialDecks: []
+            initialDecks: [],
+            maxHandSize: typeof params.maxHandSize === 'number' ? params.maxHandSize : defaults.maxHandSize,
+            maxTurns: typeof params.maxTurns === 'number' ? params.maxTurns : defaults.maxTurns
         };
     }
 }

@@ -1,10 +1,12 @@
-import { AbstractController, GenericControllerProvider, IndexedControllers } from '@cards-ts/core';
+import { AbstractController, GenericControllerProvider, IndexedControllers, GlobalController, ParamsController } from '@cards-ts/core';
 import { Card, CreatureCard, SupporterCard, ItemCard, GameCard } from './card-types.js';
 import { DeckController } from './deck-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
+import { GameParams } from '../game-params.js';
 
 type HandDependencies = {
     deck: DeckController;
+    params: ParamsController<GameParams>;
 };
 
 export class HandControllerProvider implements GenericControllerProvider<GameCard[][], HandDependencies, HandController> {
@@ -18,7 +20,7 @@ export class HandControllerProvider implements GenericControllerProvider<GameCar
     }
     
     dependencies() {
-        return { deck: true } as const;
+        return { deck: true, params: true } as const;
     }
 }
 
@@ -28,8 +30,27 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
             .map(() => []);
     }
     
-    // Draw a card from deck to hand
+    /**
+     * Draw a card from deck to hand.
+     * Returns undefined if:
+     * - The hand is already at maximum size (enforces hand size limit)
+     * - The deck is empty (no card to draw)
+     * 
+     * This method is used for both turn-start draws and effect-based draws,
+     * ensuring the hand size limit is consistently enforced.
+     * 
+     * @param playerId The player drawing the card
+     * @returns The drawn card, or undefined if unable to draw
+     */
     drawCard(playerId: number): GameCard | undefined {
+        const params = this.controllers.params.get();
+        const maxHandSize = params.maxHandSize;
+        
+        // Check if hand is already at max size
+        if (this.state[playerId].length >= maxHandSize) {
+            return undefined;
+        }
+        
         const card = this.controllers.deck.drawCard(playerId);
         if (card) {
             this.state[playerId].push(card);

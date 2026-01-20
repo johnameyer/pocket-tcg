@@ -5,10 +5,11 @@ import { GameParams } from '../src/game-params.js';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { StateBuilder } from './helpers/state-builder.js';
-import { runTestGame } from './helpers/test-helpers.js';
+import { runTestGame, resumeGame } from './helpers/test-helpers.js';
+import { mockRepository } from './mock-repository.js';
 
 describe('Creature Pocket TCG Game', () => {
-    const factory = gameFactory();
+    const factory = gameFactory(mockRepository);
     const params: GameParams = {
         ...new GameSetup().getDefaultParams(),
     };
@@ -164,6 +165,99 @@ describe('Creature Pocket TCG Game', () => {
                 (preConfiguredState as any).turnCounter = 3;
                 expect((preConfiguredState as any).turnCounter).to.equal(3);
             }
+        });
+    });
+
+    describe('Game Limits', () => {
+        /**
+         * Helper to create a test game with a specific hand size and max hand size parameter
+         */
+        function createHandSizeTest(handSize: number, maxHandSize: number = 10) {
+            return runTestGame({
+                actions: [],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withHand(0, Array.from({ length: handSize }, (_, i) => ({ templateId: 'basic-creature' }))),
+                    StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
+                    StateBuilder.withTurn(0),
+                    StateBuilder.withGameState('generateEnergyAndDrawCard'),
+                    (customState) => {
+                        customState.params = { ...customState.params, maxHandSize };
+                    }
+                ),
+                maxSteps: 1
+            });
+        }
+
+        describe('Hand Size Limit', () => {
+            it('should enforce maximum hand size at turn start', () => {
+                const { state } = createHandSizeTest(10);
+
+                // Hand should remain at 10 cards (draw at turn start blocked by hand size limit)
+                expect(state.hand[0].length).to.be.lte(10, 'Hand should not exceed max size of 10');
+            });
+
+            it('should allow drawing when hand is below max size', () => {
+                // Start with 8 cards and verify draw increases to 9
+                const { state } = createHandSizeTest(8);
+
+                // Hand should increase from 8 to 9 after drawing one card
+                expect(state.hand[0].length).to.equal(9, 'Hand should increase by exactly 1 card');
+            });
+
+            it('should respect custom max hand size parameter', () => {
+                const { state } = createHandSizeTest(5, 5);
+                
+                // Hand should remain at or below custom max of 5
+                expect(state.hand[0].length).to.be.lte(5, 'Hand should not exceed custom max of 5');
+            });
+        });
+
+        describe('Turn Limit', () => {
+            it('should end game in tie when turn limit is reached', () => {
+                // Start from action phase with custom turn limit
+                const params = {
+                    ...new GameSetup().getDefaultParams(),
+                    maxTurns: 6 // Very low limit for testing
+                };
+                
+                const handlers = Array.from({ length: 2 }, () => 
+                    factory.getDefaultBotHandlerChain()
+                );
+                
+                const preConfiguredState = StateBuilder.createActionPhaseState(
+                    StateBuilder.withTurnNumber(5) // Start near the limit
+                );
+                
+                const driver = factory.getGameDriver(handlers, params, ['TestPlayer', 'OpponentPlayer'], preConfiguredState);
+                
+                const state = resumeGame(driver, 20);
+                
+                // Game should complete when turn limit is reached
+                expect(state.completed).to.equal(true, 'Game should complete when turn limit reached');
+                expect(state.turnCounter.turnNumber).to.be.gte(6, 'Turn counter should reach the limit');
+            });
+
+            it('should not end game before turn limit is reached', () => {
+                const params = {
+                    ...new GameSetup().getDefaultParams(),
+                    maxTurns: 30
+                };
+                
+                const handlers = Array.from({ length: 2 }, () => 
+                    factory.getDefaultBotHandlerChain()
+                );
+                
+                const preConfiguredState = StateBuilder.createActionPhaseState(
+                    StateBuilder.withTurnNumber(2)
+                );
+                
+                const driver = factory.getGameDriver(handlers, params, ['TestPlayer', 'OpponentPlayer'], preConfiguredState);
+                
+                const state = resumeGame(driver, 5);
+                
+                // Turn counter should still be well below limit
+                expect(state.turnCounter.turnNumber).to.be.lessThan(30, 'Turn counter should be below limit');
+            });
         });
     });
 });
