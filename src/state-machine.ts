@@ -124,7 +124,7 @@ const processKnockouts = {
                     controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
                     controllers.discard.addEnergyDict(i, attachedEnergy);
                     
-                    // Add the knocked out card to discard pile (including evolution stack)
+                    // Add the knocked out bench card to discard pile (including evolution stack)
                     const cardToDiscard = {
                         instanceId: benchCard.instanceId,
                         templateId: benchCard.templateId,

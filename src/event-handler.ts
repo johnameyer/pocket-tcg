@@ -253,8 +253,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Use playCard to handle card removal properly
             const hand = controllers.hand.getHand(sourceHandler);
             const cardIndex = hand.findIndex(card => card.templateId === message.templateId);
+            let playedCard: any = undefined;
             if (cardIndex !== -1) {
-                controllers.hand.playCard(sourceHandler, cardIndex);
+                playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
             }
             
             if (message.cardType === 'creature') {
@@ -280,6 +281,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 
                 EffectApplier.applyEffects(supporterData.effects, controllers, context);
+                
+                // Add played supporter to discard pile
+                if (playedCard) {
+                    controllers.discard.addCard(sourceHandler, playedCard);
+                }
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
@@ -294,6 +300,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 
                 EffectApplier.applyEffects(itemData.effects, controllers, context);
+                
+                // Add played item to discard pile
+                if (playedCard) {
+                    controllers.discard.addCard(sourceHandler, playedCard);
+                }
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
                 const toolData = controllers.cardRepository.getTool(message.templateId);
