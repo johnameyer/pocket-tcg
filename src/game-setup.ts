@@ -14,14 +14,44 @@ export class GameSetup implements GenericGameSetup<GameParams> {
     }
     
     async setupForIntermediary(host: Intermediary): Promise<GameParams> {
-        // In a real implementation, we would ask the user to select decks or cards
-        // For now, we'll just return the default params
-        return this.getDefaultParams();
+        const defaults = this.getDefaultParams();
+        
+        const [ _, resultsPromise ] = host.form(
+            { type: 'input', message: [ `Maximum hand size? (default ${defaults.maxHandSize})` ] },
+            { type: 'input', message: [ `Maximum turns before tie? (default ${defaults.maxTurns})` ] },
+        );
+
+        const results = await resultsPromise;
+
+        const maxHandSize = Number(results[0]) || defaults.maxHandSize;
+        const maxTurns = Number(results[1]) || defaults.maxTurns;
+
+        return {
+            initialDecks: [],
+            maxHandSize,
+            maxTurns,
+        };
     }
     
-    verifyParams(params: GameParams): { readonly initialDecks?: string; } {
-        const errors: { initialDecks?: string | undefined; } = {};
-        // No validation needed for now
+    verifyParams(params: GameParams): { readonly initialDecks?: string; readonly maxHandSize?: string; readonly maxTurns?: string; } {
+        const errors: { initialDecks?: string; maxHandSize?: string; maxTurns?: string; } = {};
+        
+        try {
+            if(!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
+                throw new Error();
+            }
+        } catch (e) {
+            errors.maxHandSize = 'Max hand size must be a number greater than 0';
+        }
+        
+        try {
+            if(!Number(params.maxTurns) || Number(params.maxTurns) <= 0) {
+                throw new Error();
+            }
+        } catch (e) {
+            errors.maxTurns = 'Max turns must be a number greater than 0';
+        }
+        
         return errors;
     }
 
