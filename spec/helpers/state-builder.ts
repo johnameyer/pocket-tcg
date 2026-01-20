@@ -101,6 +101,7 @@ export class StateBuilder {
     /**
      * Customize the game state (e.g., to set a specific starting state in the state machine)
      * @param stateName The name of the state to start at (e.g., 'generateEnergyAndDrawCard', 'START_GAME', 'checkupPhase')
+     * @returns A customizer function that sets the game state
      * 
      * Common state names for unit tests:
      * - 'START_GAME' - Beginning of game before setup
@@ -165,7 +166,7 @@ export class StateBuilder {
 
     static withEnergy(creatureInstanceId: string, energyTypes: PartialEnergyDict) {
         return (state: ControllerState<Controllers>) => {
-            this.validateInstanceIdWithError(state, creatureInstanceId);
+            StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
             state.energy.attachedEnergyByInstance[creatureInstanceId] = {...createEmptyEnergyDict(), ...energyTypes};
         };
     }
@@ -207,7 +208,7 @@ export class StateBuilder {
             }
             
             // If we get here, the creature instance wasn't found
-            this.validateInstanceIdWithError(state, creatureInstanceId);
+            StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
         };
     }
 
@@ -264,7 +265,7 @@ export class StateBuilder {
 
     static withTool(creatureInstanceId: string, toolCardId: string) {
         return (state: ControllerState<Controllers>) => {
-            this.validateInstanceIdWithError(state, creatureInstanceId);
+            StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
             state.tools.attachedTools[creatureInstanceId] = { 
                 templateId: toolCardId, 
                 instanceId: `${toolCardId}-1` 
