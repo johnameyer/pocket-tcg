@@ -259,14 +259,7 @@ const handlePlayerActions = loop<Controllers>({
 // Basic game turn
 const gameTurn = loop<Controllers>({
     id: 'gameTurnLoop',
-    breakingIf: (controllers: Controllers) => {
-        // Check for turn limit
-        if (controllers.turnCounter.isMaxTurnsReached()) {
-            return true;
-        }
-        // Check for regular game over conditions
-        return isGameOver(controllers);
-    },
+    breakingIf: (controllers: Controllers) => controllers.turnCounter.isMaxTurnsReached() || isGameOver(controllers),
     run: sequence<Controllers>([
         // Reset turn state at the start of each turn
         {

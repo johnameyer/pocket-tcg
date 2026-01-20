@@ -44,6 +44,16 @@ mockCreatureData.set('tank-creature', {
     attacks: [{ name: 'Body Slam', damage: 50, energyRequirements: [{ type: 'colorless', amount: 3 }] }]
 });
 
+mockCreatureData.set('turn-limit-creature', {
+    templateId: 'turn-limit-creature',
+    name: 'Turn Limit Creature',
+    maxHp: 200,
+    type: 'colorless',
+    weakness: 'fighting',
+    retreatCost: 1,
+    attacks: [{ name: 'Weak Attack', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }]
+});
+
 const mockSupporterData = new Map<string, SupporterData>();
 mockSupporterData.set('basic-supporter', {
     templateId: 'basic-supporter',
