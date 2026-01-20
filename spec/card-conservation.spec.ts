@@ -176,12 +176,7 @@ describe('Card Conservation', () => {
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [evolutionCreature, basicCreature, basicCreature]),
-                StateBuilder.withDeck(0, [
-                    basicCreature, basicCreature, basicCreature, basicCreature,
-                    basicCreature, basicCreature, basicCreature, basicCreature,
-                    basicCreature, basicCreature, basicCreature, basicCreature,
-                    basicCreature, basicCreature, basicCreature, basicCreature
-                ])
+                StateBuilder.withDeck(0, Array(16).fill(basicCreature))
             ),
             maxSteps: 10
         });
