@@ -88,6 +88,9 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
                 type: 'status',
                 components: [`${context.effectName} shuffles the discarded cards into the deck for player ${playerId}!`]
             });
+        } else {
+            // Add the cards to the discard pile
+            controllers.discard.addCards(playerId, cardsToDiscard);
         }
     }
 }

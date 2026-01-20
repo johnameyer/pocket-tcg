@@ -86,7 +86,8 @@ export class StateBuilder {
             },
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
-            hand: [[], []]  // Array of card arrays for each player
+            hand: [[], []],  // Array of card arrays for each player
+            discard: [[], []]  // Array of card arrays for each player
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided

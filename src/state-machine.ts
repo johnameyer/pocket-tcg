@@ -73,8 +73,31 @@ const processKnockouts = {
                     const cardData = controllers.cardRepository.getCreature(targetCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(cardData.name));
                     
-                    // Clean up energy attached to the knocked out card
+                    // Get attached energy before removing it
+                    const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(targetCard.instanceId);
+                    
+                    // Clean up energy attached to the knocked out card and add to discard pile
                     controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
+                    controllers.discard.addEnergyDict(i, attachedEnergy);
+                    
+                    // Add the knocked out card to discard pile (including evolution stack)
+                    const cardToDiscard = {
+                        instanceId: targetCard.instanceId,
+                        templateId: targetCard.templateId,
+                        type: 'creature' as const
+                    };
+                    controllers.discard.addCard(i, cardToDiscard);
+                    
+                    // If there's an evolution stack, add those cards to discard pile too
+                    if (targetCard.evolutionStack && targetCard.evolutionStack.length > 0) {
+                        for (const evolvedFromId of targetCard.evolutionStack) {
+                            controllers.discard.addCard(i, {
+                                instanceId: `${evolvedFromId}-evolved`,
+                                templateId: evolvedFromId,
+                                type: 'creature' as const
+                            });
+                        }
+                    }
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
@@ -94,8 +117,31 @@ const processKnockouts = {
                     const cardData = controllers.cardRepository.getCreature(benchCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
                     
-                    // Clean up energy attached to the knocked out card
+                    // Get attached energy before removing it
+                    const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(benchCard.instanceId);
+                    
+                    // Clean up energy attached to the knocked out card and add to discard pile
                     controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
+                    controllers.discard.addEnergyDict(i, attachedEnergy);
+                    
+                    // Add the knocked out card to discard pile (including evolution stack)
+                    const cardToDiscard = {
+                        instanceId: benchCard.instanceId,
+                        templateId: benchCard.templateId,
+                        type: 'creature' as const
+                    };
+                    controllers.discard.addCard(i, cardToDiscard);
+                    
+                    // If there's an evolution stack, add those cards to discard pile too
+                    if (benchCard.evolutionStack && benchCard.evolutionStack.length > 0) {
+                        for (const evolvedFromId of benchCard.evolutionStack) {
+                            controllers.discard.addCard(i, {
+                                instanceId: `${evolvedFromId}-evolved`,
+                                templateId: evolvedFromId,
+                                type: 'creature' as const
+                            });
+                        }
+                    }
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
@@ -442,6 +488,9 @@ export const stateMachine = game<Controllers>(
         
         // Initialize hands once for all players
         controllers.hand.initialize(controllers.players.count);
+        
+        // Initialize discard piles for all players
+        controllers.discard.initialize(controllers.players.count);
         
         // Draw initial hands
         for (let i = 0; i < controllers.players.count; i++) {

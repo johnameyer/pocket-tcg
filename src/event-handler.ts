@@ -382,12 +382,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(source);
             
             const hand = controllers.hand.getHand(source);
-            const activeCardToRemove = { id: message.activeCardId, cardId: message.activeCardId, type: 'creature' as const };
+            const activeCardToRemove = { instanceId: '', templateId: message.activeCardId, type: 'creature' as const };
             controllers.hand.removeCards(source, [activeCardToRemove]);
             controllers.field.setActiveCard(source, message.activeCardId);
             
             for (const cardId of message.benchCardIds) {
-                const benchCardToRemove = { id: cardId, cardId, type: 'creature' as const };
+                const benchCardToRemove = { instanceId: '', templateId: cardId, type: 'creature' as const };
                 controllers.hand.removeCards(source, [benchCardToRemove]);
                 controllers.field.addToBench(source, cardId);
             }

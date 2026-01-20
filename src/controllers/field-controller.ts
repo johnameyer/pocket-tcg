@@ -13,6 +13,7 @@ export type FieldCard = {
     damageTaken: number;
     templateId: string; // Card template ID for the card
     turnPlayed?: number; // Track when the card was played for evolution restrictions
+    evolutionStack?: string[]; // Track previous forms in evolution chain (templateIds)
 };
 
 export type EnrichedFieldCard = FieldCard & { data: CreatureData };
@@ -341,12 +342,19 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Keep the damage taken from the previous card
-        const damageTaken = this.state.creatures[playerId][0].damageTaken;
+        const currentCard = this.state.creatures[playerId][0];
         
-        // Replace the card ID but keep the damage
+        // Initialize evolution stack if it doesn't exist
+        if (!currentCard.evolutionStack) {
+            currentCard.evolutionStack = [];
+        }
+        
+        // Add the current card to the evolution stack before evolving
+        currentCard.evolutionStack.push(currentCard.templateId);
+        
+        // Replace the card ID but keep the damage and evolution stack
         this.state.creatures[playerId][0] = {
-            ...this.state.creatures[playerId][0],
+            ...currentCard,
             templateId: evolutionTemplateId
         };
         
@@ -369,12 +377,19 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Keep the damage taken from the previous card
-        const damageTaken = this.state.creatures[playerId][benchPosition].damageTaken;
+        const currentCard = this.state.creatures[playerId][benchPosition];
         
-        // Replace the card ID but keep the damage
+        // Initialize evolution stack if it doesn't exist
+        if (!currentCard.evolutionStack) {
+            currentCard.evolutionStack = [];
+        }
+        
+        // Add the current card to the evolution stack before evolving
+        currentCard.evolutionStack.push(currentCard.templateId);
+        
+        // Replace the card ID but keep the damage and evolution stack
         this.state.creatures[playerId][benchPosition] = {
-            ...this.state.creatures[playerId][benchPosition],
+            ...currentCard,
             templateId: evolutionTemplateId
         };
         
