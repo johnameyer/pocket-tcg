@@ -40,7 +40,7 @@ export class TurnCounterController extends GlobalController<TurnCounterState, Tu
     
     public isMaxTurnsReached(): boolean {
         const params = this.controllers.params.get();
-        const maxTurns = params.maxTurns ?? 30;
+        const maxTurns = params.maxTurns;
         return this.state.turnNumber >= maxTurns;
     }
 }

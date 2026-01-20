@@ -61,22 +61,21 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Coin flip mechanics for attacks/effects
 - ✅ Special condition checkup phase
 
-## Development
+## Running
 
-### Game Configuration
-
-The game supports customizable parameters via command line:
+To start the game:
 
 ```bash
-# Set custom hand size limit (default: 10)
-pnpm start --maxHandSize 7
-
-# Set custom turn limit (default: 30)
-pnpm start --maxTurns 20
-
-# Combine multiple parameters
-pnpm start --maxHandSize 7 --maxTurns 20
+pnpm start
 ```
+
+The game supports customizable parameters via command line arguments. Use `--help` to see all available options:
+
+```bash
+pnpm start --help
+```
+
+## Development
 
 ### Building
 

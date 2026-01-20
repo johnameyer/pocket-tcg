@@ -30,10 +30,21 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
             .map(() => []);
     }
     
-    // Draw a card from deck to hand
+    /**
+     * Draw a card from deck to hand.
+     * Returns undefined if:
+     * - The hand is already at maximum size (enforces hand size limit)
+     * - The deck is empty (no card to draw)
+     * 
+     * This method is used for both turn-start draws and effect-based draws,
+     * ensuring the hand size limit is consistently enforced.
+     * 
+     * @param playerId The player drawing the card
+     * @returns The drawn card, or undefined if unable to draw
+     */
     drawCard(playerId: number): GameCard | undefined {
         const params = this.controllers.params.get();
-        const maxHandSize = params.maxHandSize ?? 10;
+        const maxHandSize = params.maxHandSize;
         
         // Check if hand is already at max size
         if (this.state[playerId].length >= maxHandSize) {

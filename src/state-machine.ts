@@ -33,13 +33,8 @@ const hasWonByPoints = (controllers: Controllers, playerId: number) => {
     return controllers.points.get(playerId) >= 3;
 };
 
-// Check if the game is over (a player is defeated or has 3 points or max turns reached)
+// Check if the game is over (a player is defeated or has 3 points)
 const isGameOver = (controllers: Controllers) => {
-    // Check turn limit
-    if (controllers.turnCounter.isMaxTurnsReached()) {
-        return true;
-    }
-    
     for (let i = 0; i < controllers.players.count; i++) {
         // Check if this player is defeated
         if (isPlayerDefeated(controllers, i)) {
@@ -121,11 +116,17 @@ const handleGameOver = sequence<Controllers>([
     { 
         name: 'sendGameOverMessage',
         run: (controllers: Controllers) => {
-        const winnerName = getWinner(controllers);
-        if (winnerName) {
-            controllers.players.messageAll(new GameOverMessage(winnerName));
+            // Check if game ended due to turn limit
+            if (controllers.turnCounter.isMaxTurnsReached()) {
+                controllers.players.messageAll(new GameOverMessage('Tie - Turn limit reached'));
+            } else {
+                const winnerName = getWinner(controllers);
+                if (winnerName) {
+                    controllers.players.messageAll(new GameOverMessage(winnerName));
+                }
+            }
         }
-    }},
+    },
     { 
         name: 'completeGame', 
         run: (controllers: Controllers) => controllers.completed.complete()
@@ -161,13 +162,6 @@ const handleKnockout = sequence<Controllers>([
 
 // Get the winner of the game
 const getWinner = (controllers: Controllers): string => {
-    const TIE_RESULT = 'Tie';
-    
-    // Check for turn limit tie
-    if (controllers.turnCounter.isMaxTurnsReached()) {
-        return TIE_RESULT;
-    }
-    
     // Check if Controllers player is defeated
     for (let i = 0; i < controllers.players.count; i++) {
         if (isPlayerDefeated(controllers, i)) {
@@ -265,7 +259,14 @@ const handlePlayerActions = loop<Controllers>({
 // Basic game turn
 const gameTurn = loop<Controllers>({
     id: 'gameTurnLoop',
-    breakingIf: isGameOver,
+    breakingIf: (controllers: Controllers) => {
+        // Check for turn limit
+        if (controllers.turnCounter.isMaxTurnsReached()) {
+            return true;
+        }
+        // Check for regular game over conditions
+        return isGameOver(controllers);
+    },
     run: sequence<Controllers>([
         // Reset turn state at the start of each turn
         {
@@ -480,7 +481,14 @@ export const stateMachine = game<Controllers>(
         }),
         
         // Main game turns
-        gameTurn
+        gameTurn,
+        
+        // Handle game end (tie or winner)
+        conditionalState({
+            id: 'gameEndCheck',
+            condition: (controllers: Controllers) => controllers.turnCounter.isMaxTurnsReached() || isGameOver(controllers),
+            truthy: handleGameOver,
+        })
     ]),
     (controllers: Controllers) => {
         // Game over logic is handled in the turn handler

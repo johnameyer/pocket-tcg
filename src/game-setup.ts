@@ -7,7 +7,6 @@ export class GameSetup implements GenericGameSetup<GameParams> {
     
     getDefaultParams(): GameParams {
         return {
-            // Default empty params
             initialDecks: [],
             maxHandSize: 10,
             maxTurns: 30
@@ -16,12 +15,8 @@ export class GameSetup implements GenericGameSetup<GameParams> {
     
     async setupForIntermediary(host: Intermediary): Promise<GameParams> {
         // In a real implementation, we would ask the user to select decks or cards
-        // For now, we'll just return empty initialDecks
-        return {
-            initialDecks: [],
-            maxHandSize: 10,
-            maxTurns: 30
-        };
+        // For now, we'll just return the default params
+        return this.getDefaultParams();
     }
     
     verifyParams(params: GameParams): { readonly initialDecks?: string; } {
@@ -46,10 +41,11 @@ export class GameSetup implements GenericGameSetup<GameParams> {
     }
 
     setupForYargs(params: Record<string, unknown>): GameParams {
+        const defaults = this.getDefaultParams();
         return {
             initialDecks: [],
-            maxHandSize: typeof params.maxHandSize === 'number' ? params.maxHandSize : 10,
-            maxTurns: typeof params.maxTurns === 'number' ? params.maxTurns : 30
+            maxHandSize: typeof params.maxHandSize === 'number' ? params.maxHandSize : defaults.maxHandSize,
+            maxTurns: typeof params.maxTurns === 'number' ? params.maxTurns : defaults.maxTurns
         };
     }
 }

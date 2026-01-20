@@ -39,7 +39,8 @@ export class StateBuilder {
                 playersReady: [true, true]
             },
             params: {
-                // No maxBattles property needed
+                maxHandSize: 10,
+                maxTurns: 30
             },
             data: [],
             turnCounter: {
