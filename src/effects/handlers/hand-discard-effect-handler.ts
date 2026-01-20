@@ -90,7 +90,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             });
         } else {
             // Add the cards to the discard pile
-            controllers.discard.addCards(playerId, cardsToDiscard);
+            controllers.discard.addCards(playerId, ...cardsToDiscard);
         }
     }
 }

@@ -87,7 +87,10 @@ export class StateBuilder {
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
             hand: [[], []],  // Array of card arrays for each player
-            discard: [[], []]  // Array of card arrays for each player
+            discard: { cards: [[], []], energy: [
+                { grass: 0, fire: 0, water: 0, lightning: 0, psychic: 0, fighting: 0, darkness: 0, metal: 0 },
+                { grass: 0, fire: 0, water: 0, lightning: 0, psychic: 0, fighting: 0, darkness: 0, metal: 0 }
+            ]}  // Discard state with cards and energy
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided

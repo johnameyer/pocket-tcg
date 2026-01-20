@@ -2,6 +2,7 @@ import { Controllers } from './controllers/controllers.js';
 import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messages/status/index.js';
 import { sequence, loop, game, conditionalState, handleSingle, named } from '@cards-ts/state-machine';
 import { TriggerProcessor } from './effects/trigger-processor.js';
+import { GameCard } from './controllers/card-types.js';
 
 // Check if any card was knocked out (has 0 HP)
 const isCardKnockedOut = (controllers: Controllers) => {
@@ -81,24 +82,25 @@ const processKnockouts = {
                     controllers.discard.addEnergyDict(i, attachedEnergy);
                     
                     // Add the knocked out card to discard pile (including evolution stack)
-                    const cardToDiscard = {
+                    const cardsToDiscard: GameCard[] = [{
                         instanceId: targetCard.instanceId,
                         templateId: targetCard.templateId,
                         type: 'creature' as const
-                    };
-                    controllers.discard.addCard(i, cardToDiscard);
+                    }];
                     
                     // If there's an evolution stack, add those cards to discard pile too
                     if (targetCard.evolutionStack && targetCard.evolutionStack.length > 0) {
                         for (let stackIndex = 0; stackIndex < targetCard.evolutionStack.length; stackIndex++) {
                             const evolvedFromId = targetCard.evolutionStack[stackIndex];
-                            controllers.discard.addCard(i, {
+                            cardsToDiscard.push({
                                 instanceId: `${evolvedFromId}-stack${stackIndex}-${targetCard.instanceId}`,
                                 templateId: evolvedFromId,
                                 type: 'creature' as const
                             });
                         }
                     }
+                    
+                    controllers.discard.addCards(i, ...cardsToDiscard);
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
@@ -126,24 +128,25 @@ const processKnockouts = {
                     controllers.discard.addEnergyDict(i, attachedEnergy);
                     
                     // Add the knocked out bench card to discard pile (including evolution stack)
-                    const cardToDiscard = {
+                    const cardsToDiscard: GameCard[] = [{
                         instanceId: benchCard.instanceId,
                         templateId: benchCard.templateId,
                         type: 'creature' as const
-                    };
-                    controllers.discard.addCard(i, cardToDiscard);
+                    }];
                     
                     // If there's an evolution stack, add those cards to discard pile too
                     if (benchCard.evolutionStack && benchCard.evolutionStack.length > 0) {
                         for (let stackIndex = 0; stackIndex < benchCard.evolutionStack.length; stackIndex++) {
                             const evolvedFromId = benchCard.evolutionStack[stackIndex];
-                            controllers.discard.addCard(i, {
+                            cardsToDiscard.push({
                                 instanceId: `${evolvedFromId}-stack${stackIndex}-${benchCard.instanceId}`,
                                 templateId: evolvedFromId,
                                 type: 'creature' as const
                             });
                         }
                     }
+                    
+                    controllers.discard.addCards(i, ...cardsToDiscard);
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
@@ -346,20 +349,20 @@ const gameTurn = loop<Controllers>({
                     maxHp: cardRepo.getCreature(opponentActive.templateId).maxHp
                 } : { name: 'None', hp: 0, maxHp: 0 };
                 
-                const myBenchInfo = myBench.map(card => ({
+                const myBenchInfo = myBench.map((card: any) => ({
                     name: cardRepo.getCreature(card.templateId).name,
                     hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
                     maxHp: cardRepo.getCreature(card.templateId).maxHp
                 }));
                 
-                const opponentBenchInfo = opponentBench.map(card => ({
+                const opponentBenchInfo = opponentBench.map((card: any) => ({
                     name: cardRepo.getCreature(card.templateId).name,
                     hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
                     maxHp: cardRepo.getCreature(card.templateId).maxHp
                 }));
                 
                 const handCards = controllers.hand.getHand(currentPlayer)
-                    .map(card => {
+                    .map((card: GameCard) => {
                         // Handle different card types
                         if (card.type === 'creature') {
                             return cardRepo.getCreature(card.templateId).name;
@@ -487,12 +490,6 @@ export const stateMachine = game<Controllers>(
             const energyTypes = controllers.deck.getPlayerEnergyTypes(i);
             controllers.energy.setAvailableTypes(i, energyTypes);
         }
-        
-        // Initialize hands once for all players
-        controllers.hand.initialize(controllers.players.count);
-        
-        // Initialize discard piles for all players
-        controllers.discard.initialize(controllers.players.count);
         
         // Draw initial hands
         for (let i = 0; i < controllers.players.count; i++) {

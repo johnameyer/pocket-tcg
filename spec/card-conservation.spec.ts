@@ -102,7 +102,7 @@ describe('Card Conservation', () => {
             const isKnockedOut = card.damageTaken >= cardData.maxHp;
             
             // Only count the card if it's not knocked out, OR if it's not in discard yet
-            const isInDiscard = state.discard[playerId]?.some((discardCard: { templateId: string; instanceId: string }) => 
+            const isInDiscard = state.discard.cards[playerId]?.some((discardCard: { templateId: string; instanceId: string }) => 
                 discardCard.templateId === card.templateId && discardCard.instanceId === card.instanceId
             );
             
@@ -116,7 +116,7 @@ describe('Card Conservation', () => {
         }
         
         // Count cards in discard pile
-        total += state.discard[playerId]?.length || 0;
+        total += state.discard.cards[playerId]?.length || 0;
         
         return total;
     }
@@ -166,7 +166,7 @@ describe('Card Conservation', () => {
         expect(totalCards).to.equal(20, `Player should have exactly 20 cards total (found ${totalCards})`);
         
         // Verify cards went to discard pile (2 discarded + 1 supporter played = 3)
-        expect(state.discard[0].length).to.equal(3, 'Should have 3 cards in discard (2 discarded + 1 supporter played)');
+        expect(state.discard.cards[0].length).to.equal(3, 'Should have 3 cards in discard (2 discarded + 1 supporter played)');
     });
 
     it('should maintain card count through evolution', () => {
@@ -218,7 +218,7 @@ describe('Card Conservation', () => {
         expect(player1Cards).to.equal(20, `Player 1 should have exactly 20 cards total after knockout (found ${player1Cards})`);
         
         // Verify the knocked out card went to discard pile
-        expect(state.discard[1].length).to.be.greaterThan(0, 'Knocked out card should be in discard pile');
+        expect(state.discard.cards[1].length).to.be.greaterThan(0, 'Knocked out card should be in discard pile');
     });
 
     it('should maintain card count through evolved creature knockout', () => {
@@ -251,7 +251,7 @@ describe('Card Conservation', () => {
         expect(player1Cards).to.equal(20, `Player 1 should have exactly 20 cards total after evolved creature knockout (found ${player1Cards})`);
         
         // Verify both the evolved form and base form went to discard pile
-        expect(state.discard[1].length).to.be.greaterThan(1, 'Both evolved form and base form should be in discard pile');
+        expect(state.discard.cards[1].length).to.be.greaterThan(1, 'Both evolved form and base form should be in discard pile');
     });
 
     it('should maintain card count with shuffle back to deck', () => {
@@ -306,7 +306,7 @@ describe('Card Conservation', () => {
         expect(totalCards).to.equal(20, `Player should have exactly 20 cards total with shuffle (found ${totalCards})`);
         
         // Verify shuffled cards went back to deck, not discard pile (only supporter itself in discard)
-        expect(state.discard[0].length).to.equal(1, 'Only the played supporter should be in discard pile, not the shuffled cards');
+        expect(state.discard.cards[0].length).to.equal(1, 'Only the played supporter should be in discard pile, not the shuffled cards');
     });
 
     it('should track discarded energy from knockouts', () => {
@@ -331,7 +331,7 @@ describe('Card Conservation', () => {
 
         // Check that energy was discarded by checking the discard pile state
         // Since we can't access controllers directly, we verify via state
-        const player1DiscardedCards = state.discard[1].length;
+        const player1DiscardedCards = state.discard.cards[1].length;
         expect(player1DiscardedCards).to.be.greaterThan(0, 'Knocked out creature should be in discard pile');
     });
 });

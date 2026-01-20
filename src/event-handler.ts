@@ -253,9 +253,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Use playCard to handle card removal properly
             const hand = controllers.hand.getHand(sourceHandler);
             const cardIndex = hand.findIndex(card => card.templateId === message.templateId);
-            let playedCard: any = undefined;
+            let playedCard: GameCard | undefined = undefined;
             if (cardIndex !== -1) {
-                playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
+                playedCard = hand[cardIndex];
+                controllers.hand.playCard(sourceHandler, cardIndex);
             }
             
             if (message.cardType === 'creature') {
@@ -284,7 +285,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Add played supporter to discard pile
                 if (playedCard) {
-                    controllers.discard.addCard(sourceHandler, playedCard);
+                    controllers.discard.addCards(sourceHandler, playedCard);
                 }
             } else if (message.cardType === 'item') {
                 // Apply item effects
@@ -303,7 +304,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Add played item to discard pile
                 if (playedCard) {
-                    controllers.discard.addCard(sourceHandler, playedCard);
+                    controllers.discard.addCards(sourceHandler, playedCard);
                 }
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
@@ -393,13 +394,20 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(source);
             
             const hand = controllers.hand.getHand(source);
-            const activeCardToRemove = { instanceId: '', templateId: message.activeCardId, type: 'creature' as const };
-            controllers.hand.removeCards(source, [activeCardToRemove]);
+            
+            // Find and remove active card from hand
+            const activeCardIndex = hand.findIndex(card => card.templateId === message.activeCardId && card.type === 'creature');
+            if (activeCardIndex !== -1) {
+                controllers.hand.playCard(source, activeCardIndex);
+            }
             controllers.field.setActiveCard(source, message.activeCardId);
             
+            // Find and remove bench cards from hand
             for (const cardId of message.benchCardIds) {
-                const benchCardToRemove = { instanceId: '', templateId: cardId, type: 'creature' as const };
-                controllers.hand.removeCards(source, [benchCardToRemove]);
+                const benchCardIndex = hand.findIndex(card => card.templateId === cardId && card.type === 'creature');
+                if (benchCardIndex !== -1) {
+                    controllers.hand.playCard(source, benchCardIndex);
+                }
                 controllers.field.addToBench(source, cardId);
             }
             

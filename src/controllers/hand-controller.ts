@@ -1,10 +1,13 @@
-import { AbstractController, GenericControllerProvider, IndexedControllers } from '@cards-ts/core';
+import { AbstractController, GenericControllerProvider, IndexedControllers, GenericHandlerController, SystemHandlerParams } from '@cards-ts/core';
 import { Card, CreatureCard, SupporterCard, ItemCard, GameCard } from './card-types.js';
 import { DeckController } from './deck-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 
 type HandDependencies = {
     deck: DeckController;
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>;
 };
 
 export class HandControllerProvider implements GenericControllerProvider<GameCard[][], HandDependencies, HandController> {
@@ -13,12 +16,12 @@ export class HandControllerProvider implements GenericControllerProvider<GameCar
     }
     
     initialState(controllers: HandDependencies): GameCard[][] {
-        return new Array(controllers.deck.getPlayerCount()).fill(undefined)
+        return new Array(controllers.players.count).fill(undefined)
             .map(() => []);
     }
     
     dependencies() {
-        return { deck: true } as const;
+        return { deck: true, players: true } as const;
     }
 }
 

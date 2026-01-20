@@ -2,4 +2,4 @@ dist
 node_modules
 tsconfig.tsbuildinfo
 npm-debug.log
-docs
+docspackage-lock.json
