@@ -7,7 +7,6 @@ import { emptyEnergyDict } from '../utils/energy-utils.js';
 
 export type DiscardState = {
     cards: GameCard[][];
-    energy: EnergyDictionary[];
 };
 
 type DiscardDependencies = {
@@ -21,8 +20,7 @@ export class DiscardControllerProvider implements GenericControllerProvider<Disc
     
     initialState(controllers: DiscardDependencies): DiscardState {
         return {
-            cards: new Array(controllers.players.count).fill(undefined).map(() => []),
-            energy: new Array(controllers.players.count).fill(undefined).map(() => emptyEnergyDict())
+            cards: new Array(controllers.players.count).fill(undefined).map(() => [])
         };
     }
     
@@ -32,8 +30,9 @@ export class DiscardControllerProvider implements GenericControllerProvider<Disc
 }
 
 /**
- * Controller for managing discarded cards and energy.
+ * Controller for managing discarded cards.
  * Tracks cards that have been discarded from hand or knocked out from field.
+ * Energy discard tracking is handled by EnergyController.
  */
 export class DiscardController extends AbstractController<DiscardState, DiscardDependencies, GameCard[]> {
     
@@ -51,36 +50,6 @@ export class DiscardController extends AbstractController<DiscardState, DiscardD
         this.state.cards[playerId].push(...cards);
     }
     
-    // Add energy to the discarded energy pile
-    addEnergy(playerId: number, energyType: AttachableEnergyType, amount: number = 1): void {
-        if (playerId < 0) {
-            throw new Error(`Invalid player ID: ${playerId}`);
-        }
-        
-        // Initialize if needed
-        if (!this.state.energy[playerId]) {
-            this.state.energy[playerId] = emptyEnergyDict();
-        }
-        
-        this.state.energy[playerId][energyType] += amount;
-    }
-    
-    // Add an energy dictionary to the discarded energy pile
-    addEnergyDict(playerId: number, energy: EnergyDictionary): void {
-        if (playerId < 0) {
-            throw new Error(`Invalid player ID: ${playerId}`);
-        }
-        
-        // Initialize if needed
-        if (!this.state.energy[playerId]) {
-            this.state.energy[playerId] = emptyEnergyDict();
-        }
-        
-        for (const energyType of Object.keys(energy) as AttachableEnergyType[]) {
-            this.state.energy[playerId][energyType] += energy[energyType];
-        }
-    }
-    
     // Get a player's discard pile
     getDiscardPile(playerId: number): GameCard[] {
         if (playerId < 0 || playerId >= this.state.cards.length) {
@@ -95,20 +64,6 @@ export class DiscardController extends AbstractController<DiscardState, DiscardD
             return 0;
         }
         return this.state.cards[playerId].length;
-    }
-    
-    // Get discarded energy for a player
-    getDiscardedEnergy(playerId: number): EnergyDictionary {
-        if (playerId < 0 || playerId >= this.state.energy.length) {
-            return emptyEnergyDict();
-        }
-        return { ...this.state.energy[playerId] };
-    }
-    
-    // Get total discarded energy count for a player
-    getTotalDiscardedEnergy(playerId: number): number {
-        const energy = this.getDiscardedEnergy(playerId);
-        return Object.values(energy).reduce((sum, count) => sum + count, 0);
     }
     
     // Required by AbstractController

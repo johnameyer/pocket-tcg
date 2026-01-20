@@ -79,7 +79,7 @@ const processKnockouts = {
                     
                     // Clean up energy attached to the knocked out card and add to discard pile
                     controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
-                    controllers.discard.addEnergyDict(i, attachedEnergy);
+                    controllers.energy.addDiscardedEnergyDict(i, attachedEnergy);
                     
                     // Add the knocked out card to discard pile (including evolution stack)
                     const cardsToDiscard: GameCard[] = [{
@@ -90,11 +90,10 @@ const processKnockouts = {
                     
                     // If there's an evolution stack, add those cards to discard pile too
                     if (targetCard.evolutionStack && targetCard.evolutionStack.length > 0) {
-                        for (let stackIndex = 0; stackIndex < targetCard.evolutionStack.length; stackIndex++) {
-                            const evolvedFromId = targetCard.evolutionStack[stackIndex];
+                        for (const stackCard of targetCard.evolutionStack) {
                             cardsToDiscard.push({
-                                instanceId: `${evolvedFromId}-stack${stackIndex}-${targetCard.instanceId}`,
-                                templateId: evolvedFromId,
+                                instanceId: stackCard.instanceId,
+                                templateId: stackCard.templateId,
                                 type: 'creature' as const
                             });
                         }
@@ -125,7 +124,7 @@ const processKnockouts = {
                     
                     // Clean up energy attached to the knocked out card and add to discard pile
                     controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
-                    controllers.discard.addEnergyDict(i, attachedEnergy);
+                    controllers.energy.addDiscardedEnergyDict(i, attachedEnergy);
                     
                     // Add the knocked out bench card to discard pile (including evolution stack)
                     const cardsToDiscard: GameCard[] = [{
@@ -136,11 +135,10 @@ const processKnockouts = {
                     
                     // If there's an evolution stack, add those cards to discard pile too
                     if (benchCard.evolutionStack && benchCard.evolutionStack.length > 0) {
-                        for (let stackIndex = 0; stackIndex < benchCard.evolutionStack.length; stackIndex++) {
-                            const evolvedFromId = benchCard.evolutionStack[stackIndex];
+                        for (const stackCard of benchCard.evolutionStack) {
                             cardsToDiscard.push({
-                                instanceId: `${evolvedFromId}-stack${stackIndex}-${benchCard.instanceId}`,
-                                templateId: evolvedFromId,
+                                instanceId: stackCard.instanceId,
+                                templateId: stackCard.templateId,
                                 type: 'creature' as const
                             });
                         }

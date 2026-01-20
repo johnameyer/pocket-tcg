@@ -477,20 +477,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionCardIndex = hand.findIndex(card => card.templateId === message.evolutionId);
             if (evolutionCardIndex === -1) return;
             
+            // Get the evolution card before removing it from hand
+            const evolutionCard = hand[evolutionCardIndex];
+            
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
+                    // Mark the field slot (instanceA) as evolved this turn to prevent double evolution
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                 }
-                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId);
+                controllers.field.evolveActiveCard(sourceHandler, evolutionCard);
             } else {
                 const benchedCards = controllers.field.getCards(sourceHandler).slice(1);
                 const targetCard = benchedCards[message.position - 1];
                 if (targetCard) {
+                    // Mark the field slot (instanceA) as evolved this turn to prevent double evolution
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
                 }
-                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId);
+                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, evolutionCard);
             }
             
             controllers.hand.playCard(sourceHandler, evolutionCardIndex);

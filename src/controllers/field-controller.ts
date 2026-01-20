@@ -8,12 +8,17 @@ import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
 
+export type EvolutionStackCard = {
+    instanceId: string;
+    templateId: string;
+};
+
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
     damageTaken: number;
     templateId: string; // Card template ID for the card
     turnPlayed?: number; // Track when the card was played for evolution restrictions
-    evolutionStack?: string[]; // Track previous forms in evolution chain (templateIds)
+    evolutionStack?: EvolutionStackCard[]; // Track previous forms in evolution chain (full card objects)
 };
 
 export type EnrichedFieldCard = FieldCard & { data: CreatureData };
@@ -332,14 +337,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     }
     
     // Evolve the active card for a player
-    public evolveActiveCard(playerId: number, evolutionTemplateId: string): boolean {
+    public evolveActiveCard(playerId: number, evolutionCard: GameCard): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
-        const cardData = this.controllers.cardRepository.getCreature(evolutionTemplateId);
+        const cardData = this.controllers.cardRepository.getCreature(evolutionCard.templateId);
         if (!cardData) {
-            throw new Error(`Card not found: ${evolutionTemplateId}`);
+            throw new Error(`Card not found: ${evolutionCard.templateId}`);
         }
         
         const currentCard = this.state.creatures[playerId][0];
@@ -349,20 +354,30 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             currentCard.evolutionStack = [];
         }
         
-        // Add the current card to the evolution stack before evolving
-        currentCard.evolutionStack.push(currentCard.templateId);
+        // Add the current card (pre-evolution form) to the evolution stack with its original instanceId
+        currentCard.evolutionStack.push({
+            instanceId: currentCard.instanceId,
+            templateId: currentCard.templateId
+        });
         
-        // Replace the card ID but keep the damage and evolution stack
+        // Add the evolution card being used to evolve to the evolution stack with its instanceId
+        currentCard.evolutionStack.push({
+            instanceId: evolutionCard.instanceId,
+            templateId: evolutionCard.templateId
+        });
+        
+        // Keep the same field slot instanceId, just change the templateId
+        // This ensures the field slot (instanceA) can't evolve again this turn
         this.state.creatures[playerId][0] = {
             ...currentCard,
-            templateId: evolutionTemplateId
+            templateId: evolutionCard.templateId  // Update to evolved form
         };
         
         return true;
     }
     
     // Evolve a benched card for a player
-    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionTemplateId: string): boolean {
+    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionCard: GameCard): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -372,9 +387,9 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Invalid bench index: ${benchIndex}`);
         }
         
-        const cardData = this.controllers.cardRepository.getCreature(evolutionTemplateId);
+        const cardData = this.controllers.cardRepository.getCreature(evolutionCard.templateId);
         if (!cardData) {
-            throw new Error(`Card not found: ${evolutionTemplateId}`);
+            throw new Error(`Card not found: ${evolutionCard.templateId}`);
         }
         
         const currentCard = this.state.creatures[playerId][benchPosition];
@@ -384,13 +399,23 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             currentCard.evolutionStack = [];
         }
         
-        // Add the current card to the evolution stack before evolving
-        currentCard.evolutionStack.push(currentCard.templateId);
+        // Add the current card (pre-evolution form) to the evolution stack with its original instanceId
+        currentCard.evolutionStack.push({
+            instanceId: currentCard.instanceId,
+            templateId: currentCard.templateId
+        });
         
-        // Replace the card ID but keep the damage and evolution stack
+        // Add the evolution card being used to evolve to the evolution stack with its instanceId
+        currentCard.evolutionStack.push({
+            instanceId: evolutionCard.instanceId,
+            templateId: evolutionCard.templateId
+        });
+        
+        // Keep the same field slot instanceId, just change the templateId
+        // This ensures the field slot (instanceA) can't evolve again this turn
         this.state.creatures[playerId][benchPosition] = {
             ...currentCard,
-            templateId: evolutionTemplateId
+            templateId: evolutionCard.templateId  // Update to evolved form
         };
         
         return true;

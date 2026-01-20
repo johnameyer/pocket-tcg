@@ -100,16 +100,11 @@ describe('Card Conservation', () => {
         for (const card of fieldCards) {
             instanceIds.add(card.instanceId);
             
-            // Add evolution stack cards
+            // Add evolution stack cards - each card in the stack represents a physical card
+            // The evolution stack contains both the pre-evolution forms AND the evolution cards used
             if (card.evolutionStack) {
                 for (const stackCard of card.evolutionStack) {
-                    // Evolution stack now contains card objects with instanceIds
-                    if (typeof stackCard === 'string') {
-                        // Legacy: templateId only - create synthetic id
-                        instanceIds.add(`${stackCard}-evolved-${card.instanceId}`);
-                    } else {
-                        instanceIds.add(stackCard.instanceId);
-                    }
+                    instanceIds.add(stackCard.instanceId);
                 }
             }
         }
@@ -144,7 +139,7 @@ describe('Card Conservation', () => {
         }
         
         // Count discarded energy
-        total += controllers.discard.getTotalDiscardedEnergy(playerId);
+        total += controllers.energy.getTotalDiscardedEnergy(playerId);
         
         // Note: We don't count current/next energy as that's generated each turn, not part of initial deck
         
@@ -198,6 +193,7 @@ describe('Card Conservation', () => {
         const activeCard = state.field.creatures[0][0];
         expect(activeCard.evolutionStack).to.exist;
         expect(activeCard.evolutionStack!.length).to.equal(1, 'Evolution stack should contain the pre-evolution form');
+        expect(activeCard.evolutionStack![0].templateId).to.equal('basic-creature', 'Evolution stack should contain basic-creature');
     });
 
     it('should maintain card count through knockout', () => {
@@ -312,7 +308,7 @@ describe('Card Conservation', () => {
         expect(player1DiscardedCards).to.be.greaterThan(0, 'Knocked out creature should be in discard pile');
         
         // Verify energy was tracked in discard
-        const discardedEnergy = state.discard.energy[1];
+        const discardedEnergy = state.energy.discardedEnergy[1];
         const totalDiscardedEnergy = Object.values(discardedEnergy).reduce((sum: number, count) => sum + (count as number), 0);
         expect(totalDiscardedEnergy).to.be.greaterThan(0, 'Energy from knocked out creature should be tracked in discard');
     });

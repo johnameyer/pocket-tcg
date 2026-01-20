@@ -35,6 +35,9 @@ export type EnergyState = {
     
     // Track if this is the very first turn of the game
     isAbsoluteFirstTurn: boolean;
+    
+    // Discarded energy per player
+    discardedEnergy: EnergyDictionary[];
 }
 
 type EnergyDependencies = { 
@@ -56,7 +59,8 @@ export class EnergyControllerProvider implements GenericControllerProvider<Energ
                 ['fire', 'water', 'lightning', 'grass', 'psychic', 'fighting', 'darkness', 'metal']
             ),
             energyAttachedThisTurn: new Array(controllers.players.count).fill(false),
-            isAbsoluteFirstTurn: true
+            isAbsoluteFirstTurn: true,
+            discardedEnergy: new Array(controllers.players.count).fill(null).map(() => EnergyController.emptyEnergyDict())
         };
     }
 
@@ -425,5 +429,47 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Mark that the first turn has passed
     public markFirstTurnComplete(): void {
         this.state.isAbsoluteFirstTurn = false;
+    }
+    
+    // Add energy to the discarded energy pile
+    public addDiscardedEnergy(playerId: number, energyType: AttachableEnergyType, amount: number = 1): void {
+        if (playerId < 0 || playerId >= this.state.discardedEnergy.length) {
+            throw new Error(`Invalid player ID: ${playerId}`);
+        }
+        
+        if (!this.state.discardedEnergy[playerId]) {
+            this.state.discardedEnergy[playerId] = EnergyController.emptyEnergyDict();
+        }
+        
+        this.state.discardedEnergy[playerId][energyType] += amount;
+    }
+    
+    // Add an energy dictionary to the discarded energy pile
+    public addDiscardedEnergyDict(playerId: number, energy: EnergyDictionary): void {
+        if (playerId < 0 || playerId >= this.state.discardedEnergy.length) {
+            throw new Error(`Invalid player ID: ${playerId}`);
+        }
+        
+        if (!this.state.discardedEnergy[playerId]) {
+            this.state.discardedEnergy[playerId] = EnergyController.emptyEnergyDict();
+        }
+        
+        for (const energyType of Object.keys(energy) as AttachableEnergyType[]) {
+            this.state.discardedEnergy[playerId][energyType] += energy[energyType];
+        }
+    }
+    
+    // Get discarded energy for a player
+    public getDiscardedEnergy(playerId: number): EnergyDictionary {
+        if (playerId < 0 || playerId >= this.state.discardedEnergy.length) {
+            return EnergyController.emptyEnergyDict();
+        }
+        return { ...this.state.discardedEnergy[playerId] };
+    }
+    
+    // Get total discarded energy count for a player
+    public getTotalDiscardedEnergy(playerId: number): number {
+        const energy = this.getDiscardedEnergy(playerId);
+        return Object.values(energy).reduce((sum, count) => sum + count, 0);
     }
 }

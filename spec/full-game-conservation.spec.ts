@@ -106,12 +106,9 @@ describe('Full Game Conservation', () => {
             if (!card) continue;
             instanceIds.add(card.instanceId);
             if (card.evolutionStack) {
+                // Evolution stack contains both pre-evolution forms and evolution cards used
                 for (const stackCard of card.evolutionStack) {
-                    if (typeof stackCard === 'string') {
-                        instanceIds.add(`${stackCard}-${card.instanceId}`);
-                    } else {
-                        instanceIds.add((stackCard as any).instanceId);
-                    }
+                    instanceIds.add(stackCard.instanceId);
                 }
             }
         }
@@ -144,7 +141,7 @@ describe('Full Game Conservation', () => {
         }
         
         // Discarded energy
-        const discarded = state.discard.energy[playerId] || {};
+        const discarded = state.energy.discardedEnergy[playerId] || {};
         total += Object.values(discarded).reduce((sum: number, count) => sum + (count as number), 0);
         
         return total;
