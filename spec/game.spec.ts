@@ -221,7 +221,7 @@ describe('Creature Pocket TCG Game', () => {
                         StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
                         StateBuilder.withTurn(0),
                         (customState) => {
-                            customState.params = { maxHandSize: 5, maxTurns: 30, initialDecks: [] };
+                            customState.params = { ...customState.params, maxHandSize: 5 };
                         }
                     ),
                     maxSteps: 2
