@@ -476,10 +476,10 @@ export const stateMachine = game<Controllers>(
         // Main game turns
         gameTurn,
         
-        // Handle game end (tie or winner)
+        // Handle turn limit tie
         conditionalState({
-            id: 'gameEndCheck',
-            condition: (controllers: Controllers) => controllers.turnCounter.isMaxTurnsReached() || isGameOver(controllers),
+            id: 'turnLimitCheck',
+            condition: (controllers: Controllers) => controllers.turnCounter.isMaxTurnsReached(),
             truthy: handleGameOver,
         })
     ]),

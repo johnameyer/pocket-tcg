@@ -179,11 +179,12 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withHand(0, Array.from({ length: handSize }, (_, i) => ({ templateId: 'basic-creature' }))),
                     StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
                     StateBuilder.withTurn(0),
+                    StateBuilder.withGameState('generateEnergyAndDrawCard'),
                     (customState) => {
                         customState.params = { ...customState.params, maxHandSize };
                     }
                 ),
-                maxSteps: 2
+                maxSteps: 1
             });
         }
 
@@ -197,16 +198,7 @@ describe('Creature Pocket TCG Game', () => {
 
             it('should allow drawing when hand is below max size', () => {
                 // Start with 8 cards and verify draw increases to 9
-                const { state } = runTestGame({
-                    actions: [],
-                    stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withHand(0, Array.from({ length: 8 }, (_, i) => ({ templateId: 'basic-creature' }))),
-                        StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
-                        StateBuilder.withTurn(0),
-                        StateBuilder.withGameState('generateEnergyAndDrawCard')
-                    ),
-                    maxSteps: 1
-                });
+                const { state } = createHandSizeTest(8);
 
                 // Hand should increase from 8 to 9 after drawing one card
                 expect(state.hand[0].length).to.equal(9, 'Hand should increase by exactly 1 card');
