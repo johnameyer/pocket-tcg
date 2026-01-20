@@ -123,3 +123,57 @@ export function runTestGame(config: TestGameConfig) {
         state
     };
 }
+
+/**
+ * Helper to run a complete bot game with conservation tracking
+ */
+export function runBotGame(config: {
+    customRepository?: MockCardRepository;
+    initialDecks: string[][];
+    maxSteps?: number;
+    conservationCheck?: (state: ControllerState<Controllers>, step: number) => void;
+}) {
+    const repository = config.customRepository || mockRepository;
+    const factory = gameFactory(repository);
+    
+    // Create bot handlers
+    const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain());
+    
+    const params = {
+        ...factory.getGameSetup().getDefaultParams(),
+        initialDecks: config.initialDecks
+    };
+    
+    const names = ['Player1', 'Player2'];
+    const driver = factory.getGameDriver(handlers, params, names);
+    
+    driver.resume();
+    
+    const maxSteps = config.maxSteps || 200;
+    let stepCount = 0;
+    
+    while (!driver.getState().completed && stepCount < maxSteps) {
+        const stateBefore = driver.getState() as ControllerState<Controllers>;
+        
+        driver.handleSyncResponses();
+        driver.resume();
+        stepCount++;
+        
+        const stateAfter = driver.getState() as ControllerState<Controllers>;
+        
+        // Call conservation check if provided
+        if (config.conservationCheck) {
+            config.conservationCheck(stateAfter, stepCount);
+        }
+        
+        if (stateAfter.completed) {
+            break;
+        }
+    }
+    
+    return {
+        driver,
+        state: driver.getState() as ControllerState<Controllers>,
+        stepCount
+    };
+}
