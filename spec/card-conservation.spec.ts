@@ -102,7 +102,7 @@ describe('Card Conservation', () => {
             const isKnockedOut = card.damageTaken >= cardData.maxHp;
             
             // Only count the card if it's not knocked out, OR if it's not in discard yet
-            const isInDiscard = state.discard[playerId]?.some((discardCard: any) => 
+            const isInDiscard = state.discard[playerId]?.some((discardCard: { templateId: string; instanceId: string }) => 
                 discardCard.templateId === card.templateId && discardCard.instanceId === card.instanceId
             );
             

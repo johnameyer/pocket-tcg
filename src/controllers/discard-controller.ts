@@ -146,6 +146,6 @@ export class DiscardController extends AbstractController<GameCard[][], DiscardD
     
     // Required by AbstractController
     validate(): void {
-        // Validation logic if needed
+        // No validation needed for discard pile - cards can be added freely as they're discarded
     }
 }

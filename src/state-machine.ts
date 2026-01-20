@@ -90,9 +90,10 @@ const processKnockouts = {
                     
                     // If there's an evolution stack, add those cards to discard pile too
                     if (targetCard.evolutionStack && targetCard.evolutionStack.length > 0) {
-                        for (const evolvedFromId of targetCard.evolutionStack) {
+                        for (let stackIndex = 0; stackIndex < targetCard.evolutionStack.length; stackIndex++) {
+                            const evolvedFromId = targetCard.evolutionStack[stackIndex];
                             controllers.discard.addCard(i, {
-                                instanceId: `${evolvedFromId}-evolved`,
+                                instanceId: `${evolvedFromId}-stack${stackIndex}-${targetCard.instanceId}`,
                                 templateId: evolvedFromId,
                                 type: 'creature' as const
                             });
@@ -134,9 +135,10 @@ const processKnockouts = {
                     
                     // If there's an evolution stack, add those cards to discard pile too
                     if (benchCard.evolutionStack && benchCard.evolutionStack.length > 0) {
-                        for (const evolvedFromId of benchCard.evolutionStack) {
+                        for (let stackIndex = 0; stackIndex < benchCard.evolutionStack.length; stackIndex++) {
+                            const evolvedFromId = benchCard.evolutionStack[stackIndex];
                             controllers.discard.addCard(i, {
-                                instanceId: `${evolvedFromId}-evolved`,
+                                instanceId: `${evolvedFromId}-stack${stackIndex}-${benchCard.instanceId}`,
                                 templateId: evolvedFromId,
                                 type: 'creature' as const
                             });
