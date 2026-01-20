@@ -169,42 +169,42 @@ describe('Creature Pocket TCG Game', () => {
     });
 
     describe('Game Limits', () => {
+        /**
+         * Helper to create a test game with a specific hand size and max hand size parameter
+         */
+        function createHandSizeTest(handSize: number, maxHandSize: number = 10) {
+            return runTestGame({
+                actions: [],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withHand(0, Array.from({ length: handSize }, (_, i) => ({ templateId: 'basic-creature' }))),
+                    StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
+                    StateBuilder.withTurn(0),
+                    (customState) => {
+                        customState.params = { ...customState.params, maxHandSize };
+                    }
+                ),
+                maxSteps: 2
+            });
+        }
+
         describe('Hand Size Limit', () => {
             it('should enforce maximum hand size at turn start', () => {
-                // Set up a game where player already has 10 cards
-                const { state } = runTestGame({
-                    actions: [],
-                    stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withHand(0, Array.from({ length: 10 }, (_, i) => ({ templateId: 'basic-creature' }))),
-                        StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }, { templateId: 'basic-creature' }]),
-                        StateBuilder.withTurn(0)
-                    ),
-                    maxSteps: 2
-                });
+                const { state } = createHandSizeTest(10);
 
                 // Hand should remain at 10 cards (draw at turn start blocked by hand size limit)
                 expect(state.hand[0].length).to.be.lte(10, 'Hand should not exceed max size of 10');
             });
 
             it('should allow drawing when hand is below max size', () => {
-                // Start with 8 cards and advance to trigger draw phase
+                // Start with 8 cards and verify draw increases to 9
                 const { state } = runTestGame({
                     actions: [],
-                    resumeFrom: StateBuilder.createStateAtPhase('generateEnergyAndDrawCard', (customState) => {
-                        customState.hand = [
-                            Array.from({ length: 8 }, (_, i) => ({ 
-                                instanceId: `hand-${i}`, 
-                                type: 'creature' as const, 
-                                templateId: 'basic-creature' 
-                            })),
-                            []
-                        ];
-                        customState.deck = [
-                            [{ instanceId: 'deck-1', type: 'creature' as const, templateId: 'basic-creature' }],
-                            []
-                        ];
-                        customState.turn = 0;
-                    }),
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withHand(0, Array.from({ length: 8 }, (_, i) => ({ templateId: 'basic-creature' }))),
+                        StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
+                        StateBuilder.withTurn(0),
+                        StateBuilder.withGameState('generateEnergyAndDrawCard')
+                    ),
                     maxSteps: 1
                 });
 
@@ -213,19 +213,7 @@ describe('Creature Pocket TCG Game', () => {
             });
 
             it('should respect custom max hand size parameter', () => {
-                // Custom max hand size can be verified by starting with that many cards
-                const { state } = runTestGame({
-                    actions: [],
-                    stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withHand(0, Array.from({ length: 5 }, (_, i) => ({ templateId: 'basic-creature' }))),
-                        StateBuilder.withDeck(0, [{ templateId: 'basic-creature' }]),
-                        StateBuilder.withTurn(0),
-                        (customState) => {
-                            customState.params = { ...customState.params, maxHandSize: 5 };
-                        }
-                    ),
-                    maxSteps: 2
-                });
+                const { state } = createHandSizeTest(5, 5);
                 
                 // Hand should remain at or below custom max of 5
                 expect(state.hand[0].length).to.be.lte(5, 'Hand should not exceed custom max of 5');

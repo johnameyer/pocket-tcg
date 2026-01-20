@@ -99,9 +99,8 @@ export class StateBuilder {
     }
 
     /**
-     * Create a game state starting at a custom state in the state machine
+     * Customize the game state (e.g., to set a specific starting state in the state machine)
      * @param stateName The name of the state to start at (e.g., 'generateEnergyAndDrawCard', 'START_GAME', 'checkupPhase')
-     * @param customizer Optional function to modify the default state
      * 
      * Common state names for unit tests:
      * - 'START_GAME' - Beginning of game before setup
@@ -113,78 +112,34 @@ export class StateBuilder {
      * Note: State names may change if the state machine is modified.
      * Run `console.log(Object.keys(flattened.states))` in @cards-ts/state-machine's adapt.js to see all available states.
      */
-    static createStateAtPhase(stateName: string, customizer?: (state: ControllerState<Controllers>) => void) {
-        // Create default minimal state structure
-        const state = {
-            turn: 0,
-            completed: false,
-            state: stateName as any,
-            waiting: { waiting: [], responded: [] },
-            points: [0, 0],
-            names: ['Player 1', 'Player 2'],
-            players: undefined,
-            setup: {
-                playersReady: stateName === 'START_GAME' ? [false, false] : [true, true]
-            },
-            params: {
-                maxHandSize: 10,
-                maxTurns: 30,
-                initialDecks: []
-            },
-            data: [],
-            turnCounter: {
-                turnNumber: stateName === 'START_GAME' ? 0 : 2
-            },
-            turnState: {
-                shouldEndTurn: false,
-                supporterPlayedThisTurn: false,
-                retreatedThisTurn: false,
-                evolvedInstancesThisTurn: [],
-                usedAbilitiesThisTurn: [],
-                pendingTargetSelection: undefined,
-                damageBoosts: [],
-                damageReductions: [],
-                retreatCostReductions: [],
-                retreatPreventions: [],
-                damagePrevention: [],
-                evolutionFlexibility: [],
-            },
-            statusEffects: {
-                activeStatusEffects: [[], []]
-            },
-            coinFlip: {
-                nextFlipGuaranteedHeads: false,
-                mockedResults: [],
-                mockedResultIndex: 0
-            },
-            field: {
-                creatures: stateName === 'START_GAME' ? [[], []] : [
-                    [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-1', turnPlayed: 0 }],
-                    [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-2', turnPlayed: 0 }]
-                ]
-            },
-            energy: {
-                currentEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
-                nextEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
-                availableTypes: [['fire'], ['fire']],
-                energyAttachedThisTurn: [false, false],
-                isAbsoluteFirstTurn: stateName === 'START_GAME' || stateName === 'generateEnergyAndDrawCard',
-                attachedEnergyByInstance: {} as Record<string, EnergyDictionary>
-            },
-            tools: {
-                attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
-            },
-            cardRepository: {},
-            deck: [[], []],
-            hand: [[], []]
-        } satisfies ControllerState<Controllers>;
-        
-        // Apply customization if provided
-        if (customizer) {
-            customizer(state as unknown as ControllerState<Controllers>);
-        }
-        
-        return state;
+    static withGameState(stateName: string) {
+        return (state: ControllerState<Controllers>) => {
+            state.state = stateName as any;
+            
+            // Adjust setup based on state
+            if (stateName === 'START_GAME') {
+                state.setup.playersReady = [false, false];
+                state.turnCounter.turnNumber = 0;
+                state.field.creatures = [[], []];
+                state.energy.isAbsoluteFirstTurn = true;
+            } else {
+                state.setup.playersReady = [true, true];
+                if (state.turnCounter.turnNumber === 0) {
+                    state.turnCounter.turnNumber = 2;
+                }
+                // Ensure creatures exist if not in START_GAME
+                if (state.field.creatures[0].length === 0) {
+                    state.field.creatures = [
+                        [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-1', turnPlayed: 0 }],
+                        [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-2', turnPlayed: 0 }]
+                    ];
+                }
+            }
+            
+            if (stateName === 'generateEnergyAndDrawCard') {
+                state.energy.isAbsoluteFirstTurn = true;
+            }
+        };
     }
 
     // TODO: StateBuilder should use CreatureRepository to validate creature IDs exist before creating instances

@@ -63,16 +63,16 @@ Developed mainly though generative AI so even with test coverage there is a chan
 
 ## Running
 
-To start the game:
+After building, start the game:
 
 ```bash
-pnpm start
+node dist/start.js
 ```
 
 The game supports customizable parameters via command line arguments. Use `--help` to see all available options:
 
 ```bash
-pnpm start --help
+node dist/start.js --help
 ```
 
 ## Development
