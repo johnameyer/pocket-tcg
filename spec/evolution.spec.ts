@@ -19,6 +19,40 @@ describe('Evolution Mechanics', () => {
         expect(getExecutedCount()).to.equal(1, 'Should have executed evolution action');
     });
 
+    it('should discard previous form when evolving', () => {
+        const { state } = runTestGame({
+            actions: [new EvolveResponseMessage('evolution-creature', 0)],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                StateBuilder.withCanEvolve(0, 0)
+            ),
+            maxSteps: 5
+        });
+
+        // Player 0's basic creature should be in discard pile after evolution
+        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
+        expect(state.discard[0][0].templateId).to.equal('basic-creature');
+        expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Active creature should be evolved');
+    });
+
+    it('should discard previous form when evolving benched creature', () => {
+        const { state } = runTestGame({
+            actions: [new EvolveResponseMessage('evolution-creature', 1)],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
+                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                StateBuilder.withCanEvolve(0, 0)
+            ),
+            maxSteps: 5
+        });
+
+        // Player 0's benched basic creature should be in discard pile after evolution
+        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
+        expect(state.discard[0][0].templateId).to.equal('basic-creature');
+        expect(state.field.creatures[0][1].templateId).to.equal('evolution-creature', 'Benched creature should be evolved');
+    });
+
     it('should prevent evolution on first turn', () => {
         const { state } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 0)],

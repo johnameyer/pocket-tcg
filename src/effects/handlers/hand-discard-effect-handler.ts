@@ -65,17 +65,25 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         // In a real implementation, this would involve player choice
         const cardsToDiscard = hand.slice(0, actualDiscardAmount);
         
-        // Remove the cards from the hand
-        controllers.hand.removeCards(playerId, cardsToDiscard);
-        
-        // Send a message about the discard
-        controllers.players.messageAll({
-            type: 'status',
-            components: [`${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!`]
-        });
-        
         // If shuffleIntoDeck is true, shuffle the discarded cards into the deck
         if (effect.shuffleIntoDeck) {
+            // Collect indices to remove in descending order for efficient removal
+            const indicesToRemove: number[] = [];
+            for (let i = 0; i < actualDiscardAmount; i++) {
+                const card = cardsToDiscard[i];
+                const index = hand.findIndex(c => c.instanceId === card.instanceId);
+                if (index !== -1) {
+                    indicesToRemove.push(index);
+                }
+            }
+            
+            // Sort in descending order and remove
+            indicesToRemove.sort((a, b) => b - a);
+            for (const index of indicesToRemove) {
+                hand.splice(index, 1);
+            }
+            
+            // Add to deck
             for (const card of cardsToDiscard) {
                 controllers.deck.addCard(playerId, card);
             }
@@ -86,7 +94,16 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             // Send a message about the shuffle
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} shuffles the discarded cards into the deck for player ${playerId}!`]
+                components: [`${context.effectName} shuffles ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}'s hand into the deck!`]
+            });
+        } else {
+            // Remove the cards from the hand (automatically discards them)
+            controllers.hand.removeCards(playerId, cardsToDiscard);
+            
+            // Send a message about the discard
+            controllers.players.messageAll({
+                type: 'status',
+                components: [`${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!`]
             });
         }
     }

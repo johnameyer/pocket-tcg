@@ -76,10 +76,15 @@ const processKnockouts = {
                     // Clean up energy attached to the knocked out card
                     controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
                     
+                    // Clean up tools attached to the knocked out card
+                    controllers.tools.detachTool(targetCard.instanceId);
+                    
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
                     const pointsToAward = cardData.attributes?.ex ? 2 : 1;
                     controllers.points.increaseScore(opponentId, pointsToAward);
+                    
+                    // Note: Card will be automatically discarded when promoteToBattle is called
                 }
             }
             
@@ -97,12 +102,15 @@ const processKnockouts = {
                     // Clean up energy attached to the knocked out card
                     controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
                     
+                    // Clean up tools attached to the knocked out card
+                    controllers.tools.detachTool(benchCard.instanceId);
+                    
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
                     const pointsToAward = cardData.attributes?.ex ? 2 : 1;
                     controllers.points.increaseScore(opponentId, pointsToAward);
                     
-                    // Remove the knocked out bench card
+                    // Remove the knocked out bench card (automatically discards)
                     controllers.field.removeBenchCard(i, benchIndex);
                 }
             }

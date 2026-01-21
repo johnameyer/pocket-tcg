@@ -3,6 +3,7 @@ import { CardRepositoryController } from './card-repository-controller.js';
 import { ToolController } from './tool-controller.js';
 import { EnergyController } from './energy-controller.js';
 import { StatusEffectController } from './status-effect-controller.js';
+import { DiscardController } from './discard-controller.js';
 import { CreatureData } from '../repository/card-types.js';
 import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
 import { ResponseMessage } from '../messages/response-message.js';
@@ -29,7 +30,8 @@ type FieldDependencies = {
     cardRepository: CardRepositoryController,
     tools: ToolController,
     energy: EnergyController,
-    statusEffects: StatusEffectController
+    statusEffects: StatusEffectController,
+    discard: DiscardController
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -47,7 +49,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true } as const;
+        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true } as const;
     }
 }
 
@@ -220,11 +222,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         return card.damageTaken >= maxHp;
     }
 
-    // Remove a card from the bench (for knockouts)
+    // Remove a card from the bench (for knockouts) and discard it
     public removeBenchCard(playerId: number, benchIndex: number): void {
         const benchPosition = benchIndex + 1; // Bench starts at position 1
         if (benchPosition < this.state.creatures[playerId].length) {
+            const removedCard = this.state.creatures[playerId][benchPosition];
             this.state.creatures[playerId].splice(benchPosition, 1);
+            // Automatically discard the removed card
+            this.controllers.discard.discardFieldCard(playerId, removedCard);
         }
     }
 
@@ -309,7 +314,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     }
 
     
-    // Move a card from bench to active position
+    // Move a card from bench to active position (discarding the old active card if it exists)
     public promoteToBattle(playerId: number, benchIndex: number) {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
@@ -322,6 +327,12 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         
         // Get the card from bench
         const card = this.state.creatures[playerId][benchPosition];
+        
+        // Discard the old active card if it exists (e.g., when it's knocked out)
+        const oldActiveCard = this.state.creatures[playerId][0];
+        if (oldActiveCard) {
+            this.controllers.discard.discardFieldCard(playerId, oldActiveCard);
+        }
         
         // Remove from bench
         this.state.creatures[playerId].splice(benchPosition, 1);
@@ -341,12 +352,13 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Keep the damage taken from the previous card
-        const damageTaken = this.state.creatures[playerId][0].damageTaken;
+        // Discard the previous form before evolution
+        const oldCard = this.state.creatures[playerId][0];
+        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card ID but keep the damage
+        // Replace the card with the evolution (preserves all properties except templateId)
         this.state.creatures[playerId][0] = {
-            ...this.state.creatures[playerId][0],
+            ...oldCard,
             templateId: evolutionTemplateId
         };
         
@@ -369,12 +381,13 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Keep the damage taken from the previous card
-        const damageTaken = this.state.creatures[playerId][benchPosition].damageTaken;
+        // Discard the previous form before evolution
+        const oldCard = this.state.creatures[playerId][benchPosition];
+        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card ID but keep the damage
+        // Replace the card with the evolution (preserves all properties except templateId)
         this.state.creatures[playerId][benchPosition] = {
-            ...this.state.creatures[playerId][benchPosition],
+            ...oldCard,
             templateId: evolutionTemplateId
         };
         

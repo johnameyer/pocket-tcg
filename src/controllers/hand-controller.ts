@@ -1,12 +1,14 @@
 import { AbstractController, GenericControllerProvider, IndexedControllers, GlobalController, ParamsController } from '@cards-ts/core';
 import { Card, CreatureCard, SupporterCard, ItemCard, GameCard } from './card-types.js';
 import { DeckController } from './deck-controller.js';
+import { DiscardController } from './discard-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { GameParams } from '../game-params.js';
 
 type HandDependencies = {
     deck: DeckController;
     params: ParamsController<GameParams>;
+    discard: DiscardController;
 };
 
 export class HandControllerProvider implements GenericControllerProvider<GameCard[][], HandDependencies, HandController> {
@@ -20,7 +22,7 @@ export class HandControllerProvider implements GenericControllerProvider<GameCar
     }
     
     dependencies() {
-        return { deck: true, params: true } as const;
+        return { deck: true, params: true, discard: true } as const;
     }
 }
 
@@ -106,7 +108,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
             return undefined;
         }
         
-        // Remove the card from hand
+        // Remove the card from hand (but don't discard it - it's being played)
         const card = this.state[playerId].splice(cardIndex, 1)[0];
         return card;
     }
@@ -126,14 +128,16 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
         return this.getHand(position);
     }
     
-    // Remove specific cards from hand
+    // Remove specific cards from hand and discard them
     removeCards(playerId: number, cardsToRemove: GameCard[]): void {
         for (const cardToRemove of cardsToRemove) {
             const index = this.state[playerId].findIndex(card => 
                 card.templateId === cardToRemove.templateId && card.type === cardToRemove.type
             );
             if (index !== -1) {
-                this.state[playerId].splice(index, 1);
+                const removedCard = this.state[playerId].splice(index, 1)[0];
+                // Automatically discard the removed card
+                this.controllers.discard.discardCard(playerId, removedCard);
             }
         }
     }
