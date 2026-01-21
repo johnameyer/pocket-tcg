@@ -55,8 +55,8 @@ describe('Knockout System', () => {
         });
         
         // Player 1's active creature should be knocked out and in discard pile
-        expect(state.discard.discardPiles[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
-        expect(state.discard.discardPiles[1].some((card: any) => card.templateId === 'evolution-creature')).to.be.true;
+        expect(state.discard[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
+        expect(state.discard[1].some((card: any) => card.templateId === 'evolution-creature')).to.be.true;
     });
 
     it('should detach tools when creature with tool is knocked out', () => {
@@ -79,7 +79,7 @@ describe('Knockout System', () => {
         expect(state.tools.attachedTools['evolution-creature-1']).to.be.undefined;
         
         // Creature should be in discard pile
-        expect(state.discard.discardPiles[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
+        expect(state.discard[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
     });
 
     it('should detach tools when benched creature with tool is knocked out', () => {

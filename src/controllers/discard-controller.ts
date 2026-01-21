@@ -1,31 +1,26 @@
-import { GenericControllerProvider, GlobalController } from '@cards-ts/core';
+import { GenericControllerProvider, GlobalController, GenericHandlerController, SystemHandlerParams } from '@cards-ts/core';
 import { GameCard } from './card-types.js';
 import { FieldCard } from './field-controller.js';
-
-type DiscardState = {
-    discardPiles: GameCard[][];
-};
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
 
 // Dependencies for this controller
 type DiscardDependencies = {
-    // No dependencies needed for basic discard operations
+    players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>;
 };
 
-export class DiscardControllerProvider implements GenericControllerProvider<DiscardState, DiscardDependencies, DiscardController> {
-    controller(state: DiscardState, controllers: DiscardDependencies): DiscardController {
+export class DiscardControllerProvider implements GenericControllerProvider<GameCard[][], DiscardDependencies, DiscardController> {
+    controller(state: GameCard[][], controllers: DiscardDependencies): DiscardController {
         return new DiscardController(state, controllers);
     }
     
-    initialState(controllers: DiscardDependencies): DiscardState {
-        // Note: Player count is not available in initialState for controllers without player dependency
-        // The initialize() method will properly populate discardPiles when the game starts
-        return {
-            discardPiles: []
-        };
+    initialState(controllers: DiscardDependencies): GameCard[][] {
+        // Initialize empty discard pile for each player
+        return new Array(controllers.players.count).fill(undefined).map(() => []);
     }
     
     dependencies() {
-        return {} as const;
+        return { players: true } as const;
     }
 }
 
@@ -34,16 +29,11 @@ export class DiscardControllerProvider implements GenericControllerProvider<Disc
  * Tracks all cards that have been discarded from hand or knocked out from field.
  * This is a GlobalController as all players can see what has been discarded.
  */
-export class DiscardController extends GlobalController<DiscardState, DiscardDependencies> {
+export class DiscardController extends GlobalController<GameCard[][], DiscardDependencies> {
     validate(): void {
-        if (!Array.isArray(this.state.discardPiles)) {
+        if (!Array.isArray(this.state)) {
             throw new Error('Discard piles must be an array');
         }
-    }
-    
-    initialize(playerCount: number): void {
-        // Initialize empty discard pile for each player
-        this.state.discardPiles = new Array(playerCount).fill(undefined).map(() => []);
     }
     
     /**
@@ -53,11 +43,11 @@ export class DiscardController extends GlobalController<DiscardState, DiscardDep
      * @param card The card to discard
      */
     discardCard(playerId: number, card: GameCard): void {
-        if (playerId < 0 || playerId >= this.state.discardPiles.length) {
+        if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
-        this.state.discardPiles[playerId].push(card);
+        this.state[playerId].push(card);
     }
     
     /**
@@ -80,7 +70,7 @@ export class DiscardController extends GlobalController<DiscardState, DiscardDep
      * @param fieldCard The field card to discard
      */
     discardFieldCard(playerId: number, fieldCard: FieldCard): void {
-        if (playerId < 0 || playerId >= this.state.discardPiles.length) {
+        if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
@@ -91,7 +81,7 @@ export class DiscardController extends GlobalController<DiscardState, DiscardDep
             type: 'creature'
         };
         
-        this.state.discardPiles[playerId].push(gameCard);
+        this.state[playerId].push(gameCard);
     }
     
     /**
@@ -101,11 +91,11 @@ export class DiscardController extends GlobalController<DiscardState, DiscardDep
      * @returns Array of discarded cards
      */
     getDiscardPile(playerId: number): GameCard[] {
-        if (playerId < 0 || playerId >= this.state.discardPiles.length) {
+        if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
-        return this.state.discardPiles[playerId];
+        return this.state[playerId];
     }
     
     /**

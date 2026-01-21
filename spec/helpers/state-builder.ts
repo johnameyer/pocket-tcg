@@ -88,9 +88,7 @@ export class StateBuilder {
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
             hand: [[], []],  // Array of card arrays for each player
-            discard: {  // Global controller state structure
-                discardPiles: [[], []]
-            }
+            discard: [[], []]  // Array of discarded card arrays for each player
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided

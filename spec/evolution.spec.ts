@@ -31,8 +31,8 @@ describe('Evolution Mechanics', () => {
         });
 
         // Player 0's basic creature should be in discard pile after evolution
-        expect(state.discard.discardPiles[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
-        expect(state.discard.discardPiles[0][0].templateId).to.equal('basic-creature');
+        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
+        expect(state.discard[0][0].templateId).to.equal('basic-creature');
         expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Active creature should be evolved');
     });
 
@@ -48,8 +48,8 @@ describe('Evolution Mechanics', () => {
         });
 
         // Player 0's benched basic creature should be in discard pile after evolution
-        expect(state.discard.discardPiles[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
-        expect(state.discard.discardPiles[0][0].templateId).to.equal('basic-creature');
+        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
+        expect(state.discard[0][0].templateId).to.equal('basic-creature');
         expect(state.field.creatures[0][1].templateId).to.equal('evolution-creature', 'Benched creature should be evolved');
     });
 
