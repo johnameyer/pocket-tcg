@@ -10,6 +10,7 @@ import { EnergyController } from '../controllers/energy-controller.js';
 import * as helpers from './intermediary-handler-helpers.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
+import { toFieldCard } from '../utils/field-card-utils.js';
 
 export class IntermediaryHandler extends GameHandler {
     
@@ -40,10 +41,10 @@ export class IntermediaryHandler extends GameHandler {
         const cardRepo = this.cardRepository;
         
         // Get benched cards for the player
-        const benchedCardsData = handlerData.field.creatures[playerId];
+        const benchedCardsData = handlerData.field.creatures[playerId].map(toFieldCard);
         
         // Convert raw card data to display format with names and HP
-        const benchedCards = benchedCardsData.map(card => {
+        const benchedCards = benchedCardsData.map((card: FieldCard) => {
             const { name, maxHp } = cardRepo.getCreature(card.templateId);
             return {
                 ...card,

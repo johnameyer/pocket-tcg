@@ -10,6 +10,7 @@ import { GameCard } from '../controllers/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
 import { EnergyDictionary } from '../controllers/energy-controller.js';
+import { toFieldCard } from '../utils/field-card-utils.js';
 
 interface SelectionOption {
     name: string;
@@ -93,7 +94,7 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     }
     
     // Get the active FieldCard for the current player
-    const activeFieldCard = handlerData.field.creatures[currentPlayer][0]; // Position 0 is active
+    const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
     
     if (!fieldCardData) {
@@ -284,7 +285,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             const fieldCardOptions = [];
             
             // Add active FieldCard
-            const activeFieldCard = handlerData.field.creatures[currentPlayer][0]; // Position 0 is active
+            const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
             const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
             const activeHp = Math.max(0, activeCreatureData.maxHp - activeFieldCard.damageTaken);
             fieldCardOptions.push({
@@ -293,8 +294,8 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             });
             
             // Add benched FieldCard
-            const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1); // Positions 1+ are benched
-            benchedFieldCards.forEach((fieldCard, index: number) => {
+            const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
+            benchedFieldCards.forEach((fieldCard: FieldCard, index: number) => {
                 const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
                 const hp = Math.max(0, fieldCardData.maxHp - fieldCard.damageTaken);
                 fieldCardOptions.push({
@@ -345,9 +346,9 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     const fieldCardOptions = [];
     
     // Check all FieldCard positions for evolution using ActionValidator
-    const allFieldCards = handlerData.field.creatures[currentPlayer] || [];
+    const allFieldCards = handlerData.field.creatures[currentPlayer]?.map(toFieldCard) || [];
     
-    allFieldCards.forEach((fieldCard, position) => {
+    allFieldCards.forEach((fieldCard: FieldCard, position: number) => {
         if (ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
             const evolution = allFieldCard.find(id => {
                 const data = cardRepository.getCreature(id);
@@ -453,7 +454,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     const fieldCardOptions = [];
     
     // Add active FieldCard
-    const activeFieldCard = handlerData.field.creatures[currentPlayer][0]; // Position 0 is active
+    const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
     const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
     fieldCardOptions.push({
         name: `${activeCreatureData.name} (Active)`,
@@ -461,8 +462,8 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     });
     
     // Add benched FieldCard
-    const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1); // Positions 1+ are benched
-    benchedFieldCards.forEach((fieldCard, index: number) => {
+    const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
+    benchedFieldCards.forEach((fieldCard: FieldCard, index: number) => {
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
         fieldCardOptions.push({
             name: `${fieldCardData.name} (Bench)`,
@@ -497,9 +498,9 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
  */
 export async function handleRetreat(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
     const currentPlayer = handlerData.turn;
-    const activeFieldCard = handlerData.field.creatures[currentPlayer][0]; // Position 0 is active
+    const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
-    const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1); // Positions 1+ are benched
+    const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
     
     // Check if retreat is possible using ActionValidator
     if (!ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
@@ -517,7 +518,7 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
         return;
     }
     
-    const benchOptions = benchedFieldCards.map((fieldCard, index: number) => {
+    const benchOptions = benchedFieldCards.map((fieldCard: FieldCard, index: number) => {
         const data = cardRepository.getCreature(fieldCard.templateId);
         const hp = Math.max(0, data.maxHp - fieldCard.damageTaken);
         return {
@@ -583,7 +584,7 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const actionOptions = [];
     
     // Check if any attacks are usable
-    const activeFieldCard = handlerData.field.creatures[currentPlayer][0]; // Position 0 is active
+    const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
     
     // Use ActionValidator to check if attack is possible
@@ -598,10 +599,7 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     actionOptions.push({ name: 'Play a card', value: 'play' });
     
     // Check if any FieldCard can evolve
-    const allFieldCards = [
-        handlerData.field.creatures[currentPlayer],
-        ...(handlerData.field.creatures[currentPlayer] || [])
-    ].filter(Boolean);
+    const allFieldCards = handlerData.field.creatures[currentPlayer].map(toFieldCard);
     
     const canEvolve = allFieldCards.some((_, position) => 
         ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)
@@ -620,8 +618,8 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     }
     
     // Check bench FieldCard for abilities
-    const benchFieldCards = handlerData.field.creatures[currentPlayer].slice(1); // Positions 1+ are benched
-    benchFieldCards.forEach((fieldCard, benchIndex: number) => {
+    const benchFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
+    benchFieldCards.forEach((fieldCard: FieldCard, benchIndex: number) => {
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
         if (fieldCardData && fieldCardData.ability) {
             if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
@@ -684,8 +682,8 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
  */
 export async function showPlayerStatus(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, playerId: number): Promise<void> {
     const hand = handlerData.hand;
-    const activeFieldCard = handlerData.field.creatures[playerId][0]; // Position 0 is active
-    const benchedFieldCards = handlerData.field.creatures[playerId].slice(1); // Positions 1+ are benched
+    const activeFieldCard = toFieldCard(handlerData.field.creatures[playerId][0]); // Position 0 is active
+    const benchedFieldCards = handlerData.field.creatures[playerId].slice(1).map(toFieldCard); // Positions 1+ are benched
     const supporterPlayed = handlerData.turnState.supporterPlayedThisTurn;
     
     // Get active FieldCard info with energy
@@ -701,7 +699,7 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
         .join(',') || '';
     
     // Get bench FieldCard info with energy
-    const benchInfo = benchedFieldCards.map((fieldCard) => {
+    const benchInfo = benchedFieldCards.map((fieldCard: FieldCard) => {
         const data = cardRepository.getCreature(fieldCard.templateId);
         const name = data.name;
         const maxHp = data.maxHp;
