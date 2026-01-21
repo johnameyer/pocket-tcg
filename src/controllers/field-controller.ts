@@ -352,13 +352,21 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Keep the damage taken from the previous card
-        const damageTaken = this.state.creatures[playerId][0].damageTaken;
+        // Discard the previous form before evolution
+        const oldCard = this.state.creatures[playerId][0];
+        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card ID but keep the damage
+        // Keep the damage taken and instance ID from the previous card
+        const damageTaken = this.state.creatures[playerId][0].damageTaken;
+        const instanceId = this.state.creatures[playerId][0].instanceId;
+        const turnPlayed = this.state.creatures[playerId][0].turnPlayed;
+        
+        // Replace the card with the evolution
         this.state.creatures[playerId][0] = {
-            ...this.state.creatures[playerId][0],
-            templateId: evolutionTemplateId
+            instanceId,
+            damageTaken,
+            templateId: evolutionTemplateId,
+            turnPlayed
         };
         
         return true;
@@ -380,13 +388,21 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Keep the damage taken from the previous card
-        const damageTaken = this.state.creatures[playerId][benchPosition].damageTaken;
+        // Discard the previous form before evolution
+        const oldCard = this.state.creatures[playerId][benchPosition];
+        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card ID but keep the damage
+        // Keep the damage taken and instance ID from the previous card
+        const damageTaken = this.state.creatures[playerId][benchPosition].damageTaken;
+        const instanceId = this.state.creatures[playerId][benchPosition].instanceId;
+        const turnPlayed = this.state.creatures[playerId][benchPosition].turnPlayed;
+        
+        // Replace the card with the evolution
         this.state.creatures[playerId][benchPosition] = {
-            ...this.state.creatures[playerId][benchPosition],
-            templateId: evolutionTemplateId
+            instanceId,
+            damageTaken,
+            templateId: evolutionTemplateId,
+            turnPlayed
         };
         
         return true;

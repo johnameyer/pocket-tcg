@@ -45,6 +45,11 @@ export class DiscardController extends AbstractController<GameCard[][], DiscardD
      * @param card The card to discard
      */
     discardCard(playerId: number, card: GameCard): void {
+        // Handle uninitialized state
+        if (!this.state || this.state.length === 0) {
+            return;
+        }
+        
         if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -72,6 +77,11 @@ export class DiscardController extends AbstractController<GameCard[][], DiscardD
      * @param fieldCard The field card to discard
      */
     discardFieldCard(playerId: number, fieldCard: FieldCard): void {
+        // Handle uninitialized state
+        if (!this.state || this.state.length === 0) {
+            return;
+        }
+        
         if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -93,6 +103,11 @@ export class DiscardController extends AbstractController<GameCard[][], DiscardD
      * @returns Array of discarded cards
      */
     getDiscardPile(playerId: number): GameCard[] {
+        // Handle uninitialized state - return empty array
+        if (!this.state || this.state.length === 0) {
+            return [];
+        }
+        
         if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }

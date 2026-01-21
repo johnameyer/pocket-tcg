@@ -38,4 +38,24 @@ describe('Knockout System', () => {
         
         expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Bench creature should be promoted to active after knockout');
     });
+
+    it('should discard knocked out active creature', () => {
+        const { state } = runTestGame({
+            actions: [
+                new AttackResponseMessage(0),
+                new SelectActiveCardResponseMessage(0)
+            ],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withCreatures(1, 'evolution-creature', ['high-hp-creature']),
+                StateBuilder.withDamage('evolution-creature-1', 180), // Close to KO
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+            ),
+            maxSteps: 10
+        });
+        
+        // Player 1's active creature should be knocked out and in discard pile
+        expect(state.discard[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
+        expect(state.discard[1].some(card => card.templateId === 'evolution-creature')).to.be.true;
+    });
 });
