@@ -67,14 +67,23 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         
         // If shuffleIntoDeck is true, shuffle the discarded cards into the deck
         if (effect.shuffleIntoDeck) {
-            // Remove cards from hand without discarding them
-            for (const card of cardsToDiscard) {
+            // Collect indices to remove in descending order for efficient removal
+            const indicesToRemove: number[] = [];
+            for (let i = 0; i < actualDiscardAmount; i++) {
+                const card = cardsToDiscard[i];
                 const index = hand.findIndex(c => c.instanceId === card.instanceId);
                 if (index !== -1) {
-                    hand.splice(index, 1);
+                    indicesToRemove.push(index);
                 }
             }
             
+            // Sort in descending order and remove
+            indicesToRemove.sort((a, b) => b - a);
+            for (const index of indicesToRemove) {
+                hand.splice(index, 1);
+            }
+            
+            // Add to deck
             for (const card of cardsToDiscard) {
                 controllers.deck.addCard(playerId, card);
             }

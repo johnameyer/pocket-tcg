@@ -144,8 +144,8 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Discard specific cards from hand by index
     discardCardsByIndex(playerId: number, indices: number[]): GameCard[] {
-        // Sort indices in descending order to avoid index shifts
-        const sortedIndices = [...indices].sort((a, b) => b - a);
+        // Sort indices in descending order to avoid index shifts (without mutating original)
+        const sortedIndices = indices.slice().sort((a, b) => b - a);
         const discardedCards: GameCard[] = [];
         
         for (const index of sortedIndices) {

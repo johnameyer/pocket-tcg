@@ -352,14 +352,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Discard the previous form before evolution
+        // Store the current card's properties before discarding
         const oldCard = this.state.creatures[playerId][0];
-        this.controllers.discard.discardFieldCard(playerId, oldCard);
+        const damageTaken = oldCard.damageTaken;
+        const instanceId = oldCard.instanceId;
+        const turnPlayed = oldCard.turnPlayed;
         
-        // Keep the damage taken and instance ID from the previous card
-        const damageTaken = this.state.creatures[playerId][0].damageTaken;
-        const instanceId = this.state.creatures[playerId][0].instanceId;
-        const turnPlayed = this.state.creatures[playerId][0].turnPlayed;
+        // Discard the previous form before evolution
+        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
         // Replace the card with the evolution
         this.state.creatures[playerId][0] = {
@@ -388,14 +388,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Discard the previous form before evolution
+        // Store the current card's properties before discarding
         const oldCard = this.state.creatures[playerId][benchPosition];
-        this.controllers.discard.discardFieldCard(playerId, oldCard);
+        const damageTaken = oldCard.damageTaken;
+        const instanceId = oldCard.instanceId;
+        const turnPlayed = oldCard.turnPlayed;
         
-        // Keep the damage taken and instance ID from the previous card
-        const damageTaken = this.state.creatures[playerId][benchPosition].damageTaken;
-        const instanceId = this.state.creatures[playerId][benchPosition].instanceId;
-        const turnPlayed = this.state.creatures[playerId][benchPosition].turnPlayed;
+        // Discard the previous form before evolution
+        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
         // Replace the card with the evolution
         this.state.creatures[playerId][benchPosition] = {
