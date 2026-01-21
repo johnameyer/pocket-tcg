@@ -684,7 +684,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             for (const [energyType, amount] of Object.entries(attachedEnergy)) {
                 if (energyToRemove <= 0) break;
                 const toRemove = Math.min(amount, energyToRemove);
-                controllers.energy.discardSpecificEnergyFromInstance(activeCard.instanceId, energyType as AttachableEnergyType, toRemove);
+                controllers.energy.discardSpecificEnergyFromInstance(sourceHandler, activeCard.instanceId, energyType as AttachableEnergyType, toRemove);
                 energyToRemove -= toRemove;
             }
             

@@ -35,6 +35,9 @@ export type EnergyState = {
     
     // Track if this is the very first turn of the game
     isAbsoluteFirstTurn: boolean;
+    
+    // Track discarded energy per player
+    discardedEnergy: EnergyDictionary[];
 }
 
 type EnergyDependencies = { 
@@ -56,7 +59,8 @@ export class EnergyControllerProvider implements GenericControllerProvider<Energ
                 ['fire', 'water', 'lightning', 'grass', 'psychic', 'fighting', 'darkness', 'metal']
             ),
             energyAttachedThisTurn: new Array(controllers.players.count).fill(false),
-            isAbsoluteFirstTurn: true
+            isAbsoluteFirstTurn: true,
+            discardedEnergy: new Array(controllers.players.count).fill(null).map(() => EnergyController.emptyEnergyDict())
         };
     }
 
@@ -232,7 +236,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return true;
     }
 
-    public discardSpecificEnergyFromInstance(instanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
+    public discardSpecificEnergyFromInstance(playerId: number, instanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
         const attached = this.state.attachedEnergyByInstance[instanceId];
         if (!attached) return false;
         
@@ -240,6 +244,12 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             const available = attached[energyType] || 0;
             const toDiscard = Math.min(available, amount);
             attached[energyType] -= toDiscard;
+            
+            // Track discarded energy
+            if (toDiscard > 0) {
+                this.state.discardedEnergy[playerId][energyType] += toDiscard;
+            }
+            
             return toDiscard > 0; // Return true if any energy was discarded
         } else {
             // Discard random energy
@@ -253,6 +263,11 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
                 const toDiscard = Math.min(available, remaining);
                 attached[type] -= toDiscard;
                 remaining -= toDiscard;
+                
+                // Track discarded energy
+                if (toDiscard > 0) {
+                    this.state.discardedEnergy[playerId][type] += toDiscard;
+                }
             }
         }
         
@@ -345,14 +360,23 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     }
     
     // Remove all energy from a card instance (for knockouts)
-    public removeAllEnergyFromInstance(instanceId: string): void {
+    public removeAllEnergyFromInstance(playerId: number, instanceId: string): void {
         if (this.state.attachedEnergyByInstance[instanceId]) {
+            // Track discarded energy before removing
+            const attached = this.state.attachedEnergyByInstance[instanceId];
+            for (const type of Object.keys(attached) as AttachableEnergyType[]) {
+                const amount = attached[type];
+                if (amount > 0) {
+                    this.state.discardedEnergy[playerId][type] += amount;
+                }
+            }
+            
             delete this.state.attachedEnergyByInstance[instanceId];
         }
     }
     
     // Discard energy from a card by instance ID (for retreat cost)
-    public discardEnergyFromInstance(instanceId: string, amount: number): boolean {
+    public discardEnergyFromInstance(playerId: number, instanceId: string, amount: number): boolean {
         const attached = this.state.attachedEnergyByInstance[instanceId];
         if (!attached) return false;
         
@@ -367,6 +391,11 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             const toDiscard = Math.min(available, remaining);
             attached[type] -= toDiscard;
             remaining -= toDiscard;
+            
+            // Track discarded energy
+            if (toDiscard > 0) {
+                this.state.discardedEnergy[playerId][type] += toDiscard;
+            }
         }
         
         return true;
@@ -425,5 +454,16 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Mark that the first turn has passed
     public markFirstTurnComplete(): void {
         this.state.isAbsoluteFirstTurn = false;
+    }
+    
+    // Get discarded energy for a player
+    public getDiscardedEnergy(playerId: number): EnergyDictionary {
+        return this.state.discardedEnergy[playerId] || EnergyController.emptyEnergyDict();
+    }
+    
+    // Get total discarded energy for a player
+    public getTotalDiscardedEnergy(playerId: number): number {
+        const discarded = this.getDiscardedEnergy(playerId);
+        return Object.values(discarded).reduce((sum, count) => sum + count, 0);
     }
 }
