@@ -244,8 +244,8 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
 
     // Retreat active creature with a bench creature
     public retreat(playerId: number, benchIndex: number): boolean {
-        const activeCard = this.getRawCardByPosition(playerId, 0);
-        const benchCards = this.state.creatures[playerId].slice(1); // Get raw bench cards
+        const activeCard = this.state.creatures[playerId]?.[0];
+        const benchCards = this.state.creatures[playerId].slice(1);
         
         if (!activeCard || benchIndex < 0 || benchIndex >= benchCards.length) {
             return false;

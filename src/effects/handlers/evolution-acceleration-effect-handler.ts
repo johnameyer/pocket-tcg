@@ -8,6 +8,7 @@ import { getCreatureFromTarget } from '../effect-utils.js';
 import { HandlerData } from '../../game-handler.js';
 import { TargetResolver } from '../target-resolver.js';
 import { GameCard } from '../../controllers/card-types.js';
+import { getCurrentTemplateId } from '../../utils/field-card-utils.js';
 
 /**
  * Handler for evolution acceleration effects that allow evolving a creature directly
@@ -39,13 +40,13 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             
             // Check if creature was played this turn (can't evolve on first turn)
             const currentTurn = handlerData.turnCounter.turnNumber;
-            if (targetCreature.turnPlayed === currentTurn) {
+            if (targetCreature.turnLastPlayed === currentTurn) {
                 return false;
             }
             
             // Check restrictions - for now, only basic-creature-only is supported
             if (effect.restrictions && effect.restrictions.includes('basic-creature-only')) {
-                const currentData = cardRepository.getCreature(targetCreature.templateId);
+                const currentData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
                 const isBasicCreature = !currentData.evolvesFrom;
                 
                 if (!isBasicCreature) {
@@ -60,7 +61,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
                 const cardData = cardRepository.getCreature(card.templateId);
                 if (!cardData.evolvesFrom) return false;
                 const stage1Data = cardRepository.getCreature(cardData.evolvesFrom);
-                return stage1Data && stage1Data.evolvesFrom === targetCreature.templateId;
+                return stage1Data && stage1Data.evolvesFrom === getCurrentTemplateId(targetCreature);
             });
             
             // For validation, we allow the item to be played even if there's no valid evolution

@@ -3,6 +3,7 @@ import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveRe
 import { ResponseMessage } from '../messages/response-message.js';
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { CardRepository } from '../repository/card-repository.js';
+import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -55,7 +56,7 @@ export class DefaultBotHandler extends GameHandler {
             const allCreatures = this.cardRepository.getAllCreatureIds();
             const evolution = allCreatures.find((id: string) => {
                 const data = this.cardRepository.getCreature(id);
-                return data?.evolvesFrom === activeCreature.templateId;
+                return data?.evolvesFrom === getCurrentTemplateId(activeCreature);
             });
             
             if (evolution) {
@@ -78,12 +79,12 @@ export class DefaultBotHandler extends GameHandler {
         // Try to attack if we have sufficient energy
         const activeCard = handlerData.field.creatures[currentPlayer][0]; // Get active card at position 0
         if (activeCard && handlerData.energy) {
-            const creatureData = this.cardRepository.getCreature(activeCard.templateId);
+            const creatureData = this.cardRepository.getCreature(getCurrentTemplateId(activeCard));
             const attack = creatureData?.attacks[0];
             
             if (attack) {
                 // Use the new energy system - attachedEnergyByInstance
-                const instanceId = activeCard.instanceId;
+                const instanceId = getCurrentInstanceId(activeCard);
                 const attachedEnergy = handlerData.energy.attachedEnergyByInstance?.[instanceId];
                 
                 if (attachedEnergy) {

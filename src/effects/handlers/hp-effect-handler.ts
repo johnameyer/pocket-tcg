@@ -11,6 +11,7 @@ import { FieldCard } from "../../controllers/field-controller.js";
 import { HandlerData } from '../../game-handler.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
 import { TargetResolver } from '../target-resolver.js';
+import { toFieldCard } from '../../utils/field-card-utils.js';
 
 /**
  * Handler for HP effects (healing and damage).
@@ -130,7 +131,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         for (let i = 0; i < playercreature.length; i++) {
             const creature = playercreature[i];
             if (creature) {
-                result.push(creature);
+                result.push(toFieldCard(creature));
             }
         }
         
