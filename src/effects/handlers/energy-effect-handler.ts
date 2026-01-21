@@ -1,7 +1,7 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { EnergyEffect } from '../../repository/effect-types.js';
 import { FixedTarget, ResolvedTarget } from '../../repository/target-types.js';
-import { EffectContext } from '../effect-context.js';
+import { EffectContext, EffectContextFactory } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
@@ -107,6 +107,47 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                         type: 'status',
                         components: [`${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}!`]
                     });
+                    
+                    // Trigger energy-attachment effects by pushing them to the queue
+                    // Get the creature data - will throw an error if not found
+                    const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
+                    
+                    // Process tool triggers
+                    const tool = controllers.tools.getAttachedTool(targetCreature.instanceId);
+                    if (tool) {
+                        const toolData = controllers.cardRepository.getTool(tool.templateId);
+                        if (toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
+                            // Check if the trigger is for a specific energy type
+                            if (!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
+                                const toolContext = EffectContextFactory.createTriggerContext(
+                                    playerId,
+                                    toolData.name,
+                                    'energy-attachment',
+                                    targetCreature.instanceId,
+                                    { energyType }
+                                );
+                                controllers.effects.pushPendingEffect(toolData.effects, toolContext);
+                            }
+                        }
+                    }
+                    
+                    // Process ability triggers
+                    if (creatureData.ability) {
+                        const ability = creatureData.ability;
+                        if (ability.trigger?.type === 'energy-attachment' && ability.effects) {
+                            // Check if the trigger is for a specific energy type
+                            if (!ability.trigger.energyType || ability.trigger.energyType === energyType) {
+                                const abilityContext = EffectContextFactory.createTriggerContext(
+                                    playerId,
+                                    `${creatureData.name}'s ${ability.name}`,
+                                    'energy-attachment',
+                                    targetCreature.instanceId,
+                                    { energyType }
+                                );
+                                controllers.effects.pushPendingEffect(ability.effects, abilityContext);
+                            }
+                        }
+                    }
                 } else {
                     controllers.players.messageAll({
                         type: 'status',

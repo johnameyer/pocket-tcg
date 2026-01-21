@@ -2,7 +2,7 @@ import { Controllers } from '../../controllers/controllers.js';
 import { HpEffect } from '../../repository/effect-types.js';
 import { CreatureAbility } from '../../repository/card-types.js';
 import { FixedTarget, ResolvedTarget, TargetCriteria, Target } from '../../repository/target-types.js';
-import { EffectContext } from '../effect-context.js';
+import { EffectContext, EffectContextFactory } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
@@ -234,6 +234,45 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
                 type: 'status',
                 components: [`${context.effectName} deals ${damageDealt} damage${customName ? ' to ' + customName : ''}!`]
             });
+            
+            // Trigger when-damaged effects by pushing them to the queue
+            // The queue will be processed by the event handler or state machine
+            const triggerContext = EffectContextFactory.createTriggerContext(
+                playerId,
+                'damage trigger',
+                'damaged',
+                creature.instanceId,
+                { damage: damageDealt }
+            );
+            
+            // Process tool triggers
+            const tool = controllers.tools.getAttachedTool(creature.instanceId);
+            if (tool) {
+                const toolData = controllers.cardRepository.getTool(tool.templateId);
+                if (toolData && toolData.effects && toolData.trigger?.type === 'damaged') {
+                    const toolContext = EffectContextFactory.createTriggerContext(
+                        playerId,
+                        toolData.name,
+                        'damaged',
+                        creature.instanceId
+                    );
+                    controllers.effects.pushPendingEffect(toolData.effects, toolContext);
+                }
+            }
+            
+            // Process ability triggers
+            if (creatureData.ability) {
+                const ability = creatureData.ability;
+                if (ability.trigger?.type === 'damaged' && ability.effects) {
+                    const abilityContext = EffectContextFactory.createTriggerContext(
+                        playerId,
+                        `${creatureData.name}'s ${ability.name}`,
+                        'damaged',
+                        creature.instanceId
+                    );
+                    controllers.effects.pushPendingEffect(ability.effects, abilityContext);
+                }
+            }
         }
     }
     

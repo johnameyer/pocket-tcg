@@ -31,7 +31,8 @@ export class TriggerProcessor {
                     creatureInstanceId
                 );
 
-                EffectApplier.applyEffects(toolData.effects, controllers, context);
+                // Push to queue instead of applying immediately
+                controllers.effects.pushPendingEffect(toolData.effects, context);
             }
         }
 
@@ -47,7 +48,8 @@ export class TriggerProcessor {
                     creatureInstanceId
                 );
                 
-                EffectApplier.applyEffects(ability.effects, controllers, context);
+                // Push to queue instead of applying immediately
+                controllers.effects.pushPendingEffect(ability.effects, context);
             }
         }
     }
@@ -72,7 +74,8 @@ export class TriggerProcessor {
                     creatureInstanceId
                 );
 
-                EffectApplier.applyEffects(toolData.effects, controllers, context);
+                // Push to queue instead of applying immediately
+                controllers.effects.pushPendingEffect(toolData.effects, context);
             }
         }
         
@@ -94,7 +97,8 @@ export class TriggerProcessor {
                     creatureInstanceId
                 );
                 
-                EffectApplier.applyEffects(ability.effects, controllers, context);
+                // Push to queue instead of applying immediately
+                controllers.effects.pushPendingEffect(ability.effects, context);
             }
         }
     }
