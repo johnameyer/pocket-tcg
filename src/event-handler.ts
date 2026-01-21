@@ -477,20 +477,23 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionCard = controllers.hand.playCard(sourceHandler, evolutionCardIndex);
             const evolutionInstanceId = evolutionCard?.instanceId;
             
+            // Get the current turn number
+            const turnNumber = controllers.turnCounter.getTurn();
+            
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                 }
-                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId);
+                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId, turnNumber);
             } else {
                 const benchedCards = controllers.field.getCards(sourceHandler).slice(1);
                 const targetCard = benchedCards[message.position - 1];
                 if (targetCard) {
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
                 }
-                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId);
+                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId, turnNumber);
             }
             
             const { name } = controllers.cardRepository.getCreature(message.evolutionId);

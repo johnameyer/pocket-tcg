@@ -33,8 +33,7 @@ type FieldDependencies = {
     tools: ToolController,
     energy: EnergyController,
     statusEffects: StatusEffectController,
-    discard: DiscardController,
-    turnCounter?: { getTurn: () => number }
+    discard: DiscardController
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -52,7 +51,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true, turnCounter: false } as const;
+        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true } as const;
     }
 }
 
@@ -358,7 +357,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     }
     
     // Evolve the active card for a player
-    public evolveActiveCard(playerId: number, evolutionTemplateId: string, evolutionInstanceId?: string): boolean {
+    public evolveActiveCard(playerId: number, evolutionTemplateId: string, evolutionInstanceId?: string, turnNumber?: number): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -373,22 +372,19 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         // Use provided instanceId or generate a new one for the evolution
         const newInstanceId = evolutionInstanceId ?? `${evolutionTemplateId}-${Date.now()}-${Math.random()}`;
         
-        // Get the current turn number from the turn state controller
-        const turnNumber = this.controllers.turnCounter?.getTurn() ?? 0;
-        
         // Add the evolution to the stack (keeping previous forms)
         this.state.creatures[playerId][0] = addEvolution(
             oldCard,
             newInstanceId,
             evolutionTemplateId,
-            turnNumber
+            turnNumber ?? 0
         );
         
         return true;
     }
     
     // Evolve a benched card for a player
-    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionTemplateId: string, evolutionInstanceId?: string): boolean {
+    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionTemplateId: string, evolutionInstanceId?: string, turnNumber?: number): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -408,15 +404,12 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         // Use provided instanceId or generate a new one for the evolution
         const newInstanceId = evolutionInstanceId ?? `${evolutionTemplateId}-${Date.now()}-${Math.random()}`;
         
-        // Get the current turn number from the turn state controller
-        const turnNumber = this.controllers.turnCounter?.getTurn() ?? 0;
-        
         // Add the evolution to the stack (keeping previous forms)
         this.state.creatures[playerId][benchPosition] = addEvolution(
             oldCard,
             newInstanceId,
             evolutionTemplateId,
-            turnNumber
+            turnNumber ?? 0
         );
         
         return true;
