@@ -75,10 +75,9 @@ export class StateBuilder {
                 ]
             },
             energy: {
-                currentEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
-                nextEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
+                currentEnergy: [null, null],
+                nextEnergy: [null, null],
                 availableTypes: [['fire'], ['fire']],
-                energyAttachedThisTurn: [false, false],
                 isAbsoluteFirstTurn: false,
                 attachedEnergyByInstance: {} as Record<string, EnergyDictionary>
             },
@@ -276,21 +275,21 @@ export class StateBuilder {
 
     static withCurrentEnergy(player: number, energyTypes: PartialEnergyDict) {
         return (state: ControllerState<Controllers>) => {
-            const energyDict = createEmptyEnergyDict();
-            Object.entries(energyTypes).forEach(([type, count]) => {
-                if (type in energyDict && count !== undefined) {
-                    energyDict[type as AttachableEnergyType] = count;
-                }
-            });
-            state.energy.currentEnergy[player] = energyDict;
+            // Find the first non-zero energy type and set it as current energy
+            const firstEnergyType = Object.entries(energyTypes).find(([_, count]) => count && count > 0);
+            if (firstEnergyType) {
+                state.energy.currentEnergy[player] = firstEnergyType[0] as AttachableEnergyType;
+            } else {
+                state.energy.currentEnergy[player] = null;
+            }
         };
     }
 
     static withNoEnergy(player: number) {
         return (state: ControllerState<Controllers>) => {
-            state.energy.currentEnergy[player] = createEmptyEnergyDict();
-            state.energy.nextEnergy[player] = createEmptyEnergyDict();
-            state.energy.availableTypes[player] = [];
+            // Set current energy to null (no energy available)
+            state.energy.currentEnergy[player] = null;
+            state.energy.nextEnergy[player] = null;
         };
     }
 

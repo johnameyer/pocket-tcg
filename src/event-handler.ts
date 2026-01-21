@@ -498,10 +498,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
     'attach-energy-response': {
         validateEvent: {
             validators: [
-                EventHandler.validate('Energy already attached this turn', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                    return !controllers.energy.canAttachEnergy(source);
-                }),
-                EventHandler.validate('No energy available', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
+                EventHandler.validate('No energy available to attach', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
                     return !controllers.energy.canAttachEnergy(source);
                 }),
                 EventHandler.validate('First turn restriction', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
@@ -516,7 +513,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(sourceHandler);
             
             const currentPlayer = sourceHandler;
-            const energyType = controllers.energy.generateEnergy(currentPlayer);
+            // Get the current available energy type (don't generate new energy!)
+            const availableTypes = controllers.energy.getAvailableEnergyTypes(currentPlayer);
+            if (availableTypes.length === 0) {
+                return; // No energy available
+            }
+            const energyType = availableTypes[0]; // Get the first (and only) available energy type
             
             // Get the card at the specified field position
             const fieldCard = controllers.field.getRawCardByPosition(currentPlayer, message.fieldPosition);
