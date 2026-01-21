@@ -91,3 +91,21 @@ export type ToolData = {
     effects: Effect[];
     trigger?: Trigger;
 };
+
+/**
+ * Represents a single form in an evolution chain.
+ */
+export type EvolutionStackCard = {
+    instanceId: string;
+    templateId: string;
+};
+
+/**
+ * Represents a field card with complete evolution history.
+ * This is the internal state representation.
+ */
+export type InstancedFieldCard = {
+    evolutionStack: EvolutionStackCard[]; // Track all forms in evolution chain
+    damageTaken: number;
+    turnLastPlayed: number; // Track when a card was last played / added for evolution restrictions
+};

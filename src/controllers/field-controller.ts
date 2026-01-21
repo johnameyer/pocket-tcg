@@ -4,10 +4,11 @@ import { ToolController } from './tool-controller.js';
 import { EnergyController } from './energy-controller.js';
 import { StatusEffectController } from './status-effect-controller.js';
 import { DiscardController } from './discard-controller.js';
-import { CreatureData } from '../repository/card-types.js';
+import { CreatureData, InstancedFieldCard } from '../repository/card-types.js';
 import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
+import { getCurrentInstanceId, getCurrentTemplateId, toFieldCard, createInstancedFieldCard, addEvolution } from '../utils/field-card-utils.js';
 
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
@@ -20,7 +21,8 @@ export type EnrichedFieldCard = FieldCard & { data: CreatureData };
 
 export type FieldState = {
     // Creatures for each player - position 0 is active, 1+ are bench
-    creatures: FieldCard[][];
+    // Internal state uses InstancedFieldCard for evolution tracking
+    creatures: InstancedFieldCard[][];
     // Track if each player can evolve their active card
     canEvolveActive?: boolean[];
 };
@@ -31,7 +33,8 @@ type FieldDependencies = {
     tools: ToolController,
     energy: EnergyController,
     statusEffects: StatusEffectController,
-    discard: DiscardController
+    discard: DiscardController,
+    turnCounter?: { getTurn: () => number }
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -49,7 +52,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true } as const;
+        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true, turnCounter: false } as const;
     }
 }
 
@@ -65,21 +68,25 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         const card = this.state.creatures[playerId]?.[position];
         if (!card) return undefined;
         
-        const data = this.controllers.cardRepository.getCreature(card.templateId);
-        return { ...card, data };
+        const fieldCard = toFieldCard(card);
+        const data = this.controllers.cardRepository.getCreature(fieldCard.templateId);
+        return { ...fieldCard, data };
     }
 
     // Get all cards for a player
     public getCards(playerId: number): EnrichedFieldCard[] {
         return this.state.creatures[playerId]?.map(card => {
-            const data = this.controllers.cardRepository.getCreature(card.templateId);
-            return { ...card, data };
+            const fieldCard = toFieldCard(card);
+            const data = this.controllers.cardRepository.getCreature(fieldCard.templateId);
+            return { ...fieldCard, data };
         }) || [];
     }
 
     // Get raw field card data (without enrichment) - for internal use
     public getRawCardByPosition(playerId: number, position: number): FieldCard | undefined {
-        return this.state.creatures[playerId]?.[position];
+        const card = this.state.creatures[playerId]?.[position];
+        if (!card) return undefined;
+        return toFieldCard(card);
     }
 
     // Apply damage to a card at any position and return the actual damage applied
@@ -88,22 +95,25 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
-        const card = this.getRawCardByPosition(playerId, position);
+        const card = this.state.creatures[playerId]?.[position];
         
         // Check if card exists
         if (!card) {
             throw new Error(`No card found for player ${playerId} at position ${position} when applying damage`);
         }
         
+        const templateId = getCurrentTemplateId(card);
+        
         // Check if templateId exists
-        if (!card.templateId) {
+        if (!templateId) {
             throw new Error(`No templateId found for player ${playerId}'s card at position ${position} when applying damage`);
         }
         
-        const { maxHp } = this.controllers.cardRepository.getCreature(card.templateId);
+        const { maxHp } = this.controllers.cardRepository.getCreature(templateId);
         
         // Get HP bonus from attached tools
-        const hpBonus = this.controllers.tools.getHpBonus(card.instanceId);
+        const instanceId = getCurrentInstanceId(card);
+        const hpBonus = this.controllers.tools.getHpBonus(instanceId);
         const totalMaxHp = maxHp + hpBonus;
         
         // Cap damage to prevent health from going negative
@@ -121,7 +131,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
-        const card = this.getRawCardByPosition(playerId, 0); // Active card is at position 0
+        const card = this.state.creatures[playerId]?.[0]; // Active card is at position 0
         
         // Check if card exists
         if (!card) {
@@ -159,13 +169,11 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         return actualHealing;
     }
     
-
-    
     // Attack the opponent's card
     public attack(attackerId: number, attackIndex: number, resolvedDamage?: number) {
         // Find the target (opponent)
         const targetId = (attackerId + 1) % this.controllers.players.count;
-        const attackerCard = this.getRawCardByPosition(attackerId, 0); // Active card is at position 0
+        const attackerCard = this.state.creatures[attackerId]?.[0]; // Active card is at position 0
         
         // Check if attacker card exists
         if (!attackerCard) {
@@ -173,14 +181,15 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         }
         
         // Check if target card exists
-        if (!this.getRawCardByPosition(targetId, 0)) {
+        if (!this.state.creatures[targetId]?.[0]) {
             throw new Error(`No active card found for target ${targetId}`);
         }
         
         // Get card data and attack
-        const cardData = this.controllers.cardRepository.getCreature(attackerCard.templateId);
+        const attackerTemplateId = getCurrentTemplateId(attackerCard);
+        const cardData = this.controllers.cardRepository.getCreature(attackerTemplateId);
         if (attackIndex >= cardData.attacks.length) {
-            throw new Error(`Invalid attack index for card ID ${attackerCard.templateId}`);
+            throw new Error(`Invalid attack index for card ID ${attackerTemplateId}`);
         }
         
         const attack = cardData.attacks[attackIndex];
@@ -210,14 +219,15 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
 
     // Check if a player's active card is knocked out
     public isKnockedOut(playerId: number): boolean {
-        const card = this.getRawCardByPosition(playerId, 0); // Active card is at position 0
+        const card = this.state.creatures[playerId]?.[0]; // Active card is at position 0
         
         // If there's no active card, throw an error
         if (!card) {
             throw new Error(`No active card found for player ${playerId} when checking knockout status`);
         }
         
-        const { maxHp } = this.controllers.cardRepository.getCreature(card.templateId);
+        const templateId = getCurrentTemplateId(card);
+        const { maxHp } = this.controllers.cardRepository.getCreature(templateId);
 
         return card.damageTaken >= maxHp;
     }
@@ -265,7 +275,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     }
     
     // Set the active card for a player
-    public setActiveCard(playerId: number, templateId: string): void {
+    public setActiveCard(playerId: number, templateId: string, instanceId?: string): void {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -278,15 +288,18 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             this.state.creatures[playerId] = [];
         }
         
-        this.state.creatures[playerId][0] = {
-            instanceId: `${templateId}-${Date.now()}-${Math.random()}`,
-            damageTaken: 0,
-            templateId: templateId
-        };
+        // Use provided instanceId or generate a new one
+        const cardInstanceId = instanceId ?? `${templateId}-${Date.now()}-${Math.random()}`;
+        
+        this.state.creatures[playerId][0] = createInstancedFieldCard(
+            cardInstanceId,
+            templateId,
+            0
+        );
     }
     
     // Add a card to a player's bench
-    public addToBench(playerId: number, templateId: string): boolean {
+    public addToBench(playerId: number, templateId: string, instanceId?: string): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -304,11 +317,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         // Vet validity of card
         this.controllers.cardRepository.getCreature(templateId);
         
-        this.state.creatures[playerId].push({
-            instanceId: `${templateId}-${Date.now()}-${Math.random()}`,
-            damageTaken: 0,
-            templateId: templateId
-        });
+        // Use provided instanceId or generate a new one
+        const cardInstanceId = instanceId ?? `${templateId}-${Date.now()}-${Math.random()}`;
+        
+        this.state.creatures[playerId].push(createInstancedFieldCard(
+            cardInstanceId,
+            templateId,
+            0
+        ));
         
         return true;
     }
@@ -342,7 +358,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     }
     
     // Evolve the active card for a player
-    public evolveActiveCard(playerId: number, evolutionTemplateId: string): boolean {
+    public evolveActiveCard(playerId: number, evolutionTemplateId: string, evolutionInstanceId?: string): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -352,21 +368,27 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Discard the previous form before evolution
         const oldCard = this.state.creatures[playerId][0];
-        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card with the evolution (preserves all properties except templateId)
-        this.state.creatures[playerId][0] = {
-            ...oldCard,
-            templateId: evolutionTemplateId
-        };
+        // Use provided instanceId or generate a new one for the evolution
+        const newInstanceId = evolutionInstanceId ?? `${evolutionTemplateId}-${Date.now()}-${Math.random()}`;
+        
+        // Get the current turn number from the turn state controller
+        const turnNumber = this.controllers.turnCounter?.getTurn() ?? 0;
+        
+        // Add the evolution to the stack (keeping previous forms)
+        this.state.creatures[playerId][0] = addEvolution(
+            oldCard,
+            newInstanceId,
+            evolutionTemplateId,
+            turnNumber
+        );
         
         return true;
     }
     
     // Evolve a benched card for a player
-    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionTemplateId: string): boolean {
+    public evolveBenchedCard(playerId: number, benchIndex: number, evolutionTemplateId: string, evolutionInstanceId?: string): boolean {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
@@ -381,15 +403,21 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Discard the previous form before evolution
         const oldCard = this.state.creatures[playerId][benchPosition];
-        this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card with the evolution (preserves all properties except templateId)
-        this.state.creatures[playerId][benchPosition] = {
-            ...oldCard,
-            templateId: evolutionTemplateId
-        };
+        // Use provided instanceId or generate a new one for the evolution
+        const newInstanceId = evolutionInstanceId ?? `${evolutionTemplateId}-${Date.now()}-${Math.random()}`;
+        
+        // Get the current turn number from the turn state controller
+        const turnNumber = this.controllers.turnCounter?.getTurn() ?? 0;
+        
+        // Add the evolution to the stack (keeping previous forms)
+        this.state.creatures[playerId][benchPosition] = addEvolution(
+            oldCard,
+            newInstanceId,
+            evolutionTemplateId,
+            turnNumber
+        );
         
         return true;
     }

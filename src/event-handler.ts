@@ -250,15 +250,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: PlayCardResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
             
-            // Use playCard to handle card removal properly
+            // Use playCard to handle card removal properly and preserve instanceId
             const hand = controllers.hand.getHand(sourceHandler);
             const cardIndex = hand.findIndex(card => card.templateId === message.templateId);
+            let cardInstanceId: string | undefined;
             if (cardIndex !== -1) {
-                controllers.hand.playCard(sourceHandler, cardIndex);
+                const card = controllers.hand.playCard(sourceHandler, cardIndex);
+                cardInstanceId = card?.instanceId;
             }
             
             if (message.cardType === 'creature') {
-                controllers.field.addToBench(sourceHandler, message.templateId);
+                controllers.field.addToBench(sourceHandler, message.templateId, cardInstanceId);
                 const { name } = controllers.cardRepository.getCreature(message.templateId);
                 controllers.players.messageAll({
                     type: 'card-played',
@@ -387,9 +389,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const activeCardIndex = hand.findIndex(card => 
                 card.templateId === message.activeCardId && card.type === 'creature'
             );
+            let activeInstanceId: string | undefined;
             if (activeCardIndex !== -1) {
-                controllers.hand.playCard(source, activeCardIndex);
-                controllers.field.setActiveCard(source, message.activeCardId);
+                const activeCard = controllers.hand.playCard(source, activeCardIndex);
+                activeInstanceId = activeCard?.instanceId;
+                controllers.field.setActiveCard(source, message.activeCardId, activeInstanceId);
             }
             
             // Find and play bench cards from hand
@@ -398,8 +402,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     card.templateId === cardId && card.type === 'creature'
                 );
                 if (benchCardIndex !== -1) {
-                    controllers.hand.playCard(source, benchCardIndex);
-                    controllers.field.addToBench(source, cardId);
+                    const benchCard = controllers.hand.playCard(source, benchCardIndex);
+                    controllers.field.addToBench(source, cardId, benchCard?.instanceId);
                 }
             }
             
@@ -469,23 +473,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionCardIndex = hand.findIndex(card => card.templateId === message.evolutionId);
             if (evolutionCardIndex === -1) return;
             
+            // Get the evolution card's instanceId before playing it
+            const evolutionCard = controllers.hand.playCard(sourceHandler, evolutionCardIndex);
+            const evolutionInstanceId = evolutionCard?.instanceId;
+            
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                 }
-                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId);
+                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId);
             } else {
                 const benchedCards = controllers.field.getCards(sourceHandler).slice(1);
                 const targetCard = benchedCards[message.position - 1];
                 if (targetCard) {
                     controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
                 }
-                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId);
+                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId);
             }
-            
-            controllers.hand.playCard(sourceHandler, evolutionCardIndex);
             
             const { name } = controllers.cardRepository.getCreature(message.evolutionId);
             controllers.players.messageAll(new EvolutionMessage(

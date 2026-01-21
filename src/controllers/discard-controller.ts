@@ -64,24 +64,37 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
     
     /**
      * Add a field card to the discard pile.
-     * Converts the FieldCard to a GameCard before discarding.
+     * Converts the InstancedFieldCard to GameCard(s) before discarding.
+     * When the card has an evolution stack, all cards in the stack are discarded.
      * 
      * @param playerId The player whose discard pile to add to
      * @param fieldCard The field card to discard
      */
-    discardFieldCard(playerId: number, fieldCard: FieldCard): void {
+    discardFieldCard(playerId: number, fieldCard: FieldCard | import('../repository/card-types.js').InstancedFieldCard): void {
         if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
-        // Convert FieldCard to GameCard
-        const gameCard: GameCard = {
-            instanceId: fieldCard.instanceId,
-            templateId: fieldCard.templateId,
-            type: 'creature'
-        };
-        
-        this.state[playerId].push(gameCard);
+        // Check if this is an InstancedFieldCard with an evolution stack
+        if ('evolutionStack' in fieldCard) {
+            // Discard all cards in the evolution stack
+            for (const stackCard of fieldCard.evolutionStack) {
+                const gameCard: GameCard = {
+                    instanceId: stackCard.instanceId,
+                    templateId: stackCard.templateId,
+                    type: 'creature'
+                };
+                this.state[playerId].push(gameCard);
+            }
+        } else {
+            // Regular FieldCard - convert to GameCard
+            const gameCard: GameCard = {
+                instanceId: fieldCard.instanceId,
+                templateId: fieldCard.templateId,
+                type: 'creature'
+            };
+            this.state[playerId].push(gameCard);
+        }
     }
     
     /**
