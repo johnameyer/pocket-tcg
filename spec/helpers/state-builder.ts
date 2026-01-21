@@ -15,8 +15,13 @@ const createEmptyEnergyDict = (): EnergyDictionary => ({
 
 // Helper function to validate creature instance exists
 const validateCreatureInstance = (state: ControllerState<Controllers>, creatureInstanceId: string): boolean => {
-    return state.field.creatures[0]?.some(p => p.instanceId === creatureInstanceId) ||
-           state.field.creatures[1]?.some(p => p.instanceId === creatureInstanceId);
+    // Check if any creature in evolutionStack has matching instanceId
+    return state.field.creatures[0]?.some(p => 
+        p.evolutionStack.some(card => card.instanceId === creatureInstanceId)
+    ) ||
+           state.field.creatures[1]?.some(p => 
+        p.evolutionStack.some(card => card.instanceId === creatureInstanceId)
+    );
 };
 
 export class StateBuilder {
@@ -70,8 +75,8 @@ export class StateBuilder {
             },
             field: {
                 creatures: [
-                    [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-1', turnPlayed: 0 }],
-                    [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-2', turnPlayed: 0 }]
+                    [{ evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-1' }], damageTaken: 0, turnLastPlayed: 0 }],
+                    [{ evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }]
                 ]
             },
             energy: {
@@ -133,8 +138,8 @@ export class StateBuilder {
                 // Ensure creatures exist if not in START_GAME
                 if (state.field.creatures[0].length === 0) {
                     state.field.creatures = [
-                        [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-1', turnPlayed: 0 }],
-                        [{ damageTaken: 0, templateId: 'basic-creature', instanceId: 'basic-creature-2', turnPlayed: 0 }]
+                        [{ evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-1' }], damageTaken: 0, turnLastPlayed: 0 }],
+                        [{ evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }]
                     ];
                 }
             }
@@ -151,16 +156,14 @@ export class StateBuilder {
             // Create array with active creature at position 0, bench at 1+
             state.field.creatures[player] = [
                 { 
+                    evolutionStack: [{ templateId: active, instanceId: `${active}-${player}` }],
                     damageTaken: 0, 
-                    templateId: active, 
-                    instanceId: `${active}-${player}`, 
-                    turnPlayed: 1 
+                    turnLastPlayed: 1 
                 },
                 ...bench.map((templateId, index) => ({
+                    evolutionStack: [{ templateId, instanceId: `${templateId}-${player}-${index}` }],
                     damageTaken: 0,
-                    templateId,
-                    instanceId: `${templateId}-${player}-${index}`,
-                    turnPlayed: 1
+                    turnLastPlayed: 1
                 }))
             ];
         };
@@ -190,7 +193,10 @@ export class StateBuilder {
             const availableInstances = [];
             for (let player = 0; player < 2; player++) {
                 for (const creature of state.field.creatures[player]) {
-                    availableInstances.push(creature.instanceId);
+                    // Add all instanceIds from the evolution stack
+                    for (const card of creature.evolutionStack) {
+                        availableInstances.push(card.instanceId);
+                    }
                 }
             }
             throw new Error(`Creature instance '${creatureInstanceId}' not found. Available instances: ${availableInstances.join(', ')}`);
@@ -202,7 +208,7 @@ export class StateBuilder {
             // Find and update damage for the specified creature instance
             for (let player = 0; player < 2; player++) {
                 for (const creature of state.field.creatures[player]) {
-                    if (creature.instanceId === creatureInstanceId) {
+                    if (creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
                         creature.damageTaken = damage;
                         return;
                     }

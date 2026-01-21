@@ -5,6 +5,7 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, SupporterData } from '../../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 
 describe('Switch Effect', () => {
     const testRepository = new MockCardRepository({
@@ -68,8 +69,8 @@ describe('Switch Effect', () => {
             maxSteps: 15
         });
 
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Opponent bench should be active');
-        expect(state.field.creatures[1][1].templateId).to.equal('basic-creature', 'Opponent active should be on bench');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent bench should be active');
+        expect(getCurrentTemplateId(state.field.creatures[1][1])).to.equal('basic-creature', 'Opponent active should be on bench');
         expect(state.field.creatures[1][0].damageTaken).to.equal(20, 'Damage should transfer');
     });
 
@@ -91,7 +92,7 @@ describe('Switch Effect', () => {
             maxSteps: 15
         });
 
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Damaged bench should be active');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Damaged bench should be active');
         expect(state.field.creatures[1][0].damageTaken).to.equal(30, 'Should preserve damage');
     });
 
@@ -146,7 +147,7 @@ describe('Switch Effect', () => {
             maxSteps: 10
         });
 
-        expect(state.field.creatures[1][0].templateId).to.equal('basic-creature', 'Active should remain unchanged');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('basic-creature', 'Active should remain unchanged');
         expect(state.field.creatures[1].length).to.equal(1, 'Should still have only active Pokemon');
     });
 
@@ -171,7 +172,7 @@ describe('Switch Effect', () => {
             maxSteps: 15
         });
 
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Should switch to chosen Pokemon');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Should switch to chosen Pokemon');
         expect(state.field.creatures[1][0].damageTaken).to.equal(10, 'Should preserve chosen Pokemon damage');
         expect(state.field.creatures[1][0].damageTaken).to.equal(10, 'Should preserve chosen Pokemon damage');
     });
@@ -194,7 +195,7 @@ describe('Switch Effect', () => {
             maxSteps: 15
         });
 
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Should complete switch');
-        expect(state.field.creatures[1][1].templateId).to.equal('basic-creature', 'Original active should be on bench');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Should complete switch');
+        expect(getCurrentTemplateId(state.field.creatures[1][1])).to.equal('basic-creature', 'Original active should be on bench');
     });
 });

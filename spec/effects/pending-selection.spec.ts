@@ -5,6 +5,7 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../src/utils/field-card-utils.js';
 
 describe('Pending Target Selection', () => {
     describe('Dual Target Selection', () => {
@@ -120,7 +121,9 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 40),
                     (state) => {
                         state.field.creatures[0].push({
-                            instanceId: "field-card-1", damageTaken: 30, templateId: 'basic-creature',
+                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            damageTaken: 30,
+                            turnLastPlayed: 0
                         });
                     }
                 ),
@@ -168,7 +171,9 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 35),
                     (state) => {
                         state.field.creatures[0].push({
-                            instanceId: "field-card-1", damageTaken: 25, templateId: 'basic-creature',
+                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            damageTaken: 25,
+                            turnLastPlayed: 0
                         });
                     }
                 ),
@@ -334,7 +339,9 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 25),
                     (state) => {
                         state.field.creatures[0].push({
-                            instanceId: "field-card-1", damageTaken: 15, templateId: 'basic-creature',
+                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            damageTaken: 15,
+                            turnLastPlayed: 0
                         });
                     }
                 ),

@@ -6,6 +6,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 
 describe('Retreat Prevention Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
@@ -92,7 +93,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -100,7 +103,7 @@ describe('Retreat Prevention Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevention item and end turn (retreat blocked)');
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Opponent active should remain the same (retreat prevented)');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent active should remain the same (retreat prevented)');
     });
 
     it('should target different Pokemon (self-active)', () => {
@@ -117,7 +120,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
                     state.field.creatures[0].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'high-hp-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'high-hp-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -125,7 +130,7 @@ describe('Retreat Prevention Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed prevention item only (retreat blocked)');
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Self active should remain the same (retreat prevented)');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Self active should remain the same (retreat prevented)');
     });
 
     it('should require target selection for single-choice targets', () => {
@@ -144,7 +149,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -170,7 +177,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -178,7 +187,7 @@ describe('Retreat Prevention Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed all prevention item and end turn (retreat blocked)');
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Opponent active should remain the same (all Pokemon prevented)');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent active should remain the same (all Pokemon prevented)');
     });
 
     it('should clear retreat prevention at end of turn', () => {
@@ -195,7 +204,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withHand(0, [preventionItem]),
                 (state) => {
                     state.field.creatures[1].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -220,7 +231,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
                     state.field.creatures[0].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'high-hp-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'high-hp-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -228,7 +241,7 @@ describe('Retreat Prevention Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevention item and retreat');
-        expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'Should have retreated (prevention is for opponent turn)');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'Should have retreated (prevention is for opponent turn)');
     });
 
     it('should stack multiple retreat preventions', () => {
@@ -247,7 +260,9 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -255,6 +270,6 @@ describe('Retreat Prevention Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(3, 'Should have executed both prevention items and end turn (retreat blocked)');
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Opponent active should remain the same (multiple preventions)');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent active should remain the same (multiple preventions)');
     });
 });

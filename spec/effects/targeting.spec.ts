@@ -6,6 +6,7 @@ import { SelectTargetResponseMessage } from '../../src/messages/response/select-
 import { UseAbilityResponseMessage } from '../../src/messages/response/use-ability-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../src/utils/field-card-utils.js';
 
 describe('Effect Targeting', () => {
     describe('Fixed Targets', () => {
@@ -169,10 +170,14 @@ describe('Effect Targeting', () => {
                     // Add damaged bench creature
                     (state) => {
                         state.field.creatures[0].push({
-                            instanceId: "field-card-1", damageTaken: 25, templateId: 'basic-creature',
+                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            damageTaken: 25,
+                            turnLastPlayed: 0
                         });
                         state.field.creatures[0].push({
-                            instanceId: "field-card-2", damageTaken: 0, templateId: 'basic-creature', // Not damaged
+                            evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
+                            damageTaken: 0,
+                            turnLastPlayed: 0
                         });
                     }
                 ),

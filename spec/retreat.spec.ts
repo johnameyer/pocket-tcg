@@ -5,6 +5,7 @@ import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { MockCardRepository } from './mock-repository.js';
 import { EnergyDictionary } from '../src/controllers/energy-controller.js';
+import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 // Helper to get total energy from an energy dictionary
 function getTotalEnergy(energyDict: EnergyDictionary): number {
@@ -22,7 +23,7 @@ describe('Creature Retreat System', () => {
             )
         });
         
-        expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
     });
 
     it('should prevent retreat with insufficient energy', () => {
@@ -35,7 +36,7 @@ describe('Creature Retreat System', () => {
             )
         });
         
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature');
     });
 
     it('should clear status effects on retreat', () => {
@@ -49,7 +50,7 @@ describe('Creature Retreat System', () => {
             )
         });
         
-        expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
     });
 
     it('should require exact retreat cost energy', () => {
@@ -61,7 +62,7 @@ describe('Creature Retreat System', () => {
             )
         });
         
-        expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
     });
 
     it('should allow retreat with any energy type for colorless cost', () => {
@@ -73,7 +74,7 @@ describe('Creature Retreat System', () => {
             )
         });
         
-        expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
     });
 
     it('should allow player to choose which bench creature becomes active on retreat', () => {
@@ -86,10 +87,10 @@ describe('Creature Retreat System', () => {
             )
         });
         
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature');
         expect(state.field.creatures[0].length).to.equal(3); // Active + 2 bench
-        expect(state.field.creatures[0][1].templateId).to.equal('high-hp-creature');
-        expect(state.field.creatures[0][2].templateId).to.equal('basic-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][1])).to.equal('high-hp-creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][2])).to.equal('basic-creature');
     });
 
     it('should consume energy when retreating', () => {
@@ -104,7 +105,7 @@ describe('Creature Retreat System', () => {
         // Energy should be consumed from the retreated creature (now on bench)
         const basicCreatureEnergy = state.energy.attachedEnergyByInstance['basic-creature-0'];
         expect(basicCreatureEnergy.fire).to.equal(1, 'Should consume 1 fire energy for retreat cost');
-        expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'Should have retreated successfully');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'Should have retreated successfully');
     });
 
     it('should preserve bench ordering when retreating', () => {
@@ -118,11 +119,11 @@ describe('Creature Retreat System', () => {
         
         // After retreat: Squirtle becomes active, Charmander goes to bench
         // Bench ordering should be: [Snorlax, Charmander, Snorlax]
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Froakie should be active');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Froakie should be active');
         expect(state.field.creatures[0].length).to.equal(4, 'Should have 4 creatures total (1 active + 3 bench)');
-        expect(state.field.creatures[0][1].templateId).to.equal('high-hp-creature', 'Snorlax should stay at index 1');
-        expect(state.field.creatures[0][2].templateId).to.equal('basic-creature', 'Charmander should take Froakie\'s place');
-        expect(state.field.creatures[0][3].templateId).to.equal('high-hp-creature', 'Snorlax should stay at index 3');
+        expect(getCurrentTemplateId(state.field.creatures[0][1])).to.equal('high-hp-creature', 'Snorlax should stay at index 1');
+        expect(getCurrentTemplateId(state.field.creatures[0][2])).to.equal('basic-creature', 'Charmander should take Froakie\'s place');
+        expect(getCurrentTemplateId(state.field.creatures[0][3])).to.equal('high-hp-creature', 'Snorlax should stay at index 3');
     });
 
     describe('Retreat Validation Edge Cases', () => {
@@ -135,7 +136,7 @@ describe('Creature Retreat System', () => {
                 )
             });
 
-            expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Negative bench index should be blocked');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Negative bench index should be blocked');
         });
 
         it('should prevent retreat with out-of-range bench index', () => {
@@ -147,7 +148,7 @@ describe('Creature Retreat System', () => {
                 )
             });
 
-            expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Out-of-range bench index should be blocked');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Out-of-range bench index should be blocked');
         });
 
         it('should prevent retreat when no bench creatures available', () => {
@@ -159,7 +160,7 @@ describe('Creature Retreat System', () => {
                 )
             });
 
-            expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Should not retreat with empty bench');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should not retreat with empty bench');
         });
 
         it('should allow first retreat but prevent second retreat in same turn', () => {
@@ -177,7 +178,7 @@ describe('Creature Retreat System', () => {
                 maxSteps: 10
             });
 
-            expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
         });
 
         it('should prevent multiple retreats in one turn', () => {
@@ -196,7 +197,7 @@ describe('Creature Retreat System', () => {
             });
 
             // First retreat succeeds, second is blocked by once-per-turn validation
-            expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
         });
     });
 

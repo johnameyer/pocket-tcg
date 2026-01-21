@@ -3,6 +3,7 @@ import { AttackResponseMessage } from '../src/messages/response/attack-response-
 import { SelectActiveCardResponseMessage } from '../src/messages/response/select-active-card-response-message.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
+import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 describe('Knockout System', () => {
     it('should award points when creature is knocked out', () => {
@@ -36,7 +37,7 @@ describe('Knockout System', () => {
             maxSteps: 10
         });
         
-        expect(state.field.creatures[1][0].templateId).to.equal('high-hp-creature', 'Bench creature should be promoted to active after knockout');
+        expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Bench creature should be promoted to active after knockout');
     });
 
     it('should discard knocked out active creature', () => {

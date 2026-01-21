@@ -5,6 +5,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 
 describe('Evolution Flexibility Effect', () => {
     const eevee = { templateId: 'eevee', type: 'creature' as const };
@@ -95,7 +96,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('vaporeon', 'Should have evolved to Vaporeon');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('vaporeon', 'Should have evolved to Vaporeon');
     });
 
     it('should allow evolution to different Eevee evolutions', () => {
@@ -113,7 +114,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('jolteon', 'Should have evolved to Jolteon');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('jolteon', 'Should have evolved to Jolteon');
     });
 
     it('should work with multiple Eevee evolution options', () => {
@@ -131,7 +132,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('flareon', 'Should have evolved to Flareon');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('flareon', 'Should have evolved to Flareon');
         expect(state.hand[0].length).to.equal(2, 'Other evolution cards should remain in hand');
     });
 
@@ -150,7 +151,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed flexibility item only (evolution blocked)');
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Should remain as basic creature');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should remain as basic creature');
     });
 
     it('should preserve damage when using flexible evolution', () => {
@@ -169,7 +170,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('vaporeon', 'Should have evolved to Vaporeon');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('vaporeon', 'Should have evolved to Vaporeon');
         expect(state.field.creatures[0][0].damageTaken).to.equal(20, 'Should preserve damage after evolution');
     });
 
@@ -189,7 +190,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('jolteon', 'Should have evolved to Jolteon');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('jolteon', 'Should have evolved to Jolteon');
         
         const energyState = state.energy as any;
         expect(energyState.attachedEnergyByInstance['eevee-0'].lightning).to.equal(2, 'Should preserve energy after evolution');
@@ -210,8 +211,8 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Active should remain unchanged');
-        expect(state.field.creatures[0][1].templateId).to.equal('flareon', 'Bench Eevee should have evolved to Flareon');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Active should remain unchanged');
+        expect(getCurrentTemplateId(state.field.creatures[0][1])).to.equal('flareon', 'Bench Eevee should have evolved to Flareon');
     });
 
     it('should have limited duration or scope', () => {
@@ -227,7 +228,9 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withHand(0, [flexibilityItem, vaporeon, jolteon]),
                 (state) => {
                     state.field.creatures[0].push({
-                        instanceId: "field-card-1", damageTaken: 0, templateId: 'eevee',
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'eevee' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
                     });
                 }
             ),
@@ -235,7 +238,7 @@ describe('Evolution Flexibility Effect', () => {
         });
 
         expect(getExecutedCount()).to.be.greaterThanOrEqual(2, 'Should have executed flexibility item and at least one evolution');
-        expect(state.field.creatures[0][0].templateId).to.equal('vaporeon', 'First Eevee should have evolved');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('vaporeon', 'First Eevee should have evolved');
         // Second evolution result depends on implementation (single-use vs persistent effect)
     });
 });

@@ -5,6 +5,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 
 describe('Evolution Acceleration Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
@@ -95,7 +96,7 @@ describe('Evolution Acceleration Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
-        expect(state.field.creatures[0][0].templateId).to.equal('stage2-creature', 'Should have evolved directly to stage 2');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('stage2-creature', 'Should have evolved directly to stage 2');
         expect(state.hand[0].length).to.equal(0, 'Stage 2 card should be removed from hand');
     });
 
@@ -132,7 +133,7 @@ describe('Evolution Acceleration Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed double acceleration item');
-        expect(state.field.creatures[0][0].templateId).to.equal('stage2-creature', 'Should have evolved directly to stage 2');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('stage2-creature', 'Should have evolved directly to stage 2');
         expect(state.hand[0].length).to.equal(0, 'Stage 2 card should be removed from hand');
     });
 
@@ -150,7 +151,7 @@ describe('Evolution Acceleration Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (blocked by validation)');
-        expect(state.field.creatures[0][0].templateId).to.equal('stage1-creature', 'Should remain as stage 1 (restriction violated)');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('stage1-creature', 'Should remain as stage 1 (restriction violated)');
         expect(state.hand[0].length).to.equal(2, 'Cards should remain in hand (card not playable)');
     });
 
@@ -169,7 +170,7 @@ describe('Evolution Acceleration Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
-        expect(state.field.creatures[0][0].templateId).to.equal('stage2-creature', 'Should have evolved to stage 2');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('stage2-creature', 'Should have evolved to stage 2');
         expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should preserve damage after evolution');
     });
 
@@ -188,7 +189,7 @@ describe('Evolution Acceleration Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
-        expect(state.field.creatures[0][0].templateId).to.equal('stage2-creature', 'Should have evolved to stage 2');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('stage2-creature', 'Should have evolved to stage 2');
         
         const energyState = state.energy as any;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(2, 'Should preserve energy after evolution');
@@ -208,7 +209,7 @@ describe('Evolution Acceleration Effect', () => {
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Should remain as basic creature (no valid evolution)');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should remain as basic creature (no valid evolution)');
         expect(state.hand[0].length).to.equal(0, 'Acceleration item should be consumed');
     });
 
@@ -223,14 +224,14 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withHand(0, [accelerationItem, stage2Creature]),
                 (state) => {
                     // Mark Pokemon as played this turn
-                    state.field.creatures[0][0].turnPlayed = state.turnCounter.turnNumber;
+                    state.field.creatures[0][0].turnLastPlayed = state.turnCounter.turnNumber;
                 }
             ),
             maxSteps: 15
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (blocked by validation)');
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Should remain as basic creature (played this turn)');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should remain as basic creature (played this turn)');
         expect(state.hand[0].length).to.equal(2, 'Cards should remain in hand (card not playable)');
     });
 });
