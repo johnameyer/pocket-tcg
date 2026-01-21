@@ -74,7 +74,7 @@ const processKnockouts = {
                     controllers.players.messageAll(new KnockedOutMessage(cardData.name));
                     
                     // Clean up energy attached to the knocked out card
-                    controllers.energy.removeAllEnergyFromInstance(i, targetCard.instanceId);
+                    controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
@@ -95,7 +95,7 @@ const processKnockouts = {
                     controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
                     
                     // Clean up energy attached to the knocked out card
-                    controllers.energy.removeAllEnergyFromInstance(i, benchCard.instanceId);
+                    controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;

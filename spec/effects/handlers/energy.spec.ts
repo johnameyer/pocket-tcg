@@ -3,6 +3,7 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
+import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 
 describe('Energy Effect', () => {
@@ -201,5 +202,92 @@ describe('Energy Effect', () => {
         const energyState = state.energy as any;
         const opponentActiveEnergy = energyState.attachedEnergyByInstance['basic-creature-1'] || {};
         expect(opponentActiveEnergy.fire || 0).to.equal(0, 'Should discard all available fire energy');
+    });
+
+    describe('Energy Discard Tracking', () => {
+        it('should track discarded energy from discard effects', () => {
+            const testRepository = new MockCardRepository({
+                supporters: new Map([
+                    ['energy-discard', {
+                        templateId: 'energy-discard',
+                        name: 'Energy Discard',
+                        effects: [{
+                            type: 'energy',
+                            energyType: 'fire',
+                            amount: { type: 'constant', value: 2 },
+                            target: { type: 'fixed', player: 'opponent', position: 'active' },
+                            operation: 'discard'
+                        }]
+                    }]
+                ])
+            });
+
+            const { state } = runTestGame({
+                actions: [new PlayCardResponseMessage('energy-discard', 'supporter')],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'energy-discard', type: 'supporter' }]),
+                    StateBuilder.withEnergy('basic-creature-1', { fire: 3, water: 1 })
+                ),
+                maxSteps: 10
+            });
+
+            const discardedEnergy = state.energy.discardedEnergy[1];
+            
+            // Should have discarded 2 fire energy from effect
+            expect(discardedEnergy.fire).to.equal(2, 'Should discard 2 fire energy from effect');
+            expect(discardedEnergy.water).to.equal(0, 'Should not discard water energy');
+        });
+
+        it('should track discarded energy when creature is knocked out', () => {
+            const testRepository = new MockCardRepository({
+                creatures: new Map([
+                    ['attacker', {
+                        templateId: 'attacker',
+                        name: 'Attacker',
+                        type: 'fire',
+                        maxHp: 100,
+                        retreatCost: 1,
+                        weakness: 'water',
+                        attacks: [{
+                            name: 'Big Attack',
+                            damage: 100,
+                            energyRequirements: []
+                        }]
+                    }],
+                    ['defender', {
+                        templateId: 'defender',
+                        name: 'Defender',
+                        type: 'water',
+                        maxHp: 50,
+                        retreatCost: 1,
+                        weakness: 'grass',
+                        attacks: []
+                    }]
+                ])
+            });
+
+            const { state } = runTestGame({
+                actions: [new AttackResponseMessage(0)],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'attacker'),
+                    StateBuilder.withCreatures(1, 'defender'),
+                    StateBuilder.withEnergy('defender-1', { water: 2, fire: 1 })
+                ),
+                maxSteps: 15
+            });
+
+            const discardedEnergy = state.energy.discardedEnergy[1];
+            
+            // Should have discarded all energy from knocked out defender
+            expect(discardedEnergy.water).to.equal(2, 'Should discard 2 water energy');
+            expect(discardedEnergy.fire).to.equal(1, 'Should discard 1 fire energy');
+            
+            const totalDiscarded = Object.values(discardedEnergy).reduce((sum, count) => sum + count, 0);
+            expect(totalDiscarded).to.equal(3, 'Should discard all 3 energy from knocked out creature');
+        });
     });
 });

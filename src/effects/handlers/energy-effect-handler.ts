@@ -97,6 +97,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             if (operation === 'attach' && energyType) {
                 // Attach energy directly to the creature
                 const success = controllers.energy.attachSpecificEnergyToInstance(
+                    playerId,
                     targetCreature.instanceId, 
                     energyType, 
                     amount
@@ -115,7 +116,6 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                 }
             } else if (operation === 'discard') {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
-                    playerId,
                     targetCreature.instanceId, 
                     energyType, 
                     amount
