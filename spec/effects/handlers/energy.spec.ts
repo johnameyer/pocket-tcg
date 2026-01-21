@@ -5,6 +5,12 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
+import { EnergyDictionary } from '../../../src/controllers/energy-controller.js';
+
+// Helper to get total energy from an energy dictionary
+function getTotalEnergy(energyDict: EnergyDictionary): number {
+    return Object.values(energyDict).reduce((sum, count) => sum + count, 0);
+}
 
 describe('Energy Effect', () => {
     it('should attach 1 fire energy (basic operation)', () => {
@@ -285,9 +291,7 @@ describe('Energy Effect', () => {
             // Should have discarded all energy from knocked out defender
             expect(discardedEnergy.water).to.equal(2, 'Should discard 2 water energy');
             expect(discardedEnergy.fire).to.equal(1, 'Should discard 1 fire energy');
-            
-            const totalDiscarded = Object.values(discardedEnergy).reduce((sum, count) => sum + count, 0);
-            expect(totalDiscarded).to.equal(3, 'Should discard all 3 energy from knocked out creature');
+            expect(getTotalEnergy(discardedEnergy)).to.equal(3, 'Should discard all 3 energy from knocked out creature');
         });
     });
 });

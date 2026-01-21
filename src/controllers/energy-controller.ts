@@ -38,9 +38,6 @@ export type EnergyState = {
     
     // Track discarded energy per player
     discardedEnergy: EnergyDictionary[];
-    
-    // Map instance IDs to player IDs for discard tracking
-    instanceToPlayer: { [instanceId: string]: number };
 }
 
 type EnergyDependencies = { 
@@ -63,8 +60,7 @@ export class EnergyControllerProvider implements GenericControllerProvider<Energ
             ),
             energyAttachedThisTurn: new Array(controllers.players.count).fill(false),
             isAbsoluteFirstTurn: true,
-            discardedEnergy: new Array(controllers.players.count).fill(null).map(() => EnergyController.emptyEnergyDict()),
-            instanceToPlayer: {}
+            discardedEnergy: new Array(controllers.players.count).fill(null).map(() => EnergyController.emptyEnergyDict())
         };
     }
 
@@ -79,22 +75,6 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             grass: 0, fire: 0, water: 0, lightning: 0,
             psychic: 0, fighting: 0, darkness: 0, metal: 0
         };
-    }
-
-    // Helper to get player ID from instance, throws error if not found
-    private getPlayerIdFromInstance(instanceId: string): number {
-        const playerId = this.state.instanceToPlayer[instanceId];
-        if (playerId === undefined) {
-            throw new Error(`Instance ${instanceId} not tracked - cannot determine player for discard`);
-        }
-        return playerId;
-    }
-    
-    // Register an instance as belonging to a player (called when energy is first attached)
-    private registerInstance(instanceId: string, playerId: number): void {
-        if (this.state.instanceToPlayer[instanceId] === undefined) {
-            this.state.instanceToPlayer[instanceId] = playerId;
-        }
     }
 
     // Static helper functions for handlers to work with energy state directly
@@ -203,9 +183,6 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             this.state.attachedEnergyByInstance[instanceId] = EnergyController.emptyEnergyDict();
         }
 
-        // Register the instance to player mapping
-        this.registerInstance(instanceId, playerId);
-
         this.state.attachedEnergyByInstance[instanceId][energyType] += 1;
         this.state.currentEnergy[playerId][energyType] -= 1;
         this.state.energyAttachedThisTurn[playerId] = true;
@@ -214,13 +191,10 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     }
     
     // Attach specific energy type to a card by instance ID (for effects)
-    public attachSpecificEnergyToInstance(playerId: number, instanceId: string, energyType: AttachableEnergyType, amount: number): boolean {
+    public attachSpecificEnergyToInstance(instanceId: string, energyType: AttachableEnergyType, amount: number): boolean {
         if (!this.state.attachedEnergyByInstance[instanceId]) {
             this.state.attachedEnergyByInstance[instanceId] = EnergyController.emptyEnergyDict();
         }
-        
-        // Register the instance to player mapping
-        this.registerInstance(instanceId, playerId);
         
         this.state.attachedEnergyByInstance[instanceId][energyType] += amount;
         return true;
@@ -262,11 +236,9 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return true;
     }
 
-    public discardSpecificEnergyFromInstance(instanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
+    public discardSpecificEnergyFromInstance(playerId: number, instanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
         const attached = this.state.attachedEnergyByInstance[instanceId];
         if (!attached) return false;
-        
-        const playerId = this.getPlayerIdFromInstance(instanceId);
         
         if (energyType) {
             const available = attached[energyType] || 0;
@@ -388,10 +360,8 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     }
     
     // Remove all energy from a card instance (for knockouts)
-    public removeAllEnergyFromInstance(instanceId: string): void {
+    public removeAllEnergyFromInstance(playerId: number, instanceId: string): void {
         if (this.state.attachedEnergyByInstance[instanceId]) {
-            const playerId = this.getPlayerIdFromInstance(instanceId);
-            
             // Track discarded energy before removing
             const attached = this.state.attachedEnergyByInstance[instanceId];
             for (const type of Object.keys(attached) as AttachableEnergyType[]) {
@@ -406,14 +376,12 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     }
     
     // Discard energy from a card by instance ID (for retreat cost)
-    public discardEnergyFromInstance(instanceId: string, amount: number): boolean {
+    public discardEnergyFromInstance(playerId: number, instanceId: string, amount: number): boolean {
         const attached = this.state.attachedEnergyByInstance[instanceId];
         if (!attached) return false;
         
         const totalEnergy = this.getTotalEnergyByInstance(instanceId);
         if (totalEnergy < amount) return false;
-        
-        const playerId = this.getPlayerIdFromInstance(instanceId);
         
         // Discard energy in order of availability
         let remaining = amount;

@@ -81,8 +81,7 @@ export class StateBuilder {
                 energyAttachedThisTurn: [false, false],
                 isAbsoluteFirstTurn: false,
                 attachedEnergyByInstance: {} as Record<string, EnergyDictionary>,
-                discardedEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()],
-                instanceToPlayer: {} as Record<string, number>
+                discardedEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()]
             },
             tools: {
                 attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
@@ -170,14 +169,6 @@ export class StateBuilder {
         return (state: ControllerState<Controllers>) => {
             StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
             state.energy.attachedEnergyByInstance[creatureInstanceId] = {...createEmptyEnergyDict(), ...energyTypes};
-            
-            // Register instance to player mapping
-            for (let playerId = 0; playerId < state.field.creatures.length; playerId++) {
-                if (state.field.creatures[playerId].some(card => card.instanceId === creatureInstanceId)) {
-                    state.energy.instanceToPlayer[creatureInstanceId] = playerId;
-                    break;
-                }
-            }
         };
     }
 

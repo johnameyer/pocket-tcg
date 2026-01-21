@@ -4,6 +4,12 @@ import { PlayCardResponseMessage } from '../src/messages/response/play-card-resp
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { MockCardRepository } from './mock-repository.js';
+import { EnergyDictionary } from '../src/controllers/energy-controller.js';
+
+// Helper to get total energy from an energy dictionary
+function getTotalEnergy(energyDict: EnergyDictionary): number {
+    return Object.values(energyDict).reduce((sum, count) => sum + count, 0);
+}
 
 describe('Creature Retreat System', () => {
     it('should allow retreat with sufficient energy', () => {
@@ -208,8 +214,7 @@ describe('Creature Retreat System', () => {
             const discardedEnergy = state.energy.discardedEnergy[0];
             
             // Should have discarded exactly 2 energy (retreat cost)
-            const totalDiscarded = Object.values(discardedEnergy).reduce((sum, count) => sum + count, 0);
-            expect(totalDiscarded).to.equal(2, 'Should discard 2 energy for retreat cost');
+            expect(getTotalEnergy(discardedEnergy)).to.equal(2, 'Should discard 2 energy for retreat cost');
         });
 
         it('should track multiple energy types discarded during retreat (3 cost)', () => {
@@ -225,8 +230,7 @@ describe('Creature Retreat System', () => {
             const discardedEnergy = state.energy.discardedEnergy[0];
             
             // Should have discarded 3 energy total
-            const totalDiscarded = Object.values(discardedEnergy).reduce((sum, count) => sum + count, 0);
-            expect(totalDiscarded).to.equal(3, 'Should discard 3 energy for retreat cost');
+            expect(getTotalEnergy(discardedEnergy)).to.equal(3, 'Should discard 3 energy for retreat cost');
             
             // Should have discarded all available energy
             expect(discardedEnergy.fire + discardedEnergy.water + discardedEnergy.grass).to.equal(3);
@@ -245,8 +249,7 @@ describe('Creature Retreat System', () => {
             const discardedEnergy = state.energy.discardedEnergy[0];
             
             // Should have discarded 1 energy
-            const totalDiscarded = Object.values(discardedEnergy).reduce((sum, count) => sum + count, 0);
-            expect(totalDiscarded).to.equal(1, 'Should discard 1 energy for retreat cost of 1');
+            expect(getTotalEnergy(discardedEnergy)).to.equal(1, 'Should discard 1 energy for retreat cost of 1');
         });
 
         it('should accumulate discarded energy across multiple retreats in different turns', () => {
