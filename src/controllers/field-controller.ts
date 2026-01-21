@@ -356,7 +356,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         const oldCard = this.state.creatures[playerId][0];
         this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card with the evolution (keep damage and instance ID)
+        // Replace the card with the evolution (preserves all properties except templateId)
         this.state.creatures[playerId][0] = {
             ...oldCard,
             templateId: evolutionTemplateId
@@ -385,7 +385,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         const oldCard = this.state.creatures[playerId][benchPosition];
         this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card with the evolution (keep damage and instance ID)
+        // Replace the card with the evolution (preserves all properties except templateId)
         this.state.creatures[playerId][benchPosition] = {
             ...oldCard,
             templateId: evolutionTemplateId

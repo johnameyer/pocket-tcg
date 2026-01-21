@@ -18,7 +18,7 @@ export class DiscardControllerProvider implements GenericControllerProvider<Disc
     
     initialState(controllers: DiscardDependencies): DiscardState {
         // Note: Player count is not available in initialState for controllers without player dependency
-        // State will be properly initialized when the game starts
+        // The initialize() method will properly populate discardPiles when the game starts
         return {
             discardPiles: []
         };
