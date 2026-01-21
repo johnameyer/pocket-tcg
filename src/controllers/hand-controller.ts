@@ -142,23 +142,6 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
         }
     }
     
-    // Discard specific cards from hand by index
-    discardCardsByIndex(playerId: number, indices: number[]): GameCard[] {
-        // Sort indices in descending order to avoid index shifts (without mutating original)
-        const sortedIndices = indices.slice().sort((a, b) => b - a);
-        const discardedCards: GameCard[] = [];
-        
-        for (const index of sortedIndices) {
-            if (index >= 0 && index < this.state[playerId].length) {
-                const card = this.state[playerId].splice(index, 1)[0];
-                this.controllers.discard.discardCard(playerId, card);
-                discardedCards.push(card);
-            }
-        }
-        
-        return discardedCards;
-    }
-    
     // Check if player has specific card
     hasCard(cardToCheck: GameCard, playerId: number): boolean {
         return this.state[playerId].some(card => 

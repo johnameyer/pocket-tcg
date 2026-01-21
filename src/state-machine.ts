@@ -76,6 +76,9 @@ const processKnockouts = {
                     // Clean up energy attached to the knocked out card
                     controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
                     
+                    // Clean up tools attached to the knocked out card
+                    controllers.tools.detachTool(targetCard.instanceId);
+                    
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
                     const pointsToAward = cardData.attributes?.ex ? 2 : 1;
@@ -98,6 +101,9 @@ const processKnockouts = {
                     
                     // Clean up energy attached to the knocked out card
                     controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
+                    
+                    // Clean up tools attached to the knocked out card
+                    controllers.tools.detachTool(benchCard.instanceId);
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;

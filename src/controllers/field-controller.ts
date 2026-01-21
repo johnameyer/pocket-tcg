@@ -352,21 +352,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Store the current card's properties before discarding
-        const oldCard = this.state.creatures[playerId][0];
-        const damageTaken = oldCard.damageTaken;
-        const instanceId = oldCard.instanceId;
-        const turnPlayed = oldCard.turnPlayed;
-        
         // Discard the previous form before evolution
+        const oldCard = this.state.creatures[playerId][0];
         this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card with the evolution
+        // Replace the card with the evolution (keep damage and instance ID)
         this.state.creatures[playerId][0] = {
-            instanceId,
-            damageTaken,
-            templateId: evolutionTemplateId,
-            turnPlayed
+            ...oldCard,
+            templateId: evolutionTemplateId
         };
         
         return true;
@@ -388,21 +381,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             throw new Error(`Card not found: ${evolutionTemplateId}`);
         }
         
-        // Store the current card's properties before discarding
-        const oldCard = this.state.creatures[playerId][benchPosition];
-        const damageTaken = oldCard.damageTaken;
-        const instanceId = oldCard.instanceId;
-        const turnPlayed = oldCard.turnPlayed;
-        
         // Discard the previous form before evolution
+        const oldCard = this.state.creatures[playerId][benchPosition];
         this.controllers.discard.discardFieldCard(playerId, oldCard);
         
-        // Replace the card with the evolution
+        // Replace the card with the evolution (keep damage and instance ID)
         this.state.creatures[playerId][benchPosition] = {
-            instanceId,
-            damageTaken,
-            templateId: evolutionTemplateId,
-            turnPlayed
+            ...oldCard,
+            templateId: evolutionTemplateId
         };
         
         return true;
