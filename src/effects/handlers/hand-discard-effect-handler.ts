@@ -65,17 +65,16 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         // In a real implementation, this would involve player choice
         const cardsToDiscard = hand.slice(0, actualDiscardAmount);
         
-        // Remove the cards from the hand
-        controllers.hand.removeCards(playerId, cardsToDiscard);
-        
-        // Send a message about the discard
-        controllers.players.messageAll({
-            type: 'status',
-            components: [`${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!`]
-        });
-        
         // If shuffleIntoDeck is true, shuffle the discarded cards into the deck
         if (effect.shuffleIntoDeck) {
+            // Remove cards from hand without discarding them
+            for (const card of cardsToDiscard) {
+                const index = hand.findIndex(c => c.instanceId === card.instanceId);
+                if (index !== -1) {
+                    hand.splice(index, 1);
+                }
+            }
+            
             for (const card of cardsToDiscard) {
                 controllers.deck.addCard(playerId, card);
             }
@@ -86,7 +85,16 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             // Send a message about the shuffle
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} shuffles the discarded cards into the deck for player ${playerId}!`]
+                components: [`${context.effectName} shuffles ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}'s hand into the deck!`]
+            });
+        } else {
+            // Remove the cards from the hand (automatically discards them)
+            controllers.hand.removeCards(playerId, cardsToDiscard);
+            
+            // Send a message about the discard
+            controllers.players.messageAll({
+                type: 'status',
+                components: [`${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!`]
             });
         }
     }

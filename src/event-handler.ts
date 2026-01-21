@@ -382,14 +382,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(source);
             
             const hand = controllers.hand.getHand(source);
-            const activeCardToRemove = { id: message.activeCardId, cardId: message.activeCardId, type: 'creature' as const };
-            controllers.hand.removeCards(source, [activeCardToRemove]);
-            controllers.field.setActiveCard(source, message.activeCardId);
             
+            // Find and play the active card from hand
+            const activeCardIndex = hand.findIndex(card => 
+                card.templateId === message.activeCardId && card.type === 'creature'
+            );
+            if (activeCardIndex !== -1) {
+                controllers.hand.playCard(source, activeCardIndex);
+                controllers.field.setActiveCard(source, message.activeCardId);
+            }
+            
+            // Find and play bench cards from hand
             for (const cardId of message.benchCardIds) {
-                const benchCardToRemove = { id: cardId, cardId, type: 'creature' as const };
-                controllers.hand.removeCards(source, [benchCardToRemove]);
-                controllers.field.addToBench(source, cardId);
+                const benchCardIndex = hand.findIndex(card => 
+                    card.templateId === cardId && card.type === 'creature'
+                );
+                if (benchCardIndex !== -1) {
+                    controllers.hand.playCard(source, benchCardIndex);
+                    controllers.field.addToBench(source, cardId);
+                }
             }
             
             controllers.setup.setPlayerReady(source);

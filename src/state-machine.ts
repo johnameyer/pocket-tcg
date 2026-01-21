@@ -80,6 +80,8 @@ const processKnockouts = {
                     const opponentId = (i + 1) % controllers.players.count;
                     const pointsToAward = cardData.attributes?.ex ? 2 : 1;
                     controllers.points.increaseScore(opponentId, pointsToAward);
+                    
+                    // Note: Card will be automatically discarded when promoteToBattle is called
                 }
             }
             
@@ -102,7 +104,7 @@ const processKnockouts = {
                     const pointsToAward = cardData.attributes?.ex ? 2 : 1;
                     controllers.points.increaseScore(opponentId, pointsToAward);
                     
-                    // Remove the knocked out bench card
+                    // Remove the knocked out bench card (automatically discards)
                     controllers.field.removeBenchCard(i, benchIndex);
                 }
             }
