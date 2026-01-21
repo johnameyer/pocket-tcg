@@ -552,7 +552,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Process energy-attachment triggers for all field cards (all players)
                 for (let playerId = 0; playerId < controllers.players.count; playerId++) {
                     const fieldCards = controllers.field.getPlayedCards(playerId);
-                    for (const card of fieldCards) {
+                    for (let fieldPosition = 0; fieldPosition < fieldCards.length; fieldPosition++) {
+                        const card = fieldCards[fieldPosition];
                         const cardData = controllers.cardRepository.getCreature(card.templateId);
                         if (cardData.ability) {
                             const ability = cardData.ability;
@@ -563,7 +564,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                     playerId,
                                     `${cardData.name}'s ${ability.name}`,
                                     card.instanceId,
-                                    0 // TODO: track field position correctly
+                                    fieldPosition
                                 );
                                 
                                 EffectApplier.applyEffects(

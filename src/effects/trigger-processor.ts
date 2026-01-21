@@ -54,6 +54,54 @@ export class TriggerProcessor {
         }
     }
 
+    static processEnergyAttachment(
+        controllers: Controllers,
+        playerId: number,
+        creatureInstanceId: string,
+        creatureCardId: string,
+        energyType: string
+    ): void {
+        // Get the creature data
+        const creatureData = controllers.cardRepository.getCreature(creatureCardId);
+        
+        // Process tool triggers
+        const tool = controllers.tools.getAttachedTool(creatureInstanceId);
+        if (tool) {
+            const toolData = controllers.cardRepository.getTool(tool.templateId);
+            if (toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
+                // Check if the trigger is for a specific energy type
+                if (!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
+                    const toolContext = EffectContextFactory.createTriggerContext(
+                        playerId,
+                        toolData.name,
+                        'energy-attachment',
+                        creatureInstanceId,
+                        { energyType }
+                    );
+                    controllers.effects.pushPendingEffect(toolData.effects, toolContext);
+                }
+            }
+        }
+        
+        // Process ability triggers
+        if (creatureData.ability) {
+            const ability = creatureData.ability;
+            if (ability.trigger?.type === 'energy-attachment' && ability.effects) {
+                // Check if the trigger is for a specific energy type
+                if (!ability.trigger.energyType || ability.trigger.energyType === energyType) {
+                    const abilityContext = EffectContextFactory.createTriggerContext(
+                        playerId,
+                        `${creatureData.name}'s ${ability.name}`,
+                        'energy-attachment',
+                        creatureInstanceId,
+                        { energyType }
+                    );
+                    controllers.effects.pushPendingEffect(ability.effects, abilityContext);
+                }
+            }
+        }
+    }
+
     static processEndOfTurn(
         controllers: Controllers,
         playerId: number,
