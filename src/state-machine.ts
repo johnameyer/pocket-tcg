@@ -275,7 +275,7 @@ const gameTurn = loop<Controllers>({
             run: (controllers: Controllers) => {
                 const currentPlayer = controllers.turn.get();
                 controllers.turnState.startTurn();
-                controllers.energy.resetTurnFlags(currentPlayer);
+                // No need to reset energy flags - energy attachment is tracked by currentEnergy being null
             }
         },
         

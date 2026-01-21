@@ -3,7 +3,7 @@ import { HandlerData } from '../game-handler.js';
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
-import { EnergyController } from '../controllers/energy-controller.js';
+import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { ActionValidator } from '../effects/action-validator.js';
 import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, RetreatResponseMessage, UseAbilityResponseMessage } from '../messages/response/index.js';
 import { GameCard } from '../controllers/card-types.js';
@@ -739,21 +739,17 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     });
     
     const globalTurn = handlerData.turnCounter.turnNumber;
-    const currentEnergyDict = handlerData.energy.currentEnergy[playerId];
-    const nextEnergyDict = handlerData.energy.nextEnergy[playerId];
-    const energyAttached = handlerData.energy.energyAttachedThisTurn[playerId];
+    const currentEnergyType = handlerData.energy.currentEnergy[playerId];
+    const nextEnergyType = handlerData.energy.nextEnergy[playerId];
+    const energyAttached = currentEnergyType === null; // If null, energy was attached this turn
     
-    // Format energy dictionary for display
-    const formatEnergyDict = (energyDict: EnergyDictionary) => {
-        const energyTypes = Object.entries(energyDict)
-            .filter(([_, count]) => (count as number) > 0)
-            .map(([type, count]) => `${count}${type.charAt(0).toUpperCase()}`)
-            .join(' ');
-        return energyTypes.length > 0 ? energyTypes : 'None';
+    // Format energy type for display
+    const formatEnergyType = (energyType: AttachableEnergyType | null) => {
+        return energyType ? `1${energyType.charAt(0).toUpperCase()}` : 'None';
     };
     
-    const currentEnergy = formatEnergyDict(currentEnergyDict);
-    const nextEnergy = formatEnergyDict(nextEnergyDict);
+    const currentEnergy = formatEnergyType(currentEnergyType);
+    const nextEnergy = formatEnergyType(nextEnergyType);
     
     const activeEnergyDisplay = activeEnergyCount > 0 ? ` [${activeEnergyCount}${activeEnergyTypes ? ':' + activeEnergyTypes : ''}]` : '';
     

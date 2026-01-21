@@ -19,19 +19,16 @@ export type AttachedEnergy = {
 
 export type EnergyState = {
     // Current energy available for attachment per player
-    currentEnergy: EnergyDictionary[];
+    currentEnergy: (AttachableEnergyType | null)[];
     
     // Next turn's energy preview per player
-    nextEnergy: EnergyDictionary[];
+    nextEnergy: (AttachableEnergyType | null)[];
     
     // Energy attached to card instances (indexed by instance ID)
     attachedEnergyByInstance: { [instanceId: string]: EnergyDictionary };
     
     // Energy types available for generation (based on deck)
     availableTypes: AttachableEnergyType[][];
-    
-    // Whether energy has been attached this turn
-    energyAttachedThisTurn: boolean[];
     
     // Track if this is the very first turn of the game
     isAbsoluteFirstTurn: boolean;
@@ -49,13 +46,12 @@ export class EnergyControllerProvider implements GenericControllerProvider<Energ
 
     initialState(controllers: EnergyDependencies): EnergyState {
         return {
-            currentEnergy: new Array(controllers.players.count).fill(null).map(() => EnergyController.emptyEnergyDict()),
-            nextEnergy: new Array(controllers.players.count).fill(null).map(() => EnergyController.emptyEnergyDict()),
+            currentEnergy: new Array(controllers.players.count).fill(null),
+            nextEnergy: new Array(controllers.players.count).fill(null),
             attachedEnergyByInstance: {},
             availableTypes: new Array(controllers.players.count).fill(undefined).map(() => 
                 ['fire', 'water', 'lightning', 'grass', 'psychic', 'fighting', 'darkness', 'metal']
             ),
-            energyAttachedThisTurn: new Array(controllers.players.count).fill(false),
             isAbsoluteFirstTurn: true
         };
     }
@@ -104,10 +100,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
 
     static getAvailableEnergyTypes(energyState: EnergyState, playerId: number): string[] {
         const currentEnergy = energyState.currentEnergy[playerId];
-        if (!currentEnergy) return [];
-        return Object.entries(currentEnergy)
-            .filter(([_, count]) => (count as number) > 0)
-            .map(([type, _]) => type);
+        return currentEnergy ? [currentEnergy] : [];
     }
     validate() {
         if (!Array.isArray(this.state.currentEnergy)) {
@@ -124,12 +117,10 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             const defaultType: AttachableEnergyType = 'fire';
             
             // Set current energy
-            this.state.currentEnergy[playerId] = EnergyController.emptyEnergyDict();
-            this.state.currentEnergy[playerId][defaultType] = 1;
+            this.state.currentEnergy[playerId] = defaultType;
             
             // Generate next energy preview
-            this.state.nextEnergy[playerId] = EnergyController.emptyEnergyDict();
-            this.state.nextEnergy[playerId][defaultType] = 1;
+            this.state.nextEnergy[playerId] = defaultType;
             
             return defaultType;
         }
@@ -138,33 +129,29 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         const randomType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
         
         // Set current energy
-        this.state.currentEnergy[playerId] = EnergyController.emptyEnergyDict();
-        this.state.currentEnergy[playerId][randomType] = 1;
+        this.state.currentEnergy[playerId] = randomType;
         
         // Generate next energy preview
         const nextRandomType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-        this.state.nextEnergy[playerId] = EnergyController.emptyEnergyDict();
-        this.state.nextEnergy[playerId][nextRandomType] = 1;
+        this.state.nextEnergy[playerId] = nextRandomType;
         
         return randomType;
     }
 
     // Get current energy of specific type
     public getCurrentEnergy(playerId: number, energyType: AttachableEnergyType): number {
-        return this.state.currentEnergy[playerId][energyType] || 0;
+        const current = this.state.currentEnergy[playerId];
+        return current === energyType ? 1 : 0;
     }
 
     // Get preview energy of specific type (next turn)
     public getPreviewEnergy(playerId: number, energyType: AttachableEnergyType): number {
-        return this.state.nextEnergy[playerId][energyType] || 0;
+        const next = this.state.nextEnergy[playerId];
+        return next === energyType ? 1 : 0;
     }
 
     // Attach energy to a card by instance ID
     public attachEnergyToInstance(playerId: number, instanceId: string, energyType: AttachableEnergyType): boolean {
-        if (this.state.energyAttachedThisTurn[playerId]) {
-            return false;
-        }
-
         // Check first turn restriction
         if (this.state.isAbsoluteFirstTurn) {
             return false;
@@ -180,8 +167,8 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         }
 
         this.state.attachedEnergyByInstance[instanceId][energyType] += 1;
-        this.state.currentEnergy[playerId][energyType] -= 1;
-        this.state.energyAttachedThisTurn[playerId] = true;
+        // Clear current energy after attachment
+        this.state.currentEnergy[playerId] = null;
 
         return true;
     }
@@ -325,23 +312,19 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
 
     // Check if energy can be attached this turn
     public canAttachEnergy(playerId: number, energyType?: AttachableEnergyType): boolean {
-        if (this.state.energyAttachedThisTurn[playerId]) return false;
-        
         const currentEnergy = this.state.currentEnergy[playerId];
         if (energyType) {
-            return currentEnergy[energyType] > 0;
+            return currentEnergy === energyType;
         }
         
-        // Check if any energy is available
-        return Object.values(currentEnergy).some(count => count > 0);
+        // Any energy is available if currentEnergy is not null
+        return currentEnergy !== null;
     }
 
     // Get available energy types for attachment
     public getAvailableEnergyTypes(playerId: number): AttachableEnergyType[] {
         const currentEnergy = this.state.currentEnergy[playerId];
-        return Object.entries(currentEnergy)
-            .filter(([_, count]) => count > 0)
-            .map(([type, _]) => type as AttachableEnergyType);
+        return currentEnergy ? [currentEnergy] : [];
     }
     
     // Remove all energy from a card instance (for knockouts)
@@ -405,11 +388,6 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return remaining <= 0;
     }
     
-    // Reset turn-specific flags
-    public resetTurnFlags(playerId: number): void {
-        this.state.energyAttachedThisTurn[playerId] = false;
-    }
-
     // Set available energy types for a player (based on deck)
     public setAvailableTypes(playerId: number, types: AttachableEnergyType[]): void {
         if (playerId >= 0 && playerId < this.state.availableTypes.length) {
