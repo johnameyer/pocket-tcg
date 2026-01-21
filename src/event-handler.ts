@@ -429,14 +429,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Creature already evolved this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     let targetCard;
                     if (message.position === 0) {
-                        targetCard = controllers.field.getCardByPosition(source, 0);
+                        targetCard = controllers.field.state.creatures[source][0];
                     } else {
-                        const benchedCards = controllers.field.getCards(source).slice(1);
-                        targetCard = benchedCards[message.position - 1];
+                        targetCard = controllers.field.state.creatures[source][message.position];
                     }
                     
                     if (targetCard) {
-                        const hasEvolved = controllers.turnState.hasEvolvedThisTurn(targetCard.instanceId);
+                        // Check evolution using the original instance ID (first in evolution stack)
+                        const originalInstanceId = targetCard.evolutionStack[0]?.instanceId;
+                        const hasEvolved = controllers.turnState.hasEvolvedThisTurn(originalInstanceId);
                         return hasEvolved ? new Error('Creature already evolved this turn') : undefined;
                     }
                     return undefined;
@@ -477,13 +478,16 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionCard = controllers.hand.playCard(sourceHandler, evolutionCardIndex);
             const evolutionInstanceId = evolutionCard?.instanceId;
             
-            // Get the current turn number
-            const turnNumber = controllers.turnCounter.getTurn();
+            // Get the current turn number (default to 0 if not available)
+            const turnNumber = controllers.turnCounter?.getTurn?.() ?? 0;
             
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
-                    controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
+                    // Mark evolution using the original instance ID (not the current form)
+                    const rawCard = controllers.field.state.creatures[sourceHandler]?.[0];
+                    const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
+                    controllers.turnState.markEvolvedThisTurn(originalInstanceId);
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                 }
                 controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId, turnNumber);
@@ -491,7 +495,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const benchedCards = controllers.field.getCards(sourceHandler).slice(1);
                 const targetCard = benchedCards[message.position - 1];
                 if (targetCard) {
-                    controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
+                    // Mark evolution using the original instance ID (not the current form)
+                    const rawCard = controllers.field.state.creatures[sourceHandler]?.[message.position];
+                    const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
+                    controllers.turnState.markEvolvedThisTurn(originalInstanceId);
                 }
                 controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId, turnNumber);
             }

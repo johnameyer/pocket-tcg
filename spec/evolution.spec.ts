@@ -20,7 +20,7 @@ describe('Evolution Mechanics', () => {
         expect(getExecutedCount()).to.equal(1, 'Should have executed evolution action');
     });
 
-    it('should discard previous form when evolving', () => {
+    it('should keep previous form in evolution stack when evolving', () => {
         const { state } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
@@ -31,13 +31,18 @@ describe('Evolution Mechanics', () => {
             maxSteps: 5
         });
 
-        // Player 0's basic creature should be in discard pile after evolution
-        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
-        expect(state.discard[0][0].templateId).to.equal('basic-creature');
-        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('evolution-creature', 'Active creature should be evolved');
+        // Player 0's basic creature should remain in the evolution stack, not in discard pile
+        expect(state.discard[0].length).to.equal(0, 'Player 0 should have 0 cards in discard pile');
+        
+        // Check evolution stack has both forms
+        const activeCard = state.field.creatures[0][0];
+        expect(activeCard.evolutionStack.length).to.equal(2, 'Evolution stack should have 2 cards');
+        expect(activeCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
+        expect(activeCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
+        expect(getCurrentTemplateId(activeCard)).to.equal('evolution-creature', 'Current form should be evolved');
     });
 
-    it('should discard previous form when evolving benched creature', () => {
+    it('should keep previous form in evolution stack when evolving benched creature', () => {
         const { state } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 1)],
             stateCustomizer: StateBuilder.combine(
@@ -48,10 +53,15 @@ describe('Evolution Mechanics', () => {
             maxSteps: 5
         });
 
-        // Player 0's benched basic creature should be in discard pile after evolution
-        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
-        expect(state.discard[0][0].templateId).to.equal('basic-creature');
-        expect(getCurrentTemplateId(state.field.creatures[0][1])).to.equal('evolution-creature', 'Benched creature should be evolved');
+        // Player 0's benched basic creature should remain in the evolution stack, not in discard pile
+        expect(state.discard[0].length).to.equal(0, 'Player 0 should have 0 cards in discard pile');
+        
+        // Check evolution stack has both forms
+        const benchedCard = state.field.creatures[0][1];
+        expect(benchedCard.evolutionStack.length).to.equal(2, 'Evolution stack should have 2 cards');
+        expect(benchedCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
+        expect(benchedCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
+        expect(getCurrentTemplateId(benchedCard)).to.equal('evolution-creature', 'Current form should be evolved');
     });
 
     it('should prevent evolution on first turn', () => {
@@ -91,7 +101,9 @@ describe('Evolution Mechanics', () => {
             maxSteps: 15
         });
 
-        expect(getCurrentTemplateId(state.field.creatures[0].slice(1)[0])).to.equal('evolution-creature', 'Creature should have evolved once');
+        // After evolution and retreat, the evolved creature should be on bench
+        const benchCard = state.field.creatures[0].slice(1)[0];
+        expect(getCurrentTemplateId(benchCard)).to.equal('evolution-creature', 'Creature should have evolved once');
         expect(state.hand[0].length).to.equal(1, 'Second evolution card should remain in hand (blocked)');
     });
 

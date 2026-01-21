@@ -369,10 +369,11 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         
         const oldCard = this.state.creatures[playerId][0];
         
-        // Use provided instanceId or generate a new one for the evolution
+        // Use the evolution card's instanceId for the new form (it will be added to evolutionStack)
+        // Note: evolutionInstanceId comes from the card in hand
         const newInstanceId = evolutionInstanceId ?? `${evolutionTemplateId}-${Date.now()}-${Math.random()}`;
         
-        // Add the evolution to the stack (keeping previous forms)
+        // Add the evolution to the stack (keeping all previous forms)
         this.state.creatures[playerId][0] = addEvolution(
             oldCard,
             newInstanceId,
