@@ -40,7 +40,7 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 2 }), // Evolution creature needs 2 fire energy
                     StateBuilder.withCanEvolve(0, 0)
                 ),
                 maxSteps: 10
