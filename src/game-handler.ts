@@ -13,4 +13,7 @@ export abstract class GameHandler implements Handler<GameHandlerParams, HandlerD
     
     // Method to handle setup phase
     abstract handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void | Promise<void>;
+    
+    // Method to handle pending selections (targets, energy, cards in hand, choices, etc.)
+    abstract handlePendingSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void | Promise<void>;
 }

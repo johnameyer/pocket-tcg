@@ -67,7 +67,7 @@ export class StateBuilder {
                 retreatedThisTurn: false,
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
-                pendingTargetSelection: undefined,
+                pendingSelection: undefined,
                 damageBoosts: [],
                 damageReductions: [],
                 retreatCostReductions: [],

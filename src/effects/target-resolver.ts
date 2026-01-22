@@ -6,7 +6,7 @@ import { getOpponentPlayerId } from './effect-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { HandlerData } from '../game-handler.js';
 import { FieldCard } from "../controllers/field-controller.js";
-import { PendingTargetSelection } from './pending-target-selection.js';
+import { PendingTargetSelection } from './pending-selection-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { ConditionEvaluator } from './condition-evaluator.js';
 import { Condition } from '../repository/condition-types.js';
@@ -607,8 +607,8 @@ export class TargetResolver {
             
             // If target resolution requires selection, set up pending target selection
             if (resolution.type === 'requires-selection') {
-                controllers.turnState.setPendingTargetSelection({
-                    type: 'target',
+                controllers.turnState.setPendingSelection({
+                    selectionType: 'target',
                     effect: effect,
                     originalContext: context
                 });
