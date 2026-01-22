@@ -199,7 +199,7 @@ export class EffectApplier {
      * @param targetCreatureIndex The selected target creature index
      */
     static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingTargetSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
-        const { effect, originalContext, type = 'target' } = pendingSelection;
+        const { effect, originalContext, selectionType = 'target' } = pendingSelection;
 
         // Target validation is now handled at the event handler level
         // If we reach here, the target is valid

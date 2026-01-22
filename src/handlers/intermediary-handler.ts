@@ -76,7 +76,7 @@ export class IntermediaryHandler extends GameHandler {
     
     async handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
         const currentPlayer = handlerData.turn;
-        const pendingEffect = handlerData.turnState.pendingTargetSelection;
+        const pendingEffect = handlerData.turnState.pendingSelection;
         
         if (!pendingEffect) {
             return;
