@@ -6,6 +6,7 @@ import { EffectContextFactory } from './effect-context.js';
 import { TargetResolver } from './target-resolver.js';
 import { Effect } from '../repository/effect-types.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
+import { getCurrentTemplateId, getCurrentInstanceId, getFieldInstanceId } from '../utils/field-card-utils.js';
 
 /**
  * ActionValidator provides HandlerData-based validation methods for game actions.
@@ -21,12 +22,12 @@ export class ActionValidator {
         
         const currentTurn = handlerData.turnCounter.turnNumber;
         
-        if (currentTurn <= 1 || (creature.turnPlayed !== undefined && creature.turnPlayed >= currentTurn)) return false;
+        if (currentTurn <= 1 || (creature.turnLastPlayed !== undefined && creature.turnLastPlayed >= currentTurn)) return false;
         
         const allCreatures = cardRepository.getAllCreatureIds();
         return allCreatures.some(id => {
             const data = cardRepository.getCreature(id);
-            return data.evolvesFrom === creature.templateId;
+            return data.evolvesFrom === getCurrentTemplateId(creature);
         });
     }
     
@@ -64,9 +65,9 @@ export class ActionValidator {
         //     return false;
         // }
         
-        const creatureData = cardRepository.getCreature(activeCreature.templateId);
+        const creatureData = cardRepository.getCreature(getCurrentTemplateId(activeCreature));
         const retreatCost = creatureData.retreatCost || 0;
-        const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, activeCreature.instanceId);
+        const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, getFieldInstanceId(activeCreature));
         
         const statusEffects = (handlerData.statusEffects?.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
         const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
@@ -94,12 +95,12 @@ export class ActionValidator {
             return false;
         }
         
-        const creatureData = cardRepository.getCreature(activeCreature.templateId);
+        const creatureData = cardRepository.getCreature(getCurrentTemplateId(activeCreature));
         
         if (attackIndex < 0 || attackIndex >= creatureData.attacks.length) return false;
         
         const attack = creatureData.attacks[attackIndex];
-        return EnergyController.canUseAttackByInstance(handlerData.energy, activeCreature.instanceId, attack.energyRequirements);
+        return EnergyController.canUseAttackByInstance(handlerData.energy, getFieldInstanceId(activeCreature), attack.energyRequirements);
     }
     
     /**
@@ -176,7 +177,7 @@ export class ActionValidator {
         const creature = handlerData.field.creatures[playerId]?.[position];
         if (!creature) return false;
         
-        const creatureData = cardRepository.getCreature(creature.templateId);
+        const creatureData = cardRepository.getCreature(getCurrentTemplateId(creature));
         if (!creatureData.ability) return false;
         
         const ability = creatureData.ability;

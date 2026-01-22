@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
+import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 describe('Game-Ending Scenarios', () => {
     describe('No Bench Creatures Available', () => {
@@ -66,8 +67,8 @@ describe('Game-Ending Scenarios', () => {
             
             if (attackerKO && defenderKO) {
                 // Both should be promoted from bench
-                expect(state.field.creatures[0][0].templateId).to.not.equal('evolution-creature', 'Attacker should be promoted from bench');
-                expect(state.field.creatures[1][0].templateId).to.not.equal('evolution-creature', 'Defender should be promoted from bench');
+                expect(getCurrentTemplateId(state.field.creatures[0][0])).to.not.equal('evolution-creature', 'Attacker should be promoted from bench');
+                expect(getCurrentTemplateId(state.field.creatures[1][0])).to.not.equal('evolution-creature', 'Defender should be promoted from bench');
             }
         });
     });

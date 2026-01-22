@@ -82,11 +82,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.attackIndex < 0 || message.attackIndex >= cardData.attacks.length;
                 }),
                 EventHandler.validate('Insufficient energy for attack', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
+                    if (!fieldInstanceId) return true; // No card, can't attack
                     const playerCard = controllers.field.getCardByPosition(source, 0);
                     const { attacks } = controllers.cardRepository.getCreature(playerCard.templateId);
                     const attack = attacks[message.attackIndex];
                     
-                    return !controllers.energy.canUseAttackByInstance(playerCard.instanceId, attack.energyRequirements);
+                    return !controllers.energy.canUseAttackByInstance(fieldInstanceId, attack.energyRequirements);
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttackResponseMessage) => {
@@ -223,10 +225,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     if (message.cardType !== 'tool') return false;
                     const targetPlayerId = message.targetPlayerId ?? source;
                     const targetFieldIndex = message.targetFieldIndex ?? 0;
-                    const targetCards = controllers.field.getCards(targetPlayerId);
-                    const targetCard = targetCards[targetFieldIndex];
-                    if (!targetCard) return true;
-                    return !controllers.tools.canAttachTool(targetCard.instanceId);
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(targetPlayerId, targetFieldIndex);
+                    if (!fieldInstanceId) return true;
+                    return !controllers.tools.canAttachTool(fieldInstanceId);
                 }),
                 EventHandler.validate('Item effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     if (message.cardType !== 'item') return false;
@@ -257,15 +258,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: PlayCardResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
             
-            // Use playCard to handle card removal properly
+            // Use playCard to handle card removal properly and preserve instanceId
             const hand = controllers.hand.getHand(sourceHandler);
             const cardIndex = hand.findIndex(card => card.templateId === message.templateId);
+            let cardInstanceId: string | undefined;
             if (cardIndex !== -1) {
-                controllers.hand.playCard(sourceHandler, cardIndex);
+                const card = controllers.hand.playCard(sourceHandler, cardIndex);
+                cardInstanceId = card?.instanceId;
             }
             
             if (message.cardType === 'creature') {
-                controllers.field.addToBench(sourceHandler, message.templateId);
+                controllers.field.addToBench(sourceHandler, message.templateId, cardInstanceId);
                 const { name } = controllers.cardRepository.getCreature(message.templateId);
                 controllers.players.messageAll({
                     type: 'card-played',
@@ -313,14 +316,16 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const targetPlayerId = message.targetPlayerId ?? sourceHandler;
                 const targetFieldIndex = message.targetFieldIndex ?? 0;
                 
-                // Get the target creature
-                const targetCards = controllers.field.getCards(targetPlayerId);
-                const targetCard = targetCards[targetFieldIndex];
+                // Get the target creature (raw InstancedFieldCard to access fieldInstanceId)
+                const rawTargetCard = controllers.field.state.creatures[targetPlayerId]?.[targetFieldIndex];
                 
-                if (targetCard) {
+                if (rawTargetCard) {
                     // Generate a unique tool instance ID
                     const toolInstanceId = `${message.templateId}-${Date.now()}`;
-                    controllers.tools.attachTool(targetCard.instanceId, message.templateId, toolInstanceId);
+                    // Use fieldInstanceId for tool attachment so it persists through evolution
+                    controllers.tools.attachTool(rawTargetCard.fieldInstanceId, message.templateId, toolInstanceId);
+                    
+                    const targetCard = controllers.field.getCards(targetPlayerId)[targetFieldIndex];
                     controllers.players.messageAll({
                         type: 'card-played',
                         components: [`Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!`]
@@ -403,9 +408,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const activeCardIndex = hand.findIndex(card => 
                 card.templateId === message.activeCardId && card.type === 'creature'
             );
+            let activeInstanceId: string | undefined;
             if (activeCardIndex !== -1) {
-                controllers.hand.playCard(source, activeCardIndex);
-                controllers.field.setActiveCard(source, message.activeCardId);
+                const activeCard = controllers.hand.playCard(source, activeCardIndex);
+                activeInstanceId = activeCard?.instanceId;
+                controllers.field.setActiveCard(source, message.activeCardId, activeInstanceId);
             }
             
             // Find and play bench cards from hand
@@ -414,8 +421,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     card.templateId === cardId && card.type === 'creature'
                 );
                 if (benchCardIndex !== -1) {
-                    controllers.hand.playCard(source, benchCardIndex);
-                    controllers.field.addToBench(source, cardId);
+                    const benchCard = controllers.hand.playCard(source, benchCardIndex);
+                    controllers.field.addToBench(source, cardId, benchCard?.instanceId);
                 }
             }
             
@@ -441,14 +448,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Creature already evolved this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     let targetCard;
                     if (message.position === 0) {
-                        targetCard = controllers.field.getCardByPosition(source, 0);
+                        targetCard = controllers.field.state.creatures[source][0];
                     } else {
-                        const benchedCards = controllers.field.getCards(source).slice(1);
-                        targetCard = benchedCards[message.position - 1];
+                        targetCard = controllers.field.state.creatures[source][message.position];
                     }
                     
                     if (targetCard) {
-                        const hasEvolved = controllers.turnState.hasEvolvedThisTurn(targetCard.instanceId);
+                        // Check evolution using the original instance ID (first in evolution stack)
+                        const originalInstanceId = targetCard.evolutionStack[0]?.instanceId;
+                        const hasEvolved = controllers.turnState.hasEvolvedThisTurn(originalInstanceId);
                         return hasEvolved ? new Error('Creature already evolved this turn') : undefined;
                     }
                     return undefined;
@@ -485,23 +493,34 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionCardIndex = hand.findIndex(card => card.templateId === message.evolutionId);
             if (evolutionCardIndex === -1) return;
             
+            // Get the evolution card's instanceId before playing it
+            const evolutionCard = controllers.hand.playCard(sourceHandler, evolutionCardIndex);
+            const evolutionInstanceId = evolutionCard?.instanceId;
+            
+            // Get the current turn number (default to 0 if not available)
+            const turnNumber = controllers.turnCounter?.getTurn?.() ?? 0;
+            
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
-                    controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
+                    // Mark evolution using the original instance ID (not the current form)
+                    const rawCard = controllers.field.state.creatures[sourceHandler]?.[0];
+                    const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
+                    controllers.turnState.markEvolvedThisTurn(originalInstanceId);
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                 }
-                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId);
+                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId, turnNumber);
             } else {
                 const benchedCards = controllers.field.getCards(sourceHandler).slice(1);
                 const targetCard = benchedCards[message.position - 1];
                 if (targetCard) {
-                    controllers.turnState.markEvolvedThisTurn(targetCard.instanceId);
+                    // Mark evolution using the original instance ID (not the current form)
+                    const rawCard = controllers.field.state.creatures[sourceHandler]?.[message.position];
+                    const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
+                    controllers.turnState.markEvolvedThisTurn(originalInstanceId);
                 }
-                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId);
+                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId, turnNumber);
             }
-            
-            controllers.hand.playCard(sourceHandler, evolutionCardIndex);
             
             const { name } = controllers.cardRepository.getCreature(message.evolutionId);
             controllers.players.messageAll(new EvolutionMessage(
@@ -536,14 +555,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             }
             const energyType = availableTypes[0]; // Get the first (and only) available energy type
             
-            // Get the card at the specified field position
-            const fieldCard = controllers.field.getRawCardByPosition(currentPlayer, message.fieldPosition);
-            if (!fieldCard) {
+            // Get the field instance ID for energy attachment
+            const fieldInstanceId = controllers.field.getFieldInstanceId(currentPlayer, message.fieldPosition);
+            if (!fieldInstanceId) {
                 return; // Invalid field position
             }
             
-            const instanceId = fieldCard.instanceId;
-            const success = controllers.energy.attachEnergyToInstance(currentPlayer, instanceId, energyType);
+            const success = controllers.energy.attachEnergyToInstance(currentPlayer, fieldInstanceId, energyType);
             
             if (success) {
                 controllers.players.messageAll({
@@ -668,12 +686,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.benchIndex < 0 || message.benchIndex >= benchCards.length;
                 }),
                 EventHandler.validate('Insufficient energy for retreat', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
+                    if (!fieldInstanceId) return true;
+                    
                     const activeCard = controllers.field.getCardByPosition(source, 0);
                     if (!activeCard) return true;
                     
                     const creatureData = controllers.cardRepository.getCreature(activeCard.templateId);
                     const retreatCost = creatureData.retreatCost;
-                    const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(activeCard.instanceId);
+                    const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
                     const totalEnergy = Object.values(attachedEnergy).reduce((sum, amount) => sum + amount, 0);
                     
                     return totalEnergy < retreatCost;
@@ -698,19 +719,23 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const activeCard = controllers.field.getCardByPosition(sourceHandler, 0);
             if (!activeCard) return;
             
+            // Get field instance ID for energy operations
+            const fieldInstanceId = controllers.field.getFieldInstanceId(sourceHandler, 0);
+            if (!fieldInstanceId) return;
+            
             // Calculate retreat cost after reductions
             const creatureData = controllers.cardRepository.getCreature(activeCard.templateId);
             const retreatCost = creatureData.retreatCost;
             
             // Consume energy for retreat
-            const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(activeCard.instanceId);
+            const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
             let energyToRemove = retreatCost;
             
             // Remove energy in order of availability
             for (const [energyType, amount] of Object.entries(attachedEnergy)) {
                 if (energyToRemove <= 0) break;
                 const toRemove = Math.min(amount, energyToRemove);
-                controllers.energy.discardSpecificEnergyFromInstance(sourceHandler, activeCard.instanceId, energyType as AttachableEnergyType, toRemove);
+                controllers.energy.discardSpecificEnergyFromInstance(sourceHandler, fieldInstanceId, energyType as AttachableEnergyType, toRemove);
                 energyToRemove -= toRemove;
             }
             

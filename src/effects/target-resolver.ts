@@ -10,6 +10,7 @@ import { PendingTargetSelection } from './pending-target-selection.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { ConditionEvaluator } from './condition-evaluator.js';
 import { Condition } from '../repository/condition-types.js';
+import { toFieldCard, getCurrentInstanceId } from '../utils/field-card-utils.js';
 
 /**
  * Result of target resolution, indicating whether a target was resolved,
@@ -376,8 +377,8 @@ export class TargetResolver {
                 for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                     const creature = allCreatures[fieldIndex];
                     if (creature && 
-                        TargetResolver.creatureMatchesCriteria(creature, criteria, handlerData, cardRepository, fieldIndex) &&
-                        validationFn(creature, handlerData)) {
+                        TargetResolver.creatureMatchesCriteria(toFieldCard(creature), criteria, handlerData, cardRepository, fieldIndex) &&
+                        validationFn(toFieldCard(creature), handlerData)) {
                         return true;
                     }
                 }
@@ -424,7 +425,7 @@ export class TargetResolver {
                 
                 for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                     const creature = allCreatures[fieldIndex];
-                    if (creature && TargetResolver.creatureMatchesCriteria(creature, criteria, handlerData, cardRepository, fieldIndex)) {
+                    if (creature && TargetResolver.creatureMatchesCriteria(toFieldCard(creature), criteria, handlerData, cardRepository, fieldIndex)) {
                         return true;
                     }
                 }
@@ -466,7 +467,7 @@ export class TargetResolver {
             } else if (context.type === 'trigger') {
                 // For triggers, find the field position of the creature that has the trigger
                 const allCreatures = handlerData.field.creatures[playerId] || [];
-                fieldIndex = allCreatures.findIndex(creature => creature?.instanceId === context.creatureInstanceId);
+                fieldIndex = allCreatures.findIndex(creature => creature && getCurrentInstanceId(creature) === context.creatureInstanceId);
                 if (fieldIndex === -1) {
                     throw new Error(`Trigger source creature not found: ${context.creatureInstanceId}`);
                 }
@@ -477,7 +478,8 @@ export class TargetResolver {
             fieldIndex = 0; // Default to active
         }
         
-        return handlerData.field?.creatures?.[playerId]?.[fieldIndex];
+        const card = handlerData.field?.creatures?.[playerId]?.[fieldIndex];
+        return card ? toFieldCard(card) : undefined;
     }
     
     /**

@@ -3,6 +3,7 @@ import { EvolveResponseMessage } from '../src/messages/response/evolve-response-
 import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
+import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 describe('Evolution Mechanics', () => {
     it('should evolve basic creature to evolution', () => {
@@ -19,7 +20,7 @@ describe('Evolution Mechanics', () => {
         expect(getExecutedCount()).to.equal(1, 'Should have executed evolution action');
     });
 
-    it('should discard previous form when evolving', () => {
+    it('should keep previous form in evolution stack when evolving', () => {
         const { state } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
@@ -30,13 +31,18 @@ describe('Evolution Mechanics', () => {
             maxSteps: 5
         });
 
-        // Player 0's basic creature should be in discard pile after evolution
-        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
-        expect(state.discard[0][0].templateId).to.equal('basic-creature');
-        expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Active creature should be evolved');
+        // Player 0's basic creature should remain in the evolution stack, not in discard pile
+        expect(state.discard[0].length).to.equal(0, 'Player 0 should have 0 cards in discard pile');
+        
+        // Check evolution stack has both forms
+        const activeCard = state.field.creatures[0][0];
+        expect(activeCard.evolutionStack.length).to.equal(2, 'Evolution stack should have 2 cards');
+        expect(activeCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
+        expect(activeCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
+        expect(getCurrentTemplateId(activeCard)).to.equal('evolution-creature', 'Current form should be evolved');
     });
 
-    it('should discard previous form when evolving benched creature', () => {
+    it('should keep previous form in evolution stack when evolving benched creature', () => {
         const { state } = runTestGame({
             actions: [new EvolveResponseMessage('evolution-creature', 1)],
             stateCustomizer: StateBuilder.combine(
@@ -47,10 +53,15 @@ describe('Evolution Mechanics', () => {
             maxSteps: 5
         });
 
-        // Player 0's benched basic creature should be in discard pile after evolution
-        expect(state.discard[0].length).to.equal(1, 'Player 0 should have 1 card in discard pile');
-        expect(state.discard[0][0].templateId).to.equal('basic-creature');
-        expect(state.field.creatures[0][1].templateId).to.equal('evolution-creature', 'Benched creature should be evolved');
+        // Player 0's benched basic creature should remain in the evolution stack, not in discard pile
+        expect(state.discard[0].length).to.equal(0, 'Player 0 should have 0 cards in discard pile');
+        
+        // Check evolution stack has both forms
+        const benchedCard = state.field.creatures[0][1];
+        expect(benchedCard.evolutionStack.length).to.equal(2, 'Evolution stack should have 2 cards');
+        expect(benchedCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
+        expect(benchedCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
+        expect(getCurrentTemplateId(benchedCard)).to.equal('evolution-creature', 'Current form should be evolved');
     });
 
     it('should prevent evolution on first turn', () => {
@@ -58,11 +69,14 @@ describe('Evolution Mechanics', () => {
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                 (state) => state.turn = 1
             )
         });
 
-        expect(state.field.creatures[0][0].templateId).to.equal('basic-creature', 'Evolution should be prevented on first turn');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Evolution should be prevented on first turn');
+        expect(state.hand[0].length).to.equal(1, 'Evolution card should still be in hand');
+        expect(state.hand[0][0].templateId).to.equal('evolution-creature', 'Evolution card should not be played');
     });
 
     it('should prevent same creature instance from evolving twice per turn even with retreats', () => {
@@ -83,14 +97,16 @@ describe('Evolution Mechanics', () => {
                 (state) => {
                     const creatureData = state.field.creatures[0][0];
                     if (creatureData) {
-                        creatureData.turnPlayed = 0;
+                        creatureData.turnLastPlayed = 0;
                     }
                 }
             ),
             maxSteps: 15
         });
 
-        expect(state.field.creatures[0].slice(1)[0].templateId).to.equal('evolution-creature', 'Creature should have evolved once');
+        // After evolution and retreat, the evolved creature should be on bench
+        const benchCard = state.field.creatures[0].slice(1)[0];
+        expect(getCurrentTemplateId(benchCard)).to.equal('evolution-creature', 'Creature should have evolved once');
         expect(state.hand[0].length).to.equal(1, 'Second evolution card should remain in hand (blocked)');
     });
 
@@ -108,7 +124,7 @@ describe('Evolution Mechanics', () => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
                         const creatureData = state.field.creatures[0][0];
                         if (creatureData) {
-                            creatureData.turnPlayed = 0;
+                            creatureData.turnLastPlayed = 0;
                         }
                     }
                 ),
@@ -117,7 +133,7 @@ describe('Evolution Mechanics', () => {
 
             const statusEffects = state.statusEffects.activeStatusEffects[0];
             expect(statusEffects).to.have.length(0, 'Status effects should be cleared after evolution');
-            expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Creature should be evolved');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('evolution-creature', 'Creature should be evolved');
         });
 
         it('should preserve damage when evolving with status effects', () => {
@@ -133,7 +149,7 @@ describe('Evolution Mechanics', () => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
                         const creatureData = state.field.creatures[0][0];
                         if (creatureData) {
-                            creatureData.turnPlayed = 0;
+                            creatureData.turnLastPlayed = 0;
                             creatureData.damageTaken = 60;
                         }
                     }
@@ -143,7 +159,7 @@ describe('Evolution Mechanics', () => {
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(60, 'Damage should be preserved during evolution');
             expect((state.statusEffects.activeStatusEffects[0] as any[]).length).to.equal(0, 'Status effects should be cleared');
-            expect(state.field.creatures[0][0].templateId).to.equal('evolution-creature', 'Creature should be evolved');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('evolution-creature', 'Creature should be evolved');
         });
 
         it('should clear status effects when retreating', () => {
@@ -162,7 +178,7 @@ describe('Evolution Mechanics', () => {
 
             const statusEffects = state.statusEffects.activeStatusEffects[0] as any[];
             expect(statusEffects).to.have.length(0, 'Retreat should clear status effects');
-            expect(state.field.creatures[0][0].templateId).to.equal('high-hp-creature', 'Should have retreated successfully');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'Should have retreated successfully');
         });
 
         it('should maintain poison/burn effects through non-clearing actions', () => {

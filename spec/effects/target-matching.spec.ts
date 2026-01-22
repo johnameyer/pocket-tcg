@@ -5,6 +5,7 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
+import { getCurrentTemplateId } from '../../src/utils/field-card-utils.js';
 
 describe('Target Matching', () => {
     describe('Fixed Targets', () => {
@@ -181,10 +182,16 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
                         state.field.creatures[0].push({
-                            instanceId: "field-card-1", damageTaken: 15, templateId: 'basic-creature',
+                            fieldInstanceId: "test-field-id",
+                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            damageTaken: 15,
+                            turnLastPlayed: 0
                         });
                         state.field.creatures[0].push({
-                            instanceId: "field-card-2", damageTaken: 25, templateId: 'basic-creature',
+                            fieldInstanceId: "test-field-id-2",
+                            evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
+                            damageTaken: 25,
+                            turnLastPlayed: 0
                         });
                     }
                 ),
@@ -224,10 +231,16 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
                         state.field.creatures[0].push({
-                            instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
+                            fieldInstanceId: "test-field-id",
+                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            damageTaken: 0,
+                            turnLastPlayed: 0
                         });
                         state.field.creatures[0].push({
-                            instanceId: "field-card-2", damageTaken: 15, templateId: 'basic-creature',
+                            fieldInstanceId: "test-field-id-2",
+                            evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
+                            damageTaken: 15,
+                            turnLastPlayed: 0
                         });
                     }
                 ),
@@ -305,8 +318,11 @@ describe('Target Matching', () => {
                     StateBuilder.withHand(0, [{ templateId: 'opponent-scope', type: 'supporter' }]),
                     (state) => {
                         state.field.creatures[1].push({
-                            instanceId: "field-card-1", damageTaken: 0, templateId: 'basic-creature',
-                        });
+                        fieldInstanceId: "test-field-id",
+                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        damageTaken: 0,
+                        turnLastPlayed: 0
+                    });
                     }
                 ),
                 maxSteps: 10

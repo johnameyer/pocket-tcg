@@ -11,6 +11,7 @@ import { TargetResolver } from '../target-resolver.js';
 import { ConditionEvaluator } from '../condition-evaluator.js';
 import { Condition } from '../../repository/condition-types.js';
 import { FieldCard } from '../../controllers/field-controller.js';
+import { getFieldInstanceId } from '../../utils/field-card-utils.js';
 
 /**
  * Handler for energy transfer effects that move energy from one creature to another.
@@ -47,7 +48,8 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
                 return true; // No specific energy requirement
             }
             
-            const attachedEnergy = handlerData.energy?.attachedEnergyByInstance?.[creature.instanceId];
+            const fieldInstanceId = getFieldInstanceId(creature);
+            const attachedEnergy = handlerData.energy?.attachedEnergyByInstance?.[fieldInstanceId];
             if (!attachedEnergy) return false;
             
             // Check if the creature has any of the required energy types
@@ -114,7 +116,8 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
                     const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
                     if (!attachedEnergyByInstance) return false;
                     
-                    const creatureEnergy = attachedEnergyByInstance[creature.instanceId];
+                    const fieldInstanceId = getFieldInstanceId(creature);
+                    const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
                     if (!creatureEnergy) return false;
                     
                     // Check if the creature has any energy
@@ -128,7 +131,8 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
                     const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
                     if (!attachedEnergyByInstance) return false;
                     
-                    const creatureEnergy = attachedEnergyByInstance[creature.instanceId];
+                    const fieldInstanceId = getFieldInstanceId(creature);
+                    const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
                     if (!creatureEnergy || !(creatureEnergy.water > 0)) {
                         return false;
                     }
@@ -170,10 +174,20 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         // Targets are always resolved by EffectApplier
         const sourceTarget = effect.source.targets[0];
         const targetTarget = effect.target.targets[0];
+        
+        // Get field instance IDs for energy operations
+        const sourceFieldInstanceId = controllers.field.getFieldInstanceId(sourceTarget.playerId, sourceTarget.fieldIndex);
+        const targetFieldInstanceId = controllers.field.getFieldInstanceId(targetTarget.playerId, targetTarget.fieldIndex);
+
+        // Ensure both creatures exist
+        if (!sourceFieldInstanceId || !targetFieldInstanceId) {
+            throw new Error(`Source or target creature not found`);
+        }
+
+        // Get the creatures for display names
         const sourceCreature = controllers.field.getCardByPosition(sourceTarget.playerId, sourceTarget.fieldIndex);
         const targetCreature = controllers.field.getCardByPosition(targetTarget.playerId, targetTarget.fieldIndex);
 
-        // Ensure both creature exist
         if (!sourceCreature || !targetCreature) {
             throw new Error(`Source or target creature not found`);
         }
@@ -183,7 +197,7 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         
         if (effect.energyTypes && effect.energyTypes.length > 0) {
             // Get the attached energy for the source creature
-            const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(sourceCreature.instanceId);
+            const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
             
             // Find the first energy type from the effect's energyTypes array that the source creature has
             for (const energyType of effect.energyTypes) {
@@ -206,7 +220,7 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         }
         
         // Cap the transfer amount at available energy
-        const sourceEnergy = controllers.energy.getAttachedEnergyByInstance(sourceCreature.instanceId);
+        const sourceEnergy = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
         const availableEnergy = sourceEnergy?.[energyTypeToTransfer as keyof typeof sourceEnergy] || 0;
         const actualAmount = Math.min(amount, availableEnergy);
         
@@ -215,27 +229,25 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
             return;
         }
         
-        // Get source creature name for the message
+        // Get creature names for the message
         let sourceCreatureName = sourceCreature.data.name || 'a creature';
-        
-        // Get target creature name for the message
         let targetCreatureName = targetCreature.data.name || 'a creature';
         
         // Get the energy state before transfer
-        const sourceEnergyBefore = controllers.energy.getAttachedEnergyByInstance(sourceCreature.instanceId);
-        const targetEnergyBefore = controllers.energy.getAttachedEnergyByInstance(targetCreature.instanceId);
+        const sourceEnergyBefore = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
+        const targetEnergyBefore = controllers.energy.getAttachedEnergyByInstance(targetFieldInstanceId);
         
         // Transfer energy between the creature
         const success = controllers.energy.transferEnergyBetweenInstances(
-            sourceCreature.instanceId,
-            targetCreature.instanceId,
+            sourceFieldInstanceId,
+            targetFieldInstanceId,
             energyTypeToTransfer as AttachableEnergyType,
             actualAmount
         );
         
         // Get the energy state after transfer
-        const sourceEnergyAfter = controllers.energy.getAttachedEnergyByInstance(sourceCreature.instanceId);
-        const targetEnergyAfter = controllers.energy.getAttachedEnergyByInstance(targetCreature.instanceId);
+        const sourceEnergyAfter = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
+        const targetEnergyAfter = controllers.energy.getAttachedEnergyByInstance(targetFieldInstanceId);
         
         if (!success) {
             throw new Error(`Failed to transfer energy!`);
