@@ -33,8 +33,8 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         };
     }
     
-    verifyParams(params: GameParams): { readonly initialDecks?: string; readonly maxHandSize?: string; readonly maxTurns?: string; } {
-        const errors: { initialDecks?: string; maxHandSize?: string; maxTurns?: string; } = {};
+    verifyParams(params: GameParams): { readonly initialDecks?: string; readonly playerEnergyTypes?: string; readonly maxHandSize?: string; readonly maxTurns?: string; } {
+        const errors: { initialDecks?: string; playerEnergyTypes?: string; maxHandSize?: string; maxTurns?: string; } = {};
         
         try {
             if(!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
