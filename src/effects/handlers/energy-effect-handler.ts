@@ -115,6 +115,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                 }
             } else if (operation === 'discard') {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
+                    playerId,
                     targetCreature.instanceId, 
                     energyType, 
                     amount

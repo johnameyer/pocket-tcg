@@ -74,7 +74,7 @@ const processKnockouts = {
                     controllers.players.messageAll(new KnockedOutMessage(cardData.name));
                     
                     // Clean up energy attached to the knocked out card
-                    controllers.energy.removeAllEnergyFromInstance(targetCard.instanceId);
+                    controllers.energy.removeAllEnergyFromInstance(i, targetCard.instanceId);
                     
                     // Clean up tools attached to the knocked out card
                     controllers.tools.detachTool(targetCard.instanceId);
@@ -100,7 +100,7 @@ const processKnockouts = {
                     controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
                     
                     // Clean up energy attached to the knocked out card
-                    controllers.energy.removeAllEnergyFromInstance(benchCard.instanceId);
+                    controllers.energy.removeAllEnergyFromInstance(i, benchCard.instanceId);
                     
                     // Clean up tools attached to the knocked out card
                     controllers.tools.detachTool(benchCard.instanceId);

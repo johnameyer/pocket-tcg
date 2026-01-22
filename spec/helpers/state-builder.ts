@@ -79,7 +79,8 @@ export class StateBuilder {
                 nextEnergy: [null, null],
                 availableTypes: [['fire'], ['fire']],
                 isAbsoluteFirstTurn: false,
-                attachedEnergyByInstance: {} as Record<string, EnergyDictionary>
+                attachedEnergyByInstance: {} as Record<string, EnergyDictionary>,
+                discardedEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()]
             },
             tools: {
                 attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
