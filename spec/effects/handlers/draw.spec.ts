@@ -6,22 +6,17 @@ import { MockCardRepository } from '../../mock-repository.js';
 import { SupporterData } from '../../../src/repository/card-types.js';
 import { DrawEffectHandler } from '../../../src/effects/handlers/draw-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { HandlerData } from '../../../src/game-handler.js';
 import { DrawEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Draw Effect', () => {
     describe('canApply', () => {
         const handler = new DrawEffectHandler();
 
         it('should return true when deck has cards', () => {
-            const handlerData: HandlerData = {
-                deck: 10,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(10)
+                .build();
 
             const effect: DrawEffect = {
                 type: 'draw',
@@ -35,14 +30,9 @@ describe('Draw Effect', () => {
         });
 
         it('should return false when deck is empty', () => {
-            const handlerData: HandlerData = {
-                deck: 0,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(0)
+                .build();
 
             const effect: DrawEffect = {
                 type: 'draw',
@@ -56,7 +46,6 @@ describe('Draw Effect', () => {
         });
     });
 
-describe('Draw Effect', () => {
     it('should draw 2 cards (basic amount)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([

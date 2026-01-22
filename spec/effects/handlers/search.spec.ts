@@ -6,8 +6,8 @@ import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, SupporterData, ItemData } from '../../../src/repository/card-types.js';
 import { SearchEffectHandler } from '../../../src/effects/handlers/search-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { HandlerData } from '../../../src/game-handler.js';
 import { SearchEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Search Effect', () => {
     describe('canApply', () => {
@@ -15,14 +15,9 @@ describe('Search Effect', () => {
         const mockRepository = new MockCardRepository();
 
         it('should return true when deck has cards', () => {
-            const handlerData: HandlerData = {
-                deck: 10,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(10)
+                .build();
 
             const effect: SearchEffect = {
                 type: 'search',
@@ -37,14 +32,9 @@ describe('Search Effect', () => {
         });
 
         it('should return false for item when deck is empty', () => {
-            const handlerData: HandlerData = {
-                deck: 0,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(0)
+                .build();
 
             const effect: SearchEffect = {
                 type: 'search',
@@ -59,14 +49,9 @@ describe('Search Effect', () => {
         });
 
         it('should return true for supporter even when deck is empty', () => {
-            const handlerData: HandlerData = {
-                deck: 0,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(0)
+                .build();
 
             const effect: SearchEffect = {
                 type: 'search',
@@ -81,7 +66,6 @@ describe('Search Effect', () => {
         });
     });
 
-describe('Search Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const evolutionCreature = { templateId: 'evolution-creature', type: 'creature' as const };
     const basicItem = { templateId: 'basic-item', type: 'item' as const };

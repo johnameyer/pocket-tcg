@@ -6,8 +6,69 @@ import { SelectTargetResponseMessage } from '../../../src/messages/response/sele
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, SupporterData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
+import { SwitchEffectHandler } from '../../../src/effects/handlers/switch-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { SwitchEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Switch Effect', () => {
+    describe('canApply', () => {
+        const handler = new SwitchEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true when there are benched creatures to switch with', () => {
+            const handlerData = HandlerDataBuilder.create()
+                .withCreatures(0, 'basic-creature', ['basic-creature'])
+                .withCreatures(1, 'basic-creature', [])
+                .build();
+
+            const effect: SwitchEffect = {
+                type: 'switch',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when there are no benched creatures', () => {
+            const handlerData = HandlerDataBuilder.create()
+                .withCreatures(0, 'basic-creature', [])
+                .build();
+
+            const effect: SwitchEffect = {
+                type: 'switch',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return false when switchWith is not provided', () => {
+            const handlerData = HandlerDataBuilder.create()
+                .withCreatures(0, 'basic-creature', ['basic-creature'])
+                .build();
+
+            const effect: SwitchEffect = {
+                type: 'switch',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                switchWith: undefined as any
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
             ['basic-creature', {

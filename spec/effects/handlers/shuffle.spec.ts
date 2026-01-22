@@ -6,22 +6,17 @@ import { MockCardRepository } from '../../mock-repository.js';
 import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
 import { ShuffleEffectHandler } from '../../../src/effects/handlers/shuffle-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { HandlerData } from '../../../src/game-handler.js';
 import { ShuffleEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Shuffle Effect', () => {
     describe('canApply', () => {
         const handler = new ShuffleEffectHandler();
 
         it('should always return true (shuffle effects can always be applied)', () => {
-            const handlerData: HandlerData = {
-                deck: 0,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(0)
+                .build();
 
             const effect: ShuffleEffect = {
                 type: 'shuffle',
@@ -35,14 +30,9 @@ describe('Shuffle Effect', () => {
         });
 
         it('should return true even when deck is empty', () => {
-            const handlerData: HandlerData = {
-                deck: 0,
-                hand: [],
-                field: { creatures: [[], []] },
-                turnCounter: { turnNumber: 1 },
-                turnState: { supporterPlayedThisTurn: false },
-                energy: { currentEnergy: [null, null], isAbsoluteFirstTurn: false }
-            } as HandlerData;
+            const handlerData = HandlerDataBuilder.create()
+                .withDeck(0)
+                .build();
 
             const effect: ShuffleEffect = {
                 type: 'shuffle',
@@ -56,7 +46,6 @@ describe('Shuffle Effect', () => {
         });
     });
 
-describe('Shuffle Effect', () => {
     it('should shuffle opponent hand and draw 3 (basic operation)', () => {
         const testRepository = new MockCardRepository({
             items: new Map<string, ItemData>([
