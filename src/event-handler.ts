@@ -262,9 +262,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const hand = controllers.hand.getHand(sourceHandler);
             const cardIndex = hand.findIndex(card => card.templateId === message.templateId);
             let cardInstanceId: string | undefined;
+            let playedCard: GameCard | undefined;
             if (cardIndex !== -1) {
-                const card = controllers.hand.playCard(sourceHandler, cardIndex);
-                cardInstanceId = card?.instanceId;
+                playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
+                cardInstanceId = playedCard?.instanceId;
             }
             
             if (message.cardType === 'creature') {
@@ -293,6 +294,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the supporter effects
                 EffectQueueProcessor.processQueue(controllers);
+                
+                // Discard the played supporter card
+                if (playedCard) {
+                    controllers.discard.discardCard(sourceHandler, playedCard);
+                }
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
@@ -310,6 +316,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the item effects
                 EffectQueueProcessor.processQueue(controllers);
+                
+                // Discard the played item card
+                if (playedCard) {
+                    controllers.discard.discardCard(sourceHandler, playedCard);
+                }
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
                 const toolData = controllers.cardRepository.getTool(message.templateId);
