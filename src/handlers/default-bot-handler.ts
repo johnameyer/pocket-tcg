@@ -4,6 +4,7 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
+import { isPendingEnergySelection, isPendingCardInHandSelection, isPendingChoiceSelection, isPendingMultiTargetSelection } from '../effects/pending-selection-types.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -171,38 +172,42 @@ export class DefaultBotHandler extends GameHandler {
                 
             case 'energy':
                 // For energy selection, select the first available energy types
-                const energySelection = pendingSelection as any;
-                const count = energySelection.count || 1;
-                // Just select first energy type available (simplified bot logic)
-                responsesQueue.push(new SelectEnergyResponseMessage(
-                    Array(count).fill('fire') // Default to fire energy
-                ));
+                if (isPendingEnergySelection(pendingSelection)) {
+                    const count = pendingSelection.count || 1;
+                    // Just select first energy type available (simplified bot logic)
+                    responsesQueue.push(new SelectEnergyResponseMessage(
+                        Array(count).fill('fire') // Default to fire energy
+                    ));
+                }
                 break;
                 
             case 'card-in-hand':
                 // For card-in-hand selection, select the first card(s)
-                const cardSelection = pendingSelection as any;
-                const cardCount = cardSelection.count || 1;
-                const indices = Array.from({ length: cardCount }, (_, i) => i);
-                responsesQueue.push(new SelectCardResponseMessage(indices));
+                if (isPendingCardInHandSelection(pendingSelection)) {
+                    const cardCount = pendingSelection.count || 1;
+                    const indices = Array.from({ length: cardCount }, (_, i) => i);
+                    responsesQueue.push(new SelectCardResponseMessage(indices));
+                }
                 break;
                 
             case 'choice':
                 // For choice selection, select the first choice
-                const choiceSelection = pendingSelection as any;
-                const firstChoice = choiceSelection.choices?.[0]?.value || 'default';
-                responsesQueue.push(new SelectChoiceResponseMessage([firstChoice]));
+                if (isPendingChoiceSelection(pendingSelection)) {
+                    const firstChoice = pendingSelection.choices?.[0]?.value || 'default';
+                    responsesQueue.push(new SelectChoiceResponseMessage([firstChoice]));
+                }
                 break;
                 
             case 'multi-target':
                 // For multi-target selection, select first N targets
-                const multiSelection = pendingSelection as any;
-                const targetCount = multiSelection.count || 1;
-                const targets = Array.from({ length: targetCount }, (_, i) => ({
-                    playerId: (handlerData.turn + 1) % handlerData.players.count,
-                    fieldIndex: i
-                }));
-                responsesQueue.push(new SelectMultiTargetResponseMessage(targets));
+                if (isPendingMultiTargetSelection(pendingSelection)) {
+                    const targetCount = pendingSelection.count || 1;
+                    const targets = Array.from({ length: targetCount }, (_, i) => ({
+                        playerId: (handlerData.turn + 1) % handlerData.players.count,
+                        fieldIndex: i
+                    }));
+                    responsesQueue.push(new SelectMultiTargetResponseMessage(targets));
+                }
                 break;
         }
     }

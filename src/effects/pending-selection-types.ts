@@ -1,6 +1,7 @@
+import { Message } from '@cards-ts/core';
+import { AttachableEnergyType } from '../repository/energy-types.js';
 import { Effect } from '../repository/effect-types.js';
 import { EffectContext } from './effect-context.js';
-import { AttachableEnergyType } from '../repository/energy-types.js';
 
 /**
  * Represents the different types of selections that can be pending.
@@ -98,3 +99,26 @@ export type PendingSelection =
     | PendingCardInHandSelection
     | PendingChoiceSelection
     | PendingMultiTargetSelection;
+
+/**
+ * Type guard functions for pending selection types
+ */
+export function isPendingTargetSelection(selection: PendingSelection): selection is PendingTargetSelection {
+    return selection.selectionType === 'target';
+}
+
+export function isPendingEnergySelection(selection: PendingSelection): selection is PendingEnergySelection {
+    return selection.selectionType === 'energy';
+}
+
+export function isPendingCardInHandSelection(selection: PendingSelection): selection is PendingCardInHandSelection {
+    return selection.selectionType === 'card-in-hand';
+}
+
+export function isPendingChoiceSelection(selection: PendingSelection): selection is PendingChoiceSelection {
+    return selection.selectionType === 'choice';
+}
+
+export function isPendingMultiTargetSelection(selection: PendingSelection): selection is PendingMultiTargetSelection {
+    return selection.selectionType === 'multi-target';
+}

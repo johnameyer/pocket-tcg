@@ -11,6 +11,7 @@ import * as helpers from './intermediary-handler-helpers.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
+import { isPendingTargetSelection, isPendingEnergySelection, isPendingCardInHandSelection, isPendingChoiceSelection, isPendingMultiTargetSelection } from '../effects/pending-selection-types.js';
 
 export class IntermediaryHandler extends GameHandler {
     
@@ -214,23 +215,33 @@ export class IntermediaryHandler extends GameHandler {
         
         switch (pendingSelection.selectionType) {
             case 'target':
-                await this.handleTargetSelection(handlerData, responsesQueue, pendingSelection as any);
+                if (isPendingTargetSelection(pendingSelection)) {
+                    await this.handleTargetSelection(handlerData, responsesQueue, pendingSelection);
+                }
                 break;
                 
             case 'energy':
-                await this.handleEnergySelection(handlerData, responsesQueue, pendingSelection as any);
+                if (isPendingEnergySelection(pendingSelection)) {
+                    await this.handleEnergySelection(handlerData, responsesQueue, pendingSelection);
+                }
                 break;
                 
             case 'card-in-hand':
-                await this.handleCardInHandSelection(handlerData, responsesQueue, pendingSelection as any);
+                if (isPendingCardInHandSelection(pendingSelection)) {
+                    await this.handleCardInHandSelection(handlerData, responsesQueue, pendingSelection);
+                }
                 break;
                 
             case 'choice':
-                await this.handleChoiceSelection(handlerData, responsesQueue, pendingSelection as any);
+                if (isPendingChoiceSelection(pendingSelection)) {
+                    await this.handleChoiceSelection(handlerData, responsesQueue, pendingSelection);
+                }
                 break;
                 
             case 'multi-target':
-                await this.handleMultiTargetSelection(handlerData, responsesQueue, pendingSelection as any);
+                if (isPendingMultiTargetSelection(pendingSelection)) {
+                    await this.handleMultiTargetSelection(handlerData, responsesQueue, pendingSelection);
+                }
                 break;
         }
     }
