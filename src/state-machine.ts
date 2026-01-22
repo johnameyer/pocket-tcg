@@ -2,6 +2,7 @@ import { Controllers } from './controllers/controllers.js';
 import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messages/status/index.js';
 import { sequence, loop, game, conditionalState, handleSingle, named } from '@cards-ts/state-machine';
 import { TriggerProcessor } from './effects/trigger-processor.js';
+import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 
 // Check if any card was knocked out (has 0 HP)
 const isCardKnockedOut = (controllers: Controllers) => {
@@ -283,7 +284,7 @@ const gameTurn = loop<Controllers>({
             run: (controllers: Controllers) => {
                 const currentPlayer = controllers.turn.get();
                 controllers.turnState.startTurn();
-                controllers.energy.resetTurnFlags(currentPlayer);
+                // No need to reset energy flags - energy attachment is tracked by currentEnergy being null
             }
         },
         
@@ -409,6 +410,9 @@ const gameTurn = loop<Controllers>({
                 
                 // Process end-of-turn status effect checks for current player
                 const endOfTurnResult = controllers.statusEffects.processEndOfTurnChecks(currentPlayer);
+                
+                // Process any effects that were triggered during the checkup phase
+                EffectQueueProcessor.processQueue(controllers);
                 
                 // Clear persistent effects at end of turn (they last "during opponent's next turn")
             }

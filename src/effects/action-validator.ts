@@ -1,6 +1,6 @@
 import { HandlerData } from '../game-handler.js';
 import { CardRepository } from '../repository/card-repository.js';
-import { EnergyController } from '../controllers/energy-controller.js';
+import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { EffectValidator } from './effect-validator.js';
 import { EffectContextFactory } from './effect-context.js';
 import { TargetResolver } from './target-resolver.js';
@@ -35,14 +35,15 @@ export class ActionValidator {
      * Checks if energy can be attached.
      */
     static canAttachEnergy(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, energyType?: string): boolean {
-        if (handlerData.energy.energyAttachedThisTurn[playerId]) return false;
+        // Check if energy is available (currentEnergy is not null)
+        if (handlerData.energy.currentEnergy[playerId] === null) return false;
         
         if (handlerData.energy.isAbsoluteFirstTurn) return false;
         
         const availableTypes = EnergyController.getAvailableEnergyTypes(handlerData.energy, playerId);
         
         if (energyType) {
-            return availableTypes.includes(energyType);
+            return availableTypes.includes(energyType as AttachableEnergyType);
         }
         
         return availableTypes.length > 0;

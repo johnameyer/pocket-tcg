@@ -1,10 +1,13 @@
-import { AbstractController, GenericControllerProvider, IndexedControllers } from '@cards-ts/core';
+import { AbstractController, GenericControllerProvider, IndexedControllers, ParamsController } from '@cards-ts/core';
 import { GameCard } from './card-types.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
+import { CardRepositoryController } from './card-repository-controller.js';
+import { GameParams } from '../game-params.js';
 
 // Dependencies for this controller
 type DeckDependencies = {
-    // No dependencies needed for basic deck operations
+    cardRepository: CardRepositoryController;
+    params: ParamsController<GameParams>;
 };
 
 export class DeckControllerProvider implements GenericControllerProvider<GameCard[][], DeckDependencies, DeckController> {
@@ -17,7 +20,7 @@ export class DeckControllerProvider implements GenericControllerProvider<GameCar
     }
     
     dependencies() {
-        return {} as const;
+        return { cardRepository: true, params: true } as const;
     }
 }
 
@@ -38,11 +41,16 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
                 if (initialDecks[i].length > 0 && typeof initialDecks[i][0] === 'string') {
                     // Convert string IDs to GameCard objects
                     const stringDecks = initialDecks as string[][];
-                    this.state[i] = stringDecks[i].map(templateId => ({
-                        instanceId: `card-${this.nextCardInstanceId++}`,
-                        type: 'creature', // Generic term instead of 'creature'
-                        templateId: templateId
-                    } as GameCard));
+                    this.state[i] = stringDecks[i].map(templateId => {
+                        // Use getCard to determine correct type (already validated above)
+                        const { type } = this.controllers.cardRepository.getCard(templateId);
+                        
+                        return {
+                            instanceId: `card-${this.nextCardInstanceId++}`,
+                            type: type as 'creature' | 'supporter' | 'item' | 'tool',
+                            templateId: templateId
+                        } as GameCard;
+                    });
                 } else {
                     // Use GameCard objects directly
                     this.state[i] = [...(initialDecks as GameCard[][])[i]];
@@ -65,6 +73,13 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     
     // Get energy types for a player
     getPlayerEnergyTypes(playerId: number): AttachableEnergyType[] {
+        // Check if energy types are provided via game params
+        const gameParams = this.controllers.params.get();
+        if (gameParams?.playerEnergyTypes && gameParams.playerEnergyTypes[playerId]) {
+            return gameParams.playerEnergyTypes[playerId];
+        }
+        
+        // Fallback to hardcoded values
         const playerEnergyTypes: AttachableEnergyType[][] = [
             ['metal'], // Player 1: Metal
             ['lightning'], // Player 2: Lightning
@@ -116,7 +131,22 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     
     // Required by AbstractController
     validate(): void {
-        // Validation logic if needed
+        // Validate that all cards in initial decks exist in repository
+        const params = this.controllers.params.get();
+        if (params.initialDecks) {
+            for (let i = 0; i < params.initialDecks.length; i++) {
+                const deck = params.initialDecks[i];
+                if (deck.length > 0 && typeof deck[0] === 'string') {
+                    for (const templateId of deck as string[]) {
+                        try {
+                            this.controllers.cardRepository.getCard(templateId);
+                        } catch (error: any) {
+                            throw new Error(`Invalid card in player ${i} deck: ${error.message}`);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     addCard(playerId: number, card: GameCard): void {

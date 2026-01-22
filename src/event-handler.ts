@@ -14,6 +14,7 @@ import { ActionValidator } from './effects/action-validator.js';
 import { ControllerUtils } from './utils/controller-utils.js';
 import { TargetResolver } from './effects/target-resolver.js';
 import { effectHandlers } from './effects/handlers/effect-handlers-map.js';
+import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -167,6 +168,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         attackResult.target.templateId,
                         attackResult.damage
                     );
+                    
+                    // Process any effects that were triggered by the damage
+                    EffectQueueProcessor.processQueue(controllers);
                 }
             }
             
@@ -178,6 +182,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Apply all attack effects (no damage boost effects to filter)
                 if (attack.effects && attack.effects.length > 0) {
                     EffectApplier.applyEffects(attack.effects, controllers, context);
+                    
+                    // Process any effects that were triggered by the attack effects
+                    EffectQueueProcessor.processQueue(controllers);
                 }
             }
             
@@ -283,6 +290,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 
                 EffectApplier.applyEffects(supporterData.effects, controllers, context);
+                
+                // Process any effects that were triggered by the supporter effects
+                EffectQueueProcessor.processQueue(controllers);
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
@@ -297,6 +307,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 
                 EffectApplier.applyEffects(itemData.effects, controllers, context);
+                
+                // Process any effects that were triggered by the item effects
+                EffectQueueProcessor.processQueue(controllers);
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
                 const toolData = controllers.cardRepository.getTool(message.templateId);
@@ -335,6 +348,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     activeCard.instanceId,
                     activeCard.templateId
                 );
+                
+                // Process any effects that were triggered by end-of-turn
+                EffectQueueProcessor.processQueue(controllers);
             }
             
             // Clear guaranteed coin flip heads at end of turn (Will supporter effect)
@@ -517,10 +533,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
     'attach-energy-response': {
         validateEvent: {
             validators: [
-                EventHandler.validate('Energy already attached this turn', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                    return !controllers.energy.canAttachEnergy(source);
-                }),
-                EventHandler.validate('No energy available', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
+                EventHandler.validate('No energy available to attach', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
                     return !controllers.energy.canAttachEnergy(source);
                 }),
                 EventHandler.validate('First turn restriction', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
@@ -535,7 +548,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(sourceHandler);
             
             const currentPlayer = sourceHandler;
-            const energyType = controllers.energy.generateEnergy(currentPlayer);
+            // Get the current available energy type (don't generate new energy!)
+            const availableTypes = controllers.energy.getAvailableEnergyTypes(currentPlayer);
+            if (availableTypes.length === 0) {
+                return; // No energy available
+            }
+            const energyType = availableTypes[0]; // Get the first (and only) available energy type
             
             // Get the field instance ID for energy attachment
             const fieldInstanceId = controllers.field.getFieldInstanceId(currentPlayer, message.fieldPosition);
@@ -554,7 +572,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Process energy-attachment triggers for all field cards (all players)
                 for (let playerId = 0; playerId < controllers.players.count; playerId++) {
                     const fieldCards = controllers.field.getPlayedCards(playerId);
-                    for (const card of fieldCards) {
+                    for (let fieldPosition = 0; fieldPosition < fieldCards.length; fieldPosition++) {
+                        const card = fieldCards[fieldPosition];
                         const cardData = controllers.cardRepository.getCreature(card.templateId);
                         if (cardData.ability) {
                             const ability = cardData.ability;
@@ -564,7 +583,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                 const context = EffectContextFactory.createAbilityContext(
                                     playerId,
                                     `${cardData.name}'s ${ability.name}`,
-                                    card.instanceId
+                                    card.instanceId,
+                                    fieldPosition
                                 );
                                 
                                 EffectApplier.applyEffects(
@@ -576,6 +596,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         }
                     }
                 }
+                
+                // Process any effects that were triggered by energy attachment
+                EffectQueueProcessor.processQueue(controllers);
             }
             
         }
@@ -639,6 +662,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     );
                     
                     EffectApplier.applyEffects(ability.effects, controllers, context);
+                    
+                    // Process any effects that were triggered by the ability
+                    EffectQueueProcessor.processQueue(controllers);
                 }
             }
             

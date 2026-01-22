@@ -68,9 +68,9 @@ export class DefaultBotHandler extends GameHandler {
         // Try to attach energy if available and not first turn restricted
         if (handlerData.energy) {
             const isFirstTurnRestricted = handlerData.energy.isAbsoluteFirstTurn;
-            const energyAttachedThisTurn = handlerData.energy.energyAttachedThisTurn[currentPlayer];
+            const hasCurrentEnergy = handlerData.energy.currentEnergy[currentPlayer] !== null;
             
-            if (!energyAttachedThisTurn && !isFirstTurnRestricted) {
+            if (hasCurrentEnergy && !isFirstTurnRestricted) {
                 responsesQueue.push(new AttachEnergyResponseMessage(0));
                 return;
             }

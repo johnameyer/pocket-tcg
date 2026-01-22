@@ -2,7 +2,7 @@ import { Controllers } from '../../controllers/controllers.js';
 import { HpEffect } from '../../repository/effect-types.js';
 import { CreatureAbility } from '../../repository/card-types.js';
 import { FixedTarget, ResolvedTarget, TargetCriteria, Target } from '../../repository/target-types.js';
-import { EffectContext } from '../effect-context.js';
+import { EffectContext, EffectContextFactory } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
@@ -12,6 +12,7 @@ import { HandlerData } from '../../game-handler.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
 import { TargetResolver } from '../target-resolver.js';
 import { toFieldCard } from '../../utils/field-card-utils.js';
+import { TriggerProcessor } from '../trigger-processor.js';
 
 /**
  * Handler for HP effects (healing and damage).
@@ -235,6 +236,16 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
                 type: 'status',
                 components: [`${context.effectName} deals ${damageDealt} damage${customName ? ' to ' + customName : ''}!`]
             });
+            
+            // Trigger when-damaged effects by calling TriggerProcessor
+            // which will push them to the queue for processing
+            TriggerProcessor.processWhenDamaged(
+                controllers,
+                playerId,
+                creature.instanceId,
+                creature.templateId,
+                damageDealt
+            );
         }
     }
     
