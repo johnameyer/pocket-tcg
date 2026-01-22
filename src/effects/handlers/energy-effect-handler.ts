@@ -1,12 +1,13 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { EnergyEffect } from '../../repository/effect-types.js';
 import { FixedTarget, ResolvedTarget } from '../../repository/target-types.js';
-import { EffectContext } from '../effect-context.js';
+import { EffectContext, EffectContextFactory } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { TargetResolver } from '../target-resolver.js';
+import { TriggerProcessor } from '../trigger-processor.js';
 
 /**
  * Handler for energy effects that attach or discard energy cards.
@@ -107,6 +108,15 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                         type: 'status',
                         components: [`${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}!`]
                     });
+                    
+                    // Trigger energy-attachment effects using TriggerProcessor
+                    TriggerProcessor.processEnergyAttachment(
+                        controllers,
+                        playerId,
+                        targetCreature.instanceId,
+                        targetCreature.templateId,
+                        energyType
+                    );
                 } else {
                     controllers.players.messageAll({
                         type: 'status',

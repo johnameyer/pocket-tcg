@@ -85,6 +85,9 @@ export class StateBuilder {
             tools: {
                 attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
             },
+            effects: {
+                immediatelyPendingEffects: []
+            },
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
             hand: [[], []],  // Array of card arrays for each player
