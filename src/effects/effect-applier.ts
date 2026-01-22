@@ -1,7 +1,17 @@
 import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
+<<<<<<< HEAD
 import { ResolvedTarget } from '../repository/target-types.js';
+=======
+import { FixedTarget, Target, ResolvedTarget } from '../repository/target-types.js';
+import { EffectContext } from './effect-context.js';
+import { PendingSelection, PendingTargetSelection } from './pending-selection-types.js';
+import { ResolutionRequirement, EffectHandler, EffectHandlerMap } from './interfaces/effect-handler-interface.js';
+import { effectHandlers } from './handlers/effect-handlers-map.js';
+import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
+import { getEffectValue } from './effect-utils.js';
+>>>>>>> ed465c3 (Add new selection types, handler methods, and response messages)
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
@@ -200,7 +210,7 @@ export class EffectApplier {
      * @param targetCreatureIndex The selected target creature index
      */
     static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingTargetSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
-        const { effect, originalContext, type = 'target' } = pendingSelection;
+        const { effect, originalContext, selectionType = 'target' } = pendingSelection;
 
         /*
          * Target validation is now handled at the event handler level
@@ -273,11 +283,16 @@ export class EffectApplier {
                  * Set up pending selection for the next target
                  */
                 const pendingSelection: PendingTargetSelection = {
+                    selectionType: 'target',
                     effect: resolvedEffect,
+<<<<<<< HEAD
                     originalContext,
                     type: 'target',
+=======
+                    originalContext
+>>>>>>> ed465c3 (Add new selection types, handler methods, and response messages)
                 };
-                controllers.turnState.setPendingTargetSelection(pendingSelection);
+                controllers.turnState.setPendingSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up
             }
         }

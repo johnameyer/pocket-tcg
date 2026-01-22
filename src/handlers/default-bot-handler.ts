@@ -1,9 +1,10 @@
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { GameHandler, HandlerData } from '../game-handler.js';
-import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage } from '../messages/response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage, SelectMultiTargetResponseMessage } from '../messages/response/index.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
+import { isPendingEnergySelection, isPendingCardInHandSelection, isPendingChoiceSelection, isPendingMultiTargetSelection } from '../effects/pending-selection-types.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -150,6 +151,64 @@ export class DefaultBotHandler extends GameHandler {
                 'basic-creature', // Use a default creature ID
                 [],
             ));
+        }
+    }
+    
+    handlePendingSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        
+        if (!pendingSelection) {
+            return;
+        }
+        
+        switch (pendingSelection.selectionType) {
+            case 'target':
+                // For target selection, select the first valid target (active or first bench)
+                responsesQueue.push(new SelectTargetResponseMessage(
+                    (handlerData.turn + 1) % handlerData.players.count, // opponent
+                    0 // active position
+                ));
+                break;
+                
+            case 'energy':
+                // For energy selection, select the first available energy types
+                if (isPendingEnergySelection(pendingSelection)) {
+                    const count = pendingSelection.count || 1;
+                    // Just select first energy type available (simplified bot logic)
+                    responsesQueue.push(new SelectEnergyResponseMessage(
+                        Array(count).fill('fire') // Default to fire energy
+                    ));
+                }
+                break;
+                
+            case 'card-in-hand':
+                // For card-in-hand selection, select the first card(s)
+                if (isPendingCardInHandSelection(pendingSelection)) {
+                    const cardCount = pendingSelection.count || 1;
+                    const indices = Array.from({ length: cardCount }, (_, i) => i);
+                    responsesQueue.push(new SelectCardResponseMessage(indices));
+                }
+                break;
+                
+            case 'choice':
+                // For choice selection, select the first choice
+                if (isPendingChoiceSelection(pendingSelection)) {
+                    const firstChoice = pendingSelection.choices?.[0]?.value || 'default';
+                    responsesQueue.push(new SelectChoiceResponseMessage([firstChoice]));
+                }
+                break;
+                
+            case 'multi-target':
+                // For multi-target selection, select first N targets
+                if (isPendingMultiTargetSelection(pendingSelection)) {
+                    const targetCount = pendingSelection.count || 1;
+                    const targets = Array.from({ length: targetCount }, (_, i) => ({
+                        playerId: (handlerData.turn + 1) % handlerData.players.count,
+                        fieldIndex: i
+                    }));
+                    responsesQueue.push(new SelectMultiTargetResponseMessage(targets));
+                }
+                break;
         }
     }
 }

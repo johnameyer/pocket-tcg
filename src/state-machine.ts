@@ -258,6 +258,57 @@ const drawCardAndShowSummary = {
     },
 };
 
+// Check if there's a pending selection that needs to be resolved
+const hasPendingSelection = (controllers: Controllers) => {
+    return controllers.turnState.getPendingSelection() !== undefined;
+};
+
+// Get the player who needs to make a selection (depends on effect context)
+const getPlayerNeedingPendingSelection = (controllers: Controllers) => {
+    const pendingSelection = controllers.turnState.getPendingSelection();
+    if (!pendingSelection) {
+        return -1;
+    }
+    
+    // Determine which player should make the selection based on the effect context
+    const context = pendingSelection.originalContext;
+    
+    // For target/choice selections, check if opponent should choose
+    if (pendingSelection.selectionType === 'target' || pendingSelection.selectionType === 'multi-target') {
+        const effect = pendingSelection.effect;
+        if ('target' in effect && effect.target && typeof effect.target === 'object' && 'chooser' in effect.target) {
+            const chooser = effect.target.chooser;
+            if (chooser === 'opponent') {
+                // Opponent of source player chooses
+                return (context.sourcePlayer + 1) % controllers.players.count;
+            }
+        }
+    }
+    
+    // For energy/card-in-hand selections, use the specified player
+    if (pendingSelection.selectionType === 'energy' || pendingSelection.selectionType === 'card-in-hand') {
+        const selection = pendingSelection as any;
+        if (selection.playerId !== undefined) {
+            return selection.playerId;
+        }
+    }
+    
+    // Default to source player
+    return context.sourcePlayer;
+};
+
+// Handle pending selections in a loop
+const handlePendingSelections = loop<Controllers>({
+    id: 'pendingSelectionLoop',
+    breakingIf: (controllers: Controllers) => !hasPendingSelection(controllers),
+    run: handleSingle({
+        handler: 'pendingSelection',
+        position: getPlayerNeedingPendingSelection
+    }),
+    // TODO Condition is not re-evaluated for some reason without afterEach...
+    afterEach: () => {},
+});
+
 // Handle player actions
 const handlePlayerActions = loop<Controllers>({
     id: 'actionLoop',
@@ -273,6 +324,12 @@ const handlePlayerActions = loop<Controllers>({
             name: 'noop',
             run: () => {},
         }, 
+        // Handle any pending selections after the action
+        conditionalState({
+            id: 'checkPendingSelections',
+            condition: hasPendingSelection,
+            truthy: handlePendingSelections,
+        }),
         // Check for knockouts after each action
         conditionalState({
             id: 'checkKnockouts',

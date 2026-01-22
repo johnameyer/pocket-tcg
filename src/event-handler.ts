@@ -2,8 +2,9 @@
 import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
-import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage } from './messages/response/index.js';
-import { AttackResultMessage, EvolutionMessage } from './messages/status/index.js';
+import { EventHandler, buildEventHandler } from '@cards-ts/core';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage, SelectMultiTargetResponseMessage } from './messages/response/index.js';
+import { AttackResultMessage, HealResultMessage, EvolutionMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
 import { EffectContextFactory } from './effects/effect-context.js';
@@ -15,7 +16,7 @@ import { ControllerUtils } from './utils/controller-utils.js';
 import { TargetResolver } from './effects/target-resolver.js';
 import { effectHandlers } from './effects/handlers/effect-handlers-map.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
-import { getCurrentTemplateId } from './utils/field-card-utils.js';
+import { Target } from './repository/target-types.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -788,7 +789,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         },
     },
     'select-target-response': {
-        canRespond: EventHandler.isTurn('turn'),
+        // Don't check turn - opponent may need to make selections during the active player's turn
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid target selection', (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
@@ -872,6 +873,206 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
             }
             
-        },
+        }
     },
+    'select-energy-response': {
+        // Don't check turn - opponent may need to make selections during the active player's turn
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Invalid energy selection', (controllers: Controllers, source: number, message: SelectEnergyResponseMessage) => {
+                    const pendingSelection = controllers.turnState.getPendingSelection();
+                    if (!pendingSelection || pendingSelection.selectionType !== 'energy') {
+                        return true; // No pending energy selection - validation fails
+                    }
+                    
+                    const energySelection = pendingSelection as any;
+                    const expectedCount = energySelection.count || 1;
+                    
+                    // Validate count
+                    if (message.selectedEnergy.length !== expectedCount) {
+                        return true; // Wrong number of energy selected
+                    }
+                    
+                    // Validate energy types if restricted
+                    if (energySelection.allowedTypes && energySelection.allowedTypes.length > 0) {
+                        for (const energy of message.selectedEnergy) {
+                            if (!energySelection.allowedTypes.includes(energy)) {
+                                return true; // Invalid energy type
+                            }
+                        }
+                    }
+                    
+                    return false; // Valid selection
+                })
+            ],
+            fallback: (controllers: Controllers, source: number, message: SelectEnergyResponseMessage) => {
+                controllers.waiting.removePosition(source);
+                controllers.turnState.clearPendingSelection();
+                return undefined as any;
+            }
+        },
+        merge: (controllers: Controllers, sourceHandler: number, message: SelectEnergyResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
+            
+            // For now, just clear the pending selection
+            // The actual energy handling will be done by the specific effect handlers
+            controllers.turnState.clearPendingSelection();
+        }
+    },
+    'select-card-response': {
+        // Don't check turn - opponent may need to make selections during the active player's turn
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Invalid card selection', (controllers: Controllers, source: number, message: SelectCardResponseMessage) => {
+                    const pendingSelection = controllers.turnState.getPendingSelection();
+                    if (!pendingSelection || pendingSelection.selectionType !== 'card-in-hand') {
+                        return true; // No pending card selection - validation fails
+                    }
+                    
+                    const cardSelection = pendingSelection as any;
+                    const expectedCount = cardSelection.count || 1;
+                    
+                    // Validate count
+                    if (message.cardIndices.length !== expectedCount) {
+                        return true; // Wrong number of cards selected
+                    }
+                    
+                    const hand = controllers.hand.getHand(cardSelection.playerId);
+                    
+                    // Validate indices are within hand bounds
+                    for (const index of message.cardIndices) {
+                        if (index < 0 || index >= hand.length) {
+                            return true; // Invalid index
+                        }
+                    }
+                    
+                    // Validate card types if restricted
+                    if (cardSelection.cardType) {
+                        for (const index of message.cardIndices) {
+                            const card = hand[index];
+                            if (card.type !== cardSelection.cardType) {
+                                return true; // Wrong card type
+                            }
+                        }
+                    }
+                    
+                    return false; // Valid selection
+                })
+            ],
+            fallback: (controllers: Controllers, source: number, message: SelectCardResponseMessage) => {
+                controllers.waiting.removePosition(source);
+                controllers.turnState.clearPendingSelection();
+                return undefined as any;
+            }
+        },
+        merge: (controllers: Controllers, sourceHandler: number, message: SelectCardResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
+            
+            // For now, just clear the pending selection
+            // The actual card handling will be done by the specific effect handlers
+            controllers.turnState.clearPendingSelection();
+        }
+    },
+    'select-choice-response': {
+        // Don't check turn - opponent may need to make selections during the active player's turn
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Invalid choice selection', (controllers: Controllers, source: number, message: SelectChoiceResponseMessage) => {
+                    const pendingSelection = controllers.turnState.getPendingSelection();
+                    if (!pendingSelection || pendingSelection.selectionType !== 'choice') {
+                        return true; // No pending choice selection - validation fails
+                    }
+                    
+                    const choiceSelection = pendingSelection as any;
+                    
+                    // Validate that choices exist
+                    if (!choiceSelection.choices || choiceSelection.choices.length === 0) {
+                        return true; // No choices available
+                    }
+                    
+                    // Validate all selected choices are valid
+                    const validChoices = choiceSelection.choices.map((c: any) => c.value);
+                    for (const choice of message.choiceValues) {
+                        if (!validChoices.includes(choice)) {
+                            return true; // Invalid choice
+                        }
+                    }
+                    
+                    // Validate single vs multiple selection
+                    if (!choiceSelection.allowMultiple && message.choiceValues.length > 1) {
+                        return true; // Multiple selections not allowed
+                    }
+                    
+                    return false; // Valid selection
+                })
+            ],
+            fallback: (controllers: Controllers, source: number, message: SelectChoiceResponseMessage) => {
+                controllers.waiting.removePosition(source);
+                controllers.turnState.clearPendingSelection();
+                return undefined as any;
+            }
+        },
+        merge: (controllers: Controllers, sourceHandler: number, message: SelectChoiceResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
+            
+            // For now, just clear the pending selection
+            // The actual choice handling will be done by the specific effect handlers
+            controllers.turnState.clearPendingSelection();
+        }
+    },
+    'select-multi-target-response': {
+        // Don't check turn - opponent may need to make selections during the active player's turn
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Invalid multi-target selection', (controllers: Controllers, source: number, message: SelectMultiTargetResponseMessage) => {
+                    const pendingSelection = controllers.turnState.getPendingSelection();
+                    if (!pendingSelection || pendingSelection.selectionType !== 'multi-target') {
+                        return true; // No pending multi-target selection - validation fails
+                    }
+                    
+                    const multiSelection = pendingSelection as any;
+                    const expectedCount = multiSelection.count || 1;
+                    const minCount = multiSelection.minTargets || expectedCount;
+                    
+                    // Validate count
+                    if (message.targets.length < minCount || message.targets.length > expectedCount) {
+                        return true; // Wrong number of targets selected
+                    }
+                    
+                    // Validate each target
+                    const { effect, originalContext } = pendingSelection;
+                    const target = 'target' in effect ? effect.target : undefined;
+                    
+                    if (target && typeof target === 'object') {
+                        for (const selectedTarget of message.targets) {
+                            const isValid = TargetResolver.validateTargetSelection(
+                                target,
+                                selectedTarget.playerId,
+                                selectedTarget.fieldIndex,
+                                controllers,
+                                originalContext
+                            );
+                            if (!isValid) {
+                                return true; // Invalid target
+                            }
+                        }
+                    }
+                    
+                    return false; // Valid selection
+                })
+            ],
+            fallback: (controllers: Controllers, source: number, message: SelectMultiTargetResponseMessage) => {
+                controllers.waiting.removePosition(source);
+                controllers.turnState.clearPendingSelection();
+                return undefined as any;
+            }
+        },
+        merge: (controllers: Controllers, sourceHandler: number, message: SelectMultiTargetResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
+            
+            // For now, just clear the pending selection
+            // The actual multi-target handling will be done by the specific effect handlers
+            controllers.turnState.clearPendingSelection();
+        }
+    }
 });

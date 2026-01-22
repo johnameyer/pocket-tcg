@@ -14,6 +14,7 @@ export function createTestPlayers(actionHandler: (handlerData: any, responses: a
         handleSelectActiveCard: actionHandler,
         handleSelectTarget: actionHandler,
         handleSelectMultiTarget: actionHandler,
+        handlePendingSelection: actionHandler,
         handleSetup: actionHandler,
         handleMessage: messageHandler || (() => {}),
     });
@@ -33,6 +34,7 @@ export function createTestPlayersWithDifferentHandlers(
         handleSelectActiveCard: handler,
         handleSelectTarget: handler,
         handleSelectMultiTarget: handler,
+        handlePendingSelection: handler,
         handleSetup: handler,
         handleMessage: messageHandler || (() => {}),
     });

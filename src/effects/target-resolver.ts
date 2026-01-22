@@ -3,7 +3,12 @@ import { Effect } from '../repository/effect-types.js';
 import { Target, FixedTarget, TargetCriteria, SingleTarget, ResolvedTarget } from '../repository/target-types.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { HandlerData } from '../game-handler.js';
+<<<<<<< HEAD
 import { FieldCard } from '../controllers/field-controller.js';
+=======
+import { FieldCard } from "../controllers/field-controller.js";
+import { PendingTargetSelection } from './pending-selection-types.js';
+>>>>>>> ed465c3 (Add new selection types, handler methods, and response messages)
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { toFieldCard, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { ConditionEvaluator } from './condition-evaluator.js';
@@ -612,8 +617,8 @@ export class TargetResolver {
             
             // If target resolution requires selection, set up pending target selection
             if (resolution.type === 'requires-selection') {
-                controllers.turnState.setPendingTargetSelection({
-                    type: 'target',
+                controllers.turnState.setPendingSelection({
+                    selectionType: 'target',
                     effect: effect,
                     originalContext: context,
                 });

@@ -83,7 +83,7 @@ describe('Pending Target Selection', () => {
             });
 
             // Should have pending target effect
-            expect(pendingState.turnState.pendingTargetSelection).to.not.be.null;
+            expect(pendingState.turnState.pendingSelection).to.not.be.null;
             expect(pendingState.field.creatures[0][0].damageTaken).to.equal(40, 'Should not heal yet');
             expect(pendingState.field.creatures[0][1].damageTaken).to.equal(20, 'Should not heal yet');
         });
@@ -131,7 +131,7 @@ describe('Pending Target Selection', () => {
             });
 
             // Should resolve and heal selected target
-            expect(state.turnState.pendingTargetSelection).to.be.undefined;
+            expect(state.turnState.pendingSelection).to.be.undefined;
             expect(state.field.creatures[0][0].damageTaken).to.equal(40, 'Should not heal active');
             expect(state.field.creatures[0][1].damageTaken).to.equal(5, 'Should heal selected bench');
         });
@@ -351,9 +351,9 @@ describe('Pending Target Selection', () => {
             });
 
             // Should have effect name in pending selection
-            expect(state.turnState.pendingTargetSelection).to.not.be.null;
-            if (state.turnState.pendingTargetSelection) {
-                expect((state.turnState.pendingTargetSelection as any).originalContext.effectName).to.equal('Named Effect');
+            expect(state.turnState.pendingSelection).to.not.be.null;
+            if (state.turnState.pendingSelection) {
+                expect((state.turnState.pendingSelection as any).originalContext.effectName).to.equal('Named Effect');
             }
         });
     });

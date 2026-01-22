@@ -2,14 +2,18 @@ import { Intermediary } from '@cards-ts/core';
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { GameHandler, HandlerData } from '../game-handler.js';
 import { ResponseMessage } from '../messages/response-message.js';
-import { SelectActiveCardResponseMessage, SelectTargetResponseMessage } from '../messages/response/index.js';
+import { SelectActiveCardResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage, SelectMultiTargetResponseMessage } from '../messages/response/index.js';
 import { SetupCompleteResponseMessage } from '../messages/response/index.js';
 import { Controllers } from '../controllers/controllers.js';
 import { TargetResolver } from '../effects/target-resolver.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
+<<<<<<< HEAD
 import * as helpers from './intermediary-handler-helpers.js';
+=======
+import { isPendingTargetSelection, isPendingEnergySelection, isPendingCardInHandSelection, isPendingChoiceSelection, isPendingMultiTargetSelection } from '../effects/pending-selection-types.js';
+>>>>>>> ed465c3 (Add new selection types, handler methods, and response messages)
 
 export class IntermediaryHandler extends GameHandler {
     
@@ -75,7 +79,7 @@ export class IntermediaryHandler extends GameHandler {
     
     async handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
         const currentPlayer = handlerData.turn;
-        const pendingEffect = handlerData.turnState.pendingTargetSelection;
+        const pendingEffect = handlerData.turnState.pendingSelection;
         
         if (!pendingEffect) {
             return;
@@ -209,5 +213,320 @@ export class IntermediaryHandler extends GameHandler {
             .filter(cardId => cardId !== activeCardId);
         
         responsesQueue.push(new SetupCompleteResponseMessage(activeCardId, benchCardIds));
+    }
+    
+    async handlePendingSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        
+        if (!pendingSelection) {
+            return;
+        }
+        
+        const currentPlayer = handlerData.turn;
+        
+        switch (pendingSelection.selectionType) {
+            case 'target':
+                if (isPendingTargetSelection(pendingSelection)) {
+                    await this.handleTargetSelection(handlerData, responsesQueue, pendingSelection);
+                }
+                break;
+                
+            case 'energy':
+                if (isPendingEnergySelection(pendingSelection)) {
+                    await this.handleEnergySelection(handlerData, responsesQueue, pendingSelection);
+                }
+                break;
+                
+            case 'card-in-hand':
+                if (isPendingCardInHandSelection(pendingSelection)) {
+                    await this.handleCardInHandSelection(handlerData, responsesQueue, pendingSelection);
+                }
+                break;
+                
+            case 'choice':
+                if (isPendingChoiceSelection(pendingSelection)) {
+                    await this.handleChoiceSelection(handlerData, responsesQueue, pendingSelection);
+                }
+                break;
+                
+            case 'multi-target':
+                if (isPendingMultiTargetSelection(pendingSelection)) {
+                    await this.handleMultiTargetSelection(handlerData, responsesQueue, pendingSelection);
+                }
+                break;
+        }
+    }
+    
+    private async handleTargetSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+        // This is the existing handleSelectTarget logic, just moved here
+        const currentPlayer = handlerData.turn;
+        const context = pendingSelection.originalContext;
+        
+        // Get the target from the effect (if it has one)
+        const target = 'target' in pendingSelection.effect ? pendingSelection.effect.target : undefined;
+        
+        if (!target || typeof target === 'string') {
+            return;
+        }
+        
+        // Use TargetResolver with Controllers (converted from HandlerData)
+        const controllers = handlerData as unknown as Controllers;
+        const resolution = TargetResolver.resolveTarget(target, controllers, context);
+        
+        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+            return;
+        }
+        
+        // Convert available targets to options for the form
+        const targetOptions = resolution.availableTargets.map(target => ({
+            name: `${target.name} (${target.hp} HP) - ${target.position === 'active' ? 'Active' : 'Bench'}`,
+            value: { playerId: target.playerId, fieldIndex: target.fieldIndex }
+        }));
+        
+        // Determine the appropriate message based on the effect type and pending prompt
+        let effectMessage = pendingSelection.prompt || 'Choose target for the effect:';
+        if (pendingSelection.effect.type === 'switch') {
+            if (target.type === 'single-choice' && target.chooser === 'opponent') {
+                effectMessage = 'Choose which of your card to switch in:';
+            } else {
+                effectMessage = 'Choose which card to force into battle:';
+            }
+        }
+            
+        const [sent, received] = this.intermediary.form({
+            type: 'list',
+            message: [effectMessage],
+            choices: targetOptions
+        });
+        
+        const selection = (await received)[0] as unknown as { playerId: number; fieldIndex: number };
+        responsesQueue.push(new SelectTargetResponseMessage(selection.playerId, selection.fieldIndex));
+    }
+    
+    private async handleEnergySelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+        const { playerId, fieldPosition, count, allowedTypes } = pendingSelection;
+        
+        // Get the card with energy
+        const fieldCard = handlerData.field.creatures[playerId]?.[fieldPosition];
+        if (!fieldCard) {
+            return;
+        }
+        
+        // Get attached energy
+        const energyData = handlerData.energy;
+        if (!energyData) {
+            return;
+        }
+        
+        const fieldInstanceId = fieldCard.fieldInstanceId;
+        const attachedEnergy = energyData.attachedEnergyByInstance?.[fieldInstanceId] || {};
+        
+        // Create options for each energy type
+        const energyOptions: Array<{ name: string; value: string }> = [];
+        for (const [energyType, amount] of Object.entries(attachedEnergy)) {
+            if (typeof amount === 'number' && amount > 0) {
+                if (!allowedTypes || allowedTypes.includes(energyType as any)) {
+                    for (let i = 0; i < amount; i++) {
+                        energyOptions.push({
+                            name: `${energyType} energy`,
+                            value: energyType
+                        });
+                    }
+                }
+            }
+        }
+        
+        if (energyOptions.length === 0) {
+            return;
+        }
+        
+        const prompt = pendingSelection.prompt || `Select ${count} energy to discard:`;
+        
+        if (count === 1) {
+            // Single selection
+            const [sent, received] = this.intermediary.form({
+                type: 'list',
+                message: [prompt],
+                choices: energyOptions
+            });
+            
+            const selected = (await received)[0] as string;
+            responsesQueue.push(new SelectEnergyResponseMessage([selected as any]));
+        } else {
+            // Multiple selection
+            const [sent, received] = this.intermediary.form({
+                type: 'checkbox',
+                message: [prompt],
+                choices: energyOptions,
+                validate: (selected: any[]) => {
+                    if (selected.length !== count) {
+                        return `Must select exactly ${count} energy`;
+                    }
+                    return true;
+                }
+            });
+            
+            const selected = (await received)[0] as string[];
+            responsesQueue.push(new SelectEnergyResponseMessage(selected as any));
+        }
+    }
+    
+    private async handleCardInHandSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+        const { playerId, count, cardType } = pendingSelection;
+        const hand = handlerData.hand;
+        
+        // Filter cards by type if specified
+        let eligibleCards = hand;
+        if (cardType) {
+            eligibleCards = hand.filter(card => card.type === cardType);
+        }
+        
+        if (eligibleCards.length === 0) {
+            return;
+        }
+        
+        // Create options for each card
+        const cardOptions = eligibleCards.map((card, index) => {
+            const originalIndex = hand.indexOf(card);
+            let cardName = card.templateId;
+            
+            // Try to get the card name from repository
+            try {
+                if (card.type === 'creature') {
+                    cardName = this.cardRepository.getCreature(card.templateId).name;
+                } else if (card.type === 'supporter') {
+                    cardName = this.cardRepository.getSupporter(card.templateId).name;
+                } else if (card.type === 'item') {
+                    cardName = this.cardRepository.getItem(card.templateId).name;
+                } else if (card.type === 'tool') {
+                    cardName = this.cardRepository.getTool(card.templateId).name;
+                }
+            } catch (e) {
+                // Keep templateId if lookup fails
+            }
+            
+            return {
+                name: cardName,
+                value: originalIndex
+            };
+        });
+        
+        const prompt = pendingSelection.prompt || `Select ${count} card(s) from hand:`;
+        
+        if (count === 1) {
+            // Single selection
+            const [sent, received] = this.intermediary.form({
+                type: 'list',
+                message: [prompt],
+                choices: cardOptions
+            });
+            
+            const selected = (await received)[0] as number;
+            responsesQueue.push(new SelectCardResponseMessage([selected]));
+        } else {
+            // Multiple selection
+            const [sent, received] = this.intermediary.form({
+                type: 'checkbox',
+                message: [prompt],
+                choices: cardOptions,
+                validate: (selected: any[]) => {
+                    if (selected.length !== count) {
+                        return `Must select exactly ${count} cards`;
+                    }
+                    return true;
+                }
+            });
+            
+            const selected = (await received)[0] as number[];
+            responsesQueue.push(new SelectCardResponseMessage(selected));
+        }
+    }
+    
+    private async handleChoiceSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+        const { choices, allowMultiple } = pendingSelection;
+        
+        if (!choices || choices.length === 0) {
+            return;
+        }
+        
+        const prompt = pendingSelection.prompt || 'Make a selection:';
+        
+        if (!allowMultiple) {
+            // Single selection
+            const [sent, received] = this.intermediary.form({
+                type: 'list',
+                message: [prompt],
+                choices: choices
+            });
+            
+            const selected = (await received)[0] as string;
+            responsesQueue.push(new SelectChoiceResponseMessage([selected]));
+        } else {
+            // Multiple selection
+            const [sent, received] = this.intermediary.form({
+                type: 'checkbox',
+                message: [prompt],
+                choices: choices
+            });
+            
+            const selected = (await received)[0] as string[];
+            responsesQueue.push(new SelectChoiceResponseMessage(selected));
+        }
+    }
+    
+    private async handleMultiTargetSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+        const { count, minTargets } = pendingSelection;
+        const currentPlayer = handlerData.turn;
+        const context = pendingSelection.originalContext;
+        
+        // Get the target from the effect
+        const target = 'target' in pendingSelection.effect ? pendingSelection.effect.target : undefined;
+        
+        if (!target || typeof target === 'string') {
+            return;
+        }
+        
+        // Use TargetResolver with Controllers
+        const controllers = handlerData as unknown as Controllers;
+        const resolution = TargetResolver.resolveTarget(target, controllers, context);
+        
+        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+            return;
+        }
+        
+        // Convert available targets to options
+        const targetOptions = resolution.availableTargets.map((target, index) => ({
+            name: `${target.name} (${target.hp} HP) - ${target.position === 'active' ? 'Active' : 'Bench'}`,
+            value: index
+        }));
+        
+        const prompt = pendingSelection.prompt || `Select ${count} target(s):`;
+        const minCount = minTargets || count;
+        
+        const [sent, received] = this.intermediary.form({
+            type: 'checkbox',
+            message: [prompt],
+            choices: targetOptions,
+            validate: (selected: any[]) => {
+                if (selected.length < minCount) {
+                    return `Must select at least ${minCount} targets`;
+                }
+                if (selected.length > count) {
+                    return `Cannot select more than ${count} targets`;
+                }
+                return true;
+            }
+        });
+        
+        const selectedIndices = (await received)[0] as number[];
+        const targets = selectedIndices.map(index => {
+            const targetOption = resolution.availableTargets[index];
+            return {
+                playerId: targetOption.playerId,
+                fieldIndex: targetOption.fieldIndex
+            };
+        });
+        
+        responsesQueue.push(new SelectMultiTargetResponseMessage(targets));
     }
 }
