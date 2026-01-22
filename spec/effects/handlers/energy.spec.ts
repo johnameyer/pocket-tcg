@@ -4,31 +4,22 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary } from '../../../src/controllers/energy-controller.js';
+import { createSupporterRepo } from '../../helpers/test-utils.js';
+import { MockCardRepository } from '../../mock-repository.js';
 
-// Helper to get total energy from an energy dictionary
-function getTotalEnergy(energyDict: EnergyDictionary): number {
-    return Object.values(energyDict).reduce((sum, count) => sum + count, 0);
-}
+const getTotalEnergy = (energyDict: EnergyDictionary): number => 
+    Object.values(energyDict).reduce((sum, count) => sum + count, 0);
 
 describe('Energy Effect', () => {
     it('should attach 1 fire energy (basic operation)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map([
-                ['energy-supporter', {
-                    templateId: 'energy-supporter',
-                    name: 'Energy Supporter',
-                    effects: [{
-                        type: 'energy',
-                        energyType: 'fire',
-                        amount: { type: 'constant', value: 1 },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('energy-supporter', 'Energy Supporter', [{
+            type: 'energy',
+            energyType: 'fire',
+            amount: { type: 'constant', value: 1 },
+            target: { type: 'fixed', player: 'self', position: 'active' },
+            operation: 'attach'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('energy-supporter', 'supporter')],
@@ -45,21 +36,13 @@ describe('Energy Effect', () => {
     });
 
     it('should discard energy instead of attach', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map([
-                ['discard-supporter', {
-                    templateId: 'discard-supporter',
-                    name: 'Discard Supporter',
-                    effects: [{
-                        type: 'energy',
-                        energyType: 'fire',
-                        amount: { type: 'constant', value: 1 },
-                        target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'discard'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('discard-supporter', 'Discard Supporter', [{
+            type: 'energy',
+            energyType: 'fire',
+            amount: { type: 'constant', value: 1 },
+            target: { type: 'fixed', player: 'opponent', position: 'active' },
+            operation: 'discard'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('discard-supporter', 'supporter')],
@@ -79,21 +62,13 @@ describe('Energy Effect', () => {
     });
 
     it('should attach different energy types (water)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map([
-                ['water-supporter', {
-                    templateId: 'water-supporter',
-                    name: 'Water Supporter',
-                    effects: [{
-                        type: 'energy',
-                        energyType: 'water',
-                        amount: { type: 'constant', value: 1 },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('water-supporter', 'Water Supporter', [{
+            type: 'energy',
+            energyType: 'water',
+            amount: { type: 'constant', value: 1 },
+            target: { type: 'fixed', player: 'self', position: 'active' },
+            operation: 'attach'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('water-supporter', 'supporter')],
@@ -110,21 +85,13 @@ describe('Energy Effect', () => {
     });
 
     it('should attach different amounts (2 energy)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map([
-                ['multi-energy-supporter', {
-                    templateId: 'multi-energy-supporter',
-                    name: 'Multi Energy Supporter',
-                    effects: [{
-                        type: 'energy',
-                        energyType: 'fire',
-                        amount: { type: 'constant', value: 2 },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('multi-energy-supporter', 'Multi Energy Supporter', [{
+            type: 'energy',
+            energyType: 'fire',
+            amount: { type: 'constant', value: 2 },
+            target: { type: 'fixed', player: 'self', position: 'active' },
+            operation: 'attach'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('multi-energy-supporter', 'supporter')],
@@ -141,29 +108,19 @@ describe('Energy Effect', () => {
     });
 
     it('should target different Pokemon (choice)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map([
-                ['choice-energy-supporter', {
-                    templateId: 'choice-energy-supporter',
-                    name: 'Choice Energy Supporter',
-                    effects: [{
-                        type: 'energy',
-                        energyType: 'grass',
-                        amount: { type: 'constant', value: 1 },
-                        target: {
-                            type: 'fixed',
-                            player: 'self', position: 'active'
-                        },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('choice-energy-supporter', 'Choice Energy Supporter', [{
+            type: 'energy',
+            energyType: 'grass',
+            amount: { type: 'constant', value: 1 },
+            target: {
+                type: 'fixed',
+                player: 'self', position: 'active'
+            },
+            operation: 'attach'
+        }]);
 
         const { state } = runTestGame({
-            actions: [
-                new PlayCardResponseMessage('choice-energy-supporter', 'supporter')
-            ],
+            actions: [new PlayCardResponseMessage('choice-energy-supporter', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -177,21 +134,13 @@ describe('Energy Effect', () => {
     });
 
     it('should cap discard at available energy', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map([
-                ['big-discard-supporter', {
-                    templateId: 'big-discard-supporter',
-                    name: 'Big Discard Supporter',
-                    effects: [{
-                        type: 'energy',
-                        energyType: 'fire',
-                        amount: { type: 'constant', value: 5 },
-                        target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'discard'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('big-discard-supporter', 'Big Discard Supporter', [{
+            type: 'energy',
+            energyType: 'fire',
+            amount: { type: 'constant', value: 5 },
+            target: { type: 'fixed', player: 'opponent', position: 'active' },
+            operation: 'discard'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('big-discard-supporter', 'supporter')],
@@ -212,21 +161,13 @@ describe('Energy Effect', () => {
 
     describe('Energy Discard Tracking', () => {
         it('should track discarded energy from discard effects', () => {
-            const testRepository = new MockCardRepository({
-                supporters: new Map([
-                    ['energy-discard', {
-                        templateId: 'energy-discard',
-                        name: 'Energy Discard',
-                        effects: [{
-                            type: 'energy',
-                            energyType: 'fire',
-                            amount: { type: 'constant', value: 2 },
-                            target: { type: 'fixed', player: 'opponent', position: 'active' },
-                            operation: 'discard'
-                        }]
-                    }]
-                ])
-            });
+            const testRepository = createSupporterRepo('energy-discard', 'Energy Discard', [{
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 2 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'discard'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('energy-discard', 'supporter')],
@@ -241,8 +182,6 @@ describe('Energy Effect', () => {
             });
 
             const discardedEnergy = state.energy.discardedEnergy[1];
-            
-            // Should have discarded 2 fire energy from effect
             expect(discardedEnergy.fire).to.equal(2, 'Should discard 2 fire energy from effect');
             expect(discardedEnergy.water).to.equal(0, 'Should not discard water energy');
         });
@@ -250,28 +189,10 @@ describe('Energy Effect', () => {
         it('should track discarded energy when creature is knocked out', () => {
             const testRepository = new MockCardRepository({
                 creatures: new Map([
-                    ['attacker', {
-                        templateId: 'attacker',
-                        name: 'Attacker',
-                        type: 'fire',
-                        maxHp: 100,
-                        retreatCost: 1,
-                        weakness: 'water',
-                        attacks: [{
-                            name: 'Big Attack',
-                            damage: 100,
-                            energyRequirements: []
-                        }]
-                    }],
-                    ['defender', {
-                        templateId: 'defender',
-                        name: 'Defender',
-                        type: 'water',
-                        maxHp: 50,
-                        retreatCost: 1,
-                        weakness: 'grass',
-                        attacks: []
-                    }]
+                    ['attacker', { templateId: 'attacker', name: 'Attacker', type: 'fire', maxHp: 100, retreatCost: 1, 
+                        weakness: 'water', attacks: [{ name: 'Big Attack', damage: 100, energyRequirements: [] }] }],
+                    ['defender', { templateId: 'defender', name: 'Defender', type: 'water', maxHp: 50, retreatCost: 1, 
+                        weakness: 'grass', attacks: [] }]
                 ])
             });
 
@@ -287,8 +208,6 @@ describe('Energy Effect', () => {
             });
 
             const discardedEnergy = state.energy.discardedEnergy[1];
-            
-            // Should have discarded all energy from knocked out defender
             expect(discardedEnergy.water).to.equal(2, 'Should discard 2 water energy');
             expect(discardedEnergy.fire).to.equal(1, 'Should discard 1 fire energy');
             expect(getTotalEnergy(discardedEnergy)).to.equal(3, 'Should discard all 3 energy from knocked out creature');
