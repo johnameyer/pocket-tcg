@@ -121,6 +121,7 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 40),
                     (state) => {
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id",
                             evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                             damageTaken: 30,
                             turnLastPlayed: 0
@@ -171,6 +172,7 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 35),
                     (state) => {
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id",
                             evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                             damageTaken: 25,
                             turnLastPlayed: 0
@@ -339,6 +341,7 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 25),
                     (state) => {
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id",
                             evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                             damageTaken: 15,
                             turnLastPlayed: 0

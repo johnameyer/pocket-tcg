@@ -182,11 +182,13 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id",
                             evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                             damageTaken: 15,
                             turnLastPlayed: 0
                         });
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id-2",
                             evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
                             damageTaken: 25,
                             turnLastPlayed: 0
@@ -229,11 +231,13 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id",
                             evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                             damageTaken: 0,
                             turnLastPlayed: 0
                         });
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id-2",
                             evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
                             damageTaken: 15,
                             turnLastPlayed: 0
@@ -314,6 +318,7 @@ describe('Target Matching', () => {
                     StateBuilder.withHand(0, [{ templateId: 'opponent-scope', type: 'supporter' }]),
                     (state) => {
                         state.field.creatures[1].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0

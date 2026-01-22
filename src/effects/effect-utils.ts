@@ -130,9 +130,10 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 let totalEnergy = 0;
                 let fieldIndex = 0;
                 while (true) {
-                    const creature = controllers.field.getCardByPosition(resolvedTargetPlayer, fieldIndex);
-                    if (!creature) break;
-                    const energyState = controllers.energy.getAttachedEnergyByInstance(creature.instanceId);
+                    // Get fieldInstanceId for energy lookup
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(resolvedTargetPlayer, fieldIndex);
+                    if (!fieldInstanceId) break;
+                    const energyState = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
                     if (energyState) {
                         totalEnergy += Object.values(energyState).reduce((sum: number, count: number) => sum + count, 0);
                     }

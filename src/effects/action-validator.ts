@@ -6,7 +6,7 @@ import { EffectContextFactory } from './effect-context.js';
 import { TargetResolver } from './target-resolver.js';
 import { Effect } from '../repository/effect-types.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
-import { getCurrentTemplateId, getCurrentInstanceId, getOriginalInstanceId } from '../utils/field-card-utils.js';
+import { getCurrentTemplateId, getCurrentInstanceId, getFieldInstanceId } from '../utils/field-card-utils.js';
 
 /**
  * ActionValidator provides HandlerData-based validation methods for game actions.
@@ -66,7 +66,7 @@ export class ActionValidator {
         
         const creatureData = cardRepository.getCreature(getCurrentTemplateId(activeCreature));
         const retreatCost = creatureData.retreatCost || 0;
-        const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, getOriginalInstanceId(activeCreature));
+        const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, getFieldInstanceId(activeCreature));
         
         const statusEffects = (handlerData.statusEffects?.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
         const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
@@ -99,7 +99,7 @@ export class ActionValidator {
         if (attackIndex < 0 || attackIndex >= creatureData.attacks.length) return false;
         
         const attack = creatureData.attacks[attackIndex];
-        return EnergyController.canUseAttackByInstance(handlerData.energy, getOriginalInstanceId(activeCreature), attack.energyRequirements);
+        return EnergyController.canUseAttackByInstance(handlerData.energy, getFieldInstanceId(activeCreature), attack.energyRequirements);
     }
     
     /**

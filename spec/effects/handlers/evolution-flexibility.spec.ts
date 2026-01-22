@@ -228,6 +228,7 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withHand(0, [flexibilityItem, vaporeon, jolteon]),
                 (state) => {
                     state.field.creatures[0].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'eevee' }],
                         damageTaken: 0,
                         turnLastPlayed: 0

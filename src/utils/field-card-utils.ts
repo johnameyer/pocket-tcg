@@ -26,7 +26,20 @@ export function getCurrentTemplateId(card: FieldCard | InstancedFieldCard): stri
 }
 
 /**
+ * Get the field instance ID (persists through evolution).
+ * This ID is used for energy and tool attachments.
+ */
+export function getFieldInstanceId(card: FieldCard | InstancedFieldCard): string {
+    if ('evolutionStack' in card) {
+        return card.fieldInstanceId;
+    }
+    // For FieldCard (backward compatibility), use the card's instanceId
+    return card.instanceId;
+}
+
+/**
  * Get the original instance ID (first card in the evolution chain).
+ * @deprecated Use getFieldInstanceId instead for energy/tool attachments
  */
 export function getOriginalInstanceId(card: FieldCard | InstancedFieldCard): string {
     if ('evolutionStack' in card) {
@@ -60,6 +73,7 @@ export function createInstancedFieldCard(
     turnPlayed: number = 0
 ): InstancedFieldCard {
     return {
+        fieldInstanceId: instanceId, // Use the first instance ID as the field instance ID
         evolutionStack: [{ instanceId, templateId }],
         damageTaken: 0,
         turnLastPlayed: turnPlayed

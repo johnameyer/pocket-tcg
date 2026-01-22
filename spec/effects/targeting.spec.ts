@@ -170,11 +170,13 @@ describe('Effect Targeting', () => {
                     // Add damaged bench creature
                     (state) => {
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id",
                             evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                             damageTaken: 25,
                             turnLastPlayed: 0
                         });
                         state.field.creatures[0].push({
+                            fieldInstanceId: "test-field-id-2",
                             evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
                             damageTaken: 0,
                             turnLastPlayed: 0

@@ -80,7 +80,17 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
         for (const target of targets) {
             const { playerId, fieldIndex } = target;
             
-            // Get the target creature
+            // Get the field instance ID for energy/tool operations
+            const fieldInstanceId = controllers.field.getFieldInstanceId(playerId, fieldIndex);
+            if (!fieldInstanceId) {
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [`${context.effectName} target creature not found!`]
+                });
+                continue;
+            }
+            
+            // Get the target creature for display name
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             if (!targetCreature) {
                 controllers.players.messageAll({
@@ -90,14 +100,13 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                 continue;
             }
             
-            // Get the creature data - will throw an error if not found
-            const creatureName = controllers.cardRepository.getCreature(targetCreature.templateId).name;
+            const creatureName = targetCreature.data.name;
             
             // Apply the appropriate energy operation
             if (operation === 'attach' && energyType) {
                 // Attach energy directly to the creature
                 const success = controllers.energy.attachSpecificEnergyToInstance(
-                    targetCreature.instanceId, 
+                    fieldInstanceId, 
                     energyType, 
                     amount
                 );
@@ -116,7 +125,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             } else if (operation === 'discard') {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
                     playerId,
-                    targetCreature.instanceId, 
+                    fieldInstanceId, 
                     energyType, 
                     amount
                 );

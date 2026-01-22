@@ -73,11 +73,15 @@ const processKnockouts = {
                     const cardData = controllers.cardRepository.getCreature(targetCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(cardData.name));
                     
-                    // Clean up energy attached to the knocked out card
-                    controllers.energy.removeAllEnergyFromInstance(i, targetCard.instanceId);
-                    
-                    // Clean up tools attached to the knocked out card
-                    controllers.tools.detachTool(targetCard.instanceId);
+                    // Get field instance ID for cleanup
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(i, 0);
+                    if (fieldInstanceId) {
+                        // Clean up energy attached to the knocked out card
+                        controllers.energy.removeAllEnergyFromInstance(i, fieldInstanceId);
+                        
+                        // Clean up tools attached to the knocked out card
+                        controllers.tools.detachTool(fieldInstanceId);
+                    }
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
@@ -99,11 +103,15 @@ const processKnockouts = {
                     const cardData = controllers.cardRepository.getCreature(benchCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
                     
-                    // Clean up energy attached to the knocked out card
-                    controllers.energy.removeAllEnergyFromInstance(i, benchCard.instanceId);
-                    
-                    // Clean up tools attached to the knocked out card
-                    controllers.tools.detachTool(benchCard.instanceId);
+                    // Get field instance ID for cleanup (benchIndex + 1 because bench starts at position 1)
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(i, benchIndex + 1);
+                    if (fieldInstanceId) {
+                        // Clean up energy attached to the knocked out card
+                        controllers.energy.removeAllEnergyFromInstance(i, fieldInstanceId);
+                        
+                        // Clean up tools attached to the knocked out card
+                        controllers.tools.detachTool(fieldInstanceId);
+                    }
                     
                     // Award points to the opponent (2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;

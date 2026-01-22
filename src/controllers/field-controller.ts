@@ -8,7 +8,7 @@ import { CreatureData, InstancedFieldCard } from '../repository/card-types.js';
 import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
-import { getCurrentInstanceId, getCurrentTemplateId, toFieldCard, createInstancedFieldCard, addEvolution } from '../utils/field-card-utils.js';
+import { getCurrentInstanceId, getCurrentTemplateId, getFieldInstanceId, toFieldCard, createInstancedFieldCard, addEvolution } from '../utils/field-card-utils.js';
 
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
@@ -88,6 +88,14 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         return toFieldCard(card);
     }
 
+    // Get the field instance ID for a card at a specific position
+    // This ID persists through evolution and is used for energy/tool attachments
+    public getFieldInstanceId(playerId: number, position: number): string | undefined {
+        const card = this.state.creatures[playerId]?.[position];
+        if (!card) return undefined;
+        return getFieldInstanceId(card);
+    }
+
     // Apply damage to a card at any position and return the actual damage applied
     public applyDamage(playerId: number, damage: number, position: number = 0): number {
         if (playerId < 0 || playerId >= this.state.creatures.length) {
@@ -111,7 +119,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         const { maxHp } = this.controllers.cardRepository.getCreature(templateId);
         
         // Get HP bonus from attached tools
-        const instanceId = getCurrentInstanceId(card);
+        const instanceId = getFieldInstanceId(card);
         const hpBonus = this.controllers.tools.getHpBonus(instanceId);
         const totalMaxHp = maxHp + hpBonus;
         

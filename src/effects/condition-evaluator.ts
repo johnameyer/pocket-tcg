@@ -4,6 +4,7 @@ import { FieldCard } from "../controllers/field-controller.js";
 import { CardRepository } from '../repository/card-repository.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { CreatureData } from '../repository/card-types.js';
+import { getFieldInstanceId } from '../utils/field-card-utils.js';
 
 /**
  * Centralized class for evaluating componentized conditions.
@@ -35,7 +36,8 @@ export class ConditionEvaluator {
             const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
             if (!attachedEnergyByInstance) return false;
             
-            const creatureEnergy = attachedEnergyByInstance[creature.instanceId];
+            const fieldInstanceId = getFieldInstanceId(creature);
+            const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
             if (!creatureEnergy) return false;
             
             // Get the energy type and required count

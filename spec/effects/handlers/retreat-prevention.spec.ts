@@ -93,6 +93,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
@@ -120,6 +121,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
                     state.field.creatures[0].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'high-hp-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
@@ -149,6 +151,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
@@ -177,6 +180,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
@@ -204,6 +208,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withHand(0, [preventionItem]),
                 (state) => {
                     state.field.creatures[1].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
@@ -231,6 +236,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
                     state.field.creatures[0].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'high-hp-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
@@ -260,6 +266,7 @@ describe('Retreat Prevention Effect', () => {
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
+                        fieldInstanceId: "test-field-id",
                         evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
                         damageTaken: 0,
                         turnLastPlayed: 0
