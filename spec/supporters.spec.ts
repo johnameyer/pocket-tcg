@@ -29,5 +29,11 @@ describe('Supporters', () => {
         // Only first supporter should execute, second should be blocked
         expect(getExecutedCount()).to.equal(1, 'Should only execute first supporter');
         expect(state.hand[0].length).to.equal(1, 'Second supporter should remain in hand');
+        
+        // Card conservation: supporter moves from hand to discard
+        const p0TotalCards = state.hand[0].length + state.deck[0].length + state.discard[0].length + 
+            state.field.creatures[0].filter((c: any) => c).reduce((sum: number, card: any) => 
+                sum + (card.evolutionStack ? card.evolutionStack.length : 0), 0);
+        expect(p0TotalCards).to.equal(20, 'Player 0 should have 20 cards total after playing supporter');
     });
 });

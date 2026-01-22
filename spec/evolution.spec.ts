@@ -40,6 +40,12 @@ describe('Evolution Mechanics', () => {
         expect(activeCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
         expect(activeCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
         expect(getCurrentTemplateId(activeCard)).to.equal('evolution-creature', 'Current form should be evolved');
+        
+        // Card conservation: cards in evolution stack count toward 20 total
+        const p0TotalCards = state.hand[0].length + state.deck[0].length + state.discard[0].length + 
+            state.field.creatures[0].filter((c: any) => c).reduce((sum: number, card: any) => 
+                sum + (card.evolutionStack ? card.evolutionStack.length : 0), 0);
+        expect(p0TotalCards).to.equal(20, 'Player 0 should have 20 cards total after evolution');
     });
 
     it('should keep previous form in evolution stack when evolving benched creature', () => {

@@ -58,6 +58,12 @@ describe('Knockout System', () => {
         // Player 1's active creature should be knocked out and in discard pile
         expect(state.discard[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
         expect(state.discard[1].some((card: any) => card.templateId === 'evolution-creature')).to.be.true;
+        
+        // Card conservation: verify total card count remains 20
+        const p1TotalCards = state.hand[1].length + state.deck[1].length + state.discard[1].length + 
+            state.field.creatures[1].filter((c: any) => c).reduce((sum: number, card: any) => 
+                sum + (card.evolutionStack ? card.evolutionStack.length : 0), 0);
+        expect(p1TotalCards).to.equal(20, 'Player 1 should have 20 cards total after knockout');
     });
 
     it('should discard all cards in evolution stack when evolved creature is knocked out', () => {
@@ -95,6 +101,12 @@ describe('Knockout System', () => {
         expect(discardPile.length).to.be.greaterThanOrEqual(2, 'Both forms should be in discard pile');
         expect(discardPile.some(card => card.templateId === 'basic-creature')).to.be.true;
         expect(discardPile.some(card => card.templateId === 'evolution-creature')).to.be.true;
+        
+        // Card conservation: evolution stack cards properly moved to discard
+        const p1TotalCards = state.hand[1].length + state.deck[1].length + state.discard[1].length + 
+            state.field.creatures[1].filter((c: any) => c).reduce((sum: number, card: any) => 
+                sum + (card.evolutionStack ? card.evolutionStack.length : 0), 0);
+        expect(p1TotalCards).to.equal(20, 'Player 1 should have 20 cards total after evolved creature knockout');
     });
 
     it('should detach tools when creature with tool is knocked out', () => {
