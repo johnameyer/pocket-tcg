@@ -264,7 +264,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             let cardInstanceId: string | undefined;
             let playedCard: GameCard | undefined;
             if (cardIndex !== -1) {
-                playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
+                if (message.cardType === 'supporter' || message.cardType === 'item') {
+                    // For supporters and items, play and discard in one operation
+                    playedCard = controllers.hand.playCardAndDiscard(sourceHandler, cardIndex);
+                } else {
+                    // For creatures and tools, just play (they go to field/attached)
+                    playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
+                }
                 cardInstanceId = playedCard?.instanceId;
             }
             
@@ -294,11 +300,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the supporter effects
                 EffectQueueProcessor.processQueue(controllers);
-                
-                // Discard the played supporter card
-                if (playedCard) {
-                    controllers.discard.discardCard(sourceHandler, playedCard);
-                }
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
@@ -316,11 +317,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the item effects
                 EffectQueueProcessor.processQueue(controllers);
-                
-                // Discard the played item card
-                if (playedCard) {
-                    controllers.discard.discardCard(sourceHandler, playedCard);
-                }
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
                 const toolData = controllers.cardRepository.getTool(message.templateId);

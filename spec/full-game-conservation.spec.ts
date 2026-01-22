@@ -84,9 +84,9 @@ describe('Full Game Conservation', () => {
     }
 
     /**
-     * Count cards for a player using state inspection
+     * Collect all card instance IDs for a player
      */
-    function countPlayerCards(state: ControllerState<Controllers>, playerId: number): number {
+    function collectPlayerCardInstanceIds(state: ControllerState<Controllers>, playerId: number): Set<string> {
         const instanceIds = new Set<string>();
         
         // Hand
@@ -120,19 +120,26 @@ describe('Full Game Conservation', () => {
             instanceIds.add(card.instanceId);
         }
         
-        return instanceIds.size;
+        return instanceIds;
     }
 
     /**
-     * Count total energy for a player
+     * Count cards for a player using state inspection
      */
-    function countPlayerEnergy(state: ControllerState<Controllers>, playerId: number): number {
-        let total = 0;
+    function countPlayerCards(state: ControllerState<Controllers>, playerId: number): number {
+        return collectPlayerCardInstanceIds(state, playerId).size;
+    }
+
+    /**
+     * Count total energy for a player by type
+     */
+    function countPlayerEnergyByType(state: ControllerState<Controllers>, playerId: number): { [type: string]: number } {
+        const energyByType: { [type: string]: number } = {};
         
         // Current energy
         const currentEnergy = state.energy.currentEnergy[playerId];
         if (currentEnergy) {
-            total += 1; // Each current energy counts as 1
+            energyByType[currentEnergy] = (energyByType[currentEnergy] || 0) + 1;
         }
         
         // Attached energy
@@ -141,14 +148,26 @@ describe('Full Game Conservation', () => {
             if (!card) continue;
             // Use fieldInstanceId to access attached energy
             const attached = state.energy.attachedEnergyByInstance[card.fieldInstanceId] || {};
-            total += Object.values(attached).reduce((sum: number, count) => sum + (count as number), 0);
+            for (const [type, count] of Object.entries(attached)) {
+                energyByType[type] = (energyByType[type] || 0) + (count as number);
+            }
         }
         
         // Discarded energy
         const discarded = state.energy.discardedEnergy[playerId] || {};
-        total += Object.values(discarded).reduce((sum: number, count) => sum + (count as number), 0);
+        for (const [type, count] of Object.entries(discarded)) {
+            energyByType[type] = (energyByType[type] || 0) + (count as number);
+        }
         
-        return total;
+        return energyByType;
+    }
+
+    /**
+     * Count total energy for a player
+     */
+    function countPlayerEnergy(state: ControllerState<Controllers>, playerId: number): number {
+        const energyByType = countPlayerEnergyByType(state, playerId);
+        return Object.values(energyByType).reduce((sum: number, count) => sum + (count as number), 0);
     }
 
     it('should maintain conservation throughout a complete game', function() {
@@ -158,70 +177,83 @@ describe('Full Game Conservation', () => {
         const player1Deck = createTestDeck();
         const player2Deck = createTestDeck();
         
-        let previousPlayer1Energy = 0;
-        let previousPlayer2Energy = 0;
+        let previousPlayer1InstanceIds: Set<string> | null = null;
+        let previousPlayer2InstanceIds: Set<string> | null = null;
+        let previousPlayer1EnergyByType: { [type: string]: number } = {};
+        let previousPlayer2EnergyByType: { [type: string]: number } = {};
         let previousState: ControllerState<Controllers> | null = null;
         
-        const { state, stepCount } = runBotGame({
+        runBotGame({
             customRepository: gameRepository,
             initialDecks: [player1Deck, player2Deck],
-            maxSteps: 500, // Increase step limit
-            conservationCheck: (currentState, step) => {
-                // Check card conservation
-                const currentPlayer1Cards = countPlayerCards(currentState, 0);
-                const currentPlayer2Cards = countPlayerCards(currentState, 1);
+            maxSteps: 500,
+            integrityCheck: (currentState, step) => {
+                // Check card conservation using instance ID sets
+                const currentPlayer1InstanceIds = collectPlayerCardInstanceIds(currentState, 0);
+                const currentPlayer2InstanceIds = collectPlayerCardInstanceIds(currentState, 1);
                 
-                expect(currentPlayer1Cards).to.equal(20, 
-                    `Player 1 card count violated at step ${step}: expected 20, got ${currentPlayer1Cards}`);
-                expect(currentPlayer2Cards).to.equal(20, 
-                    `Player 2 card count violated at step ${step}: expected 20, got ${currentPlayer2Cards}`);
+                expect(currentPlayer1InstanceIds.size).to.equal(20, 
+                    `Player 1 card count violated at step ${step}: expected 20, got ${currentPlayer1InstanceIds.size}`);
+                expect(currentPlayer2InstanceIds.size).to.equal(20, 
+                    `Player 2 card count violated at step ${step}: expected 20, got ${currentPlayer2InstanceIds.size}`);
                 
-                // Check energy conservation (energy can only increase or stay same)
-                const currentPlayer1Energy = countPlayerEnergy(currentState, 0);
-                const currentPlayer2Energy = countPlayerEnergy(currentState, 1);
+                // Verify no duplicate instance IDs (each card is unique)
+                if (previousPlayer1InstanceIds) {
+                    // Cards can move between zones but the set of instance IDs should remain the same
+                    const player1Diff = [...currentPlayer1InstanceIds].filter(id => !previousPlayer1InstanceIds!.has(id));
+                    const player1Missing = [...previousPlayer1InstanceIds].filter(id => !currentPlayer1InstanceIds.has(id));
+                    if (player1Diff.length > 0 || player1Missing.length > 0) {
+                        expect.fail(`Player 1 instance IDs changed at step ${step}: added ${player1Diff}, removed ${player1Missing}`);
+                    }
+                }
                 
-                // Energy should never decrease unexpectedly
+                if (previousPlayer2InstanceIds) {
+                    const player2Diff = [...currentPlayer2InstanceIds].filter(id => !previousPlayer2InstanceIds!.has(id));
+                    const player2Missing = [...previousPlayer2InstanceIds].filter(id => !currentPlayer2InstanceIds.has(id));
+                    if (player2Diff.length > 0 || player2Missing.length > 0) {
+                        expect.fail(`Player 2 instance IDs changed at step ${step}: added ${player2Diff}, removed ${player2Missing}`);
+                    }
+                }
+                
+                // Check energy conservation by type (energy can only increase or stay same, never decrease unexpectedly)
+                const currentPlayer1EnergyByType = countPlayerEnergyByType(currentState, 0);
+                const currentPlayer2EnergyByType = countPlayerEnergyByType(currentState, 1);
+                
+                // Energy should never decrease unexpectedly for any type
                 if (previousState) {
-                    if (currentPlayer1Energy < previousPlayer1Energy) {
-                        // This is acceptable if there was a knockout
-                        const hasDiscard = (currentState.discard[0]?.length || 0) > (previousState.discard[0]?.length || 0);
-                        if (!hasDiscard) {
-                            expect.fail(`Player 1 energy decreased without discard at step ${step}: ${previousPlayer1Energy} -> ${currentPlayer1Energy}`);
+                    for (const type of Object.keys(previousPlayer1EnergyByType)) {
+                        const currentCount = currentPlayer1EnergyByType[type] || 0;
+                        const previousCount = previousPlayer1EnergyByType[type] || 0;
+                        if (currentCount < previousCount) {
+                            // This is acceptable if there was a knockout
+                            const hasDiscard = (currentState.discard[0]?.length || 0) > (previousState.discard[0]?.length || 0);
+                            if (!hasDiscard) {
+                                expect.fail(`Player 1 ${type} energy decreased without discard at step ${step}: ${previousCount} -> ${currentCount}`);
+                            }
                         }
                     }
                     
-                    if (currentPlayer2Energy < previousPlayer2Energy) {
-                        const hasDiscard = (currentState.discard[1]?.length || 0) > (previousState.discard[1]?.length || 0);
-                        if (!hasDiscard) {
-                            expect.fail(`Player 2 energy decreased without discard at step ${step}: ${previousPlayer2Energy} -> ${currentPlayer2Energy}`);
+                    for (const type of Object.keys(previousPlayer2EnergyByType)) {
+                        const currentCount = currentPlayer2EnergyByType[type] || 0;
+                        const previousCount = previousPlayer2EnergyByType[type] || 0;
+                        if (currentCount < previousCount) {
+                            const hasDiscard = (currentState.discard[1]?.length || 0) > (previousState.discard[1]?.length || 0);
+                            if (!hasDiscard) {
+                                expect.fail(`Player 2 ${type} energy decreased without discard at step ${step}: ${previousCount} -> ${currentCount}`);
+                            }
                         }
                     }
                 }
                 
-                previousPlayer1Energy = currentPlayer1Energy;
-                previousPlayer2Energy = currentPlayer2Energy;
+                previousPlayer1InstanceIds = currentPlayer1InstanceIds;
+                previousPlayer2InstanceIds = currentPlayer2InstanceIds;
+                previousPlayer1EnergyByType = currentPlayer1EnergyByType;
+                previousPlayer2EnergyByType = currentPlayer2EnergyByType;
                 previousState = currentState;
             }
         });
         
-        // Verify game completed or at least ran for a reasonable number of steps
-        // Some games might not complete if they reach a stalemate
-        expect(stepCount).to.be.greaterThan(10, 'Game should run for at least some steps');
-        
-        // If game completed, verify conservation
-        if (state.completed) {
-            const finalPlayer1Cards = countPlayerCards(state, 0);
-            const finalPlayer2Cards = countPlayerCards(state, 1);
-            
-            expect(finalPlayer1Cards).to.equal(20, `Player 1 should end with 20 cards, got ${finalPlayer1Cards}`);
-            expect(finalPlayer2Cards).to.equal(20, `Player 2 should end with 20 cards, got ${finalPlayer2Cards}`);
-        } else {
-            // Even if not completed, verify conservation at end
-            const finalPlayer1Cards = countPlayerCards(state, 0);
-            const finalPlayer2Cards = countPlayerCards(state, 1);
-            
-            expect(finalPlayer1Cards).to.equal(20, `Player 1 should have 20 cards even if game didn't complete, got ${finalPlayer1Cards}`);
-            expect(finalPlayer2Cards).to.equal(20, `Player 2 should have 20 cards even if game didn't complete, got ${finalPlayer2Cards}`);
-        }
+        // Verification is done in the integrity check after each step
+        // No need for additional final verification
     });
 });

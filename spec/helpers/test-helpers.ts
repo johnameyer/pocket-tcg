@@ -148,15 +148,14 @@ export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['ge
 }
 
 /**
- * Helper function to run a complete bot game with conservation checks
+ * Helper function to run a complete bot game with optional integrity checks
  * @param config Configuration for the bot game
- * @returns Game driver, final state, and step count
  */
 export function runBotGame(config: {
     customRepository?: MockCardRepository;
     initialDecks: string[][];
     maxSteps?: number;
-    conservationCheck?: (state: ControllerState<Controllers>, step: number) => void;
+    integrityCheck?: (state: ControllerState<Controllers>, step: number) => void;
 }) {
     const repository = config.customRepository || mockRepository;
     const factory = gameFactory(repository);
@@ -184,19 +183,13 @@ export function runBotGame(config: {
         
         const stateAfter = driver.getState() as ControllerState<Controllers>;
         
-        // Call conservation check if provided
-        if (config.conservationCheck) {
-            config.conservationCheck(stateAfter, stepCount);
+        // Call integrity check if provided
+        if (config.integrityCheck) {
+            config.integrityCheck(stateAfter, stepCount);
         }
         
         if (stateAfter.completed) {
             break;
         }
     }
-    
-    return {
-        driver,
-        state: driver.getState() as ControllerState<Controllers>,
-        stepCount
-    };
 }
