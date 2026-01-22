@@ -2,27 +2,19 @@ import { expect } from 'chai';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { SupporterData } from '../../../src/repository/card-types.js';
+import { createSupporterRepo, createCardArray } from '../../helpers/test-utils.js';
 
 describe('Draw Effect', () => {
     it('should draw 2 cards (basic amount)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['draw-supporter', {
-                    templateId: 'draw-supporter',
-                    name: 'Draw Supporter',
-                    effects: [{ type: 'draw', amount: { type: 'constant', value: 2 } }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('draw-supporter', 'Draw Supporter',
+            [{ type: 'draw', amount: { type: 'constant', value: 2 } }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('draw-supporter', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'draw-supporter', type: 'supporter' }]),
-                StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(0, createCardArray(5, 'basic-creature'))
             ),
             maxSteps: 10
         });
@@ -32,22 +24,15 @@ describe('Draw Effect', () => {
     });
 
     it('should draw different amounts (4 cards)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['big-draw', {
-                    templateId: 'big-draw',
-                    name: 'Big Draw',
-                    effects: [{ type: 'draw', amount: { type: 'constant', value: 4 } }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('big-draw', 'Big Draw',
+            [{ type: 'draw', amount: { type: 'constant', value: 4 } }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('big-draw', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'big-draw', type: 'supporter' }]),
-                StateBuilder.withDeck(0, Array(10).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(0, createCardArray(10, 'basic-creature'))
             ),
             maxSteps: 10
         });
@@ -56,22 +41,15 @@ describe('Draw Effect', () => {
     });
 
     it('should draw limited by deck size', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['big-draw', {
-                    templateId: 'big-draw',
-                    name: 'Big Draw',
-                    effects: [{ type: 'draw', amount: { type: 'constant', value: 5 } }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('big-draw', 'Big Draw',
+            [{ type: 'draw', amount: { type: 'constant', value: 5 } }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('big-draw', 'supporter')],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'big-draw', type: 'supporter' }]),
-                StateBuilder.withDeck(0, Array(2).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(0, createCardArray(2, 'basic-creature'))
             ),
             maxSteps: 10
         });
@@ -81,15 +59,8 @@ describe('Draw Effect', () => {
     });
 
     it('should handle empty deck', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['draw-supporter', {
-                    templateId: 'draw-supporter',
-                    name: 'Draw Supporter',
-                    effects: [{ type: 'draw', amount: { type: 'constant', value: 2 } }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('draw-supporter', 'Draw Supporter',
+            [{ type: 'draw', amount: { type: 'constant', value: 2 } }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('draw-supporter', 'supporter')],
@@ -105,18 +76,10 @@ describe('Draw Effect', () => {
     });
 
     it('should draw based on context (hand size)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['context-draw', {
-                    templateId: 'context-draw',
-                    name: 'Context Draw',
-                    effects: [{
-                        type: 'draw',
-                        amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' }
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('context-draw', 'Context Draw', [{
+            type: 'draw',
+            amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' }
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('context-draw', 'supporter')],
@@ -127,7 +90,7 @@ describe('Draw Effect', () => {
                     { templateId: 'basic-creature', type: 'creature' },
                     { templateId: 'basic-creature', type: 'creature' }
                 ]),
-                StateBuilder.withDeck(0, Array(10).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(0, createCardArray(10, 'basic-creature'))
             ),
             maxSteps: 10
         });

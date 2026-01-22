@@ -3,25 +3,16 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
+import { createSupporterRepo, createItemRepo } from '../../helpers/test-utils.js';
 
 describe('HP Effect', () => {
     it('should heal 20 HP (basic operation)', () => {
-        const testRepository = new MockCardRepository({
-            items: new Map<string, ItemData>([
-                ['heal-item', {
-                    templateId: 'heal-item',
-                    name: 'Heal Item',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 20 },
-                        target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' } },
-                        operation: 'heal'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createItemRepo('heal-item', 'Heal Item', [{
+            type: 'hp',
+            amount: { type: 'constant', value: 20 },
+            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' } },
+            operation: 'heal'
+        }]);
 
         const { state } = runTestGame({
             actions: [
@@ -41,20 +32,12 @@ describe('HP Effect', () => {
     });
 
     it('should deal damage instead of heal', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['damage-supporter', {
-                    templateId: 'damage-supporter',
-                    name: 'Damage Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 30 },
-                        target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'damage'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('damage-supporter', 'Damage Supporter', [{
+            type: 'hp',
+            amount: { type: 'constant', value: 30 },
+            target: { type: 'fixed', player: 'opponent', position: 'active' },
+            operation: 'damage'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('damage-supporter', 'supporter')],
@@ -71,20 +54,12 @@ describe('HP Effect', () => {
     });
 
     it('should heal variable amounts (60 HP)', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['big-heal', {
-                    templateId: 'big-heal',
-                    name: 'Big Heal',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 60 },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'heal'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('big-heal', 'Big Heal', [{
+            type: 'hp',
+            amount: { type: 'constant', value: 60 },
+            target: { type: 'fixed', player: 'self', position: 'active' },
+            operation: 'heal'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('big-heal', 'supporter')],
@@ -101,23 +76,15 @@ describe('HP Effect', () => {
     });
 
     it('should target all matching creatures', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['mass-heal', {
-                    templateId: 'mass-heal',
-                    name: 'Mass Heal',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 20 },
-                        target: {
-                            type: 'all-matching',
-                            criteria: { player: 'self', location: 'field', condition: { hasDamage: true } }
-                        },
-                        operation: 'heal'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('mass-heal', 'Mass Heal', [{
+            type: 'hp',
+            amount: { type: 'constant', value: 20 },
+            target: {
+                type: 'all-matching',
+                criteria: { player: 'self', location: 'field', condition: { hasDamage: true } }
+            },
+            operation: 'heal'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('mass-heal', 'supporter')],
@@ -136,20 +103,12 @@ describe('HP Effect', () => {
     });
 
     it('should cap healing at current damage', () => {
-        const testRepository = new MockCardRepository({
-            items: new Map<string, ItemData>([
-                ['small-heal', {
-                    templateId: 'small-heal',
-                    name: 'Small Heal',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 20 },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'heal'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createItemRepo('small-heal', 'Small Heal', [{
+            type: 'hp',
+            amount: { type: 'constant', value: 20 },
+            target: { type: 'fixed', player: 'self', position: 'active' },
+            operation: 'heal'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('small-heal', 'item')],
@@ -166,20 +125,12 @@ describe('HP Effect', () => {
     });
 
     it('should cap damage at remaining HP', () => {
-        const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                ['overkill', {
-                    templateId: 'overkill',
-                    name: 'Overkill',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 100 },
-                        target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'damage'
-                    }]
-                }]
-            ])
-        });
+        const testRepository = createSupporterRepo('overkill', 'Overkill', [{
+            type: 'hp',
+            amount: { type: 'constant', value: 100 },
+            target: { type: 'fixed', player: 'opponent', position: 'active' },
+            operation: 'damage'
+        }]);
 
         const { state } = runTestGame({
             actions: [new PlayCardResponseMessage('overkill', 'supporter')],
