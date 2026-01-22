@@ -72,12 +72,13 @@ describe('Energy System', () => {
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withTurnNumber(2)
+                    StateBuilder.withTurnNumber(2),
+                    StateBuilder.withCurrentEnergy(0, 'fire') // Provide initial energy
                 ),
-                maxSteps: 10
+                maxSteps: 3 // Reduce steps to prevent turn transitions
             });
 
-            // Should only have one energy attached
+            // Should only have one energy attached (currentEnergy becomes null after first attachment)
             const attachedEnergy = state.energy.attachedEnergyByInstance['basic-creature-0'];
             const totalEnergy = attachedEnergy ? Object.values(attachedEnergy).reduce((sum, count) => sum + count, 0) : 0;
             expect(totalEnergy).to.be.at.most(1, 'Should not attach multiple energy per turn');
