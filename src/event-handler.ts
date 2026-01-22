@@ -752,7 +752,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         }
     },
     'select-target-response': {
-        canRespond: EventHandler.isTurn('turn'),
+        // Don't check turn - opponent may need to make selections during the active player's turn
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid target selection', (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
@@ -839,7 +839,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         }
     },
     'select-energy-response': {
-        canRespond: EventHandler.isTurn('turn'),
+        // Don't check turn - opponent may need to make selections during the active player's turn
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid energy selection', (controllers: Controllers, source: number, message: SelectEnergyResponseMessage) => {
@@ -883,7 +883,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         }
     },
     'select-card-response': {
-        canRespond: EventHandler.isTurn('turn'),
+        // Don't check turn - opponent may need to make selections during the active player's turn
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid card selection', (controllers: Controllers, source: number, message: SelectCardResponseMessage) => {
@@ -937,7 +937,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         }
     },
     'select-choice-response': {
-        canRespond: EventHandler.isTurn('turn'),
+        // Don't check turn - opponent may need to make selections during the active player's turn
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid choice selection', (controllers: Controllers, source: number, message: SelectChoiceResponseMessage) => {
@@ -984,7 +984,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         }
     },
     'select-multi-target-response': {
-        canRespond: EventHandler.isTurn('turn'),
+        // Don't check turn - opponent may need to make selections during the active player's turn
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid multi-target selection', (controllers: Controllers, source: number, message: SelectMultiTargetResponseMessage) => {
