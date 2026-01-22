@@ -69,11 +69,14 @@ describe('Evolution Mechanics', () => {
             actions: [new EvolveResponseMessage('evolution-creature', 0)],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
                 (state) => state.turn = 1
             )
         });
 
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Evolution should be prevented on first turn');
+        expect(state.hand[0].length).to.equal(1, 'Evolution card should still be in hand');
+        expect(state.hand[0][0].templateId).to.equal('evolution-creature', 'Evolution card should not be played');
     });
 
     it('should prevent same creature instance from evolving twice per turn even with retreats', () => {

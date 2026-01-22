@@ -1,6 +1,7 @@
 import { GenericControllerProvider, GlobalController, GenericHandlerController, SystemHandlerParams } from '@cards-ts/core';
 import { GameCard } from './card-types.js';
 import { FieldCard } from './field-controller.js';
+import { InstancedFieldCard } from '../repository/card-types.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
 
@@ -70,7 +71,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
      * @param playerId The player whose discard pile to add to
      * @param fieldCard The field card to discard
      */
-    discardFieldCard(playerId: number, fieldCard: FieldCard | import('../repository/card-types.js').InstancedFieldCard): void {
+    discardFieldCard(playerId: number, fieldCard: FieldCard | InstancedFieldCard): void {
         if (playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }

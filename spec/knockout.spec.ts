@@ -60,6 +60,43 @@ describe('Knockout System', () => {
         expect(state.discard[1].some((card: any) => card.templateId === 'evolution-creature')).to.be.true;
     });
 
+    it('should discard all cards in evolution stack when evolved creature is knocked out', () => {
+        const { state } = runTestGame({
+            actions: [
+                new AttackResponseMessage(0),
+                new SelectActiveCardResponseMessage(0)
+            ],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                // Start with basic creature, evolve it, then damage it near KO
+                StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withHand(1, [{templateId: 'evolution-creature', type: 'creature'}]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                StateBuilder.withCanEvolve(1, 0),
+                (state) => {
+                    // Manually create an evolved creature for testing
+                    const player1ActiveCard = state.field.creatures[1][0];
+                    if (player1ActiveCard) {
+                        // Add evolution form to the stack
+                        player1ActiveCard.evolutionStack.push({
+                            instanceId: 'evolution-creature-evolved',
+                            templateId: 'evolution-creature'
+                        });
+                        // Damage the evolved creature near KO (evolution-creature has 180 HP)
+                        player1ActiveCard.damageTaken = 160;
+                    }
+                }
+            ),
+            maxSteps: 10
+        });
+        
+        // Both the base form and evolved form should be in the discard pile
+        const discardPile = state.discard[1];
+        expect(discardPile.length).to.be.greaterThanOrEqual(2, 'Both forms should be in discard pile');
+        expect(discardPile.some(card => card.templateId === 'basic-creature')).to.be.true;
+        expect(discardPile.some(card => card.templateId === 'evolution-creature')).to.be.true;
+    });
+
     it('should detach tools when creature with tool is knocked out', () => {
         const { state } = runTestGame({
             actions: [

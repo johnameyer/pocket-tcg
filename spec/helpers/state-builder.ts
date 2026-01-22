@@ -14,6 +14,9 @@ const createEmptyEnergyDict = (): EnergyDictionary => ({
 });
 
 // Helper function to validate creature instance exists
+// Checks if any card in any evolution stack has matching instanceId
+// This is needed because energy/tools are attached using the original instanceId,
+// but we need to find the card even after it evolves to new forms
 const validateCreatureInstance = (state: ControllerState<Controllers>, creatureInstanceId: string): boolean => {
     // Check if any creature in evolutionStack has matching instanceId
     return state.field.creatures[0]?.some(p => 
