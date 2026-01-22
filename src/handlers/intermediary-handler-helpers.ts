@@ -443,11 +443,12 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
             choices: energyOptions
         });
         
-        selectedEnergyType = (await energyReceived)[0] as string;
-        if (selectedEnergyType === 'back') {
+        const selectedValue = (await energyReceived)[0] as string;
+        if (selectedValue === 'back') {
             await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
             return;
         }
+        selectedEnergyType = selectedValue as AttachableEnergyType;
     }
     
     const fieldCardOptions = [];

@@ -98,7 +98,8 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return true;
     }
 
-    static getAvailableEnergyTypes(energyState: EnergyState, playerId: number): string[] {
+    // Static helper to get the current energy type available for a player (used by handlers)
+    static getAvailableEnergyTypes(energyState: EnergyState, playerId: number): AttachableEnergyType[] {
         const currentEnergy = energyState.currentEnergy[playerId];
         return currentEnergy ? [currentEnergy] : [];
     }
@@ -313,12 +314,19 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Check if energy can be attached this turn
     public canAttachEnergy(playerId: number, energyType?: AttachableEnergyType): boolean {
         const currentEnergy = this.state.currentEnergy[playerId];
+        
+        // No energy available
+        if (currentEnergy === null) {
+            return false;
+        }
+        
+        // Check for specific energy type if provided
         if (energyType) {
             return currentEnergy === energyType;
         }
         
-        // Any energy is available if currentEnergy is not null
-        return currentEnergy !== null;
+        // Any energy is available
+        return true;
     }
 
     // Get available energy types for attachment

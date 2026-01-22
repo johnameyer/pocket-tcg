@@ -273,15 +273,9 @@ export class StateBuilder {
         };
     }
 
-    static withCurrentEnergy(player: number, energyTypes: PartialEnergyDict) {
+    static withCurrentEnergy(player: number, energyType: AttachableEnergyType | null) {
         return (state: ControllerState<Controllers>) => {
-            // Find the first non-zero energy type and set it as current energy
-            const firstEnergyType = Object.entries(energyTypes).find(([_, count]) => count && count > 0);
-            if (firstEnergyType) {
-                state.energy.currentEnergy[player] = firstEnergyType[0] as AttachableEnergyType;
-            } else {
-                state.energy.currentEnergy[player] = null;
-            }
+            state.energy.currentEnergy[player] = energyType;
         };
     }
 

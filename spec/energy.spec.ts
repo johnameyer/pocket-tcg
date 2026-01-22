@@ -73,7 +73,7 @@ describe('Energy System', () => {
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTurnNumber(2),
-                    StateBuilder.withCurrentEnergy(0, { fire: 1 }) // Provide initial energy
+                    StateBuilder.withCurrentEnergy(0, 'fire') // Provide initial energy
                 ),
                 maxSteps: 3 // Reduce steps to prevent turn transitions
             });

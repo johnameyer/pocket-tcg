@@ -1,6 +1,6 @@
 import { HandlerData } from '../game-handler.js';
 import { CardRepository } from '../repository/card-repository.js';
-import { EnergyController } from '../controllers/energy-controller.js';
+import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { EffectValidator } from './effect-validator.js';
 import { EffectContextFactory } from './effect-context.js';
 import { TargetResolver } from './target-resolver.js';
@@ -42,7 +42,7 @@ export class ActionValidator {
         const availableTypes = EnergyController.getAvailableEnergyTypes(handlerData.energy, playerId);
         
         if (energyType) {
-            return availableTypes.includes(energyType);
+            return availableTypes.includes(energyType as AttachableEnergyType);
         }
         
         return availableTypes.length > 0;
