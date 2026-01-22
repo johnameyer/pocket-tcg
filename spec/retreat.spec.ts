@@ -6,11 +6,10 @@ import { runTestGame } from './helpers/test-helpers.js';
 import { MockCardRepository } from './mock-repository.js';
 import { EnergyDictionary } from '../src/controllers/energy-controller.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
+import { createSupporterRepo } from './helpers/test-utils.js';
 
-// Helper to get total energy from an energy dictionary
-function getTotalEnergy(energyDict: EnergyDictionary): number {
-    return Object.values(energyDict).reduce((sum, count) => sum + count, 0);
-}
+const getTotalEnergy = (energyDict: EnergyDictionary): number => 
+    Object.values(energyDict).reduce((sum, count) => sum + count, 0);
 
 describe('Creature Retreat System', () => {
     it('should allow retreat with sufficient energy', () => {
@@ -254,21 +253,13 @@ describe('Creature Retreat System', () => {
         });
 
         it('should accumulate discarded energy across multiple retreats in different turns', () => {
-            const testRepository = new MockCardRepository({
-                supporters: new Map([
-                    ['energy-discard', {
-                        templateId: 'energy-discard',
-                        name: 'Energy Discard',
-                        effects: [{
-                            type: 'energy',
-                            energyType: 'fire',
-                            amount: { type: 'constant', value: 1 },
-                            target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'discard'
-                        }]
-                    }]
-                ])
-            });
+            const testRepository = createSupporterRepo('energy-discard', 'Energy Discard', [{
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                operation: 'discard'
+            }]);
 
             const { state } = runTestGame({
                 actions: [
@@ -277,7 +268,7 @@ describe('Creature Retreat System', () => {
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'evolution-creature', ['basic-creature']),  // retreat cost = 2
+                    StateBuilder.withCreatures(0, 'evolution-creature', ['basic-creature']),
                     StateBuilder.withHand(0, [{ templateId: 'energy-discard', type: 'supporter' }]),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 4 })
                 ),
@@ -285,8 +276,6 @@ describe('Creature Retreat System', () => {
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
-            
-            // Should have discarded 1 from effect + 2 from retreat = 3 total
             expect(discardedEnergy.fire).to.equal(3, 'Should accumulate discarded fire energy from both events');
         });
     });

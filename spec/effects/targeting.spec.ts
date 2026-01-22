@@ -7,22 +7,17 @@ import { UseAbilityResponseMessage } from '../../src/messages/response/use-abili
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../src/utils/field-card-utils.js';
+import { createSupporterRepo } from '../helpers/test-utils.js';
 
 describe('Effect Targeting', () => {
     describe('Fixed Targets', () => {
         it('should target self-active creature', () => {
-            const testRepository = new MockCardRepository({ supporters: new Map([
-                ['self-heal-supporter', {
-                    templateId: 'self-heal-supporter',
-                    name: 'Self Heal Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 30 },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'heal'
-                    }]
-                }]
-            ]) });
+            const testRepository = createSupporterRepo('self-heal-supporter', 'Self Heal Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 30 },
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                operation: 'heal'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('self-heal-supporter', 'supporter')],
@@ -39,18 +34,12 @@ describe('Effect Targeting', () => {
         });
 
         it('should target opponent-active creature', () => {
-            const testRepository = new MockCardRepository({ supporters: new Map([
-                ['opponent-damage-supporter', {
-                    templateId: 'opponent-damage-supporter',
-                    name: 'Opponent Damage Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 40 },
-                        target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'damage'
-                    }]
-                }]
-            ]) });
+            const testRepository = createSupporterRepo('opponent-damage-supporter', 'Opponent Damage Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 40 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'damage'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('opponent-damage-supporter', 'supporter')],
@@ -106,33 +95,27 @@ describe('Effect Targeting', () => {
 
     describe('Single Choice Targets', () => {
         it('should require target selection for single-choice', () => {
-            const testRepository = new MockCardRepository({ supporters: new Map([
-                ['choice-heal-supporter', {
-                    templateId: 'choice-heal-supporter',
-                    name: 'Choice Heal Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 50 },
-                        target: {
-                            type: 'single-choice',
-                            chooser: 'self',
-                            criteria: { player: 'self', location: 'field' }
-                        },
-                        operation: 'heal'
-                    }]
-                }]
-            ]) });
+            const testRepository = createSupporterRepo('choice-heal-supporter', 'Choice Heal Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 50 },
+                target: {
+                    type: 'single-choice',
+                    chooser: 'self',
+                    criteria: { player: 'self', location: 'field' }
+                },
+                operation: 'heal'
+            }]);
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('choice-heal-supporter', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1) // Select bench position 1
+                    new SelectTargetResponseMessage(0, 1)
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
                     StateBuilder.withHand(0, [{ templateId: 'choice-heal-supporter', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0-0', 40) // Damage to first bench creature
+                    StateBuilder.withDamage('basic-creature-0-0', 40)
                 ),
                 maxSteps: 15
             });
@@ -144,21 +127,15 @@ describe('Effect Targeting', () => {
 
     describe('All Matching Targets', () => {
         it('should target all matching creature', () => {
-            const testRepository = new MockCardRepository({ supporters: new Map([
-                ['mass-heal-supporter', {
-                    templateId: 'mass-heal-supporter',
-                    name: 'Mass Heal Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 20 },
-                        target: {
-                            type: 'all-matching',
-                            criteria: { player: 'self', location: 'field', condition: { hasDamage: true } }
-                        },
-                        operation: 'heal'
-                    }]
-                }]
-            ]) });
+            const testRepository = createSupporterRepo('mass-heal-supporter', 'Mass Heal Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 20 },
+                target: {
+                    type: 'all-matching',
+                    criteria: { player: 'self', location: 'field', condition: { hasDamage: true } }
+                },
+                operation: 'heal'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('mass-heal-supporter', 'supporter')],
@@ -194,21 +171,15 @@ describe('Effect Targeting', () => {
 
     describe('Scope Filtering', () => {
         it('should filter by self-field scope', () => {
-            const testRepository = new MockCardRepository({ supporters: new Map([
-                ['self-field-supporter', {
-                    templateId: 'self-field-supporter',
-                    name: 'Self Field Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 10 },
-                        target: {
-                            type: 'all-matching',
-                            criteria: { player: 'self', location: 'field' }
-                        },
-                        operation: 'heal'
-                    }]
-                }]
-            ]) });
+            const testRepository = createSupporterRepo('self-field-supporter', 'Self Field Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 10 },
+                target: {
+                    type: 'all-matching',
+                    criteria: { player: 'self', location: 'field' }
+                },
+                operation: 'heal'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('self-field-supporter', 'supporter')],
@@ -228,21 +199,15 @@ describe('Effect Targeting', () => {
         });
 
         it('should filter by opponent-field scope', () => {
-            const testRepository = new MockCardRepository({ supporters: new Map([
-                ['opponent-field-supporter', {
-                    templateId: 'opponent-field-supporter',
-                    name: 'Opponent Field Supporter',
-                    effects: [{
-                        type: 'hp',
-                        amount: { type: 'constant', value: 15 },
-                        target: {
-                            type: 'all-matching',
-                            criteria: { player: 'opponent', location: 'field' }
-                        },
-                        operation: 'damage'
-                    }]
-                }]
-            ]) });
+            const testRepository = createSupporterRepo('opponent-field-supporter', 'Opponent Field Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 15 },
+                target: {
+                    type: 'all-matching',
+                    criteria: { player: 'opponent', location: 'field' }
+                },
+                operation: 'damage'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('opponent-field-supporter', 'supporter')],
@@ -260,24 +225,14 @@ describe('Effect Targeting', () => {
         });
     });
 
-    // Multi Choice Targets - TODO: Implement multi-target selection system
-
     describe('All Matching Targets', () => {
         it('should target all matching creatures automatically', () => {
-            const testRepository = new MockCardRepository({ 
-                supporters: new Map([
-                    ['all-bench-damage-supporter', {
-                        templateId: 'all-bench-damage-supporter',
-                        name: 'All Bench Damage Supporter',
-                        effects: [{
-                            type: 'hp',
-                            amount: { type: 'constant', value: 20 },
-                            target: { type: 'fixed', player: 'opponent', position: 'active' },
-                            operation: 'damage'
-                        }]
-                    }]
-                ])
-            });
+            const testRepository = createSupporterRepo('all-bench-damage-supporter', 'All Bench Damage Supporter', [{
+                type: 'hp',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'damage'
+            }]);
 
             const { state } = runTestGame({
                 actions: [new PlayCardResponseMessage('all-bench-damage-supporter', 'supporter')],
