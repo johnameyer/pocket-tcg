@@ -14,9 +14,9 @@ describe('Shuffle Effect', () => {
         const handler = new ShuffleEffectHandler();
 
         it('should always return true (shuffle effects can always be applied)', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withDeck(0)
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(0)
+            );
 
             const effect: ShuffleEffect = {
                 type: 'shuffle',
@@ -30,9 +30,9 @@ describe('Shuffle Effect', () => {
         });
 
         it('should return true even when deck is empty', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withDeck(0)
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(0)
+            );
 
             const effect: ShuffleEffect = {
                 type: 'shuffle',

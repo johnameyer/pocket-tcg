@@ -20,10 +20,10 @@ describe('Energy Effect', () => {
     describe('canApply', () => {
         const handler = new EnergyEffectHandler();
 
-        it('should always return true (energy effects can always be applied)', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', [])
-                .build();
+        it('should return true for attach operation', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
 
             const effect: EnergyEffect = {
                 type: 'energy',
@@ -39,10 +39,51 @@ describe('Energy Effect', () => {
             expect(result).to.be.true;
         });
 
-        it('should return true even when no creatures exist', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withDeck(10)
-                .build();
+        it('should return true for discard operation', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: EnergyEffect = {
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'discard'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return true when target has no energy (discard will have no effect)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: EnergyEffect = {
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'discard'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            // Energy effects always return true - even if there's no energy to discard
+            expect(result).to.be.true;
+        });
+
+        it('should return true when no target exists (effect will fail gracefully during apply)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(10)
+            );
 
             const effect: EnergyEffect = {
                 type: 'energy',
@@ -55,6 +96,7 @@ describe('Energy Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
+            // Energy effects always return true - target validation happens during apply
             expect(result).to.be.true;
         });
     });

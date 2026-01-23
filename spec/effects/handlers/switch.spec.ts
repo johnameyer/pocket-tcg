@@ -17,10 +17,10 @@ describe('Switch Effect', () => {
         const mockRepository = new MockCardRepository();
 
         it('should return true when there are benched creatures to switch with', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', ['basic-creature'])
-                .withCreatures(1, 'basic-creature', [])
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
 
             const effect: SwitchEffect = {
                 type: 'switch',
@@ -34,10 +34,10 @@ describe('Switch Effect', () => {
             expect(result).to.be.true;
         });
 
-        it('should return false when there are no benched creatures', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', [])
-                .build();
+        it('should return false when there are no benched creatures (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
 
             const effect: SwitchEffect = {
                 type: 'switch',
@@ -52,9 +52,9 @@ describe('Switch Effect', () => {
         });
 
         it('should return false when switchWith is not provided', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', ['basic-creature'])
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature'])
+            );
 
             const effect: SwitchEffect = {
                 type: 'switch',

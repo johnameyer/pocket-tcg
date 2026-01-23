@@ -15,10 +15,10 @@ describe('Status Effect', () => {
         const mockRepository = new MockCardRepository();
 
         it('should return true when there is a valid target', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', [])
-                .withCreatures(1, 'basic-creature', [])
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
 
             const effect: StatusEffect = {
                 type: 'status',
@@ -32,15 +32,15 @@ describe('Status Effect', () => {
             expect(result).to.be.true;
         });
 
-        it('should return false when target is not provided', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', [])
-                .build();
+        it('should return false when there is no creature at target position (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
 
             const effect: StatusEffect = {
                 type: 'status',
                 condition: 'poison',
-                target: undefined as any
+                target: { type: 'fixed', player: 'opponent', position: 'active' }
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
@@ -49,15 +49,16 @@ describe('Status Effect', () => {
             expect(result).to.be.false;
         });
 
-        it('should return false when there is no creature at target position', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withCreatures(0, 'basic-creature', [])
-                .build();
+        it('should return false when target is bench but no benched creatures exist (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
 
             const effect: StatusEffect = {
                 type: 'status',
                 condition: 'poison',
-                target: { type: 'fixed', player: 'opponent', position: 'active' }
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' } }
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');

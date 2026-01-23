@@ -14,9 +14,9 @@ describe('Draw Effect', () => {
         const handler = new DrawEffectHandler();
 
         it('should return true when deck has cards', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withDeck(10)
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(10)
+            );
 
             const effect: DrawEffect = {
                 type: 'draw',
@@ -30,9 +30,9 @@ describe('Draw Effect', () => {
         });
 
         it('should return false when deck is empty', () => {
-            const handlerData = HandlerDataBuilder.create()
-                .withDeck(0)
-                .build();
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(0)
+            );
 
             const effect: DrawEffect = {
                 type: 'draw',
