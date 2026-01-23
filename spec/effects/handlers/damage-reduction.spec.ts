@@ -4,8 +4,67 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData } from '../../../src/repository/card-types.js';
+import { DamageReductionEffectHandler } from '../../../src/effects/handlers/damage-reduction-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { DamageReductionEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Damage Reduction Effect', () => {
+    describe('canApply', () => {
+        const handler = new DamageReductionEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true when target exists', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'defensive-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: DamageReductionEffect = {
+                type: 'damage-reduction',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'self', position: 'active' }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when target does not exist (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default();
+
+            const effect: DamageReductionEffect = {
+                type: 'damage-reduction',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'self', position: 'active' }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'defensive-creature', [])
+            );
+
+            const effect: DamageReductionEffect = {
+                type: 'damage-reduction',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
             ['defensive-creature', {

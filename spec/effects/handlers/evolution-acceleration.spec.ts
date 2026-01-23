@@ -6,8 +6,73 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
+import { EvolutionAccelerationEffectHandler } from '../../../src/effects/handlers/evolution-acceleration-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { EvolutionAccelerationEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Evolution Acceleration Effect', () => {
+    describe('canApply', () => {
+        const handler = new EvolutionAccelerationEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true when target is valid basic creature', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withTurnNumber(3)
+            );
+
+            const effect: EvolutionAccelerationEffect = {
+                type: 'evolution-acceleration',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                skipStages: 1,
+                restrictions: ['basic-creature-only']
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when target does not exist (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default();
+
+            const effect: EvolutionAccelerationEffect = {
+                type: 'evolution-acceleration',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                skipStages: 1,
+                restrictions: ['basic-creature-only']
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return false when creature was played this turn', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withTurnNumber(1)
+            );
+            // Set creature as played this turn
+            handlerData.field.creatures[0][0].turnLastPlayed = 1;
+
+            const effect: EvolutionAccelerationEffect = {
+                type: 'evolution-acceleration',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                skipStages: 1,
+                restrictions: ['basic-creature-only']
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const stage1Creature = { templateId: 'stage1-creature', type: 'creature' as const };
     const stage2Creature = { templateId: 'stage2-creature', type: 'creature' as const };
