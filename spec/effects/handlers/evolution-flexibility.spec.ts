@@ -6,8 +6,48 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
+import { EvolutionFlexibilityEffectHandler } from '../../../src/effects/handlers/evolution-flexibility-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { EvolutionFlexibilityEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Evolution Flexibility Effect', () => {
+    describe('canApply', () => {
+        const handler = new EvolutionFlexibilityEffectHandler();
+
+        it('should always return true (evolution flexibility effects can always be applied)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'eevee', [])
+            );
+
+            const effect: EvolutionFlexibilityEffect = {
+                type: 'evolution-flexibility',
+                target: 'vaporeon',
+                baseForm: 'eevee'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return true even when no creatures exist', () => {
+            const handlerData = HandlerDataBuilder.default();
+
+            const effect: EvolutionFlexibilityEffect = {
+                type: 'evolution-flexibility',
+                target: 'vaporeon',
+                baseForm: 'eevee'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+    });
+
     const eevee = { templateId: 'eevee', type: 'creature' as const };
     const vaporeon = { templateId: 'vaporeon', type: 'creature' as const };
     const jolteon = { templateId: 'jolteon', type: 'creature' as const };
@@ -72,7 +112,7 @@ describe('Evolution Flexibility Effect', () => {
                 name: 'Flexibility Item',
                 effects: [{
                     type: 'evolution-flexibility',
-                    target: 'self',
+                    target: 'vaporeon',
                     baseForm: 'eevee'
                 }]
             }]

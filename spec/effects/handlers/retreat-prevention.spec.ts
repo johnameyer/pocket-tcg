@@ -7,8 +7,70 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
+import { RetreatPreventionEffectHandler } from '../../../src/effects/handlers/retreat-prevention-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { RetreatPreventionEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Retreat Prevention Effect', () => {
+    describe('canApply', () => {
+        const handler = new RetreatPreventionEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true when target exists', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: RetreatPreventionEffect = {
+                type: 'retreat-prevention',
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                duration: 'turn'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when target does not exist (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
+
+            const effect: RetreatPreventionEffect = {
+                type: 'retreat-prevention',
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                duration: 'turn'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: RetreatPreventionEffect = {
+                type: 'retreat-prevention',
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' } },
+                duration: 'turn'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
     const preventionItem = { templateId: 'prevention-item', type: 'item' as const };

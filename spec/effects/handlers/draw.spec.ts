@@ -4,8 +4,48 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { SupporterData } from '../../../src/repository/card-types.js';
+import { DrawEffectHandler } from '../../../src/effects/handlers/draw-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { DrawEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Draw Effect', () => {
+    describe('canApply', () => {
+        const handler = new DrawEffectHandler();
+
+        it('should return true when deck has cards', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(10)
+            );
+
+            const effect: DrawEffect = {
+                type: 'draw',
+                amount: { type: 'constant', value: 3 }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when deck is empty', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(0)
+            );
+
+            const effect: DrawEffect = {
+                type: 'draw',
+                amount: { type: 'constant', value: 3 }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     it('should draw 2 cards (basic amount)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([

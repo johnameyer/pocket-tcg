@@ -4,8 +4,48 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
+import { ShuffleEffectHandler } from '../../../src/effects/handlers/shuffle-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { ShuffleEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Shuffle Effect', () => {
+    describe('canApply', () => {
+        const handler = new ShuffleEffectHandler();
+
+        it('should always return true (shuffle effects can always be applied)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(0)
+            );
+
+            const effect: ShuffleEffect = {
+                type: 'shuffle',
+                target: 'self'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return true even when deck is empty', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(0)
+            );
+
+            const effect: ShuffleEffect = {
+                type: 'shuffle',
+                target: 'opponent'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+    });
+
     it('should shuffle opponent hand and draw 3 (basic operation)', () => {
         const testRepository = new MockCardRepository({
             items: new Map<string, ItemData>([

@@ -5,8 +5,92 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
+import { HpEffectHandler } from '../../../src/effects/handlers/hp-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { HpEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('HP Effect', () => {
+    describe('canApply', () => {
+        const handler = new HpEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true for heal when there are damaged creatures', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withDamage(0, 0, 20)
+            );
+
+            const effect: HpEffect = {
+                type: 'hp',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                operation: 'heal'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Heal', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false for heal when target has no damage (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withDamage(0, 0, 0)
+            );
+
+            const effect: HpEffect = {
+                type: 'hp',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                operation: 'heal'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Heal', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return true for damage when target exists', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: HpEffect = {
+                type: 'hp',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'damage'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Damage', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false for damage when target does not exist (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
+
+            const effect: HpEffect = {
+                type: 'hp',
+                amount: { type: 'constant', value: 20 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'damage'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Damage', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     it('should heal 20 HP (basic operation)', () => {
         const testRepository = new MockCardRepository({
             items: new Map<string, ItemData>([

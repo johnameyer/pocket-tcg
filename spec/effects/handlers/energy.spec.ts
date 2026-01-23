@@ -6,6 +6,10 @@ import { SelectTargetResponseMessage } from '../../../src/messages/response/sele
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary } from '../../../src/controllers/energy-controller.js';
+import { EnergyEffectHandler } from '../../../src/effects/handlers/energy-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { EnergyEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 // Helper to get total energy from an energy dictionary
 function getTotalEnergy(energyDict: EnergyDictionary): number {
@@ -13,6 +17,90 @@ function getTotalEnergy(energyDict: EnergyDictionary): number {
 }
 
 describe('Energy Effect', () => {
+    describe('canApply', () => {
+        const handler = new EnergyEffectHandler();
+
+        it('should return true for attach operation', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
+
+            const effect: EnergyEffect = {
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                operation: 'attach'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return true for discard operation', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: EnergyEffect = {
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'discard'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return true when target has no energy (discard will have no effect)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: EnergyEffect = {
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                operation: 'discard'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            // Energy effects always return true - even if there's no energy to discard
+            expect(result).to.be.true;
+        });
+
+        it('should return true when no target exists (effect will fail gracefully during apply)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withDeck(10)
+            );
+
+            const effect: EnergyEffect = {
+                type: 'energy',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                operation: 'attach'
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
+            const result = handler.canApply(handlerData, effect, context);
+            
+            // Energy effects always return true - target validation happens during apply
+            expect(result).to.be.true;
+        });
+    });
+
     it('should attach 1 fire energy (basic operation)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([

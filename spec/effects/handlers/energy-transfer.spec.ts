@@ -5,8 +5,88 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, SupporterData } from '../../../src/repository/card-types.js';
+import { EnergyTransferEffectHandler } from '../../../src/effects/handlers/energy-transfer-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { EnergyTransferEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Energy Transfer Effect', () => {
+    describe('canApply', () => {
+        const handler = new EnergyTransferEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true when source has required energy', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature'])
+            );
+            // Set up energy on active creature
+            handlerData.energy.attachedEnergyByInstance['basic-creature-0'] = {
+                grass: 0, fire: 2, water: 0, lightning: 0,
+                psychic: 0, fighting: 0, darkness: 0, metal: 0
+            };
+
+            const effect: EnergyTransferEffect = {
+                type: 'energy-transfer',
+                energyTypes: ['fire'],
+                amount: { type: 'constant', value: 1 },
+                source: { type: 'fixed', player: 'self', position: 'active' },
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when source has no required energy (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature'])
+            );
+            // No energy on active creature
+            handlerData.energy.attachedEnergyByInstance['basic-creature-0'] = {
+                grass: 0, fire: 0, water: 0, lightning: 0,
+                psychic: 0, fighting: 0, darkness: 0, metal: 0
+            };
+
+            const effect: EnergyTransferEffect = {
+                type: 'energy-transfer',
+                energyTypes: ['fire'],
+                amount: { type: 'constant', value: 1 },
+                source: { type: 'fixed', player: 'self', position: 'active' },
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return false when no valid destination (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
+            handlerData.energy.attachedEnergyByInstance['basic-creature-0'] = {
+                grass: 0, fire: 2, water: 0, lightning: 0,
+                psychic: 0, fighting: 0, darkness: 0, metal: 0
+            };
+
+            const effect: EnergyTransferEffect = {
+                type: 'energy-transfer',
+                energyTypes: ['fire'],
+                amount: { type: 'constant', value: 1 },
+                source: { type: 'fixed', player: 'self', position: 'active' },
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
     const transferSupporter = { templateId: 'transfer-supporter', type: 'supporter' as const };

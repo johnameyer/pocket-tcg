@@ -4,8 +4,70 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
+import { StatusEffectHandler } from '../../../src/effects/handlers/status-effect-handler.js';
+import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { StatusEffect } from '../../../src/repository/effect-types.js';
+import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Status Effect', () => {
+    describe('canApply', () => {
+        const handler = new StatusEffectHandler();
+        const mockRepository = new MockCardRepository();
+
+        it('should return true when there is a valid target', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: StatusEffect = {
+                type: 'status',
+                condition: 'poison',
+                target: { type: 'fixed', player: 'opponent', position: 'active' }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when there is no creature at target position (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+            );
+
+            const effect: StatusEffect = {
+                type: 'status',
+                condition: 'poison',
+                target: { type: 'fixed', player: 'opponent', position: 'active' }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+
+        it('should return false when target is bench but no benched creatures exist (target resolution failure)', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+            );
+
+            const effect: StatusEffect = {
+                type: 'status',
+                condition: 'poison',
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' } }
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.false;
+        });
+    });
+
     it('should apply poison status (basic condition)', () => {
         const testRepository = new MockCardRepository({
             creatures: new Map([
