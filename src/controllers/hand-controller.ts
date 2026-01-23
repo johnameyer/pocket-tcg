@@ -113,6 +113,15 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
         return card;
     }
     
+    // Play a card from hand and discard it (for supporters/items)
+    playCardAndDiscard(playerId: number, cardIndex: number): GameCard | undefined {
+        const card = this.playCard(playerId, cardIndex);
+        if (card) {
+            this.controllers.discard.discardCard(playerId, card);
+        }
+        return card;
+    }
+    
     // Get a player's hand
     getHand(playerId: number): GameCard[] {
         return this.state[playerId];

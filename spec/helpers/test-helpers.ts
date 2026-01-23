@@ -146,3 +146,50 @@ export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['ge
     }
     return driver.getState() as ControllerState<Controllers>;
 }
+
+/**
+ * Helper function to run a complete bot game with optional integrity checks
+ * @param config Configuration for the bot game
+ */
+export function runBotGame(config: {
+    customRepository?: MockCardRepository;
+    initialDecks: string[][];
+    maxSteps?: number;
+    integrityCheck?: (state: ControllerState<Controllers>, step: number) => void;
+}) {
+    const repository = config.customRepository || mockRepository;
+    const factory = gameFactory(repository);
+    
+    // Create bot handlers
+    const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain());
+    
+    const params = {
+        ...factory.getGameSetup().getDefaultParams(),
+        initialDecks: config.initialDecks
+    };
+    
+    const names = ['Player1', 'Player2'];
+    const driver = factory.getGameDriver(handlers, params, names);
+    
+    driver.resume();
+    
+    const maxSteps = config.maxSteps || 200;
+    let stepCount = 0;
+    
+    while (!driver.getState().completed && stepCount < maxSteps) {
+        driver.handleSyncResponses();
+        driver.resume();
+        stepCount++;
+        
+        const stateAfter = driver.getState() as ControllerState<Controllers>;
+        
+        // Call integrity check if provided
+        if (config.integrityCheck) {
+            config.integrityCheck(stateAfter, stepCount);
+        }
+        
+        if (stateAfter.completed) {
+            break;
+        }
+    }
+}

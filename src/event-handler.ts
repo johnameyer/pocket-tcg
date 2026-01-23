@@ -262,9 +262,16 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const hand = controllers.hand.getHand(sourceHandler);
             const cardIndex = hand.findIndex(card => card.templateId === message.templateId);
             let cardInstanceId: string | undefined;
+            let playedCard: GameCard | undefined;
             if (cardIndex !== -1) {
-                const card = controllers.hand.playCard(sourceHandler, cardIndex);
-                cardInstanceId = card?.instanceId;
+                if (message.cardType === 'supporter' || message.cardType === 'item') {
+                    // For supporters and items, play and discard in one operation
+                    playedCard = controllers.hand.playCardAndDiscard(sourceHandler, cardIndex);
+                } else {
+                    // For creatures and tools, just play (they go to field/attached)
+                    playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
+                }
+                cardInstanceId = playedCard?.instanceId;
             }
             
             if (message.cardType === 'creature') {

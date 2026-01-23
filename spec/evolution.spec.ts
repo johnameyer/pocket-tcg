@@ -40,6 +40,10 @@ describe('Evolution Mechanics', () => {
         expect(activeCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
         expect(activeCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
         expect(getCurrentTemplateId(activeCard)).to.equal('evolution-creature', 'Current form should be evolved');
+        
+        // Card conservation: both cards are in evolution stack, not discarded
+        expect(activeCard.evolutionStack.some((c) => c.templateId === 'basic-creature')).to.be.true;
+        expect(activeCard.evolutionStack.some((c) => c.templateId === 'evolution-creature')).to.be.true;
     });
 
     it('should keep previous form in evolution stack when evolving benched creature', () => {

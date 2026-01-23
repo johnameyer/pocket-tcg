@@ -29,5 +29,8 @@ describe('Supporters', () => {
         // Only first supporter should execute, second should be blocked
         expect(getExecutedCount()).to.equal(1, 'Should only execute first supporter');
         expect(state.hand[0].length).to.equal(1, 'Second supporter should remain in hand');
+        
+        // Card conservation: supporter moved to discard
+        expect(state.discard[0].some((card: any) => card.templateId === 'basic-supporter')).to.be.true;
     });
 });
