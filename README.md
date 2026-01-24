@@ -77,6 +77,76 @@ The game supports customizable parameters via command line arguments. Use `--hel
 node dist/start.js --help
 ```
 
+## Using Custom Card Definitions
+
+This package exports all card type definitions, allowing you to create your own card repositories with custom creatures, supporters, items, and tools.
+
+### Example Usage
+
+```typescript
+import { 
+  CardRepository, 
+  CreatureData, 
+  SupporterData, 
+  ItemData, 
+  ToolData 
+} from '@cards-ts/pocket-tcg';
+
+// Define your custom creatures
+const myCreatures = new Map<string, CreatureData>();
+myCreatures.set('my-creature', {
+  templateId: 'my-creature',
+  name: 'My Creature',
+  maxHp: 100,
+  type: 'fire',
+  weakness: 'water',
+  retreatCost: 1,
+  attacks: [
+    { 
+      name: 'Fireball', 
+      damage: 30, 
+      energyRequirements: [{ type: 'fire', amount: 2 }] 
+    }
+  ]
+});
+
+// Define your custom supporters
+const mySupporters = new Map<string, SupporterData>();
+mySupporters.set('my-supporter', {
+  templateId: 'my-supporter',
+  name: 'My Supporter',
+  effects: [
+    { 
+      type: 'draw', 
+      amount: { type: 'constant', value: 3 } 
+    }
+  ]
+});
+
+// Create a card repository with your custom cards
+const cardRepository = new CardRepository(
+  myCreatures,
+  mySupporters,
+  new Map<string, ItemData>(),
+  new Map<string, ToolData>()
+);
+
+// Use the repository with the game factory
+// (see game-factory.ts for more details)
+```
+
+### Exported Types
+
+The package exports all necessary types for card definitions:
+
+- **Card Types**: `CreatureData`, `SupporterData`, `ItemData`, `ToolData`
+- **Effect Types**: `Effect`, `HpEffect`, `StatusEffect`, `DrawEffect`, `EnergyEffect`, and more
+- **Target Types**: `Target`, `FixedTarget`, `SingleChoiceTarget`, `MultiChoiceTarget`, `AllMatchingTarget`
+- **Condition Types**: `Condition` for conditional effects
+- **Energy Types**: `AttachableEnergyType`, `EnergyRequirementType`
+- **Effect Values**: `EffectValue`, `ConstantValue`, `ResolvedValue`, `ConditionalValue`, and more
+- **Repository**: `CardRepository` class for managing card data
+
 ## Development
 
 ### Building
