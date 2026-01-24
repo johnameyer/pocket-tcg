@@ -79,6 +79,13 @@ export class ConditionEvaluator {
                     }
                 }
                 
+                if (condition.attributes.mega !== undefined) {
+                    const isMega = creatureData.attributes?.mega || false;
+                    if (condition.attributes.mega !== isMega) {
+                        return false;
+                    }
+                }
+                
                 if (condition.attributes.ultraBeast !== undefined) {
                     const isUltraBeast = creatureData.attributes?.ultraBeast || false;
                     if (condition.attributes.ultraBeast !== isUltraBeast) {

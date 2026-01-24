@@ -28,6 +28,7 @@ export type Condition = {
     isType?: AttachableEnergyType;
     attributes?: {
         ex?: boolean;
+        mega?: boolean;
         ultraBeast?: boolean;
     };
 };
