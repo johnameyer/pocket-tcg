@@ -6,20 +6,76 @@ import { runTestGame } from './helpers/test-helpers.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 describe('Knockout System', () => {
-    it('should award points when creature is knocked out', () => {
-        const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
-            stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withDamage('high-hp-creature-1', 160), // 180 HP - 160 damage = 20 HP, attack does 20 damage = KO
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
-                (state) => { state.points = [0, 0]; }
-            ),
-            maxSteps: 10
+    describe('Point Awarding', () => {
+        it('should award points when creature is knocked out', () => {
+            const { state } = runTestGame({
+                actions: [new AttackResponseMessage(0)],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'high-hp-creature'),
+                    StateBuilder.withDamage('high-hp-creature-1', 160), // 180 HP - 160 damage = 20 HP, attack does 20 damage = KO
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                    (state) => { state.points = [0, 0]; }
+                ),
+                maxSteps: 10
+            });
+            
+            expect(state.points[0]).to.be.greaterThan(0, 'Player 0 should have gained points for knocking out creature');
         });
-        
-        expect(state.points[0]).to.be.greaterThan(0, 'Player 0 should have gained points for knocking out creature');
+
+        it('should award 1 point when a regular card is knocked out', () => {
+            const { state } = runTestGame({
+                actions: [
+                    new AttackResponseMessage(0),
+                    new SelectActiveCardResponseMessage(0)
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withDamage('basic-creature-1', 40), // Pre-damage so 20 damage attack will KO (40 + 20 = 60 HP)
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                ),
+                maxSteps: 15
+            });
+
+            expect(state.points[0]).to.equal(1, 'Player 0 should have 1 point from basic knockout');
+        });
+
+        it('should award 2 points when an ex card is knocked out', () => {
+            const { state } = runTestGame({
+                actions: [
+                    new AttackResponseMessage(0),
+                    new SelectActiveCardResponseMessage(0)
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'ex-creature', ['basic-creature']),
+                    StateBuilder.withDamage('ex-creature-1', 100), // Pre-damage so 20 damage attack will KO (100 + 20 = 120 HP)
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                ),
+                maxSteps: 15
+            });
+
+            expect(state.points[0]).to.equal(2, 'Player 0 should have 2 points from ex knockout');
+        });
+
+        it('should award 3 points when a mega ex card is knocked out', () => {
+            const { state } = runTestGame({
+                actions: [
+                    new AttackResponseMessage(0),
+                    new SelectActiveCardResponseMessage(0)
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'mega-ex-creature', ['basic-creature']),
+                    StateBuilder.withDamage('mega-ex-creature-1', 100), // Pre-damage so 20 damage attack will KO (100 + 20 = 120 HP)
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                ),
+                maxSteps: 15
+            });
+
+            expect(state.points[0]).to.equal(3, 'Player 0 should have 3 points from mega ex knockout');
+        });
     });
 
     it('should handle bench promotion after knockout', () => {

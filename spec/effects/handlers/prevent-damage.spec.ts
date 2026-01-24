@@ -64,6 +64,7 @@ describe('Prevent Damage Effect', () => {
 
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const exCreature = { templateId: 'ex-creature', type: 'creature' as const };
+    const megaExCreature = { templateId: 'mega-ex-creature', type: 'creature' as const };
     const preventItem = { templateId: 'prevent-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
@@ -86,6 +87,16 @@ describe('Prevent Damage Effect', () => {
                 retreatCost: 2,
                 attributes: { ex: true },
                 attacks: [{ name: 'Ex Attack', damage: 60, energyRequirements: [{ type: 'water', amount: 2 }] }]
+            }],
+            ['mega-ex-creature', {
+                templateId: 'mega-ex-creature',
+                name: 'Mega Ex Creature',
+                maxHp: 220,
+                type: 'lightning',
+                weakness: 'fighting',
+                retreatCost: 3,
+                attributes: { ex: true, mega: true },
+                attacks: [{ name: 'Mega Attack', damage: 90, energyRequirements: [{ type: 'lightning', amount: 3 }] }]
             }]
         ]),
         items: new Map<string, ItemData>([
@@ -149,6 +160,26 @@ describe('Prevent Damage Effect', () => {
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
         expect(state.field.creatures[1][0].damageTaken).to.equal(0, 'Should take no damage from ex creature (prevented)');
+    });
+
+    it('should prevent damage from mega ex sources', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [
+                new PlayCardResponseMessage('prevent-ex-item', 'item'),
+                new AttackResponseMessage(0) // Mega ex attack should be prevented
+            ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'mega-ex-creature'),
+                StateBuilder.withCreatures(1, 'basic-creature'),
+                StateBuilder.withHand(0, [preventExItem]),
+                StateBuilder.withEnergy('mega-ex-creature-0', { lightning: 3 })
+            ),
+            maxSteps: 15
+        });
+
+        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
+        expect(state.field.creatures[1][0].damageTaken).to.equal(0, 'Should take no damage from mega ex (prevented)');
     });
 
     it('should not prevent damage from non-ex sources', () => {
