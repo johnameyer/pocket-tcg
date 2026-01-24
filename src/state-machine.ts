@@ -3,6 +3,18 @@ import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messag
 import { sequence, loop, game, conditionalState, handleSingle, named } from '@cards-ts/state-machine';
 import { TriggerProcessor } from './effects/trigger-processor.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
+import { CreatureData } from './repository/card-types.js';
+
+// Helper function to calculate points awarded for knocking out a creature
+const calculateKnockoutPoints = (creatureData: CreatureData): number => {
+    if (creatureData.attributes?.ex && creatureData.attributes?.mega) {
+        return 3; // Mega ex cards
+    } else if (creatureData.attributes?.ex) {
+        return 2; // Regular ex cards
+    } else {
+        return 1; // Basic cards
+    }
+};
 
 // Check if any card was knocked out (has 0 HP)
 const isCardKnockedOut = (controllers: Controllers) => {
@@ -84,9 +96,9 @@ const processKnockouts = {
                         controllers.tools.detachTool(fieldInstanceId);
                     }
                     
-                    // Award points to the opponent (2 for ex cards, 1 for regular)
+                    // Award points to the opponent
                     const opponentId = (i + 1) % controllers.players.count;
-                    const pointsToAward = cardData.attributes?.ex ? 2 : 1;
+                    const pointsToAward = calculateKnockoutPoints(cardData);
                     controllers.points.increaseScore(opponentId, pointsToAward);
                     
                     // Note: Card will be automatically discarded when promoteToBattle is called
@@ -114,9 +126,9 @@ const processKnockouts = {
                         controllers.tools.detachTool(fieldInstanceId);
                     }
                     
-                    // Award points to the opponent (2 for ex cards, 1 for regular)
+                    // Award points to the opponent
                     const opponentId = (i + 1) % controllers.players.count;
-                    const pointsToAward = cardData.attributes?.ex ? 2 : 1;
+                    const pointsToAward = calculateKnockoutPoints(cardData);
                     controllers.points.increaseScore(opponentId, pointsToAward);
                     
                     // Remove the knocked out bench card (automatically discards)

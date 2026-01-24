@@ -44,6 +44,28 @@ mockCreatureData.set('tank-creature', {
     attacks: [{ name: 'Body Slam', damage: 50, energyRequirements: [{ type: 'colorless', amount: 3 }] }]
 });
 
+mockCreatureData.set('ex-creature', {
+    templateId: 'ex-creature',
+    name: 'Ex Creature',
+    maxHp: 120,
+    type: 'water',
+    weakness: 'grass',
+    retreatCost: 2,
+    attributes: { ex: true },
+    attacks: [{ name: 'Ex Attack', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }]
+});
+
+mockCreatureData.set('mega-ex-creature', {
+    templateId: 'mega-ex-creature',
+    name: 'Mega Ex Creature',
+    maxHp: 120,
+    type: 'lightning',
+    weakness: 'fighting',
+    retreatCost: 3,
+    attributes: { ex: true, mega: true },
+    attacks: [{ name: 'Mega Attack', damage: 60, energyRequirements: [{ type: 'lightning', amount: 3 }] }]
+});
+
 const mockSupporterData = new Map<string, SupporterData>();
 mockSupporterData.set('basic-supporter', {
     templateId: 'basic-supporter',

@@ -60,6 +60,7 @@ export type CreatureData = {
     evolvesFrom?: string;
     attributes?: {
         ex?: boolean;
+        mega?: boolean;
         ultraBeast?: boolean;
     };
 };
