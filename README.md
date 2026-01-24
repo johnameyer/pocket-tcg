@@ -57,7 +57,9 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Hand size limits (default 10 cards, customizable)
 
 ### Battle Features
-- ✅ Special cards (2 points when knocked out)
+- ✅ Special ex cards (2 points when knocked out)
+- ✅ Mega ex cards (3 points when knocked out)
+- ✅ Ex protection effects (prevent damage from ex/mega ex cards)
 - ✅ Coin flip mechanics for attacks/effects
 - ✅ Special condition checkup phase
 
