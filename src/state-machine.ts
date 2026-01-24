@@ -84,9 +84,9 @@ const processKnockouts = {
                         controllers.tools.detachTool(fieldInstanceId);
                     }
                     
-                    // Award points to the opponent (2 for ex cards, 1 for regular)
+                    // Award points to the opponent (3 for mega ex, 2 for ex cards, 1 for regular)
                     const opponentId = (i + 1) % controllers.players.count;
-                    const pointsToAward = cardData.attributes?.ex ? 2 : 1;
+                    const pointsToAward = (cardData.attributes?.ex && cardData.attributes?.mega) ? 3 : (cardData.attributes?.ex ? 2 : 1);
                     controllers.points.increaseScore(opponentId, pointsToAward);
                     
                     // Note: Card will be automatically discarded when promoteToBattle is called
