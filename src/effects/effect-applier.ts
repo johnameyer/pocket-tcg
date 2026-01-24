@@ -3,7 +3,7 @@ import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
 import { FixedTarget, Target, ResolvedTarget } from '../repository/target-types.js';
 import { EffectContext } from './effect-context.js';
-import { PendingTargetSelection } from './pending-target-selection.js';
+import { PendingSelection, PendingTargetSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler, EffectHandlerMap } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
@@ -199,7 +199,7 @@ export class EffectApplier {
      * @param targetCreatureIndex The selected target creature index
      */
     static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingTargetSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
-        const { effect, originalContext, type = 'target' } = pendingSelection;
+        const { effect, originalContext, selectionType = 'target' } = pendingSelection;
 
         // Target validation is now handled at the event handler level
         // If we reach here, the target is valid
@@ -266,11 +266,11 @@ export class EffectApplier {
                 // There's still another target that needs selection
                 // Set up pending selection for the next target
                 const pendingSelection: PendingTargetSelection = {
+                    selectionType: 'target',
                     effect: resolvedEffect,
-                    originalContext,
-                    type: 'target'
+                    originalContext
                 };
-                controllers.turnState.setPendingTargetSelection(pendingSelection);
+                controllers.turnState.setPendingSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up
             }
         }
