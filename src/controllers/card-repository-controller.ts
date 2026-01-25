@@ -27,6 +27,7 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
     }
 
     getCreature(id: string) { return this.repository.getCreature(id); }
+    getCreatureByName(name: string) { return this.repository.getCreatureByName(name); }
     getSupporter(id: string) { return this.repository.getSupporter(id); }
     getItem(id: string) { return this.repository.getItem(id); }
     getTool(id: string) { return this.repository.getTool(id); }

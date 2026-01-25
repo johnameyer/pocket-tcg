@@ -24,7 +24,7 @@ describe('Damage Boost Conditions', () => {
                 maxHp: 120,
                 type: 'fire',
                 weakness: 'water',
-                evolvesFrom: 'basic-creature',
+                evolvesFrom: 'Basic Creature',
                 retreatCost: 2,
                 attacks: [{ name: 'Evolution Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }]
             }],
@@ -46,7 +46,7 @@ describe('Damage Boost Conditions', () => {
                 effects: [{
                     type: 'damage-boost',
                     amount: { type: 'constant', value: 30 },
-                    condition: { evolvesFrom: 'basic-creature' },
+                    condition: { evolvesFrom: 'Basic Creature' },
                     duration: 'this-turn'
                 }]
             }],

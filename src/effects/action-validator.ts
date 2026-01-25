@@ -24,10 +24,11 @@ export class ActionValidator {
         
         if (currentTurn <= 1 || (creature.turnLastPlayed !== undefined && creature.turnLastPlayed >= currentTurn)) return false;
         
+        const creatureData = cardRepository.getCreature(getCurrentTemplateId(creature));
         const allCreatures = cardRepository.getAllCreatureIds();
         return allCreatures.some(id => {
             const data = cardRepository.getCreature(id);
-            return data.evolvesFrom === getCurrentTemplateId(creature);
+            return data.evolvesFrom === creatureData.name;
         });
     }
     

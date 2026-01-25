@@ -350,13 +350,13 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     
     allFieldCards.forEach((fieldCard: FieldCard, position: number) => {
         if (ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
+            const currentData = cardRepository.getCreature(fieldCard.templateId);
             const evolution = allFieldCard.find(id => {
                 const data = cardRepository.getCreature(id);
-                return data.evolvesFrom === fieldCard.templateId;
+                return data.evolvesFrom === currentData.name;
             });
             
             if (evolution) {
-                const currentData = cardRepository.getCreature(fieldCard.templateId);
                 const evolutionData = cardRepository.getCreature(evolution);
                 
                 if (position === 0) { // Active FieldCard

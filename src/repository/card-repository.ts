@@ -22,6 +22,21 @@ export class CardRepository {
         return Array.from(this.creatureData.keys());
     }
     
+    /**
+     * Get a creature by its name.
+     * @param name The name of the creature to find
+     * @returns The first creature data matching the name
+     * @throws Error if no creature with that name is found
+     */
+    public getCreatureByName(name: string): CreatureData {
+        for (const creature of this.creatureData.values()) {
+            if (creature.name === name) {
+                return creature;
+            }
+        }
+        throw new Error(`Creature not found with name: ${name}`);
+    }
+    
     public getSupporter(templateId: string): SupporterData {
         const supporter = this.supporterData.get(templateId);
         if (!supporter) {
@@ -101,8 +116,9 @@ export class CardRepository {
             }
             
             // Check if the FieldCard it evolves from is also an evolution FieldCard
+            // evolvesFrom is now a creature name, not a templateId
             try {
-                const preFieldCard = this.getCreature(fieldCard.evolvesFrom);
+                const preFieldCard = this.getCreatureByName(fieldCard.evolvesFrom);
                 if (!preFieldCard.evolvesFrom) {
                     return 1; // Stage 1 FieldCard (evolves from Basic)
                 } else {

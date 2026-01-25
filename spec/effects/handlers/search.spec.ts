@@ -94,7 +94,7 @@ describe('Search Effect', () => {
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 2,
-                evolvesFrom: 'basic-creature',
+                evolvesFrom: 'Basic Creature',
                 attacks: [{ name: 'Evolution Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }]
             }]
         ]),

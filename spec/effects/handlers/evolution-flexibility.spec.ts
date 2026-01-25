@@ -73,7 +73,7 @@ describe('Evolution Flexibility Effect', () => {
                 type: 'water',
                 weakness: 'lightning',
                 retreatCost: 2,
-                evolvesFrom: 'eevee',
+                evolvesFrom: 'Eevee',
                 attacks: [{ name: 'Water Gun', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }]
             }],
             ['jolteon', {
@@ -83,7 +83,7 @@ describe('Evolution Flexibility Effect', () => {
                 type: 'lightning',
                 weakness: 'fighting',
                 retreatCost: 1,
-                evolvesFrom: 'eevee',
+                evolvesFrom: 'Eevee',
                 attacks: [{ name: 'Thunder Shock', damage: 40, energyRequirements: [{ type: 'lightning', amount: 2 }] }]
             }],
             ['flareon', {
@@ -93,7 +93,7 @@ describe('Evolution Flexibility Effect', () => {
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 1,
-                evolvesFrom: 'eevee',
+                evolvesFrom: 'Eevee',
                 attacks: [{ name: 'Flamethrower', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }]
             }],
             ['basic-creature', {
