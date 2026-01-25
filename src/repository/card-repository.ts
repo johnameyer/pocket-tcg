@@ -24,6 +24,12 @@ export class CardRepository {
     
     /**
      * Get a creature by its name.
+     * This is used for evolution chain validation where evolvesFrom references a creature name.
+     * 
+     * Note: If multiple creatures share the same name (e.g., different versions with different templateIds),
+     * this returns the first match. This is acceptable because creatures with the same name should have
+     * compatible evolution chains - the evolvesFrom property references the name, not a specific templateId.
+     * 
      * @param name The name of the creature to find
      * @returns The first creature data matching the name
      * @throws Error if no creature with that name is found
