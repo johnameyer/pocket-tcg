@@ -57,7 +57,7 @@ export class DefaultBotHandler extends GameHandler {
             const allCreatures = this.cardRepository.getAllCreatureIds();
             const evolution = allCreatures.find((id: string) => {
                 const data = this.cardRepository.getCreature(id);
-                return data?.evolvesFrom === activeCreatureData.name;
+                return data?.previousStageName === activeCreatureData.name;
             });
             
             if (evolution) {

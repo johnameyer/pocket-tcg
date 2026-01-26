@@ -214,7 +214,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot play evolved creature directly', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     if (message.cardType === 'creature') {
                         const creatureData = controllers.cardRepository.getCreature(message.templateId);
-                        return creatureData.evolvesFrom !== undefined;
+                        return creatureData.previousStageName !== undefined;
                     }
                     return false;
                 }),
@@ -482,7 +482,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         const evolutionData = controllers.cardRepository.getCreature(message.evolutionId);
                         const currentData = controllers.cardRepository.getCreature(getCurrentTemplateId(targetCard));
                         
-                        const isValidEvolution = evolutionData.evolvesFrom === currentData.name;
+                        const isValidEvolution = evolutionData.previousStageName === currentData.name;
                         
                         return !isValidEvolution;
                     }

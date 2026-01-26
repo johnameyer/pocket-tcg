@@ -57,7 +57,7 @@ export type CreatureData = {
     attacks: CreatureAttack[];
     ability?: CreatureAbility;
     stage?: number;
-    evolvesFrom?: string;
+    previousStageName?: string;
     attributes?: {
         ex?: boolean;
         mega?: boolean;

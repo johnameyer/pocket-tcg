@@ -181,7 +181,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             
             // Check if card can be played using ActionValidator
             if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if (fieldCardData.evolvesFrom) {
+                if (fieldCardData.previousStageName) {
                     cardDescription = ' (Cannot play evolved FieldCard directly!)';
                 } else {
                     cardDescription = ' (Bench is full!)';
@@ -353,7 +353,7 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
             const currentData = cardRepository.getCreature(fieldCard.templateId);
             const evolution = allFieldCard.find(id => {
                 const data = cardRepository.getCreature(id);
-                return data.evolvesFrom === currentData.name;
+                return data.previousStageName === currentData.name;
             });
             
             if (evolution) {

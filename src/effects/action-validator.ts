@@ -28,7 +28,7 @@ export class ActionValidator {
         const allCreatures = cardRepository.getAllCreatureIds();
         return allCreatures.some(id => {
             const data = cardRepository.getCreature(id);
-            return data.evolvesFrom === creatureData.name;
+            return data.previousStageName === creatureData.name;
         });
     }
     
@@ -133,7 +133,7 @@ export class ActionValidator {
     private static canPlayCreatureCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
         const creatureData = cardRepository.getCreature(cardId);
         
-        if (creatureData.evolvesFrom) return false;
+        if (creatureData.previousStageName) return false;
         
         const benchSize = handlerData.field.creatures[playerId].length - 1;
         return benchSize < 3;

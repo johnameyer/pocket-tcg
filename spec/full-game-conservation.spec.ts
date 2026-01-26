@@ -34,7 +34,7 @@ describe('Full Game Conservation', () => {
                 name: 'Evolved Fire',
                 maxHp: 120,
                 type: 'fire',
-                evolvesFrom: 'Basic Fire',
+                previousStageName: 'Basic Fire',
                 weakness: 'water',
                 retreatCost: 2,
                 attacks: [
