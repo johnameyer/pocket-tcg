@@ -200,7 +200,7 @@ export class AttackDamageResolver {
         // Check if this is an evolution-based boost
         if (boost.effectName.includes('Evolution Boost')) {
             // Only apply to creatures that evolve from something (have evolvesFrom property)
-            return !!targetData.evolvesFrom;
+            return !!targetData.previousStageName;
         }
         
         // Check Red Supporter - only applies to ex Pokemon

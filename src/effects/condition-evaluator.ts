@@ -98,10 +98,10 @@ export class ConditionEvaluator {
         }
         
         // Check evolvesFrom condition
-        if (condition.evolvesFrom !== undefined) {
+        if (condition.previousStageName !== undefined) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
-                if (!creatureData.evolvesFrom || creatureData.evolvesFrom.toLowerCase() !== condition.evolvesFrom.toLowerCase()) {
+                if (!creatureData.previousStageName || creatureData.previousStageName.toLowerCase() !== condition.previousStageName.toLowerCase()) {
                     return false;
                 }
             } catch (error) {
@@ -131,13 +131,13 @@ export class ConditionEvaluator {
      * Stage 2 = Evolves from Stage 1
      */
     private static calculateStage(creatureData: CreatureData, cardRepository: CardRepository): number {
-        if (!creatureData.evolvesFrom) {
+        if (!creatureData.previousStageName) {
             return 0; // Basic creature
         }
         
         try {
-            const prevStageData = cardRepository.getCreature(creatureData.evolvesFrom);
-            if (!prevStageData.evolvesFrom) {
+            const prevStageData = cardRepository.getCreature(creatureData.previousStageName);
+            if (!prevStageData.previousStageName) {
                 return 1; // Stage 1 (evolves from Basic)
             } else {
                 return 2; // Stage 2 (evolves from Stage 1)

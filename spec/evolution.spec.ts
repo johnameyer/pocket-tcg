@@ -214,4 +214,42 @@ describe('Evolution Mechanics', () => {
             expect(state.field.creatures[0][0]).to.exist;
         });
     });
+
+    describe('Evolution with Same Name, Different Template ID', () => {
+        /**
+         * This test verifies that evolution is based on creature name, not templateId.
+         * A player can have up to two creatures with the same name but different templateIds in their deck.
+         */
+        
+        it('should allow basic-variant to evolve based on name', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withCanEvolve(0, 0)
+                )
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Should have executed evolution action');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('evolution-creature', 'Should have evolved');
+        });
+
+        it('should preserve evolution stack showing original templateId', () => {
+            const { state } = runTestGame({
+                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withCanEvolve(0, 0)
+                ),
+                maxSteps: 5
+            });
+
+            const activeCard = state.field.creatures[0][0];
+            expect(activeCard.evolutionStack.length).to.equal(2, 'Evolution stack should have 2 cards');
+            expect(activeCard.evolutionStack[0].templateId).to.equal('basic-creature', 'Base form should be basic-creature');
+            expect(activeCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Evolved form should be evolution-creature');
+        });
+    });
 });

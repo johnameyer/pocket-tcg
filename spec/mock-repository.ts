@@ -30,7 +30,7 @@ mockCreatureData.set('evolution-creature', {
     type: 'fire',
     weakness: 'water',
     retreatCost: 2,
-    evolvesFrom: 'basic-creature',
+    previousStageName: 'Basic Creature',
     attacks: [{ name: 'Evolved Attack', damage: 50, energyRequirements: [{ type: 'fire', amount: 2 }] }]
 });
 

@@ -47,7 +47,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             // Check restrictions - for now, only basic-creature-only is supported
             if (effect.restrictions && effect.restrictions.includes('basic-creature-only')) {
                 const currentData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
-                const isBasicCreature = !currentData.evolvesFrom;
+                const isBasicCreature = !currentData.previousStageName;
                 
                 if (!isBasicCreature) {
                     return false;
@@ -56,12 +56,17 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             
             // Check if there's a valid Stage 2 evolution in hand
             const hand = handlerData.hand;
+            const targetCreatureData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
             const hasValidEvolution = hand.some(card => {
                 if (card.type !== 'creature') return false;
                 const cardData = cardRepository.getCreature(card.templateId);
-                if (!cardData.evolvesFrom) return false;
-                const stage1Data = cardRepository.getCreature(cardData.evolvesFrom);
-                return stage1Data && stage1Data.evolvesFrom === getCurrentTemplateId(targetCreature);
+                if (!cardData.previousStageName) return false;
+                try {
+                    const stage1Data = cardRepository.getCreatureByName(cardData.previousStageName);
+                    return stage1Data && stage1Data.previousStageName === targetCreatureData.name;
+                } catch (error) {
+                    return false;
+                }
             });
             
             // For validation, we allow the item to be played even if there's no valid evolution
@@ -118,7 +123,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             
             // Check restrictions - for now, only basic-creature-only is supported
             const currentData = controllers.cardRepository.getCreature(targetCreature.templateId);
-            const isBasicCreature = !currentData.evolvesFrom;
+            const isBasicCreature = !currentData.previousStageName;
             
             if (!isBasicCreature) {
                 continue;
@@ -167,17 +172,23 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
      * @returns The Stage 2 evolution card, or undefined if none found
      */
     private findStage2Evolution(controllers: Controllers, hand: GameCard[], basicCardId: string): GameCard | undefined {
+        const basicCardData = controllers.cardRepository.getCreature(basicCardId);
         return hand.find((card) => {
             if (card.type !== 'creature') return false;
             
             const cardData = controllers.cardRepository.getCreature(card.templateId);
-            if (!cardData.evolvesFrom) return false;
+            if (!cardData.previousStageName) return false;
             
             // Check if this Stage 2 can evolve from the Basic creature
-            const stage1Data = controllers.cardRepository.getCreature(cardData.evolvesFrom);
-            if (!stage1Data.evolvesFrom) return false;
-            
-            return stage1Data.evolvesFrom === basicCardId;
+            // evolvesFrom is now a name, not a templateId
+            try {
+                const stage1Data = controllers.cardRepository.getCreatureByName(cardData.previousStageName);
+                if (!stage1Data.previousStageName) return false;
+                
+                return stage1Data.previousStageName === basicCardData.name;
+            } catch (error) {
+                return false;
+            }
         });
     }
 }

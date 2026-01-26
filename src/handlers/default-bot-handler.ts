@@ -53,10 +53,11 @@ export class DefaultBotHandler extends GameHandler {
         // Try to evolve active creature if possible
         if (handlerData.field.canEvolveActive && (handlerData.field.canEvolveActive as boolean[])[currentPlayer]) {
             const activeCreature = handlerData.field.creatures[currentPlayer][0]; // Get active creature at position 0
+            const activeCreatureData = this.cardRepository.getCreature(getCurrentTemplateId(activeCreature));
             const allCreatures = this.cardRepository.getAllCreatureIds();
             const evolution = allCreatures.find((id: string) => {
                 const data = this.cardRepository.getCreature(id);
-                return data?.evolvesFrom === getCurrentTemplateId(activeCreature);
+                return data?.previousStageName === activeCreatureData.name;
             });
             
             if (evolution) {

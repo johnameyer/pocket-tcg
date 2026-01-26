@@ -15,6 +15,7 @@ import { ControllerUtils } from './utils/controller-utils.js';
 import { TargetResolver } from './effects/target-resolver.js';
 import { effectHandlers } from './effects/handlers/effect-handlers-map.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
+import { getCurrentTemplateId } from './utils/field-card-utils.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -213,7 +214,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot play evolved creature directly', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     if (message.cardType === 'creature') {
                         const creatureData = controllers.cardRepository.getCreature(message.templateId);
-                        return creatureData.evolvesFrom !== undefined;
+                        return creatureData.previousStageName !== undefined;
                     }
                     return false;
                 }),
@@ -479,9 +480,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     
                     if (targetCard) {
                         const evolutionData = controllers.cardRepository.getCreature(message.evolutionId);
-                        const currentData = controllers.cardRepository.getCreature(targetCard.templateId);
+                        const currentData = controllers.cardRepository.getCreature(getCurrentTemplateId(targetCard));
                         
-                        const isValidEvolution = evolutionData.evolvesFrom === targetCard.templateId;
+                        const isValidEvolution = evolutionData.previousStageName === currentData.name;
                         
                         return !isValidEvolution;
                     }

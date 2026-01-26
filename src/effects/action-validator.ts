@@ -24,10 +24,11 @@ export class ActionValidator {
         
         if (currentTurn <= 1 || (creature.turnLastPlayed !== undefined && creature.turnLastPlayed >= currentTurn)) return false;
         
+        const creatureData = cardRepository.getCreature(getCurrentTemplateId(creature));
         const allCreatures = cardRepository.getAllCreatureIds();
         return allCreatures.some(id => {
             const data = cardRepository.getCreature(id);
-            return data.evolvesFrom === getCurrentTemplateId(creature);
+            return data.previousStageName === creatureData.name;
         });
     }
     
@@ -132,7 +133,7 @@ export class ActionValidator {
     private static canPlayCreatureCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
         const creatureData = cardRepository.getCreature(cardId);
         
-        if (creatureData.evolvesFrom) return false;
+        if (creatureData.previousStageName) return false;
         
         const benchSize = handlerData.field.creatures[playerId].length - 1;
         return benchSize < 3;

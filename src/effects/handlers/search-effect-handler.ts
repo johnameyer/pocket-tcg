@@ -174,7 +174,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                         if (card.type === 'creature') {
                             try {
                                 const creatureData = controllers.cardRepository.getCreature(card.templateId);
-                                return !creatureData.evolvesFrom;
+                                return !creatureData.previousStageName;
                             } catch (error) {
                                 return false;
                             }
@@ -196,7 +196,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                         if (card.type === 'creature') {
                             try {
                                 const creatureData = controllers.cardRepository.getCreature(card.templateId);
-                                return !creatureData.evolvesFrom;
+                                return !creatureData.previousStageName;
                             } catch (error) {
                                 return false;
                             }

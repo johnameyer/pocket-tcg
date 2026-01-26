@@ -96,7 +96,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 2,
-                evolvesFrom: 'basic-creature',
+                previousStageName: 'Basic Creature',
                 attacks: [{ name: 'Stage 1 Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }]
             }],
             ['stage2-creature', {
@@ -106,7 +106,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 3,
-                evolvesFrom: 'stage1-creature',
+                previousStageName: 'Stage 1 Creature',
                 attacks: [{ name: 'Stage 2 Attack', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }]
             }]
         ]),
