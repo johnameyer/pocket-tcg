@@ -9,7 +9,7 @@ import { TargetResolver } from '../effects/target-resolver.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
-import { isPendingTargetSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingMultiTargetSelection } from '../effects/pending-selection-types.js';
+import { isPendingFieldSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
 import * as helpers from './intermediary-handler-helpers.js';
 
 export class IntermediaryHandler extends GameHandler {
@@ -152,7 +152,7 @@ export class IntermediaryHandler extends GameHandler {
     
     async handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage>): Promise<void> {
         const pendingSelection = handlerData.turnState.pendingSelection;
-        if (!pendingSelection || !isPendingTargetSelection(pendingSelection)) {
+        if (!pendingSelection || !isPendingFieldSelection(pendingSelection)) {
             return;
         }
         
@@ -188,7 +188,7 @@ export class IntermediaryHandler extends GameHandler {
     
     async handleSelectMultiTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectMultiTargetResponseMessage>): Promise<void> {
         const pendingSelection = handlerData.turnState.pendingSelection;
-        if (!pendingSelection || !isPendingMultiTargetSelection(pendingSelection)) {
+        if (!pendingSelection || !isPendingFieldSelection(pendingSelection)) {
             return;
         }
         

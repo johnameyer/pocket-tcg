@@ -6,11 +6,10 @@ import { EffectContext } from './effect-context.js';
  * Represents the different types of selections that can be pending.
  */
 export type SelectionType = 
-    | 'target' // Select one or more cards on the field
-    | 'energy' // Select energy to discard/move
-    | 'card' // Select cards from a location (hand, deck, discard)
-    | 'choice' // Select from a list of named choices
-    | 'multi-target'; // Select multiple cards on the field
+    | 'field'   // Select one or more cards on the field
+    | 'energy'  // Select energy to discard/move
+    | 'card'    // Select cards from a location (hand, deck, discard)
+    | 'choice'; // Select from a list of named choices
 
 /**
  * Base type for all pending selections.
@@ -29,13 +28,13 @@ export type BasePendingSelection = {
 /**
  * Pending selection for target(s) on the field.
  */
-export type PendingTargetSelection = BasePendingSelection & {
-    selectionType: 'target';
-    /** Whether multiple targets can be selected */
-    allowMultiple?: boolean;
-    /** Minimum number of targets to select (default 1) */
+export type PendingFieldSelection = BasePendingSelection & {
+    selectionType: 'field';
+    /** Number of targets to select */
+    count: number;
+    /** Minimum number of targets (defaults to count) */
     minTargets?: number;
-    /** Maximum number of targets to select (default 1) */
+    /** Maximum number of targets (defaults to count) */
     maxTargets?: number;
 };
 
@@ -50,6 +49,10 @@ export type PendingEnergySelection = BasePendingSelection & {
     fieldPosition: number;
     /** Number of energy to select */
     count: number;
+    /** Minimum number of energy (defaults to count) */
+    minCount?: number;
+    /** Maximum number of energy (defaults to count) */
+    maxCount?: number;
     /** Optional: restrict to specific energy types */
     allowedTypes?: AttachableEnergyType[];
 };
@@ -65,6 +68,10 @@ export type PendingCardSelection = BasePendingSelection & {
     location: 'hand' | 'deck' | 'discard';
     /** Number of cards to select */
     count: number;
+    /** Minimum number of cards (defaults to count) */
+    minCount?: number;
+    /** Maximum number of cards (defaults to count) */
+    maxCount?: number;
     /** Optional: filter by card type */
     cardType?: 'creature' | 'item' | 'supporter' | 'tool';
 };
@@ -76,36 +83,28 @@ export type PendingChoiceSelection = BasePendingSelection & {
     selectionType: 'choice';
     /** The available choices */
     choices: Array<{ name: string; value: string }>;
-    /** Whether multiple choices can be selected */
-    allowMultiple?: boolean;
-};
-
-/**
- * Pending selection for multiple targets on the field.
- */
-export type PendingMultiTargetSelection = BasePendingSelection & {
-    selectionType: 'multi-target';
-    /** Number of targets to select */
+    /** Number of choices to select */
     count: number;
-    /** Minimum number of targets (default equals count) */
-    minTargets?: number;
+    /** Minimum number of choices (defaults to count) */
+    minCount?: number;
+    /** Maximum number of choices (defaults to count) */
+    maxCount?: number;
 };
 
 /**
  * Union type representing all possible pending selections.
  */
 export type PendingSelection = 
-    | PendingTargetSelection
+    | PendingFieldSelection
     | PendingEnergySelection
     | PendingCardSelection
-    | PendingChoiceSelection
-    | PendingMultiTargetSelection;
+    | PendingChoiceSelection;
 
 /**
  * Type guard functions for pending selection types
  */
-export function isPendingTargetSelection(selection: PendingSelection): selection is PendingTargetSelection {
-    return selection.selectionType === 'target';
+export function isPendingFieldSelection(selection: PendingSelection): selection is PendingFieldSelection {
+    return selection.selectionType === 'field';
 }
 
 export function isPendingEnergySelection(selection: PendingSelection): selection is PendingEnergySelection {
@@ -118,8 +117,4 @@ export function isPendingCardSelection(selection: PendingSelection): selection i
 
 export function isPendingChoiceSelection(selection: PendingSelection): selection is PendingChoiceSelection {
     return selection.selectionType === 'choice';
-}
-
-export function isPendingMultiTargetSelection(selection: PendingSelection): selection is PendingMultiTargetSelection {
-    return selection.selectionType === 'multi-target';
 }

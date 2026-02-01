@@ -1,14 +1,14 @@
 import { Message } from '@cards-ts/core';
 
 /**
- * Response message for selecting card(s) from hand.
+ * Response message for selecting card(s).
  */
 export class SelectCardResponseMessage extends Message {
     readonly type = 'select-card-response';
 
     constructor(
-        public readonly cardIndices: number[],
+        public readonly cardInstanceIds: string[],
     ) {
-        super([ `Selected ${cardIndices.length} card(s) from hand at indices: ${cardIndices.join(', ')}` ]);
+        super([ `Selected ${cardInstanceIds.length} card(s): ${cardInstanceIds.join(', ')}` ]);
     }
 }

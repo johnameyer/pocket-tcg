@@ -6,5 +6,4 @@ export type GameHandlerParams = {
     selectEnergy: [];
     selectCard: [];
     selectChoice: [];
-    selectMultiTarget: [];
 };

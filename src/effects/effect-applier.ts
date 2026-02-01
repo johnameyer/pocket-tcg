@@ -5,7 +5,7 @@ import { ResolvedTarget } from '../repository/target-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
-import { PendingTargetSelection } from './pending-selection-types.js';
+import { PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
@@ -199,7 +199,7 @@ export class EffectApplier {
      * @param targetPlayerId The selected target player ID
      * @param targetCreatureIndex The selected target creature index
      */
-    static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingTargetSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
+    static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingFieldSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
         const { effect, originalContext, selectionType = 'target' } = pendingSelection;
 
         /*
@@ -272,10 +272,11 @@ export class EffectApplier {
                  * There's still another target that needs selection
                  * Set up pending selection for the next target
                  */
-                const pendingSelection: PendingTargetSelection = {
-                    selectionType: 'target',
+                const pendingSelection: PendingFieldSelection = {
+                    selectionType: 'field',
                     effect: resolvedEffect,
                     originalContext,
+                    count: 1, // Single target selection by default
                 };
                 controllers.turnState.setPendingSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up

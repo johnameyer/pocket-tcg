@@ -274,8 +274,8 @@ const getPlayerNeedingPendingSelection = (controllers: Controllers) => {
     // Determine which player should make the selection based on the effect context
     const context = pendingSelection.originalContext;
     
-    // For target/choice selections, check if opponent should choose
-    if (pendingSelection.selectionType === 'target' || pendingSelection.selectionType === 'multi-target') {
+    if (pendingSelection.selectionType === 'field') {
+        // For field selections, check if opponent should choose
         const effect = pendingSelection.effect;
         if ('target' in effect && effect.target && typeof effect.target === 'object' && 'chooser' in effect.target) {
             const chooser = effect.target.chooser;
@@ -320,6 +320,17 @@ const handlePendingSelections = loop<Controllers>({
             }),
         }),
         conditionalState({
+            id: 'handleFieldSelection',
+            condition: (controllers: Controllers) => {
+                const pending = controllers.turnState.getPendingSelection();
+                return pending?.selectionType === 'field';
+            },
+            truthy: handleSingle({
+                handler: 'selectTarget',
+                position: getPlayerNeedingPendingSelection,
+            }),
+        }),
+        conditionalState({
             id: 'handleEnergySelection',
             condition: (controllers: Controllers) => {
                 const pending = controllers.turnState.getPendingSelection();
@@ -349,17 +360,6 @@ const handlePendingSelections = loop<Controllers>({
             },
             truthy: handleSingle({
                 handler: 'selectChoice',
-                position: getPlayerNeedingPendingSelection,
-            }),
-        }),
-        conditionalState({
-            id: 'handleMultiTargetSelection',
-            condition: (controllers: Controllers) => {
-                const pending = controllers.turnState.getPendingSelection();
-                return pending?.selectionType === 'multi-target';
-            },
-            truthy: handleSingle({
-                handler: 'selectMultiTarget',
                 position: getPlayerNeedingPendingSelection,
             }),
         }),

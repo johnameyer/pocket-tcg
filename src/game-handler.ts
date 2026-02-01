@@ -2,7 +2,7 @@ import { ControllerHandlerState, Handler, HandlerResponsesQueue } from '@cards-t
 import { Controllers } from './controllers/controllers.js';
 import { GameHandlerParams } from './game-handler-params.js';
 import { ResponseMessage } from './messages/response-message.js';
-import { SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage, SelectMultiTargetResponseMessage } from './messages/response/index.js';
+import { SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from './messages/response/index.js';
 
 export type HandlerData = ControllerHandlerState<Controllers>;
 
@@ -15,18 +15,15 @@ export abstract class GameHandler implements Handler<GameHandlerParams, HandlerD
     // Method to handle setup phase
     abstract handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void | Promise<void>;
     
-    // Method to handle selecting a target on the field
+    // Method to handle selecting target(s) on the field (can return array of targets)
     abstract handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage>): void | Promise<void>;
     
-    // Method to handle selecting energy (e.g., for retreat costs)
+    // Method to handle selecting energy (can return array of energy)
     abstract handleSelectEnergy(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectEnergyResponseMessage>): void | Promise<void>;
     
-    // Method to handle selecting cards (e.g., from hand, deck, discard)
+    // Method to handle selecting cards (can return array of cards)
     abstract handleSelectCard(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectCardResponseMessage>): void | Promise<void>;
     
-    // Method to handle selecting from named choices
+    // Method to handle selecting from named choices (can return array of choices)
     abstract handleSelectChoice(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectChoiceResponseMessage>): void | Promise<void>;
-    
-    // Method to handle selecting multiple targets on the field
-    abstract handleSelectMultiTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectMultiTargetResponseMessage>): void | Promise<void>;
 }

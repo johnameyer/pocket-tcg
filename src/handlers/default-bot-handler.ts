@@ -4,7 +4,7 @@ import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveRe
 import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
-import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingMultiTargetSelection } from '../effects/pending-selection-types.js';
+import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -155,11 +155,18 @@ export class DefaultBotHandler extends GameHandler {
     }
     
     handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage>): void {
-        // For target selection, select the first valid target (active or first bench)
-        responsesQueue.push(new SelectTargetResponseMessage(
-            (handlerData.turn + 1) % handlerData.players.count, // opponent
-            0, // active position
-        ));
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        if (!pendingSelection || !isPendingFieldSelection(pendingSelection)) {
+            return;
+        }
+        
+        // For target selection, select count targets (defaults to opponent's active)
+        const targetCount = pendingSelection.count || 1;
+        const targets = Array.from({ length: targetCount }, (_, i) => ({
+            playerId: (handlerData.turn + 1) % handlerData.players.count, // opponent
+            fieldIndex: i, // active position first, then bench
+        }));
+        responsesQueue.push(new SelectTargetResponseMessage(targets));
     }
     
     handleSelectEnergy(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectEnergyResponseMessage>): void {
@@ -182,8 +189,10 @@ export class DefaultBotHandler extends GameHandler {
         }
         
         const cardCount = pendingSelection.count || 1;
-        const indices = Array.from({ length: cardCount }, (_, i) => i);
-        responsesQueue.push(new SelectCardResponseMessage(indices));
+        // Get the actual cards from the specified location and extract their instance IDs
+        const hand = handlerData.hand;
+        const selectedInstanceIds = hand.slice(0, cardCount).map((card) => card.instanceId);
+        responsesQueue.push(new SelectCardResponseMessage(selectedInstanceIds));
     }
     
     handleSelectChoice(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectChoiceResponseMessage>): void {
@@ -192,21 +201,8 @@ export class DefaultBotHandler extends GameHandler {
             return;
         }
         
-        const firstChoice = pendingSelection.choices?.[0]?.value || 'default';
-        responsesQueue.push(new SelectChoiceResponseMessage([ firstChoice ]));
-    }
-    
-    handleSelectMultiTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectMultiTargetResponseMessage>): void {
-        const pendingSelection = handlerData.turnState.pendingSelection;
-        if (!pendingSelection || !isPendingMultiTargetSelection(pendingSelection)) {
-            return;
-        }
-        
-        const targetCount = pendingSelection.count || 1;
-        const targets = Array.from({ length: targetCount }, (_, i) => ({
-            playerId: (handlerData.turn + 1) % handlerData.players.count,
-            fieldIndex: i,
-        }));
-        responsesQueue.push(new SelectMultiTargetResponseMessage(targets));
+        const choiceCount = pendingSelection.count || 1;
+        const selectedChoices = pendingSelection.choices?.slice(0, choiceCount).map((choice) => choice.value) || [];
+        responsesQueue.push(new SelectChoiceResponseMessage(selectedChoices));
     }
 }
