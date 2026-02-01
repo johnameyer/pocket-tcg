@@ -860,7 +860,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             const pendingSelection = controllers.turnState.getPendingSelection();
             
-            if (pendingSelection) {
+            if (pendingSelection && isPendingFieldSelection(pendingSelection)) {
                 const hasNewPendingSelection = EffectApplier.resumeEffectWithSelection(
                     controllers,
                     pendingSelection,
@@ -872,8 +872,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 if (!hasNewPendingSelection) {
                     controllers.turnState.clearPendingSelection();
                 }
+            } else {
+                controllers.turnState.clearPendingSelection();
             }
-            
         },
     },
     'select-energy-response': {
@@ -914,11 +915,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: SelectEnergyResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
             
-            /*
-             * For now, just clear the pending selection
-             * The actual energy handling will be done by the specific effect handlers
-             */
-            controllers.turnState.clearPendingSelection();
+            const pendingSelection = controllers.turnState.getPendingSelection();
+            
+            if (pendingSelection && isPendingEnergySelection(pendingSelection)) {
+                /*
+                 * TODO: Implement resumeEffectWithEnergySelection when effects need energy selection
+                 * For now, clear the pending selection as energy-dependent effects are not yet implemented
+                 * The selected energy is available in message.selectedEnergy
+                 */
+                controllers.turnState.clearPendingSelection();
+            } else {
+                controllers.turnState.clearPendingSelection();
+            }
         },
     },
     'select-card-response': {
@@ -977,11 +985,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: SelectCardResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
             
-            /*
-             * For now, just clear the pending selection
-             * The actual card handling will be done by the specific effect handlers
-             */
-            controllers.turnState.clearPendingSelection();
+            const pendingSelection = controllers.turnState.getPendingSelection();
+            
+            if (pendingSelection && isPendingCardSelection(pendingSelection)) {
+                /*
+                 * TODO: Implement resumeEffectWithCardSelection when effects need card selection
+                 * For now, clear the pending selection as card-selection-dependent effects are not yet implemented
+                 * The selected card instance IDs are available in message.cardInstanceIds
+                 */
+                controllers.turnState.clearPendingSelection();
+            } else {
+                controllers.turnState.clearPendingSelection();
+            }
         },
     },
     'select-choice-response': {
@@ -1028,11 +1043,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: SelectChoiceResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
             
-            /*
-             * For now, just clear the pending selection
-             * The actual choice handling will be done by the specific effect handlers
-             */
-            controllers.turnState.clearPendingSelection();
+            const pendingSelection = controllers.turnState.getPendingSelection();
+            
+            if (pendingSelection && isPendingChoiceSelection(pendingSelection)) {
+                /*
+                 * TODO: Implement resumeEffectWithChoiceSelection when effects need choice selection
+                 * For now, clear the pending selection as choice-dependent effects are not yet implemented
+                 * The selected choice values are available in message.choiceValues
+                 */
+                controllers.turnState.clearPendingSelection();
+            } else {
+                controllers.turnState.clearPendingSelection();
+            }
         },
     },
 });
