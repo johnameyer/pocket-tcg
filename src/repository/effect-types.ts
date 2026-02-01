@@ -2,6 +2,7 @@ import { Target } from './target-types.js';
 import { EffectValue } from './effect-value-types.js';
 import { AttachableEnergyType } from './energy-types.js';
 import { Condition } from './condition-types.js';
+import { Duration } from './duration-types.js';
 
 /**
  * Represents when an effect can be triggered.
@@ -95,19 +96,20 @@ export type PreventDamageEffect = {
     type: 'prevent-damage';
     target?: Target;
     source?: string;
+    duration?: Duration;
 };
 
 export type DamageReductionEffect = {
     type: 'damage-reduction';
     amount: EffectValue;
     target: Target;
-    duration?: string;
+    duration?: Duration;
 };
 
 export type RetreatPreventionEffect = {
     type: 'retreat-prevention';
     target: Target;
-    duration: string;
+    duration: Duration;
 };
 
 export type EvolutionAccelerationEffect = {
@@ -137,7 +139,7 @@ export type DamageBoostEffect = {
     amount: EffectValue;
     target?: Target;
     condition?: Condition;
-    duration?: string;
+    duration?: Duration;
 };
 
 export type HpBonusEffect = {
@@ -148,32 +150,45 @@ export type HpBonusEffect = {
 export type RetreatCostReductionEffect = {
     type: 'retreat-cost-reduction';
     amount: EffectValue;
+    duration?: Duration;
 };
+
+/**
+ * Immediate effects that are resolved immediately and don't persist over time.
+ * These effects typically modify game state directly (e.g., draw cards, deal damage).
+ */
+export type ImmediateEffect =
+    | HpEffect
+    | StatusEffect
+    | DrawEffect
+    | EnergyEffect
+    | SearchEffect
+    | ShuffleEffect
+    | HandDiscardEffect
+    | SwitchEffect
+    | EnergyTransferEffect
+    | EvolutionAccelerationEffect
+    | EndTurnEffect;
+
+/**
+ * Modifier effects that can be passive and last over time.
+ * These effects change values or prevent actions and are queried when needed.
+ */
+export type ModifierEffect =
+    | PreventDamageEffect
+    | DamageReductionEffect
+    | RetreatPreventionEffect
+    | EvolutionFlexibilityEffect
+    | CoinFlipManipulationEffect
+    | DamageBoostEffect
+    | HpBonusEffect
+    | RetreatCostReductionEffect;
 
 /**
  * Union type representing all possible effects that can be applied in the game.
  * This is used to define what an effect can do, from dealing damage to drawing cards.
  */
-export type Effect = 
-    | HpEffect 
-    | StatusEffect 
-    | DrawEffect 
-    | EnergyEffect 
-    | SearchEffect 
-    | ShuffleEffect 
-    | HandDiscardEffect 
-    | SwitchEffect 
-    | EnergyTransferEffect 
-    | PreventDamageEffect 
-    | DamageReductionEffect 
-    | RetreatPreventionEffect 
-    | EvolutionAccelerationEffect 
-    | EvolutionFlexibilityEffect 
-    | EndTurnEffect 
-    | CoinFlipManipulationEffect 
-    | DamageBoostEffect 
-    | HpBonusEffect 
-    | RetreatCostReductionEffect;
+export type Effect = ImmediateEffect | ModifierEffect;
 
 /**
  * Represents an effect that requires target selection before it can be applied.
