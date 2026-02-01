@@ -171,7 +171,11 @@ export class DefaultBotHandler extends GameHandler {
             return;
         }
         
-        // Convert handlerData to Controllers for TargetResolver
+        /*
+         * Convert handlerData to Controllers for TargetResolver
+         * HandlerData is structurally compatible with Controllers (it's a view of Controllers)
+         * This pattern is used throughout the codebase for handler methods
+         */
         const controllers = handlerData as unknown as Controllers;
         const resolution = TargetResolver.resolveTarget(target, controllers, originalContext);
         
