@@ -10,6 +10,7 @@ import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
 import { isPendingFieldSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection } from '../effects/pending-selection-types.js';
+import { AttachableEnergyType } from '../repository/energy-types.js';
 import * as helpers from './intermediary-handler-helpers.js';
 
 export class IntermediaryHandler extends GameHandler {
@@ -288,14 +289,16 @@ export class IntermediaryHandler extends GameHandler {
         const attachedEnergy = energyData.attachedEnergyByInstance?.[fieldInstanceId] || {};
         
         // Create options for each energy type
-        const energyOptions: Array<{ name: string; value: string }> = [];
+        const energyOptions: Array<{ name: string; value: AttachableEnergyType }> = [];
         for (const [ energyType, amount ] of Object.entries(attachedEnergy)) {
             if (typeof amount === 'number' && amount > 0) {
-                if (!allowedTypes || allowedTypes.includes(energyType as any)) {
+                // energyType comes from EnergyDictionary keys, so it's guaranteed to be AttachableEnergyType
+                const typedEnergyType = energyType as AttachableEnergyType;
+                if (!allowedTypes || allowedTypes.includes(typedEnergyType)) {
                     for (let i = 0; i < amount; i++) {
                         energyOptions.push({
                             name: `${energyType} energy`,
-                            value: energyType,
+                            value: typedEnergyType,
                         });
                     }
                 }
@@ -316,8 +319,8 @@ export class IntermediaryHandler extends GameHandler {
                 choices: energyOptions,
             });
             
-            const selected = (await received)[0] as string;
-            responsesQueue.push(new SelectEnergyResponseMessage([ selected as any ]));
+            const selected = (await received)[0] as AttachableEnergyType;
+            responsesQueue.push(new SelectEnergyResponseMessage([ selected ]));
         } else {
             // Multiple selection
             const [ sent, received ] = this.intermediary.form({
@@ -332,8 +335,8 @@ export class IntermediaryHandler extends GameHandler {
                 },
             });
             
-            const selected = (await received)[0] as string[];
-            responsesQueue.push(new SelectEnergyResponseMessage(selected as any));
+            const selected = (await received)[0] as AttachableEnergyType[];
+            responsesQueue.push(new SelectEnergyResponseMessage(selected));
         }
     }
     
