@@ -5,6 +5,8 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
+import { TargetResolver } from '../effects/target-resolver.js';
+import { Controllers } from '../controllers/controllers.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -160,13 +162,31 @@ export class DefaultBotHandler extends GameHandler {
             return;
         }
         
-        // For target selection, select count targets (defaults to opponent's active)
-        const targetCount = pendingSelection.count || 1;
-        const targets = Array.from({ length: targetCount }, (_, i) => ({
-            playerId: (handlerData.turn + 1) % handlerData.players.count, // opponent
-            fieldIndex: i, // active position first, then bench
+        // Use TargetResolver to get valid targets compositionally
+        const { effect, originalContext } = pendingSelection;
+        const target = 'target' in effect ? effect.target : undefined;
+        
+        if (!target || typeof target === 'string') {
+            // No target selection needed or resolved already
+            return;
+        }
+        
+        // Convert handlerData to Controllers for TargetResolver
+        const controllers = handlerData as unknown as Controllers;
+        const resolution = TargetResolver.resolveTarget(target, controllers, originalContext);
+        
+        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+            return;
+        }
+        
+        // For bot: select first N available targets up to count
+        const targetCount = Math.min(pendingSelection.count || 1, resolution.availableTargets.length);
+        const selectedTargets = resolution.availableTargets.slice(0, targetCount).map(t => ({
+            playerId: t.playerId,
+            fieldIndex: t.fieldIndex,
         }));
-        responsesQueue.push(new SelectTargetResponseMessage(targets));
+        
+        responsesQueue.push(new SelectTargetResponseMessage(selectedTargets));
     }
     
     handleSelectEnergy(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectEnergyResponseMessage>): void {
