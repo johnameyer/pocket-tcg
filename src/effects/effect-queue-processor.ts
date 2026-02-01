@@ -19,10 +19,10 @@ export class EffectQueueProcessor {
          * Process effects one by one until the queue is empty
          * Using a while loop ensures that effects triggered by other effects are also processed
          */
-        while(controllers.effects.hasPendingEffects()) {
+        while (controllers.effects.hasPendingEffects()) {
             const pendingEffect = controllers.effects.popPendingEffect();
             
-            if(!pendingEffect) {
+            if (!pendingEffect) {
                 break; // Queue is empty
             }
             

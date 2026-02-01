@@ -62,11 +62,7 @@
         "@stylistic/implicit-arrow-linebreak": "error",
         "@stylistic/indent": ["error", 4],
         "@stylistic/key-spacing": "error",
-        "@stylistic/keyword-spacing": ["error", { "overrides": {
-            "if": { "after": false },
-            "for": { "after": false },
-            "while": { "after": false }
-        }}],
+        "@stylistic/keyword-spacing": "error",
         "@stylistic/linebreak-style": "error",
         "@stylistic/lines-between-class-members": "error",
         "@stylistic/multiline-comment-style": "error",

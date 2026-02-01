@@ -17,7 +17,7 @@ export class EffectApplierChoice {
     static resumeEffectWithChoice(controllers: Controllers, pendingSelection: PendingChoiceSelection, selectedIndex: number): void {
         const { effect, originalContext, availableOptions } = pendingSelection;
         
-        if(selectedIndex < 0 || selectedIndex >= availableOptions.length) {
+        if (selectedIndex < 0 || selectedIndex >= availableOptions.length) {
             console.warn(`Invalid choice index: ${selectedIndex}, must be between 0 and ${availableOptions.length - 1}`);
             return;
         }

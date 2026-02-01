@@ -43,13 +43,13 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
          */
         
         // We can still show a message about the HP bonus being applied
-        if(context.type === 'trainer') {
+        if (context.type === 'trainer') {
             // This is a trainer card being played
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} increases creature's HP by ${amount}!` ],
             });
-        } else if((context.type === 'ability' || context.type === 'trigger') && context.creatureInstanceId) {
+        } else if ((context.type === 'ability' || context.type === 'trigger') && context.creatureInstanceId) {
             // This is an ability or trigger
             const creatureName = controllers.cardRepository.getCreature(context.creatureInstanceId.split('-')[0]).name;
             

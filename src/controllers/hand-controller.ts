@@ -48,12 +48,12 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
         const maxHandSize = params.maxHandSize;
         
         // Check if hand is already at max size
-        if(this.state[playerId].length >= maxHandSize) {
+        if (this.state[playerId].length >= maxHandSize) {
             return undefined;
         }
         
         const card = this.controllers.deck.drawCard(playerId);
-        if(card) {
+        if (card) {
             this.state[playerId].push(card);
         }
         return card;
@@ -62,14 +62,14 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     // Draw initial hand (5 cards) ensuring at least one basic creature
     drawInitialHand(playerId: number): void {
         // Draw 5 cards normally first
-        for(let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) {
             this.drawCard(playerId);
         }
         
         // Check if hand has any basic creature (non-evolution creature)
         const hand = this.state[playerId];
         const hasBasicCreature = hand.some(card => {
-            if(card.type === 'creature') {
+            if (card.type === 'creature') {
                 // We'll just assume all creatures are basic for now
                 return true;
             }
@@ -77,14 +77,14 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
         });
         
         // If no basic creature, replace a non-creature card with a basic creature from deck
-        if(!hasBasicCreature) {
+        if (!hasBasicCreature) {
             const deck = this.controllers.deck.getDeck(playerId);
             const basicCreatureInDeck = deck.find(card => card.type === 'creature');
             
-            if(basicCreatureInDeck) {
+            if (basicCreatureInDeck) {
                 // Find a non-creature card to replace
                 const nonCreatureIndex = hand.findIndex(card => card.type !== 'creature');
-                if(nonCreatureIndex !== -1) {
+                if (nonCreatureIndex !== -1) {
                     // Put the non-creature card back in deck
                     const replacedCard = hand[nonCreatureIndex];
                     deck.push(replacedCard);
@@ -103,7 +103,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Play a card from hand
     playCard(playerId: number, cardIndex: number): GameCard | undefined {
-        if(cardIndex < 0 || cardIndex >= this.state[playerId].length) {
+        if (cardIndex < 0 || cardIndex >= this.state[playerId].length) {
             return undefined;
         }
         
@@ -115,7 +115,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     // Play a card from hand and discard it (for supporters/items)
     playCardAndDiscard(playerId: number, cardIndex: number): GameCard | undefined {
         const card = this.playCard(playerId, cardIndex);
-        if(card) {
+        if (card) {
             this.controllers.discard.discardCard(playerId, card);
         }
         return card;
@@ -138,10 +138,10 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Remove specific cards from hand and discard them
     removeCards(playerId: number, cardsToRemove: GameCard[]): void {
-        for(const cardToRemove of cardsToRemove) {
+        for (const cardToRemove of cardsToRemove) {
             const index = this.state[playerId].findIndex(card => card.templateId === cardToRemove.templateId && card.type === cardToRemove.type,
             );
-            if(index !== -1) {
+            if (index !== -1) {
                 const removedCard = this.state[playerId].splice(index, 1)[0];
                 // Automatically discard the removed card
                 this.controllers.discard.discardCard(playerId, removedCard);

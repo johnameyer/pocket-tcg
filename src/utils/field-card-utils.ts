@@ -5,7 +5,7 @@ import { FieldCard } from '../controllers/field-controller.js';
  * Get the current instance ID (of the topmost evolution form).
  */
 export function getCurrentInstanceId(card: FieldCard | InstancedFieldCard): string {
-    if('evolutionStack' in card) {
+    if ('evolutionStack' in card) {
         // InstancedFieldCard - get from top of evolution stack
         return card.evolutionStack[card.evolutionStack.length - 1].instanceId;
     }
@@ -17,7 +17,7 @@ export function getCurrentInstanceId(card: FieldCard | InstancedFieldCard): stri
  * Get the current template ID (of the topmost evolution form).
  */
 export function getCurrentTemplateId(card: FieldCard | InstancedFieldCard): string {
-    if('evolutionStack' in card) {
+    if ('evolutionStack' in card) {
         // InstancedFieldCard - get from top of evolution stack
         return card.evolutionStack[card.evolutionStack.length - 1].templateId;
     }
@@ -30,7 +30,7 @@ export function getCurrentTemplateId(card: FieldCard | InstancedFieldCard): stri
  * This ID is used for energy and tool attachments.
  */
 export function getFieldInstanceId(card: FieldCard | InstancedFieldCard): string {
-    if('evolutionStack' in card) {
+    if ('evolutionStack' in card) {
         return card.fieldInstanceId;
     }
     // For FieldCard (backward compatibility), use the card's instanceId
@@ -42,7 +42,7 @@ export function getFieldInstanceId(card: FieldCard | InstancedFieldCard): string
  * @deprecated Use getFieldInstanceId instead for energy/tool attachments
  */
 export function getOriginalInstanceId(card: FieldCard | InstancedFieldCard): string {
-    if('evolutionStack' in card) {
+    if ('evolutionStack' in card) {
         // InstancedFieldCard - get from bottom of evolution stack
         return card.evolutionStack[0].instanceId;
     }

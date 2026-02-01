@@ -48,21 +48,21 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
      */
     apply(controllers: Controllers, effect: DamageReductionEffect, context: EffectContext): void {
         // Ensure we have a valid target
-        if(!effect.target) {
+        if (!effect.target) {
             throw new Error('No target specified for damage reduction effect');
         }
         
         // Get the amount of damage reduction
         const reductionAmount = getEffectValue(effect.amount, controllers, context);
         
-        if(effect.target.type !== 'resolved') {
+        if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if(targets.length === 0) {
+        if (targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} found no valid targets!` ],
@@ -70,13 +70,13 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
             return;
         }
         
-        for(const target of targets) {
+        for (const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             
-            if(!targetCreature) {
+            if (!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
                     components: [ `${context.effectName} target creature not found!` ],

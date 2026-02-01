@@ -25,30 +25,30 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
      */
     canApply(handlerData: HandlerData, effect: EvolutionAccelerationEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // Use TargetResolver to check if the target is available
-        if(!TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)) {
+        if (!TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)) {
             return false;
         }
         
         // For fixed targets like self active, we can check basic requirements
-        if(effect.target.type === 'fixed' && effect.target.player === 'self' && effect.target.position === 'active') {
+        if (effect.target.type === 'fixed' && effect.target.player === 'self' && effect.target.position === 'active') {
             const targetCreature = handlerData.field.creatures[context.sourcePlayer]?.[0];
             
-            if(!targetCreature) {
+            if (!targetCreature) {
                 return false;
             }
             
             // Check if creature was played this turn (can't evolve on first turn)
             const currentTurn = handlerData.turnCounter.turnNumber;
-            if(targetCreature.turnLastPlayed === currentTurn) {
+            if (targetCreature.turnLastPlayed === currentTurn) {
                 return false;
             }
             
             // Check restrictions - for now, only basic-creature-only is supported
-            if(effect.restrictions && effect.restrictions.includes('basic-creature-only')) {
+            if (effect.restrictions && effect.restrictions.includes('basic-creature-only')) {
                 const currentData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
                 const isBasicCreature = !currentData.previousStageName;
                 
-                if(!isBasicCreature) {
+                if (!isBasicCreature) {
                     return false;
                 }
             }
@@ -57,11 +57,11 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             const hand = handlerData.hand;
             const targetCreatureData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
             const hasValidEvolution = hand.some(card => {
-                if(card.type !== 'creature') {
+                if (card.type !== 'creature') {
                     return false; 
                 }
                 const cardData = cardRepository.getCreature(card.templateId);
-                if(!cardData.previousStageName) {
+                if (!cardData.previousStageName) {
                     return false; 
                 }
                 try {
@@ -108,13 +108,13 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
      */
     apply(controllers: Controllers, effect: EvolutionAccelerationEffect, context: EffectContext): void {
         
-        if(effect.target.type !== 'resolved') {
+        if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         const targets = effect.target.targets;
         
-        if(targets.length === 0) {
+        if (targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} found no valid targets!` ],
@@ -122,10 +122,10 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             return;
         }
         
-        for(const target of targets) {
+        for (const target of targets) {
             const targetCreature = getCreatureFromTarget(controllers, target.playerId, target.fieldIndex);
             
-            if(!targetCreature) {
+            if (!targetCreature) {
                 continue;
             }
             
@@ -133,13 +133,13 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             const currentData = controllers.cardRepository.getCreature(targetCreature.templateId);
             const isBasicCreature = !currentData.previousStageName;
             
-            if(!isBasicCreature) {
+            if (!isBasicCreature) {
                 continue;
             }
             
             // Check if creature was played this turn (can't evolve on first turn)
             const currentTurn = controllers.turnCounter.getTurnNumber();
-            if(targetCreature.turnPlayed === currentTurn) {
+            if (targetCreature.turnPlayed === currentTurn) {
                 continue;
             }
             
@@ -147,12 +147,12 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             const hand = controllers.hand.getHand(context.sourcePlayer);
             const stage2Evolution = this.findStage2Evolution(controllers, hand, targetCreature.templateId);
             
-            if(!stage2Evolution) {
+            if (!stage2Evolution) {
                 continue;
             }
             
             // Perform the evolution immediately
-            if(target.fieldIndex === 0) {
+            if (target.fieldIndex === 0) {
                 // Active creature
                 controllers.field.evolveActiveCard(target.playerId, stage2Evolution.templateId);
             } else {
@@ -182,12 +182,12 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
     private findStage2Evolution(controllers: Controllers, hand: GameCard[], basicCardId: string): GameCard | undefined {
         const basicCardData = controllers.cardRepository.getCreature(basicCardId);
         return hand.find((card) => {
-            if(card.type !== 'creature') {
+            if (card.type !== 'creature') {
                 return false; 
             }
             
             const cardData = controllers.cardRepository.getCreature(card.templateId);
-            if(!cardData.previousStageName) {
+            if (!cardData.previousStageName) {
                 return false; 
             }
             
@@ -197,7 +197,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
              */
             try {
                 const stage1Data = controllers.cardRepository.getCreatureByName(cardData.previousStageName);
-                if(!stage1Data.previousStageName) {
+                if (!stage1Data.previousStageName) {
                     return false; 
                 }
                 

@@ -37,7 +37,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         const errors: { initialDecks?: string; playerEnergyTypes?: string; maxHandSize?: string; maxTurns?: string; } = {};
         
         try {
-            if(!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
+            if (!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
                 throw new Error();
             }
         } catch (e) {
@@ -45,7 +45,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         }
         
         try {
-            if(!Number(params.maxTurns) || Number(params.maxTurns) <= 0) {
+            if (!Number(params.maxTurns) || Number(params.maxTurns) <= 0) {
                 throw new Error();
             }
         } catch (e) {

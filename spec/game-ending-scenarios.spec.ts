@@ -65,7 +65,7 @@ describe('Game-Ending Scenarios', () => {
             const attackerKO = state.field.creatures[0][0].damageTaken >= 180;
             const defenderKO = state.field.creatures[1][0].damageTaken >= 180;
             
-            if(attackerKO && defenderKO) {
+            if (attackerKO && defenderKO) {
                 // Both should be promoted from bench
                 expect(getCurrentTemplateId(state.field.creatures[0][0])).to.not.equal('evolution-creature', 'Attacker should be promoted from bench');
                 expect(getCurrentTemplateId(state.field.creatures[1][0])).to.not.equal('evolution-creature', 'Defender should be promoted from bench');
@@ -91,7 +91,7 @@ describe('Game-Ending Scenarios', () => {
             });
 
             // Game should end when player 0 reaches 3 points
-            if(state.points[0] >= 3) {
+            if (state.points[0] >= 3) {
                 expect(state.completed).to.equal(true, 'Game should end when player reaches 3 points');
             }
         });

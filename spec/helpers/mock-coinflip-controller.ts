@@ -14,7 +14,7 @@ export class MockCoinFlipController extends GlobalController<MockCoinFlipState, 
     }
 
     public flip(): boolean {
-        if(this.state.mockedResults && this.state.mockedResults.length > 0) {
+        if (this.state.mockedResults && this.state.mockedResults.length > 0) {
             const result = this.state.mockedResults[this.state.mockedResultIndex % this.state.mockedResults.length];
             this.state.mockedResultIndex++;
             return result;

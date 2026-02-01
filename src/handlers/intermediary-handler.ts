@@ -23,7 +23,7 @@ export class IntermediaryHandler extends GameHandler {
         // Get the active card for the current player
         const activeCard = handlerData.field.creatures?.[currentPlayer]?.[0];
         
-        if(!activeCard) {
+        if (!activeCard) {
             return;
         }
 
@@ -52,7 +52,7 @@ export class IntermediaryHandler extends GameHandler {
             };
         });
         
-        if(benchedCards && benchedCards.length > 0) {
+        if (benchedCards && benchedCards.length > 0) {
             // Create options for each benched card
             const benchOptions = benchedCards.map((card: FieldCard, index: number) => {
                 const cardData = this.cardRepository.getCreature(card.templateId);
@@ -77,7 +77,7 @@ export class IntermediaryHandler extends GameHandler {
         const currentPlayer = handlerData.turn;
         const pendingEffect = handlerData.turnState.pendingTargetSelection;
         
-        if(!pendingEffect) {
+        if (!pendingEffect) {
             return;
         }
         
@@ -87,7 +87,7 @@ export class IntermediaryHandler extends GameHandler {
         // Get the target from the effect (if it has one)
         const target = 'target' in pendingEffect.effect ? pendingEffect.effect.target : undefined;
         
-        if(!target || typeof target === 'string') {
+        if (!target || typeof target === 'string') {
             return;
         }
         
@@ -98,7 +98,7 @@ export class IntermediaryHandler extends GameHandler {
         const controllers = handlerData as unknown as Controllers;
         const resolution = TargetResolver.resolveTarget(target, controllers, context);
         
-        if(resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
             return;
         }
         
@@ -110,8 +110,8 @@ export class IntermediaryHandler extends GameHandler {
         
         // Determine the appropriate message based on the effect type
         let effectMessage = 'Choose target for the effect:';
-        if(pendingEffect.effect.type === 'switch') {
-            if(target.type === 'single-choice' && target.chooser === 'opponent') {
+        if (pendingEffect.effect.type === 'switch') {
+            if (target.type === 'single-choice' && target.chooser === 'opponent') {
                 effectMessage = 'Choose which of your FieldCard to switch in:';
             } else {
                 effectMessage = 'Choose which FieldCard to force into battle:';
@@ -146,7 +146,7 @@ export class IntermediaryHandler extends GameHandler {
         
         const creatureCards = hand.filter(card => card.type === 'creature');
         
-        if(creatureCards.length === 0) {
+        if (creatureCards.length === 0) {
             await this.intermediary.form({
                 type: 'print',
                 message: [ 'No creature cards in hand. Finishing setup.' ],
@@ -170,10 +170,10 @@ export class IntermediaryHandler extends GameHandler {
             message: [ 'Select creatures for your team (1 active + up to 3 bench):' ],
             choices: creatureOptions,
             validate: (selected: number[]) => {
-                if(selected.length === 0) {
+                if (selected.length === 0) {
                     return 'Must select at least one creature'; 
                 }
-                if(selected.length > 4) {
+                if (selected.length > 4) {
                     return 'Can select maximum 4 creatures (1 active + 3 bench)'; 
                 }
                 return true;
@@ -182,7 +182,7 @@ export class IntermediaryHandler extends GameHandler {
         
         const selectedIndices = (await checkboxReceived)[0] as number[];
         
-        if(selectedIndices.length === 0) {
+        if (selectedIndices.length === 0) {
             // Default to first creature
             selectedIndices.push(creatureOptions[0].value);
         }

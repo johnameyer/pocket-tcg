@@ -29,7 +29,7 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
     apply(controllers: Controllers, effect: DamageBoostEffect, context: EffectContext): void {
         const amount = getEffectValue(effect.amount, controllers, context);
         const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-        if(!activecreature) {
+        if (!activecreature) {
             throw new Error(`No active creature found for player ${context.sourcePlayer}`);
         }
         

@@ -50,7 +50,7 @@ export function createActionTracker(actions: ResponseMessage[]) {
     
     return {
         handler: (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => {
-            if(actionIndex < actions.length) {
+            if (actionIndex < actions.length) {
                 responses.push(actions[actionIndex++]);
             }
         },
@@ -79,9 +79,9 @@ export function runTestGame(config: TestGameConfig) {
     const params = new GameSetup().getDefaultParams();
     
     let preConfiguredState: ControllerState<Controllers>;
-    if(config.resumeFrom) {
+    if (config.resumeFrom) {
         preConfiguredState = config.resumeFrom;
-        if(config.stateCustomizer) {
+        if (config.stateCustomizer) {
             config.stateCustomizer(preConfiguredState);
         }
     } else {
@@ -94,17 +94,17 @@ export function runTestGame(config: TestGameConfig) {
     
     driver.resume();
     const maxSteps = config.maxSteps !== undefined ? config.maxSteps : 5;
-    for(let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        for(const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
-            if(message) {
+    for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+        for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+            if (message) {
                 let payload, data;
-                if(Array.isArray(message)) {
+                if (Array.isArray(message)) {
                     ([ payload, data ] = message);
                 } else {
                     payload = message;
                 }
                 const wasValidated = driver.handleEvent(position, payload, data);
-                if(wasValidated) {
+                if (wasValidated) {
                     validatedCount++;
                 }
             }
@@ -129,11 +129,11 @@ export function runTestGame(config: TestGameConfig) {
  */
 export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['getGameDriver']>, maxSteps: number) {
     driver.resume();
-    for(let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        for(const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
-            if(message) {
+    for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+        for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+            if (message) {
                 let payload, data;
-                if(Array.isArray(message)) {
+                if (Array.isArray(message)) {
                     ([ payload, data ] = message);
                 } else {
                     payload = message;
@@ -175,7 +175,7 @@ export function runBotGame(config: {
     const maxSteps = config.maxSteps || 200;
     let stepCount = 0;
     
-    while(!driver.getState().completed && stepCount < maxSteps) {
+    while (!driver.getState().completed && stepCount < maxSteps) {
         driver.handleSyncResponses();
         driver.resume();
         stepCount++;
@@ -183,11 +183,11 @@ export function runBotGame(config: {
         const stateAfter = driver.getState() as ControllerState<Controllers>;
         
         // Call integrity check if provided
-        if(config.integrityCheck) {
+        if (config.integrityCheck) {
             config.integrityCheck(stateAfter, stepCount);
         }
         
-        if(stateAfter.completed) {
+        if (stateAfter.completed) {
             break;
         }
     }

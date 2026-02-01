@@ -100,7 +100,7 @@ describe('Evolution Mechanics', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 3 }),
                 (state) => {
                     const creatureData = state.field.creatures[0][0];
-                    if(creatureData) {
+                    if (creatureData) {
                         creatureData.turnLastPlayed = 0;
                     }
                 },
@@ -127,7 +127,7 @@ describe('Evolution Mechanics', () => {
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
                         const creatureData = state.field.creatures[0][0];
-                        if(creatureData) {
+                        if (creatureData) {
                             creatureData.turnLastPlayed = 0;
                         }
                     },
@@ -152,7 +152,7 @@ describe('Evolution Mechanics', () => {
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
                         const creatureData = state.field.creatures[0][0];
-                        if(creatureData) {
+                        if (creatureData) {
                             creatureData.turnLastPlayed = 0;
                             creatureData.damageTaken = 60;
                         }

@@ -71,7 +71,7 @@ export class HandlerDataBuilder {
         };
         
         // Apply customizers
-        for(const customizer of customizers) {
+        for (const customizer of customizers) {
             customizer(data as unknown as HandlerData);
         }
         
@@ -84,7 +84,7 @@ export class HandlerDataBuilder {
      */
     static combine(...customizers: HandlerDataCustomizer[]): HandlerDataCustomizer {
         return (data: HandlerData) => {
-            for(const customizer of customizers) {
+            for (const customizer of customizers) {
                 customizer(data);
             }
         };
@@ -141,7 +141,7 @@ export class HandlerDataBuilder {
      */
     static withDamage(player: number, fieldIndex: number, damage: number): HandlerDataCustomizer {
         return (data: HandlerData) => {
-            if(data.field.creatures[player][fieldIndex]) {
+            if (data.field.creatures[player][fieldIndex]) {
                 data.field.creatures[player][fieldIndex].damageTaken = damage;
             }
         };

@@ -79,7 +79,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Static helper functions for handlers to work with energy state directly
     static getTotalEnergyByInstance(energyState: EnergyState, instanceId: string): number {
         const attached = energyState.attachedEnergyByInstance[instanceId];
-        if(!attached) {
+        if (!attached) {
             return 0; 
         }
         return Object.values(attached as EnergyDictionary).reduce((sum, count) => sum + count, 0);
@@ -93,13 +93,13 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         const attached = EnergyController.getAttachedEnergyByInstance(energyState, instanceId);
         const totalEnergy = EnergyController.getTotalEnergyByInstance(energyState, instanceId);
         
-        for(const requirement of requiredEnergy) {
-            if(requirement.type === 'any' || requirement.type === 'colorless') {
-                if(totalEnergy < requirement.amount) {
+        for (const requirement of requiredEnergy) {
+            if (requirement.type === 'any' || requirement.type === 'colorless') {
+                if (totalEnergy < requirement.amount) {
                     return false;
                 }
             } else {
-                if((attached[requirement.type as AttachableEnergyType] || 0) < requirement.amount) {
+                if ((attached[requirement.type as AttachableEnergyType] || 0) < requirement.amount) {
                     return false;
                 }
             }
@@ -114,7 +114,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     }
 
     validate() {
-        if(!Array.isArray(this.state.currentEnergy)) {
+        if (!Array.isArray(this.state.currentEnergy)) {
             throw new Error('Shape of object is wrong');
         }
     }
@@ -124,7 +124,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         const availableTypes = this.state.availableTypes[playerId];
         
         // If no available types, default to fire
-        if(!availableTypes || availableTypes.length === 0) {
+        if (!availableTypes || availableTypes.length === 0) {
             const defaultType: AttachableEnergyType = 'fire';
             
             // Set current energy
@@ -164,16 +164,16 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Attach energy to a card by instance ID
     public attachEnergyToInstance(playerId: number, instanceId: string, energyType: AttachableEnergyType): boolean {
         // Check first turn restriction
-        if(this.state.isAbsoluteFirstTurn) {
+        if (this.state.isAbsoluteFirstTurn) {
             return false;
         }
 
         const currentEnergy = this.getCurrentEnergy(playerId, energyType);
-        if(currentEnergy <= 0) {
+        if (currentEnergy <= 0) {
             return false;
         }
 
-        if(!this.state.attachedEnergyByInstance[instanceId]) {
+        if (!this.state.attachedEnergyByInstance[instanceId]) {
             this.state.attachedEnergyByInstance[instanceId] = EnergyController.emptyEnergyDict();
         }
 
@@ -186,7 +186,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     
     // Attach specific energy type to a card by instance ID (for effects)
     public attachSpecificEnergyToInstance(instanceId: string, energyType: AttachableEnergyType, amount: number): boolean {
-        if(!this.state.attachedEnergyByInstance[instanceId]) {
+        if (!this.state.attachedEnergyByInstance[instanceId]) {
             this.state.attachedEnergyByInstance[instanceId] = EnergyController.emptyEnergyDict();
         }
         
@@ -197,28 +197,28 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Transfer energy between card instances
     public transferEnergyBetweenInstances(sourceInstanceId: string, targetInstanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
         const sourceEnergy = this.state.attachedEnergyByInstance[sourceInstanceId];
-        if(!sourceEnergy) {
+        if (!sourceEnergy) {
             return false; 
         }
         
         // Make sure we have a valid energy type
-        if(!energyType) {
+        if (!energyType) {
             // Find the first available energy type
-            for(const type of Object.keys(sourceEnergy) as AttachableEnergyType[]) {
-                if(sourceEnergy[type] > 0) {
+            for (const type of Object.keys(sourceEnergy) as AttachableEnergyType[]) {
+                if (sourceEnergy[type] > 0) {
                     energyType = type;
                     break;
                 }
             }
             
             // If no energy type found, return false
-            if(!energyType) {
+            if (!energyType) {
                 return false; 
             }
         }
         
         // Check if source has enough energy of the specified type
-        if(sourceEnergy[energyType] < amount) {
+        if (sourceEnergy[energyType] < amount) {
             return false; 
         }
         
@@ -226,7 +226,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         sourceEnergy[energyType] -= amount;
         
         // Initialize target energy if needed
-        if(!this.state.attachedEnergyByInstance[targetInstanceId]) {
+        if (!this.state.attachedEnergyByInstance[targetInstanceId]) {
             this.state.attachedEnergyByInstance[targetInstanceId] = EnergyController.emptyEnergyDict();
         }
         
@@ -238,17 +238,17 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
 
     public discardSpecificEnergyFromInstance(playerId: number, instanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
         const attached = this.state.attachedEnergyByInstance[instanceId];
-        if(!attached) {
+        if (!attached) {
             return false; 
         }
         
-        if(energyType) {
+        if (energyType) {
             const available = attached[energyType] || 0;
             const toDiscard = Math.min(available, amount);
             attached[energyType] -= toDiscard;
             
             // Track discarded energy
-            if(toDiscard > 0) {
+            if (toDiscard > 0) {
                 this.state.discardedEnergy[playerId][energyType] += toDiscard;
             }
             
@@ -256,13 +256,13 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         } 
         // Discard random energy
         const totalEnergy = this.getTotalEnergyByInstance(instanceId);
-        if(totalEnergy < amount) {
+        if (totalEnergy < amount) {
             return false; 
         }
             
         let remaining = amount;
-        for(const type of Object.keys(attached) as AttachableEnergyType[]) {
-            if(remaining <= 0) {
+        for (const type of Object.keys(attached) as AttachableEnergyType[]) {
+            if (remaining <= 0) {
                 break; 
             }
             const available = attached[type];
@@ -271,7 +271,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             remaining -= toDiscard;
                 
             // Track discarded energy
-            if(toDiscard > 0) {
+            if (toDiscard > 0) {
                 this.state.discardedEnergy[playerId][type] += toDiscard;
             }
         }
@@ -307,8 +307,8 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         const specificRequired: { [key: string]: number } = {};
         let colorlessRequired = 0;
 
-        for(const requirement of requiredEnergy) {
-            if(requirement.type === 'any' || requirement.type === 'colorless') {
+        for (const requirement of requiredEnergy) {
+            if (requirement.type === 'any' || requirement.type === 'colorless') {
                 colorlessRequired += requirement.amount;
                 totalRequired += requirement.amount;
             } else {
@@ -318,28 +318,28 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         }
 
         // Check if we have enough total energy
-        if(totalEnergy < totalRequired) {
+        if (totalEnergy < totalRequired) {
             return false;
         }
 
         // First, check if we have enough of each specific type
         let specificEnergyUsed = 0;
-        for(const [ type, amount ] of Object.entries(specificRequired)) {
+        for (const [ type, amount ] of Object.entries(specificRequired)) {
             const energyType = type as EnergyRequirementType;
             // Skip colorless energy as it's handled separately
-            if(energyType === 'colorless') {
+            if (energyType === 'colorless') {
                 continue; 
             }
             
             const attachedAmount = attached[energyType as AttachableEnergyType] || 0;
-            if(attachedAmount < amount) {
+            if (attachedAmount < amount) {
                 return false;
             }
             specificEnergyUsed += amount;
         }
 
         // Check if we have enough total energy for all requirements (specific + colorless)
-        if(totalEnergy < (specificEnergyUsed + colorlessRequired)) {
+        if (totalEnergy < (specificEnergyUsed + colorlessRequired)) {
             return false;
         }
 
@@ -351,12 +351,12 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         const currentEnergy = this.state.currentEnergy[playerId];
         
         // No energy available
-        if(currentEnergy === null) {
+        if (currentEnergy === null) {
             return false;
         }
         
         // Check for specific energy type if provided
-        if(energyType) {
+        if (energyType) {
             return currentEnergy === energyType;
         }
         
@@ -372,12 +372,12 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     
     // Remove all energy from a card instance (for knockouts)
     public removeAllEnergyFromInstance(playerId: number, instanceId: string): void {
-        if(this.state.attachedEnergyByInstance[instanceId]) {
+        if (this.state.attachedEnergyByInstance[instanceId]) {
             // Track discarded energy before removing
             const attached = this.state.attachedEnergyByInstance[instanceId];
-            for(const type of Object.keys(attached) as AttachableEnergyType[]) {
+            for (const type of Object.keys(attached) as AttachableEnergyType[]) {
                 const amount = attached[type];
-                if(amount > 0) {
+                if (amount > 0) {
                     this.state.discardedEnergy[playerId][type] += amount;
                 }
             }
@@ -389,19 +389,19 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     // Discard energy from a card by instance ID (for retreat cost)
     public discardEnergyFromInstance(playerId: number, instanceId: string, amount: number): boolean {
         const attached = this.state.attachedEnergyByInstance[instanceId];
-        if(!attached) {
+        if (!attached) {
             return false; 
         }
         
         const totalEnergy = this.getTotalEnergyByInstance(instanceId);
-        if(totalEnergy < amount) {
+        if (totalEnergy < amount) {
             return false; 
         }
         
         // Discard energy in order of availability
         let remaining = amount;
-        for(const type of Object.keys(attached) as AttachableEnergyType[]) {
-            if(remaining <= 0) {
+        for (const type of Object.keys(attached) as AttachableEnergyType[]) {
+            if (remaining <= 0) {
                 break; 
             }
             const available = attached[type];
@@ -410,7 +410,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             remaining -= toDiscard;
             
             // Track discarded energy
-            if(toDiscard > 0) {
+            if (toDiscard > 0) {
                 this.state.discardedEnergy[playerId][type] += toDiscard;
             }
         }
@@ -426,7 +426,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
 
     // Pay retreat cost by removing energy
     public payRetreatCost(instanceId: string, retreatCost: number): boolean {
-        if(!this.canPayRetreatCost(instanceId, retreatCost)) {
+        if (!this.canPayRetreatCost(instanceId, retreatCost)) {
             return false;
         }
 
@@ -434,15 +434,15 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         let remaining = retreatCost;
 
         // Remove energy in any order until retreat cost is paid
-        for(const energyType of Object.keys(attached) as (keyof EnergyDictionary)[]) {
+        for (const energyType of Object.keys(attached) as (keyof EnergyDictionary)[]) {
             const available = attached[energyType] || 0;
             const toRemove = Math.min(available, remaining);
             
-            if(toRemove > 0) {
+            if (toRemove > 0) {
                 this.state.attachedEnergyByInstance[instanceId][energyType] = (this.state.attachedEnergyByInstance[instanceId][energyType] || 0) - toRemove;
                 remaining -= toRemove;
                 
-                if(remaining <= 0) {
+                if (remaining <= 0) {
                     break;
                 }
             }
@@ -453,7 +453,7 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     
     // Set available energy types for a player (based on deck)
     public setAvailableTypes(playerId: number, types: AttachableEnergyType[]): void {
-        if(playerId >= 0 && playerId < this.state.availableTypes.length) {
+        if (playerId >= 0 && playerId < this.state.availableTypes.length) {
             this.state.availableTypes[playerId] = types;
         }
     }

@@ -84,7 +84,7 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
     const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
     
-    if(isAsleep || isParalyzed) {
+    if (isAsleep || isParalyzed) {
         const condition = isAsleep ? 'asleep' : 'paralyzed';
         await intermediary.form({ 
             type: 'print', 
@@ -98,7 +98,7 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
     
-    if(!fieldCardData) {
+    if (!fieldCardData) {
         return;
     }
     
@@ -139,7 +139,7 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     const attackIndex = (await received)[0] as number;
     
     // Handle back option
-    if(attackIndex === -1) {
+    if (attackIndex === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -161,7 +161,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     // Get the player's hand
     const hand = handlerData.hand;
     
-    if(!hand || hand.length === 0) {
+    if (!hand || hand.length === 0) {
         await intermediary.form({ type: 'print', message: [ 'Your hand is empty. Wait for your next turn to draw a card.' ] });
         // Return to action selection instead of sending an invalid play action
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
@@ -173,31 +173,31 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
         let cardName: string;
         let cardDescription = '';
         
-        if(card.type === 'creature') {
+        if (card.type === 'creature') {
             const fieldCardData = cardRepository.getCreature(card.templateId);
-            if(!fieldCardData) {
+            if (!fieldCardData) {
                 throw new Error(`FieldCard not found: ${card.templateId}`);
             }
             cardName = fieldCardData.name;
             
             // Check if card can be played using ActionValidator
-            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if(fieldCardData.previousStageName) {
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if (fieldCardData.previousStageName) {
                     cardDescription = ' (Cannot play evolved FieldCard directly!)';
                 } else {
                     cardDescription = ' (Bench is full!)';
                 }
             }
-        } else if(card.type === 'item') {
+        } else if (card.type === 'item') {
             const itemData = cardRepository.getItem(card.templateId);
-            if(!itemData) {
+            if (!itemData) {
                 throw new Error(`Item not found: ${card.templateId}`);
             }
             cardName = itemData.name;
             
             // Check if card can be played using ActionValidator
-            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if(itemData.templateId === 'potion') {
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if (itemData.templateId === 'potion') {
                     cardDescription = ' (No FieldCard need healing!)';
                 } else {
                     cardDescription = ' (Cannot play this card now)';
@@ -208,38 +208,38 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                     ? ` - ${itemData.effects[0].type}` 
                     : ' - Unknown effect';
             }
-        } else if(card.type === 'supporter') {
+        } else if (card.type === 'supporter') {
             const supporterData = cardRepository.getSupporter(card.templateId);
-            if(!supporterData) {
+            if (!supporterData) {
                 throw new Error(`Supporter not found: ${card.templateId}`);
             }
             cardName = supporterData.name;
             
             // Check if card can be played using ActionValidator
-            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if(handlerData.turnState.supporterPlayedThisTurn) {
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if (handlerData.turnState.supporterPlayedThisTurn) {
                     cardDescription = ' (Already played a Supporter this turn!)';
-                } else if(supporterData.templateId === 'sabrina') {
+                } else if (supporterData.templateId === 'sabrina') {
                     cardDescription = ' (Opponent has no bench FieldCard!)';
-                } else if(supporterData.templateId === 'lillie') {
+                } else if (supporterData.templateId === 'lillie') {
                     cardDescription = ' (No FieldCard need healing!)';
                 } else {
                     cardDescription = ' (Cannot play this card now)';
                 }
-            } else if(supporterData.effects && supporterData.effects.length > 0) {
+            } else if (supporterData.effects && supporterData.effects.length > 0) {
                 cardDescription = ` - ${supporterData.effects[0].type}`;
             }
-        } else if(card.type === 'tool') {
+        } else if (card.type === 'tool') {
             const toolData = cardRepository.getTool(card.templateId);
-            if(!toolData) {
+            if (!toolData) {
                 throw new Error(`Tool not found: ${card.templateId}`);
             }
             cardName = toolData.name;
             
             // Check if card can be played using ActionValidator
-            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
                 cardDescription = ' (Cannot attach tool now)';
-            } else if(toolData.effects && toolData.effects.length > 0) {
+            } else if (toolData.effects && toolData.effects.length > 0) {
                 cardDescription = ` - ${toolData.effects[0].type}`;
             }
         } else {
@@ -266,7 +266,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     const cardIndex = (await received)[0] as number;
     
     // Handle back option
-    if(cardIndex === -1) {
+    if (cardIndex === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -277,11 +277,11 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     const targetPlayerId = currentPlayer; // Default to self
     let targetFieldCardIndex = 0; // Default to active FieldCard
     
-    if(selectedCard.type === 'item') {
+    if (selectedCard.type === 'item') {
         const itemData = cardRepository.getItem(selectedCard.templateId);
         
         // Only ask for target if it's a healing item like potion
-        if(itemData && itemData.templateId === 'potion') {
+        if (itemData && itemData.templateId === 'potion') {
             // Create options for player's FieldCard (active + bench)
             const fieldCardOptions = [];
             
@@ -317,7 +317,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             targetFieldCardIndex = (await targetReceived)[0] as number;
             
             // Handle back option
-            if(targetFieldCardIndex === -1) {
+            if (targetFieldCardIndex === -1) {
                 await handlePlayCard(cardRepository, intermediary, handlerData, responsesQueue);
                 return;
             }
@@ -325,7 +325,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     }
     
     // Create a play card action
-    if(selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item') {
+    if (selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item') {
         responsesQueue.push(new PlayCardResponseMessage(selectedCard.templateId, selectedCard.type, targetPlayerId, targetFieldCardIndex));
     } else {
         // Handle tool cards or other unsupported types
@@ -350,17 +350,17 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     const allFieldCards = handlerData.field.creatures[currentPlayer]?.map(toFieldCard) || [];
     
     allFieldCards.forEach((fieldCard: FieldCard, position: number) => {
-        if(ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
+        if (ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
             const currentData = cardRepository.getCreature(fieldCard.templateId);
             const evolution = allFieldCard.find(id => {
                 const data = cardRepository.getCreature(id);
                 return data.previousStageName === currentData.name;
             });
             
-            if(evolution) {
+            if (evolution) {
                 const evolutionData = cardRepository.getCreature(evolution);
                 
-                if(position === 0) { // Active FieldCard
+                if (position === 0) { // Active FieldCard
                     fieldCardOptions.push({
                         name: `${currentData?.name} → ${evolutionData?.name} (Active)`,
                         value: { evolutionId: evolution, isActive: true },
@@ -375,7 +375,7 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
         }
     });
     
-    if(fieldCardOptions.length === 0) {
+    if (fieldCardOptions.length === 0) {
         await intermediary.form({ type: 'print', message: [ 'No FieldCard can evolve right now.' ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
@@ -391,7 +391,7 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     
     const selection = (await received)[0] as { evolutionId: string; isActive: boolean; benchIndex?: number } | null;
     
-    if(!selection) {
+    if (!selection) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -413,7 +413,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     const currentPlayer = handlerData.turn;
     
     // Check if energy can be attached using ActionValidator
-    if(!ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
+    if (!ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
         const message = handlerData.energy.isAbsoluteFirstTurn 
             ? 'Cannot attach energy on first turn as first player.' 
             : 'Cannot attach energy this turn.';
@@ -424,7 +424,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     
     // Get available energy types
     const availableTypes = EnergyController.getAvailableEnergyTypes(handlerData.energy, currentPlayer);
-    if(availableTypes.length === 0) {
+    if (availableTypes.length === 0) {
         await intermediary.form({ type: 'print', message: [ 'No energy available to attach.' ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
@@ -432,7 +432,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     
     // If multiple energy types available, let player choose
     let selectedEnergyType = availableTypes[0];
-    if(availableTypes.length > 1) {
+    if (availableTypes.length > 1) {
         const energyOptions = availableTypes.map((type: string) => ({
             name: type.charAt(0).toUpperCase() + type.slice(1),
             value: type,
@@ -446,7 +446,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
         });
         
         const selectedValue = (await energyReceived)[0] as string;
-        if(selectedValue === 'back') {
+        if (selectedValue === 'back') {
             await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
             return;
         }
@@ -483,7 +483,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     
     const fieldCardPosition = (await received)[0] as number;
     
-    if(fieldCardPosition === -1) {
+    if (fieldCardPosition === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -505,8 +505,8 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
     const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
     
     // Check if retreat is possible using ActionValidator
-    if(!ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
-        if(benchedFieldCards.length === 0) {
+    if (!ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
+        if (benchedFieldCards.length === 0) {
             await intermediary.form({ type: 'print', message: [ 'No bench FieldCard to retreat to.' ] });
         } else {
             const retreatCost = fieldCardData.retreatCost;
@@ -542,7 +542,7 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
     
     const benchIndex = (await received)[0] as number;
     
-    if(benchIndex === -1) {
+    if (benchIndex === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -565,7 +565,7 @@ export async function handleAbility(cardRepository: CardRepository, intermediary
     const position = parts[1]; // 'active' or 'bench'
     
     let fieldCardPosition = 0;
-    if(position === 'bench') {
+    if (position === 'bench') {
         fieldCardPosition = parseInt(parts[2]) + 1; // bench index + 1
     }
     
@@ -593,7 +593,7 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const hasUsableAttack = fieldCardData && fieldCardData.attacks && fieldCardData.attacks.some((_, index) => ActionValidator.canUseAttack(handlerData, cardRepository, currentPlayer, index),
     );
     
-    if(hasUsableAttack) {
+    if (hasUsableAttack) {
         actionOptions.push({ name: 'Attack', value: 'attack' });
     }
     
@@ -605,14 +605,14 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const canEvolve = allFieldCards.some((_, position) => ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position),
     );
     
-    if(canEvolve) {
+    if (canEvolve) {
         actionOptions.push({ name: 'Evolve FieldCard', value: 'evolve' });
     }
     
     // Check for usable abilities on active FieldCard
     const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
-    if(activeCreatureData && activeCreatureData.ability) {
-        if(ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0)) {
+    if (activeCreatureData && activeCreatureData.ability) {
+        if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0)) {
             actionOptions.push({ name: `Use ${activeCreatureData.ability.name} (Active)`, value: 'ability-active' });
         }
     }
@@ -621,20 +621,20 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const benchFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
     benchFieldCards.forEach((fieldCard: FieldCard, benchIndex: number) => {
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
-        if(fieldCardData && fieldCardData.ability) {
-            if(ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
+        if (fieldCardData && fieldCardData.ability) {
+            if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
                 actionOptions.push({ name: `Use ${fieldCardData.ability.name} (${fieldCardData.name})`, value: `ability-bench-${benchIndex}` });
             }
         }
     });
     
     // Check if energy can be attached
-    if(ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
+    if (ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
         actionOptions.push({ name: 'Attach Energy', value: 'attachEnergy' });
     }
     
     // Check if retreat is possible
-    if(ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
+    if (ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
         actionOptions.push({ name: 'Retreat', value: 'retreat' });
     }
     
@@ -649,19 +649,19 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     
     const actionType = (await actionReceived)[0] as string;
     
-    if(actionType === 'attack') {
+    if (actionType === 'attack') {
         await handleAttack(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if(actionType === 'play') {
+    } else if (actionType === 'play') {
         await handlePlayCard(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if(actionType === 'evolve') {
+    } else if (actionType === 'evolve') {
         await handleEvolve(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if(actionType === 'attachEnergy') {
+    } else if (actionType === 'attachEnergy') {
         await handleAttachEnergy(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if(actionType === 'retreat') {
+    } else if (actionType === 'retreat') {
         await handleRetreat(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if(actionType.startsWith('ability-')) {
+    } else if (actionType.startsWith('ability-')) {
         await handleAbility(cardRepository, intermediary, handlerData, responsesQueue, actionType);
-    } else if(actionType === 'endTurn') {
+    } else if (actionType === 'endTurn') {
         // Inform the player
         await intermediary.form({ 
             type: 'print', 
@@ -723,13 +723,13 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     
     // Get hand summary
     const handSummary = hand.map((card) => {
-        if(card.type === 'creature') {
+        if (card.type === 'creature') {
             const data = cardRepository.getCreature(card.templateId);
             return data.name;
-        } else if(card.type === 'supporter') {
+        } else if (card.type === 'supporter') {
             const data = cardRepository.getSupporter(card.templateId);
             return data.name;
-        } else if(card.type === 'item') {
+        } else if (card.type === 'item') {
             const data = cardRepository.getItem(card.templateId);
             return data.name;
         }

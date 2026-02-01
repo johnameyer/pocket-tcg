@@ -44,10 +44,10 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
      */
     apply(controllers: Controllers, effect: ShuffleEffect, context: EffectContext): void {
         // Handle 'both' target specially
-        if(effect.target === 'both') {
+        if (effect.target === 'both') {
             // Apply the effect to both players
-            for(let playerId = 0; playerId < controllers.players.count; playerId++) {
-                if(effect.shuffleHand) {
+            for (let playerId = 0; playerId < controllers.players.count; playerId++) {
+                if (effect.shuffleHand) {
                     this.handleHandToDeckShuffle(controllers, effect, context, playerId);
                 } else {
                     this.handleDeckShuffle(controllers, effect, context, playerId);
@@ -60,7 +60,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         const playerId = effect.target === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer;
         
         // Check if this effect should shuffle the hand into the deck
-        if(effect.shuffleHand) {
+        if (effect.shuffleHand) {
             this.handleHandToDeckShuffle(controllers, effect, context, playerId);
         } else {
             // Standard deck shuffle
@@ -84,7 +84,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
     ): void {
         // Calculate draw amount BEFORE shuffling if specified
         let drawAmount = 0;
-        if(effect.drawAfter) {
+        if (effect.drawAfter) {
             drawAmount = getEffectValue(effect.drawAfter, controllers, context);
         }
         
@@ -92,7 +92,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         const hand = [ ...controllers.hand.getHand(playerId) ];
         controllers.hand.removeCards(playerId, hand);
         
-        for(const card of hand) {
+        for (const card of hand) {
             controllers.deck.addCard(playerId, card);
         }
         
@@ -106,7 +106,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         });
         
         // Draw cards if specified
-        if(effect.drawAfter && drawAmount > 0) {
+        if (effect.drawAfter && drawAmount > 0) {
             this.drawCards(controllers, playerId, drawAmount, context, effect.target as PlayerTarget);
         }
     }
@@ -135,7 +135,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         });
         
         // Draw cards if specified
-        if(effect.drawAfter) {
+        if (effect.drawAfter) {
             const drawAmount = getEffectValue(effect.drawAfter, controllers, context);
             this.drawCards(controllers, playerId, drawAmount, context, effect.target as PlayerTarget);
         }
@@ -157,7 +157,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         context: EffectContext,
         target?: PlayerTarget,
     ): void {
-        if(drawAmount <= 0) {
+        if (drawAmount <= 0) {
             return;
         }
         
@@ -165,7 +165,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         const deckSize = controllers.deck.getDeckSize(playerId);
         
         // If the deck is empty, show a message and return
-        if(deckSize === 0) {
+        if (deckSize === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} couldn't draw any cards because the deck is empty!` ],
@@ -177,7 +177,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         const actualDrawAmount = Math.min(drawAmount, deckSize);
         
         // Draw cards one by one
-        for(let i = 0; i < actualDrawAmount; i++) {
+        for (let i = 0; i < actualDrawAmount; i++) {
             controllers.hand.drawCard(playerId);
         }
         
@@ -190,7 +190,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         });
         
         // If we couldn't draw all the requested cards, show a message
-        if(actualDrawAmount < drawAmount) {
+        if (actualDrawAmount < drawAmount) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} couldn't draw all ${drawAmount} cards because the deck only had ${deckSize} cards!` ],

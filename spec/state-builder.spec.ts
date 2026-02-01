@@ -7,7 +7,7 @@ describe('StateBuilder Validation', () => {
     it('should throw an error when attaching energy to non-existent creature', () => {
         const state = StateBuilder.createActionPhaseState();
         
-        if(!state) {
+        if (!state) {
             console.warn('State creation failed, skipping test');
             return;
         }
@@ -32,7 +32,7 @@ describe('StateBuilder Validation', () => {
     it('should successfully attach energy to existing creature', () => {
         const state = StateBuilder.createActionPhaseState();
         
-        if(!state) {
+        if (!state) {
             console.warn('State creation failed, skipping test');
             return;
         }

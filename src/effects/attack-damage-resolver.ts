@@ -32,23 +32,23 @@ export class AttackDamageResolver {
         let playercreature = controllers.field.getCardByPosition(currentPlayer, 0);
         
         // If not the active creature, check the bench
-        if(playercreature?.instanceId !== playercreatureInstanceId) {
+        if (playercreature?.instanceId !== playercreatureInstanceId) {
             const benchedcreature = controllers.field.getCards(currentPlayer);
             const benchedMatch = benchedcreature.find(p => p?.instanceId === playercreatureInstanceId);
             
             // If found on bench, use that creature
-            if(benchedMatch) {
+            if (benchedMatch) {
                 playercreature = benchedMatch;
             }
         }
         
         // If creature not found at all, return undefined
-        if(!playercreature) {
+        if (!playercreature) {
             return undefined; 
         }
         
         const creatureData = controllers.cardRepository.getCreature(playercreature.templateId);
-        if(!creatureData || !creatureData.attacks || attackIndex >= creatureData.attacks.length) {
+        if (!creatureData || !creatureData.attacks || attackIndex >= creatureData.attacks.length) {
             return undefined;
         }
         
@@ -63,7 +63,7 @@ export class AttackDamageResolver {
         
         // Calculate base damage
         let baseDamage: number;
-        if(typeof attack.damage === 'number' || attack.damage === undefined) {
+        if (typeof attack.damage === 'number' || attack.damage === undefined) {
             baseDamage = attack.damage || 0;
         } else {
             baseDamage = this.resolveDynamicDamage(attack, controllers, context);
@@ -74,20 +74,20 @@ export class AttackDamageResolver {
         // Apply weakness bonus (+20 damage if target is weak to attacker's type)
         const targetId = (currentPlayer + 1) % controllers.players.count;
         const targetcreature = controllers.field.getCardByPosition(targetId, 0);
-        if(targetcreature && totalDamage > 0) {
+        if (targetcreature && totalDamage > 0) {
             const attackerData = controllers.cardRepository.getCreature(playercreature.templateId);
             const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
-            if(targetData.weakness === attackerData.type) {
+            if (targetData.weakness === attackerData.type) {
                 totalDamage += 20; // +20 weakness damage
             }
         }
         
         // Apply damage boosts from turn state (with condition checking)
         const damageBoosts = controllers.turnState.getDamageBoosts();
-        for(const boost of damageBoosts) {
+        for (const boost of damageBoosts) {
             console.log(`DEBUG: Checking damage boost: ${boost.effectName}, amount: ${boost.amount}`);
             // Check if this boost should apply to the current target
-            if(this.shouldApplyDamageBoost(boost, targetcreature, controllers, context)) {
+            if (this.shouldApplyDamageBoost(boost, targetcreature, controllers, context)) {
                 console.log(`DEBUG: Applying damage boost: ${boost.amount}`);
                 totalDamage += boost.amount;
             } else {
@@ -96,27 +96,27 @@ export class AttackDamageResolver {
         }
         
         // Apply damage boosts from attack effects (with condition checking)
-        if(attack.effects) {
-            for(const effect of attack.effects) {
-                if(effect.type === 'damage-boost') {
+        if (attack.effects) {
+            for (const effect of attack.effects) {
+                if (effect.type === 'damage-boost') {
                     // Check if the condition is met
                     let conditionMet = true;
-                    if(effect.condition) {
+                    if (effect.condition) {
                         // Get the attacking creature for condition evaluation
                         const attackingCreature = controllers.field.getRawCardByPosition(currentPlayer, 0);
-                        if(attackingCreature?.instanceId === playercreatureInstanceId) {
+                        if (attackingCreature?.instanceId === playercreatureInstanceId) {
                             // Use the attacking creature for condition evaluation
                             conditionMet = this.evaluateAttackCondition(effect.condition, attackingCreature, controllers, context);
                         } else {
                             // Find the attacking creature on bench
                             const benchedCreature = controllers.field.getCards(currentPlayer).find(c => c?.instanceId === playercreatureInstanceId);
-                            if(benchedCreature) {
+                            if (benchedCreature) {
                                 conditionMet = this.evaluateAttackCondition(effect.condition, benchedCreature, controllers, context);
                             }
                         }
                     }
                     
-                    if(conditionMet) {
+                    if (conditionMet) {
                         const boostAmount = getEffectValue(effect.amount, controllers, context);
                         totalDamage += boostAmount;
                     }
@@ -126,14 +126,14 @@ export class AttackDamageResolver {
         
         // Apply damage reductions from turn state
         const damageReductions = controllers.turnState.getDamageReductions();
-        for(const reduction of damageReductions) {
+        for (const reduction of damageReductions) {
             totalDamage -= reduction.amount;
         }
         
         // Apply damage prevention from turn state (with source checking)
         const damagePreventions = controllers.turnState.getDamagePrevention();
-        for(const prevention of damagePreventions) {
-            if(this.shouldPreventDamage(prevention, playercreature, controllers, context)) {
+        for (const prevention of damagePreventions) {
+            if (this.shouldPreventDamage(prevention, playercreature, controllers, context)) {
                 totalDamage = 0;
                 break; // One prevention is enough to block all damage
             }
@@ -153,7 +153,7 @@ export class AttackDamageResolver {
      * @returns The resolved damage amount
      */
     static resolveDynamicDamage(attack: CreatureAttack, controllers: Controllers, context: EffectContext): number {
-        if(typeof attack.damage === 'number' || attack.damage === undefined) {
+        if (typeof attack.damage === 'number' || attack.damage === undefined) {
             return attack.damage || 0;
         }
         
@@ -161,23 +161,23 @@ export class AttackDamageResolver {
          * TODO can we swap this all for getEffectValue(attack.damage)?
          * Handle different damage calculation types
          */
-        if(attack.damage.type === 'multiplication') {
+        if (attack.damage.type === 'multiplication') {
             const subValue = getEffectValue(attack.damage.base, controllers, context);
             const multiplierValue = getEffectValue(attack.damage.multiplier, controllers, context);
             return multiplierValue * subValue;
-        } else if(attack.damage.type === 'coin-flip') {
+        } else if (attack.damage.type === 'coin-flip') {
             // Handle coin flip damage
             const isHeads = controllers.coinFlip.performCoinFlip();
             return isHeads ? attack.damage.headsValue : attack.damage.tailsValue;
-        } else if(attack.damage.type === 'addition') {
+        } else if (attack.damage.type === 'addition') {
             // Handle addition damage (like Poipole's 2-Step)
             return attack.damage.values.reduce((sum: number, value) => sum + getEffectValue(value, controllers, context), 0);
-        } else if(attack.damage.type === 'conditional') {
+        } else if (attack.damage.type === 'conditional') {
             // Handle conditional damage
             const conditionMet = evaluateConditionWithContext(attack.damage.condition, controllers, context);
             return conditionMet 
                 ? getEffectValue(attack.damage.trueValue, controllers, context) : 0;
-        } else if(attack.damage.type === 'constant') {
+        } else if (attack.damage.type === 'constant') {
             // Handle constant damage
             return attack.damage.value;
         }
@@ -194,7 +194,7 @@ export class AttackDamageResolver {
         controllers: Controllers,
         context: EffectContext,
     ): boolean {
-        if(!targetcreature) {
+        if (!targetcreature) {
             return false; 
         }
         
@@ -205,18 +205,18 @@ export class AttackDamageResolver {
         const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
         
         // Check if this is an evolution-based boost
-        if(boost.effectName.includes('Evolution Boost')) {
+        if (boost.effectName.includes('Evolution Boost')) {
             // Only apply to creatures that evolve from something (have evolvesFrom property)
             return !!targetData.previousStageName;
         }
         
         // Check Red Supporter - only applies to ex Pokemon
-        if(boost.effectName === 'Red') {
+        if (boost.effectName === 'Red') {
             return targetData.attributes?.ex === true;
         }
         
         // Check if this is an ex-based boost
-        if(boost.effectName.includes('EX Boost')) {
+        if (boost.effectName.includes('EX Boost')) {
             // Only apply to ex creatures
             return targetData.attributes?.ex === true;
         }
@@ -234,7 +234,7 @@ export class AttackDamageResolver {
         controllers: Controllers,
         context: EffectContext,
     ): boolean {
-        if(!sourcecreature) {
+        if (!sourcecreature) {
             return false; 
         }
         
@@ -245,7 +245,7 @@ export class AttackDamageResolver {
         const sourceData = controllers.cardRepository.getCreature(sourcecreature.templateId);
         
         // Check if this prevention only applies to ex sources
-        if(prevention.effectName.includes('Prevent Ex')) {
+        if (prevention.effectName.includes('Prevent Ex')) {
             // Only prevent damage from ex creatures
             return sourceData.attributes?.ex === true;
         }
@@ -264,7 +264,7 @@ export class AttackDamageResolver {
         context: EffectContext,
     ): boolean {
         // Check hasDamage condition
-        if(condition.hasDamage === true) {
+        if (condition.hasDamage === true) {
             return attackingCreature.damageTaken > 0;
         }
         

@@ -53,13 +53,13 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
     // Attach a tool to a FieldCard
     public attachTool(fieldCardInstanceId: string, toolTemplateId: string, toolInstanceId: string): boolean {
         // Check if FieldCard already has a tool
-        if(this.state.attachedTools[fieldCardInstanceId]) {
+        if (this.state.attachedTools[fieldCardInstanceId]) {
             return false;
         }
         
         // Verify tool exists
         const toolData = this.cardRepository.getTool(toolTemplateId);
-        if(!toolData) {
+        if (!toolData) {
             return false;
         }
         
@@ -86,21 +86,21 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
      */
     public getHpBonus(fieldCardInstanceId: string): number {
         const tool = this.getAttachedTool(fieldCardInstanceId);
-        if(!tool) {
+        if (!tool) {
             return 0; 
         }
         
         const toolData = this.cardRepository.getTool(tool.templateId);
-        if(!toolData || !toolData.effects) {
+        if (!toolData || !toolData.effects) {
             return 0; 
         }
         
         let hpBonus = 0;
         
         // Calculate HP bonus from tool effects
-        for(const effect of toolData.effects) {
-            if(effect.type === 'hp-bonus') {
-                if(effect.amount.type === 'constant') {
+        for (const effect of toolData.effects) {
+            if (effect.type === 'hp-bonus') {
+                if (effect.amount.type === 'constant') {
                     hpBonus += effect.amount.value;
                 }
                 // TODO: Add support for other amount types if needed

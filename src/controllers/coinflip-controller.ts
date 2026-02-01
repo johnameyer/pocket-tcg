@@ -25,12 +25,12 @@ export class CoinFlipController extends GlobalController<CoinFlipState, {}> {
          * TODO can we remove mockedResults here since we have the mocked coin flip controller in spec
          * Use mocked results if available (FIFO order)
          */
-        if(this.state.mockedResults.length > 0) {
+        if (this.state.mockedResults.length > 0) {
             return this.state.mockedResults.splice(0, 1)![0];
         }
 
         // Use guaranteed heads if set
-        if(this.state.nextFlipGuaranteedHeads) {
+        if (this.state.nextFlipGuaranteedHeads) {
             this.state.nextFlipGuaranteedHeads = false;
             return true; // heads
         }

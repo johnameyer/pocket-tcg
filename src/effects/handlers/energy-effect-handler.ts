@@ -50,7 +50,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      */
     apply(controllers: Controllers, effect: EnergyEffect, context: EffectContext): void {
         // Ensure we have a valid target
-        if(!effect.target) {
+        if (!effect.target) {
             throw new Error('No target specified for energy effect');
         }
 
@@ -63,14 +63,14 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
         // Get the operation (attach or discard)
         const operation = effect.operation;
 
-        if(effect.target.type !== 'resolved') {
+        if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if(targets.length === 0) {
+        if (targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} found no valid targets!` ],
@@ -78,12 +78,12 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             return;
         }
         
-        for(const target of targets) {
+        for (const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // Get the field instance ID for energy/tool operations
             const fieldInstanceId = controllers.field.getFieldInstanceId(playerId, fieldIndex);
-            if(!fieldInstanceId) {
+            if (!fieldInstanceId) {
                 controllers.players.messageAll({
                     type: 'status',
                     components: [ `${context.effectName} target creature not found!` ],
@@ -93,7 +93,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             
             // Get the target creature for display name
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
-            if(!targetCreature) {
+            if (!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
                     components: [ `${context.effectName} target creature not found!` ],
@@ -104,7 +104,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             const creatureName = targetCreature.data.name;
             
             // Apply the appropriate energy operation
-            if(operation === 'attach' && energyType) {
+            if (operation === 'attach' && energyType) {
                 // Attach energy directly to the creature
                 const success = controllers.energy.attachSpecificEnergyToInstance(
                     fieldInstanceId, 
@@ -112,7 +112,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                     amount,
                 );
                 
-                if(success) {
+                if (success) {
                     controllers.players.messageAll({
                         type: 'status',
                         components: [ `${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}!` ],
@@ -132,7 +132,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                         components: [ `${context.effectName} failed to attach ${energyType} energy to ${creatureName}!` ],
                     });
                 }
-            } else if(operation === 'discard') {
+            } else if (operation === 'discard') {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
                     playerId,
                     fieldInstanceId, 
@@ -140,7 +140,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                     amount,
                 );
                 
-                if(success) {
+                if (success) {
                     controllers.players.messageAll({
                         type: 'status',
                         components: [ `${context.effectName} discarded ${amount} ${energyType || 'random'} energy from ${creatureName}!` ],

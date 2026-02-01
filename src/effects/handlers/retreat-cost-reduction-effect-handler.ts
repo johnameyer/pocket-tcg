@@ -32,7 +32,7 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
         
         // Get the active creature
         const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-        if(!activecreature) {
+        if (!activecreature) {
             return;
         }
         

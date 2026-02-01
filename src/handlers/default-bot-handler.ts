@@ -23,17 +23,17 @@ export class DefaultBotHandler extends GameHandler {
         const creatureCards = hand.filter(card => card.type === 'creature');
         const benchSize = handlerData.field.creatures[currentPlayer].length;
         
-        if(creatureCards.length > 0 && benchSize < 3) {
+        if (creatureCards.length > 0 && benchSize < 3) {
             const cardIndex = hand.findIndex(card => card.type === 'creature');
             const card = hand[cardIndex];
             responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'creature'));
             return;
         }
         
-        if(!handlerData.turnState.supporterPlayedThisTurn) {
+        if (!handlerData.turnState.supporterPlayedThisTurn) {
             const supporterCards = hand.filter(card => card.type === 'supporter');
             
-            if(supporterCards.length > 0) {
+            if (supporterCards.length > 0) {
                 const cardIndex = hand.findIndex(card => card.type === 'supporter');
                 const card = hand[cardIndex];
                 responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'supporter'));
@@ -43,7 +43,7 @@ export class DefaultBotHandler extends GameHandler {
         
         const itemCards = hand.filter(card => card.type === 'item');
         
-        if(itemCards.length > 0) {
+        if (itemCards.length > 0) {
             const cardIndex = hand.findIndex(card => card.type === 'item');
             const card = hand[cardIndex];
             responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'item', currentPlayer, 0));
@@ -51,7 +51,7 @@ export class DefaultBotHandler extends GameHandler {
         }
         
         // Try to evolve active creature if possible
-        if(handlerData.field.canEvolveActive && (handlerData.field.canEvolveActive as boolean[])[currentPlayer]) {
+        if (handlerData.field.canEvolveActive && (handlerData.field.canEvolveActive as boolean[])[currentPlayer]) {
             const activeCreature = handlerData.field.creatures[currentPlayer][0]; // Get active creature at position 0
             const activeCreatureData = this.cardRepository.getCreature(getCurrentTemplateId(activeCreature));
             const allCreatures = this.cardRepository.getAllCreatureIds();
@@ -60,18 +60,18 @@ export class DefaultBotHandler extends GameHandler {
                 return data?.previousStageName === activeCreatureData.name;
             });
             
-            if(evolution) {
+            if (evolution) {
                 responsesQueue.push(new EvolveResponseMessage(evolution, 0));
                 return;
             }
         }
         
         // Try to attach energy if available and not first turn restricted
-        if(handlerData.energy) {
+        if (handlerData.energy) {
             const isFirstTurnRestricted = handlerData.energy.isAbsoluteFirstTurn;
             const hasCurrentEnergy = handlerData.energy.currentEnergy[currentPlayer] !== null;
             
-            if(hasCurrentEnergy && !isFirstTurnRestricted) {
+            if (hasCurrentEnergy && !isFirstTurnRestricted) {
                 responsesQueue.push(new AttachEnergyResponseMessage(0));
                 return;
             }
@@ -79,24 +79,24 @@ export class DefaultBotHandler extends GameHandler {
         
         // Try to attack if we have sufficient energy
         const activeCard = handlerData.field.creatures[currentPlayer][0]; // Get active card at position 0
-        if(activeCard && handlerData.energy) {
+        if (activeCard && handlerData.energy) {
             const creatureData = this.cardRepository.getCreature(getCurrentTemplateId(activeCard));
             const attack = creatureData?.attacks[0];
             
-            if(attack) {
+            if (attack) {
                 // Use the new energy system - attachedEnergyByInstance
                 const instanceId = getCurrentInstanceId(activeCard);
                 const attachedEnergy = handlerData.energy.attachedEnergyByInstance?.[instanceId];
                 
-                if(attachedEnergy) {
+                if (attachedEnergy) {
                     // Calculate total energy
                     const totalEnergy = Object.values(attachedEnergy).reduce((sum: number, count: unknown) => sum + (typeof count === 'number' ? count : 0), 0);
                     
                     // Check if we can use the attack
                     let canAttack = true;
-                    for(const requirement of attack.energyRequirements) {
-                        if(requirement.type === 'any' || requirement.type === 'colorless') {
-                            if(totalEnergy < requirement.amount) {
+                    for (const requirement of attack.energyRequirements) {
+                        if (requirement.type === 'any' || requirement.type === 'colorless') {
+                            if (totalEnergy < requirement.amount) {
                                 canAttack = false;
                                 break;
                             }
@@ -104,14 +104,14 @@ export class DefaultBotHandler extends GameHandler {
                             // Count specific energy type
                             const energyCount = attachedEnergy[requirement.type as keyof typeof attachedEnergy];
                             const typeCount = typeof energyCount === 'number' ? energyCount : 0;
-                            if(typeCount < requirement.amount) {
+                            if (typeCount < requirement.amount) {
                                 canAttack = false;
                                 break;
                             }
                         }
                     }
                     
-                    if(canAttack) {
+                    if (canAttack) {
                         responsesQueue.push(new AttackResponseMessage(0));
                         return;
                     }
@@ -134,7 +134,7 @@ export class DefaultBotHandler extends GameHandler {
         // Find all creature cards in hand
         const creatureCards = hand.filter(card => card.type === 'creature');
         
-        if(creatureCards.length > 0) {
+        if (creatureCards.length > 0) {
             // Bot selects first creature as active, others for bench (max 3 bench)
             const activeCard = creatureCards[0];
             const benchCards = creatureCards.slice(1, 4);

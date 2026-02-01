@@ -16,13 +16,13 @@ export class ActionValidator {
      */
     static canEvolveCreature(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, position: number): boolean {
         const creature = handlerData.field.creatures[playerId]?.[position];
-        if(!creature) {
+        if (!creature) {
             return false; 
         }
         
         const currentTurn = handlerData.turnCounter.turnNumber;
         
-        if(currentTurn <= 1 || (creature.turnLastPlayed !== undefined && creature.turnLastPlayed >= currentTurn)) {
+        if (currentTurn <= 1 || (creature.turnLastPlayed !== undefined && creature.turnLastPlayed >= currentTurn)) {
             return false; 
         }
         
@@ -39,17 +39,17 @@ export class ActionValidator {
      */
     static canAttachEnergy(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, energyType?: string): boolean {
         // Check if energy is available (currentEnergy is not null)
-        if(handlerData.energy.currentEnergy[playerId] === null) {
+        if (handlerData.energy.currentEnergy[playerId] === null) {
             return false; 
         }
         
-        if(handlerData.energy.isAbsoluteFirstTurn) {
+        if (handlerData.energy.isAbsoluteFirstTurn) {
             return false; 
         }
         
         const availableTypes = EnergyController.getAvailableEnergyTypes(handlerData.energy, playerId);
         
-        if(energyType) {
+        if (energyType) {
             return availableTypes.includes(energyType as AttachableEnergyType);
         }
         
@@ -61,12 +61,12 @@ export class ActionValidator {
      */
     static canRetreat(handlerData: HandlerData, cardRepository: CardRepository, playerId: number): boolean {
         const activeCreature = handlerData.field.creatures[playerId]?.[0];
-        if(!activeCreature) {
+        if (!activeCreature) {
             return false; 
         }
         
         const benchedCreatures = handlerData.field.creatures[playerId].slice(1);
-        if(benchedCreatures.length === 0) {
+        if (benchedCreatures.length === 0) {
             return false; 
         }
         
@@ -86,7 +86,7 @@ export class ActionValidator {
         const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
         const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
         
-        if(isAsleep || isParalyzed) {
+        if (isAsleep || isParalyzed) {
             return false;
         }
         
@@ -98,7 +98,7 @@ export class ActionValidator {
      */
     static canUseAttack(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, attackIndex: number): boolean {
         const activeCreature = handlerData.field.creatures[playerId]?.[0];
-        if(!activeCreature) {
+        if (!activeCreature) {
             return false; 
         }
         
@@ -106,13 +106,13 @@ export class ActionValidator {
         const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
         const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
         
-        if(isAsleep || isParalyzed) {
+        if (isAsleep || isParalyzed) {
             return false;
         }
         
         const creatureData = cardRepository.getCreature(getCurrentTemplateId(activeCreature));
         
-        if(attackIndex < 0 || attackIndex >= creatureData.attacks.length) {
+        if (attackIndex < 0 || attackIndex >= creatureData.attacks.length) {
             return false; 
         }
         
@@ -127,7 +127,7 @@ export class ActionValidator {
         const hand = handlerData.hand;
         const cardIndex = hand.findIndex(card => card.templateId === cardId);
         
-        if(cardIndex === -1) {
+        if (cardIndex === -1) {
             return false; 
         }
         
@@ -151,7 +151,7 @@ export class ActionValidator {
     private static canPlayCreatureCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
         const creatureData = cardRepository.getCreature(cardId);
         
-        if(creatureData.previousStageName) {
+        if (creatureData.previousStageName) {
             return false; 
         }
         
@@ -164,11 +164,11 @@ export class ActionValidator {
      */
     private static canPlayItemCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
         const itemData = cardRepository.getItem(cardId);
-        if(!itemData) {
+        if (!itemData) {
             return false; 
         }
         
-        if(itemData.effects && itemData.effects.length > 0) {
+        if (itemData.effects && itemData.effects.length > 0) {
             const context = EffectContextFactory.createCardContext(playerId, itemData.name, 'item');
             
             return EffectValidator.canApplyCardEffects(itemData.effects, handlerData, playerId, itemData.name, 'item', cardRepository);
@@ -181,16 +181,16 @@ export class ActionValidator {
      * Checks if a supporter card can be played.
      */
     private static canPlaySupporterCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
-        if(handlerData.turnState.supporterPlayedThisTurn) {
+        if (handlerData.turnState.supporterPlayedThisTurn) {
             return false; 
         }
         
         const supporterData = cardRepository.getSupporter(cardId);
-        if(!supporterData) {
+        if (!supporterData) {
             return false; 
         }
         
-        if(supporterData.effects && supporterData.effects.length > 0) {
+        if (supporterData.effects && supporterData.effects.length > 0) {
             return EffectValidator.canApplyCardEffects(supporterData.effects, handlerData, playerId, supporterData.name, 'supporter', cardRepository);
         }
         
@@ -202,18 +202,18 @@ export class ActionValidator {
      */
     static canUseAbility(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, position: number): boolean {
         const creature = handlerData.field.creatures[playerId]?.[position];
-        if(!creature) {
+        if (!creature) {
             return false; 
         }
         
         const creatureData = cardRepository.getCreature(getCurrentTemplateId(creature));
-        if(!creatureData.ability) {
+        if (!creatureData.ability) {
             return false; 
         }
         
         const ability = creatureData.ability;
         
-        if(ability.effects && ability.effects.length > 0) {
+        if (ability.effects && ability.effects.length > 0) {
             return EffectValidator.canApplyCardEffects(ability.effects, handlerData, playerId, `${creatureData.name}'s ${ability.name}`, undefined, cardRepository);
         }
         

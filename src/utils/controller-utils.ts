@@ -27,7 +27,7 @@ export class ControllerUtils {
      */
     static createPlayerView(controllers: Controllers, position: number): HandlerData {
         // Check if controllers is already HandlerData
-        if(this.isHandlerData(controllers)) {
+        if (this.isHandlerData(controllers)) {
             return controllers as HandlerData;
         }
         
@@ -35,7 +35,7 @@ export class ControllerUtils {
         return Object.fromEntries(
             Object.entries(controllers).map(([ key, value ]) => {
                 // Skip null or undefined values
-                if(value === null || value === undefined) {
+                if (value === null || value === undefined) {
                     return [ key, value ];
                 }
                 

@@ -35,7 +35,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
      */
     canApply(handlerData: HandlerData, effect: StatusEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // If there's no target, we can't apply the effect
-        if(!effect.target) {
+        if (!effect.target) {
             return false;
         }
         
@@ -52,30 +52,30 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: StatusEffect, context: EffectContext): void {
-        if(effect.target.type !== 'resolved') {
+        if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if(targets.length === 0) {
+        if (targets.length === 0) {
             return;
         }
         
         // Process each target
-        for(const targetInfo of targets) {
+        for (const targetInfo of targets) {
             const playerId = targetInfo.playerId;
             const fieldIndex = targetInfo.fieldIndex;
             
             // For status effects, we only care about active creature (index 0)
-            if(fieldIndex !== 0) {
+            if (fieldIndex !== 0) {
                 continue;
             }
             
             // Get the target creature for name display
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
-            if(!targetCreature) {
+            if (!targetCreature) {
                 continue;
             }
             

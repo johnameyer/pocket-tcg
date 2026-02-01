@@ -352,7 +352,7 @@ describe('Pending Target Selection', () => {
 
             // Should have effect name in pending selection
             expect(state.turnState.pendingTargetSelection).to.not.be.null;
-            if(state.turnState.pendingTargetSelection) {
+            if (state.turnState.pendingTargetSelection) {
                 expect((state.turnState.pendingTargetSelection as any).originalContext.effectName).to.equal('Named Effect');
             }
         });

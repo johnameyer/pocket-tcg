@@ -27,7 +27,7 @@ const argv = yargs(hideBin(process.argv))
 const mainPlayerIntermediary = new IncrementalIntermediary(new InquirerPresenter());
 const names: string[] = [];
 let name: string = argv.name as string;
-if(!argv.name) {        
+if (!argv.name) {        
     // await mainPlayer.askForName();
     name = 'Player';
 }
@@ -39,7 +39,7 @@ type HandlerData = ControllerHandlerState<Controllers>;
 const factory = gameFactory();
 const players: HandlerChain<SystemHandlerParams & GameHandlerParams, HandlerData, ResponseMessage>[] = Array(argv.players as number + 1);
 players[0] = factory.getIntermediaryHandlerChain(mainPlayerIntermediary);
-for(let i = 1; i < players.length; i++) {
+for (let i = 1; i < players.length; i++) {
     players[i] = factory.getDefaultBotHandlerChain();
 }
 
@@ -49,9 +49,9 @@ const params = gameSetup.setupForYargs(argv);
 
 const errors = gameSetup.verifyParams(params);
 
-if(Object.keys(errors).length) {
+if (Object.keys(errors).length) {
     // Log errors to console and exit with error code
-    for(const error of Object.entries(errors)) {
+    for (const error of Object.entries(errors)) {
         console.error(error[1]);
     }
     process.exitCode = 1;

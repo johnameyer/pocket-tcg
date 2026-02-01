@@ -15,10 +15,10 @@ export class TriggerProcessor {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
         
-        if(tool) {
+        if (tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
             
-            if(toolData && toolData.effects && toolData.trigger?.type === 'damaged') {
+            if (toolData && toolData.effects && toolData.trigger?.type === 'damaged') {
                 const fieldCards = controllers.field.getCards(playerId);
                 const creaturePosition = fieldCards.findIndex(card => card?.instanceId === creatureInstanceId);
                 
@@ -36,9 +36,9 @@ export class TriggerProcessor {
 
         // Process ability triggers
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        if(creatureData && creatureData.ability) {
+        if (creatureData && creatureData.ability) {
             const ability = creatureData.ability;
-            if(ability.trigger?.type === 'damaged' && ability.effects) {
+            if (ability.trigger?.type === 'damaged' && ability.effects) {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
@@ -64,11 +64,11 @@ export class TriggerProcessor {
         
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
-        if(tool) {
+        if (tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
-            if(toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
+            if (toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
                 // Check if the trigger is for a specific energy type
-                if(!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
+                if (!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
                     const toolContext = EffectContextFactory.createTriggerContext(
                         playerId,
                         toolData.name,
@@ -82,11 +82,11 @@ export class TriggerProcessor {
         }
         
         // Process ability triggers
-        if(creatureData.ability) {
+        if (creatureData.ability) {
             const ability = creatureData.ability;
-            if(ability.trigger?.type === 'energy-attachment' && ability.effects) {
+            if (ability.trigger?.type === 'energy-attachment' && ability.effects) {
                 // Check if the trigger is for a specific energy type
-                if(!ability.trigger.energyType || ability.trigger.energyType === energyType) {
+                if (!ability.trigger.energyType || ability.trigger.energyType === energyType) {
                     const abilityContext = EffectContextFactory.createTriggerContext(
                         playerId,
                         `${creatureData.name}'s ${ability.name}`,
@@ -108,9 +108,9 @@ export class TriggerProcessor {
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
-        if(tool) {
+        if (tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
-            if(toolData && toolData.effects && toolData.trigger?.type === 'end-of-turn') {
+            if (toolData && toolData.effects && toolData.trigger?.type === 'end-of-turn') {
                 const currentPlayer = controllers.turn.get();
                 
                 const context = EffectContextFactory.createTriggerContext(
@@ -127,12 +127,12 @@ export class TriggerProcessor {
         
         // Process ability triggers
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        if(creatureData && creatureData.ability) {
+        if (creatureData && creatureData.ability) {
             const ability = creatureData.ability;
-            if(ability.trigger?.type === 'end-of-turn' && ability.effects) {
+            if (ability.trigger?.type === 'end-of-turn' && ability.effects) {
                 
                 // Check firstTurnOnly restriction
-                if(ability.trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
+                if (ability.trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
                     return; // Skip this ability if it's not the first turn (turn 0)
                 }
                 

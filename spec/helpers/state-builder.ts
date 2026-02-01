@@ -24,7 +24,7 @@ const validateCreatureInstance = (state: ControllerState<Controllers>, creatureI
     const matchesFieldId = state.field.creatures[0]?.some(p => p.fieldInstanceId === creatureInstanceId)
                            || state.field.creatures[1]?.some(p => p.fieldInstanceId === creatureInstanceId);
     
-    if(matchesFieldId) {
+    if (matchesFieldId) {
         return true; 
     }
     
@@ -111,7 +111,7 @@ export class StateBuilder {
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided
-        if(customizer) {
+        if (customizer) {
             customizer(state as unknown as ControllerState<Controllers>);
         }
         
@@ -138,18 +138,18 @@ export class StateBuilder {
             state.state = stateName as any;
             
             // Adjust setup based on state
-            if(stateName === 'START_GAME') {
+            if (stateName === 'START_GAME') {
                 state.setup.playersReady = [ false, false ];
                 state.turnCounter.turnNumber = 0;
                 state.field.creatures = [[], []];
                 state.energy.isAbsoluteFirstTurn = true;
             } else {
                 state.setup.playersReady = [ true, true ];
-                if(state.turnCounter.turnNumber === 0) {
+                if (state.turnCounter.turnNumber === 0) {
                     state.turnCounter.turnNumber = 2;
                 }
                 // Ensure creatures exist if not in START_GAME
-                if(state.field.creatures[0].length === 0) {
+                if (state.field.creatures[0].length === 0) {
                     state.field.creatures = [
                         [{ fieldInstanceId: 'basic-creature-1', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-1' }], damageTaken: 0, turnLastPlayed: 0 }],
                         [{ fieldInstanceId: 'basic-creature-2', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }],
@@ -157,7 +157,7 @@ export class StateBuilder {
                 }
             }
             
-            if(stateName === 'generateEnergyAndDrawCard') {
+            if (stateName === 'generateEnergyAndDrawCard') {
                 state.energy.isAbsoluteFirstTurn = true;
             }
         };
@@ -208,12 +208,12 @@ export class StateBuilder {
     private static validateInstanceIdWithError(state: ControllerState<Controllers>, creatureInstanceId: string): void {
         const creatureExists = validateCreatureInstance(state, creatureInstanceId);
         
-        if(!creatureExists) {
+        if (!creatureExists) {
             const availableInstances = [];
-            for(let player = 0; player < 2; player++) {
-                for(const creature of state.field.creatures[player]) {
+            for (let player = 0; player < 2; player++) {
+                for (const creature of state.field.creatures[player]) {
                     // Add all instanceIds from the evolution stack
-                    for(const card of creature.evolutionStack) {
+                    for (const card of creature.evolutionStack) {
                         availableInstances.push(card.instanceId);
                     }
                 }
@@ -225,9 +225,9 @@ export class StateBuilder {
     static withDamage(creatureInstanceId: string, damage: number) {
         return (state: ControllerState<Controllers>) => {
             // Find and update damage for the specified creature instance
-            for(let player = 0; player < 2; player++) {
-                for(const creature of state.field.creatures[player]) {
-                    if(creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
+            for (let player = 0; player < 2; player++) {
+                for (const creature of state.field.creatures[player]) {
+                    if (creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
                         creature.damageTaken = damage;
                         return;
                     }

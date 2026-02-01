@@ -87,7 +87,7 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
         const deckSize = controllers.deck.getDeckSize(context.sourcePlayer);
         
         // If the deck is empty, show a message and return
-        if(deckSize === 0) {
+        if (deckSize === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} couldn't draw any cards because the deck is empty!` ],
@@ -99,7 +99,7 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
         const actualAmount = Math.min(amount, deckSize);
         
         // Draw the cards
-        for(let i = 0; i < actualAmount; i++) {
+        for (let i = 0; i < actualAmount; i++) {
             controllers.hand.drawCard(context.sourcePlayer);
         }
         
@@ -110,7 +110,7 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
         });
         
         // If we couldn't draw all the requested cards, show a message
-        if(actualAmount < amount) {
+        if (actualAmount < amount) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} couldn't draw all ${amount} cards because the deck only had ${deckSize} cards!` ],

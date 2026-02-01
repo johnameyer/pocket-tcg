@@ -49,18 +49,18 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
      */
     apply(controllers: Controllers, effect: RetreatPreventionEffect, context: EffectContext): void {
         // Ensure we have a valid target
-        if(!effect.target) {
+        if (!effect.target) {
             throw new Error('No target specified for retreat prevention effect');
         }
         
-        if(effect.target.type !== 'resolved') {
+        if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if(targets.length === 0) {
+        if (targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} found no valid targets!` ],
@@ -68,13 +68,13 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
             return;
         }
         
-        for(const target of targets) {
+        for (const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             
-            if(!targetCreature) {
+            if (!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
                     components: [ `${context.effectName} target creature not found!` ],

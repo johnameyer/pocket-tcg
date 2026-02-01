@@ -38,10 +38,10 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
         this.state = [];
         
         // If initial decks are provided, use them
-        if(initialDecks && initialDecks.length >= playerCount) {
-            for(let i = 0; i < playerCount; i++) {
+        if (initialDecks && initialDecks.length >= playerCount) {
+            for (let i = 0; i < playerCount; i++) {
                 // Check if we have string IDs or GameCard objects
-                if(initialDecks[i].length > 0 && typeof initialDecks[i][0] === 'string') {
+                if (initialDecks[i].length > 0 && typeof initialDecks[i][0] === 'string') {
                     // Convert string IDs to GameCard objects
                     const stringDecks = initialDecks as string[][];
                     this.state[i] = stringDecks[i].map(templateId => {
@@ -66,7 +66,7 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
         }
         
         // Initialize empty decks for each player
-        for(let i = 0; i < playerCount; i++) {
+        for (let i = 0; i < playerCount; i++) {
             this.state[i] = [];
             
             // Shuffle the deck
@@ -78,7 +78,7 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     getPlayerEnergyTypes(playerId: number): AttachableEnergyType[] {
         // Check if energy types are provided via game params
         const gameParams = this.controllers.params.get();
-        if(gameParams?.playerEnergyTypes && gameParams.playerEnergyTypes[playerId]) {
+        if (gameParams?.playerEnergyTypes && gameParams.playerEnergyTypes[playerId]) {
             return gameParams.playerEnergyTypes[playerId];
         }
         
@@ -98,7 +98,7 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     // Shuffle a player's deck
     shuffleDeck(playerId: number): void {
         const deck = this.state[playerId];
-        for(let i = deck.length - 1; i > 0; i--) {
+        for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [ deck[i], deck[j] ] = [ deck[j], deck[i] ];
         }
@@ -106,7 +106,7 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     
     // Draw a card from the deck
     drawCard(playerId: number): GameCard | undefined {
-        if(this.state[playerId].length === 0) {
+        if (this.state[playerId].length === 0) {
             return undefined; // Deck is empty
         }
         
@@ -120,7 +120,7 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     
     // Get deck size
     getDeckSize(playerId: number): number {
-        if(!this.state[playerId]) {
+        if (!this.state[playerId]) {
             return 0;
         }
         return this.state[playerId].length;
@@ -138,11 +138,11 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     validate(): void {
         // Validate that all cards in initial decks exist in repository
         const params = this.controllers.params.get();
-        if(params.initialDecks) {
-            for(let i = 0; i < params.initialDecks.length; i++) {
+        if (params.initialDecks) {
+            for (let i = 0; i < params.initialDecks.length; i++) {
                 const deck = params.initialDecks[i];
-                if(deck.length > 0 && typeof deck[0] === 'string') {
-                    for(const templateId of deck as string[]) {
+                if (deck.length > 0 && typeof deck[0] === 'string') {
+                    for (const templateId of deck as string[]) {
                         try {
                             this.controllers.cardRepository.getCard(templateId);
                         } catch (error: any) {

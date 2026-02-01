@@ -30,7 +30,7 @@ export class CoinFlipManipulationEffectHandler extends AbstractEffectHandler<Coi
      */
     apply(controllers: Controllers, effect: CoinFlipManipulationEffect, context: EffectContext): void {
         // Set the next coin flip result
-        if(effect.guaranteeNextHeads) {
+        if (effect.guaranteeNextHeads) {
             controllers.coinFlip.setNextFlipGuaranteedHeads();
         }
         

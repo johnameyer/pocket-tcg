@@ -70,7 +70,7 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
 
 export class StatusEffectController extends GlobalController<StatusEffectState, StatusEffectDependencies> {
     validate() {
-        if(!Array.isArray(this.state.activeStatusEffects)) {
+        if (!Array.isArray(this.state.activeStatusEffects)) {
             throw new Error('Shape of object is wrong');
         }
     }
@@ -90,7 +90,7 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
 
     private statusConditionToType(condition: StatusCondition): StatusEffectType {
         const type = StatusEffectController.STATUS_CONDITION_MAP[condition];
-        if(!type) {
+        if (!type) {
             throw new Error(`Unknown status condition: ${condition}`);
         }
         return type;
@@ -122,7 +122,7 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         let effects = this.getActiveEffects(playerId);
         
         // Remove conflicting status effects (only one of asleep, confused, paralyzed can be active)
-        if(effect === StatusEffectType.ASLEEP || effect === StatusEffectType.CONFUSED || effect === StatusEffectType.PARALYZED) {
+        if (effect === StatusEffectType.ASLEEP || effect === StatusEffectType.CONFUSED || effect === StatusEffectType.PARALYZED) {
             effects = effects.filter(e => e.type !== StatusEffectType.ASLEEP 
                 && e.type !== StatusEffectType.CONFUSED 
                 && e.type !== StatusEffectType.PARALYZED,
@@ -184,12 +184,12 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         let burnDamage = 0;
 
         // Check for poison status effect
-        if(effects.some(e => String(e.type) === String(StatusEffectType.POISONED) || String(e.type) === 'poison')) {
+        if (effects.some(e => String(e.type) === String(StatusEffectType.POISONED) || String(e.type) === 'poison')) {
             poisonDamage = 10;
         }
 
         // Check for burn status effect
-        if(effects.some(e => String(e.type) === String(StatusEffectType.BURNED) || String(e.type) === 'burn')) {
+        if (effects.some(e => String(e.type) === String(StatusEffectType.BURNED) || String(e.type) === 'burn')) {
             burnDamage = 20;
         }
         
@@ -204,29 +204,29 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         const coinFlipResults: { effect: StatusEffectType; result: boolean }[] = [];
 
         // Check asleep - coin flip to wake up
-        if(effects.some(e => e.type === StatusEffectType.ASLEEP)) {
+        if (effects.some(e => e.type === StatusEffectType.ASLEEP)) {
             const coinFlip = this.controllers.coinFlip.performCoinFlip(); // Use coinFlip controller
             
             coinFlipResults.push({ effect: StatusEffectType.ASLEEP, result: coinFlip });
-            if(coinFlip) {
+            if (coinFlip) {
                 this.removeStatusEffect(playerId, StatusEffectType.ASLEEP);
                 removedEffects.push(StatusEffectType.ASLEEP);
             }
         }
 
         // Check burned - coin flip to recover
-        if(effects.some(e => e.type === StatusEffectType.BURNED)) {
+        if (effects.some(e => e.type === StatusEffectType.BURNED)) {
             const coinFlip = this.controllers.coinFlip.performCoinFlip(); // Use coinFlip controller
             
             coinFlipResults.push({ effect: StatusEffectType.BURNED, result: coinFlip });
-            if(coinFlip) {
+            if (coinFlip) {
                 this.removeStatusEffect(playerId, StatusEffectType.BURNED);
                 removedEffects.push(StatusEffectType.BURNED);
             }
         }
 
         // Paralysis is automatically removed at end of next turn
-        if(effects.some(e => e.type === StatusEffectType.PARALYZED)) {
+        if (effects.some(e => e.type === StatusEffectType.PARALYZED)) {
             this.removeStatusEffect(playerId, StatusEffectType.PARALYZED);
             removedEffects.push(StatusEffectType.PARALYZED);
         }
@@ -236,13 +236,13 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
 
     // Handle confusion coin flip when attacking
     public handleConfusionAttack(playerId: number): { canAttack: boolean; selfDamage: number } {
-        if(!this.hasStatusEffect(playerId, StatusEffectType.CONFUSED)) {
+        if (!this.hasStatusEffect(playerId, StatusEffectType.CONFUSED)) {
             return { canAttack: true, selfDamage: 0 };
         }
 
         const coinFlip = this.controllers.coinFlip.performCoinFlip(); // Use coinFlip controller
         
-        if(coinFlip) {
+        if (coinFlip) {
             // On heads (success), FieldCard can attack with no self-damage
             return { canAttack: true, selfDamage: 0 };
         } 

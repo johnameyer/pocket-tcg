@@ -90,26 +90,26 @@ describe('Full Game Conservation', () => {
         
         // Hand
         const hand = state.hand[playerId] || [];
-        for(const card of hand) {
+        for (const card of hand) {
             instanceIds.push(card.instanceId);
         }
         
         // Deck
         const deck = state.deck[playerId] || [];
-        for(const card of deck) {
+        for (const card of deck) {
             instanceIds.push(card.instanceId);
         }
         
         // Field
         const fieldCards = state.field?.creatures[playerId] || [];
-        for(const card of fieldCards) {
-            if(!card) {
+        for (const card of fieldCards) {
+            if (!card) {
                 continue; 
             }
             // For InstancedFieldCard, all cards from evolution stack
-            if(card.evolutionStack) {
+            if (card.evolutionStack) {
                 // Evolution stack contains both pre-evolution forms and evolution cards used
-                for(const stackCard of card.evolutionStack) {
+                for (const stackCard of card.evolutionStack) {
                     instanceIds.push(stackCard.instanceId);
                 }
             }
@@ -117,7 +117,7 @@ describe('Full Game Conservation', () => {
         
         // Discard
         const discard = state.discard[playerId] || [];
-        for(const card of discard) {
+        for (const card of discard) {
             instanceIds.push(card.instanceId);
         }
         
@@ -139,26 +139,26 @@ describe('Full Game Conservation', () => {
         
         // Current energy
         const currentEnergy = state.energy.currentEnergy[playerId];
-        if(currentEnergy) {
+        if (currentEnergy) {
             energyByType[currentEnergy] = (energyByType[currentEnergy] || 0) + 1;
         }
         
         // Attached energy
         const fieldCards = state.field?.creatures[playerId] || [];
-        for(const card of fieldCards) {
-            if(!card) {
+        for (const card of fieldCards) {
+            if (!card) {
                 continue; 
             }
             // Use fieldInstanceId to access attached energy
             const attached = state.energy.attachedEnergyByInstance[card.fieldInstanceId] || {};
-            for(const [ type, count ] of Object.entries(attached)) {
+            for (const [ type, count ] of Object.entries(attached)) {
                 energyByType[type] = (energyByType[type] || 0) + (count as number);
             }
         }
         
         // Discarded energy
         const discarded = state.energy.discardedEnergy[playerId] || {};
-        for(const [ type, count ] of Object.entries(discarded)) {
+        for (const [ type, count ] of Object.entries(discarded)) {
             energyByType[type] = (energyByType[type] || 0) + (count as number);
         }
         
@@ -196,7 +196,7 @@ describe('Full Game Conservation', () => {
             
             // Check for duplicates
             const uniqueIds = new Set(currentInstanceIds);
-            if(uniqueIds.size !== currentInstanceIds.length) {
+            if (uniqueIds.size !== currentInstanceIds.length) {
                 const duplicates = currentInstanceIds.filter((id, index) => currentInstanceIds.indexOf(id) !== index);
                 expect.fail(`${playerName} has duplicate instance IDs at step ${step}: ${duplicates.join(', ')}`);
             }
@@ -206,14 +206,14 @@ describe('Full Game Conservation', () => {
                 `${playerName} card count violated at step ${step}: expected 20, got ${currentInstanceIds.length}`);
             
             // Verify instance IDs never change from the start of the game
-            if(initialInstanceIds) {
+            if (initialInstanceIds) {
                 const currentSet = new Set(currentInstanceIds);
                 const initialSet = new Set(initialInstanceIds);
                 
                 const added = currentInstanceIds.filter(id => !initialSet.has(id));
                 const missing = initialInstanceIds.filter(id => !currentSet.has(id));
                 
-                if(added.length > 0 || missing.length > 0) {
+                if (added.length > 0 || missing.length > 0) {
                     expect.fail(`${playerName} instance IDs changed at step ${step}: added [${added.join(', ')}], missing [${missing.join(', ')}]`);
                 }
             }
@@ -223,7 +223,7 @@ describe('Full Game Conservation', () => {
          * Helper to check energy conservation for a player
          */
         function checkPlayerEnergyConservation(playerId: number, playerName: string, currentState: ControllerState<Controllers>, step: number) {
-            if(!previousState) {
+            if (!previousState) {
                 return; 
             }
             
@@ -231,20 +231,20 @@ describe('Full Game Conservation', () => {
             const previousEnergyByType = playerId === 0 ? previousPlayer1EnergyByType : previousPlayer2EnergyByType;
             
             // Energy should never decrease unexpectedly for any type
-            for(const type of Object.keys(previousEnergyByType)) {
+            for (const type of Object.keys(previousEnergyByType)) {
                 const currentCount = currentEnergyByType[type] || 0;
                 const previousCount = previousEnergyByType[type] || 0;
-                if(currentCount < previousCount) {
+                if (currentCount < previousCount) {
                     // This is acceptable if there was a knockout
                     const hasDiscard = (currentState.discard[playerId]?.length || 0) > (previousState.discard[playerId]?.length || 0);
-                    if(!hasDiscard) {
+                    if (!hasDiscard) {
                         expect.fail(`${playerName} ${type} energy decreased without discard at step ${step}: ${previousCount} -> ${currentCount}`);
                     }
                 }
             }
             
             // Update previous energy
-            if(playerId === 0) {
+            if (playerId === 0) {
                 previousPlayer1EnergyByType = currentEnergyByType;
             } else {
                 previousPlayer2EnergyByType = currentEnergyByType;
@@ -257,7 +257,7 @@ describe('Full Game Conservation', () => {
             maxSteps: 500,
             integrityCheck: (currentState, step) => {
                 // Capture initial instance IDs on first step
-                if(!initialPlayer1InstanceIds) {
+                if (!initialPlayer1InstanceIds) {
                     initialPlayer1InstanceIds = collectPlayerCardInstanceIds(currentState, 0);
                     initialPlayer2InstanceIds = collectPlayerCardInstanceIds(currentState, 1);
                 }

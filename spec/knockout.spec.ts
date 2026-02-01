@@ -137,7 +137,7 @@ describe('Knockout System', () => {
                 (state) => {
                     // Manually create an evolved creature for testing
                     const player1ActiveCard = state.field.creatures[1][0];
-                    if(player1ActiveCard) {
+                    if (player1ActiveCard) {
                         // Add evolution form to the stack
                         player1ActiveCard.evolutionStack.push({
                             instanceId: 'evolution-creature-evolved',
@@ -199,7 +199,7 @@ describe('Knockout System', () => {
         });
         
         // If bench creature was knocked out, tool should be detached
-        if(state.field.creatures[0].length === 1) {
+        if (state.field.creatures[0].length === 1) {
             expect(state.tools.attachedTools['basic-creature-0-0']).to.be.undefined;
         }
     });

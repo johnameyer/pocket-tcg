@@ -35,11 +35,11 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         const target = effect.target || 'deck';
         
         // For deck searches, check if deck has cards
-        if(target === 'deck') {
+        if (target === 'deck') {
             const deckSize = handlerData.deck;
             
             // Only block items when deck is empty, supporters can still be played
-            if(deckSize === 0 && context.type === 'trainer' && context.cardType === 'item') {
+            if (deckSize === 0 && context.type === 'trainer' && context.cardType === 'item') {
                 return false;
             }
             
@@ -104,7 +104,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         const deck = controllers.deck.getDeck(context.sourcePlayer);
         
         // If the deck is empty, there's nothing to search
-        if(deck.length === 0) {
+        if (deck.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} has no cards to search for!` ],
@@ -116,12 +116,12 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         let filteredDeck = [ ...deck ];
         
         // Use a generic approach to handle search criteria
-        if(effect.criteria || effect.cardType) {
+        if (effect.criteria || effect.cardType) {
             filteredDeck = this.filterDeckBySearchCriteria(controllers, filteredDeck, effect);
         }
             
         // If there are no matching cards, inform the player
-        if(filteredDeck.length === 0) {
+        if (filteredDeck.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} found no matching cards!` ],
@@ -169,11 +169,11 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         let filteredDeck = [ ...deck ];
         
         // Handle criteria field
-        if(effect.criteria) {
+        if (effect.criteria) {
             switch (effect.criteria) {
                 case 'basic-creature':
                     filteredDeck = filteredDeck.filter(card => {
-                        if(card.type === 'creature') {
+                        if (card.type === 'creature') {
                             try {
                                 const creatureData = controllers.cardRepository.getCreature(card.templateId);
                                 return !creatureData.previousStageName;
@@ -189,12 +189,12 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                     console.warn(`[SearchEffectHandler] Unknown search criteria: ${effect.criteria}`);
                     break;
             }
-        } else if(effect.cardType) {
+        } else if (effect.cardType) {
             // Handle cardType field
             switch (effect.cardType) {
                 case 'basic-creature':
                     filteredDeck = filteredDeck.filter(card => {
-                        if(card.type === 'creature') {
+                        if (card.type === 'creature') {
                             try {
                                 const creatureData = controllers.cardRepository.getCreature(card.templateId);
                                 return !creatureData.previousStageName;
@@ -233,7 +233,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                             return filteredDeck; // No filtering if cardType is unknown
                     }
                     
-                    if(gameCardType) {
+                    if (gameCardType) {
                         filteredDeck = filteredDeck.filter(card => card.type === gameCardType);
                     }
                     break;
@@ -261,9 +261,9 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         context: EffectContext,
     ): void {
         // Remove the cards from the deck
-        for(const card of cardsToMove) {
+        for (const card of cardsToMove) {
             const cardIndex = deck.findIndex(c => c.instanceId === card.instanceId);
-            if(cardIndex !== -1) {
+            if (cardIndex !== -1) {
                 deck.splice(cardIndex, 1);
             }
         }
@@ -271,7 +271,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Add the cards to the destination
         switch (destination) {
             case 'hand':
-                for(const card of cardsToMove) {
+                for (const card of cardsToMove) {
                     controllers.hand.getHand(context.sourcePlayer).push(card);
                 }
                 break;
@@ -279,7 +279,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
             default:
                 console.warn(`[SearchEffectHandler] Unsupported destination: ${destination}`);
                 // If destination is not supported, put the cards back in the deck
-                for(const card of cardsToMove) {
+                for (const card of cardsToMove) {
                     deck.push(card);
                 }
                 break;

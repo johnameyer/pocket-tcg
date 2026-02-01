@@ -25,11 +25,11 @@ describe('Creature Pocket TCG Game', () => {
         
         expect(driver.getState().completed).to.be.false;
 
-        for(let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) {
             driver.handleSyncResponses();
             driver.resume();
             
-            if(driver.getState().completed) {
+            if (driver.getState().completed) {
                 break;
             }
         }
@@ -160,7 +160,7 @@ describe('Creature Pocket TCG Game', () => {
             expect((preConfiguredState as any)?.turnCounter).to.equal(2);
             
             // Verify the turn counter can be modified
-            if(preConfiguredState) {
+            if (preConfiguredState) {
                 (preConfiguredState as any).turnCounter = 3;
                 expect((preConfiguredState as any).turnCounter).to.equal(3);
             }
