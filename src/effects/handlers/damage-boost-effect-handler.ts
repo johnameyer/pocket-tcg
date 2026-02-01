@@ -20,7 +20,7 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
     
     /**
      * Apply a damage boost effect.
-     * This adds a damage boost to the player's active creature.
+     * This registers a passive effect that increases damage dealt by attacks.
      * 
      * @param controllers Game controllers
      * @param effect The damage boost effect to apply
@@ -33,7 +33,23 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
             throw new Error(`No active creature found for player ${context.sourcePlayer}`);
         }
         
-        controllers.turnState.addDamageBoost(context.sourcePlayer, amount, context.effectName);
+        // Determine duration - default to until-end-of-turn if not specified
+        const duration = effect.duration || { type: 'until-end-of-turn' as const };
+        
+        // Register as a passive effect
+        controllers.passiveEffects.registerPassiveEffect(
+            context.sourcePlayer,
+            context.effectName,
+            {
+                type: 'damage-boost',
+                amount: effect.amount,
+                target: effect.target,
+                condition: effect.condition,
+            },
+            duration,
+            controllers.turnCounter.getTurnNumber(),
+            effect.condition
+        );
         
         const targetText = effect.target ? ' conditionally' : '';
         const conditionText = effect.condition ? ' when condition is met' : '';

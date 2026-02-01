@@ -21,7 +21,7 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
     
     /**
      * Apply a fully resolved HP bonus effect.
-     * This increases the maximum HP of the creature the tool/ability is attached to.
+     * This registers a passive effect that increases the maximum HP of the creature.
      * 
      * @param controllers Game controllers
      * @param effect The HP bonus effect to apply
@@ -31,26 +31,50 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
         // Get the amount of HP to add
         const amount = getEffectValue(effect.amount, controllers, context);
         
-        /*
-         * HP bonus effects are typically applied by tools
-         * The tool controller already handles HP bonuses through getHpBonus()
-         * This handler is mainly for completeness and future extensibility
-         */
+        // Determine duration based on context
+        // For tools, use while-attached duration if we can identify the tool
+        // For abilities, use while-in-play duration if we can identify the creature
+        // Otherwise, use until-end-of-turn
+        let duration: any = { type: 'until-end-of-turn' as const };
         
-        /*
-         * For tools, the effect is applied when the tool is attached
-         * The creatureController uses ToolController.getHpBonus() when calculating creature HP
-         */
+        if (context.type === 'trainer' && context.cardInstanceId) {
+            // Tool being attached - use while-attached duration
+            // This requires knowing which creature the tool is attached to
+            const activeCreature = controllers.field.getRawCardByPosition(context.sourcePlayer, 0);
+            if (activeCreature) {
+                duration = {
+                    type: 'while-attached' as const,
+                    toolInstanceId: context.cardInstanceId,
+                    cardInstanceId: activeCreature.instanceId,
+                };
+            }
+        } else if ((context.type === 'ability' || context.type === 'trigger') && context.creatureInstanceId) {
+            // Ability from a creature - use while-in-play duration
+            duration = {
+                type: 'while-in-play' as const,
+                instanceId: context.creatureInstanceId,
+            };
+        }
         
-        // We can still show a message about the HP bonus being applied
+        // Register as a passive effect
+        controllers.passiveEffects.registerPassiveEffect(
+            context.sourcePlayer,
+            context.effectName,
+            {
+                type: 'hp-bonus',
+                amount: effect.amount,
+            },
+            duration,
+            controllers.turnCounter.getTurnNumber()
+        );
+        
+        // Show a message about the HP bonus being applied
         if (context.type === 'trainer') {
-            // This is a trainer card being played
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} increases creature's HP by ${amount}!` ],
             });
         } else if ((context.type === 'ability' || context.type === 'trigger') && context.creatureInstanceId) {
-            // This is an ability or trigger
             const creatureName = controllers.cardRepository.getCreature(context.creatureInstanceId.split('-')[0]).name;
             
             controllers.players.messageAll({
@@ -58,11 +82,6 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
                 components: [ `${context.effectName} increases ${creatureName}'s HP by ${amount}!` ],
             });
         }
-        
-        /*
-         * The actual HP bonus application is handled by the ToolController and creatureController
-         * when they calculate a creature's current HP
-         */
     }
 }
 

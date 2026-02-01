@@ -46,7 +46,7 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
     
     /**
      * Apply a fully resolved prevent damage effect.
-     * This prevents damage to the creature from specific sources.
+     * This registers a passive effect that prevents damage to the creature from specific sources.
      * 
      * @param controllers Game controllers
      * @param effect The prevent damage effect to apply
@@ -100,11 +100,24 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
         }
         
         if (creatureInstanceId) {
+            // Determine duration - default to until-end-of-next-turn if not specified
+            const duration = effect.duration || { type: 'until-end-of-next-turn' as const };
+            
             /*
-             * Register the damage prevention effect with the turn state controller
+             * Register the damage prevention effect as a passive effect
              * This will be checked during damage calculation
              */
-            controllers.turnState.registerDamagePrevention(context.sourcePlayer, context.effectName);
+            controllers.passiveEffects.registerPassiveEffect(
+                context.sourcePlayer,
+                context.effectName,
+                {
+                    type: 'prevent-damage',
+                    target: effect.target,
+                    source: effect.source,
+                },
+                duration,
+                controllers.turnCounter.getTurnNumber()
+            );
             
             // Show a message about the damage prevention
             const sourceText = effect.source ? `from ${effect.source}` : '';
