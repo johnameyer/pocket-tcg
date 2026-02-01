@@ -357,4 +357,99 @@ describe('Pending Target Selection', () => {
             }
         });
     });
+
+    describe('Multi-Target Field Selection', () => {
+        it('should handle selecting multiple targets with array format', () => {
+            const testRepository = new MockCardRepository({
+                supporters: new Map<string, SupporterData>([
+                    [ 'multi-heal-supporter', {
+                        templateId: 'multi-heal-supporter',
+                        name: 'Multi Heal Supporter',
+                        effects: [{
+                            type: 'hp',
+                            amount: { type: 'constant', value: 30 },
+                            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
+            });
+
+            const { state, getExecutedCount } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('multi-heal-supporter', 'supporter'),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'multi-heal-supporter', type: 'supporter' }]),
+                    StateBuilder.withDamage('basic-creature-0', 50),
+                    StateBuilder.withDamage('high-hp-creature-0-0', 40),
+                ),
+                maxSteps: 10,
+            });
+
+            expect(getExecutedCount()).to.equal(2, 'Should execute supporter + target selection');
+            
+            const activeCreature = state.field.creatures[0][0];
+            expect(activeCreature.damageTaken).to.equal(20, 'Active creature should be healed');
+        });
+
+        it('should support backward-compatible single target selection', () => {
+            const testRepository = new MockCardRepository({
+                supporters: new Map<string, SupporterData>([
+                    [ 'heal-supporter', {
+                        templateId: 'heal-supporter',
+                        name: 'Heal Supporter',
+                        effects: [{
+                            type: 'hp',
+                            amount: { type: 'constant', value: 50 },
+                            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
+            });
+
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('heal-supporter', 'supporter'),
+                    // Use array format for backward compatibility test
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'heal-supporter', type: 'supporter' }]),
+                    StateBuilder.withDamage('high-hp-creature-0-0', 60),
+                ),
+                maxSteps: 10,
+            });
+
+            const benchCreature = state.field.creatures[0][1];
+            expect(benchCreature.damageTaken).to.equal(10, 'Bench creature should be healed by 50');
+        });
+    });
+
+    describe('Selection Message Validation', () => {
+        it('should validate SelectTargetResponseMessage with multiple targets', () => {
+            const message = new SelectTargetResponseMessage([
+                { playerId: 0, fieldIndex: 0 },
+                { playerId: 0, fieldIndex: 1 },
+            ]);
+            
+            expect(message.targets).to.have.lengthOf(2);
+            expect(message.targetPlayerId).to.equal(0, 'Should have backward-compatible getter');
+            expect(message.targetCreatureIndex).to.equal(0, 'Should have backward-compatible getter');
+        });
+
+        it('should handle empty targets array in SelectTargetResponseMessage', () => {
+            const message = new SelectTargetResponseMessage([]);
+            
+            expect(message.targets).to.have.lengthOf(0);
+            expect(message.targetPlayerId).to.equal(-1);
+            expect(message.targetCreatureIndex).to.equal(-1);
+        });
+    });
 });
