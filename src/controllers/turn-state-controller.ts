@@ -124,19 +124,6 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     public clearPendingSelection(): void {
         this.state.pendingSelection = undefined;
     }
-    
-    // Legacy methods for backward compatibility
-    public setPendingTargetSelection(selection: PendingSelection | undefined): void {
-        this.setPendingSelection(selection);
-    }
-    
-    public getPendingTargetSelection(): PendingSelection | undefined {
-        return this.getPendingSelection();
-    }
-    
-    public clearPendingTargetSelection(): void {
-        this.clearPendingSelection();
-    }
 
     public addDamageBoost(sourcePlayer: number, amount: number, effectName: string): void {
         this.state.damageBoosts.push({ sourcePlayer, amount, effectName });

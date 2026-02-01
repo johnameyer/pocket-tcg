@@ -8,8 +8,8 @@ export class SelectEnergyResponseMessage extends Message {
     readonly type = 'select-energy-response';
 
     constructor(
-        public readonly selectedEnergy: Array<AttachableEnergyType>
+        public readonly selectedEnergy: Array<AttachableEnergyType>,
     ) {
-        super([`Selected ${selectedEnergy.length} energy: ${selectedEnergy.join(', ')}`]);
+        super([ `Selected ${selectedEnergy.length} energy: ${selectedEnergy.join(', ')}` ]);
     }
 }

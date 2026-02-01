@@ -7,8 +7,8 @@ export class SelectCardResponseMessage extends Message {
     readonly type = 'select-card-response';
 
     constructor(
-        public readonly cardIndices: number[]
+        public readonly cardIndices: number[],
     ) {
-        super([`Selected ${cardIndices.length} card(s) from hand at indices: ${cardIndices.join(', ')}`]);
+        super([ `Selected ${cardIndices.length} card(s) from hand at indices: ${cardIndices.join(', ')}` ]);
     }
 }

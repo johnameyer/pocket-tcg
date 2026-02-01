@@ -1,4 +1,3 @@
-import { Message } from '@cards-ts/core';
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { Effect } from '../repository/effect-types.js';
 import { EffectContext } from './effect-context.js';
@@ -7,11 +6,11 @@ import { EffectContext } from './effect-context.js';
  * Represents the different types of selections that can be pending.
  */
 export type SelectionType = 
-    | 'target'           // Select one or more cards on the field
-    | 'energy'           // Select energy to discard/move
-    | 'card-in-hand'     // Select a card from hand
-    | 'choice'           // Select from a list of named choices
-    | 'multi-target';    // Select multiple cards on the field
+    | 'target' // Select one or more cards on the field
+    | 'energy' // Select energy to discard/move
+    | 'card' // Select cards from a location (hand, deck, discard)
+    | 'choice' // Select from a list of named choices
+    | 'multi-target'; // Select multiple cards on the field
 
 /**
  * Base type for all pending selections.
@@ -56,12 +55,14 @@ export type PendingEnergySelection = BasePendingSelection & {
 };
 
 /**
- * Pending selection for a card from hand.
+ * Pending selection for cards from a specific location.
  */
-export type PendingCardInHandSelection = BasePendingSelection & {
-    selectionType: 'card-in-hand';
-    /** The player whose hand to select from */
+export type PendingCardSelection = BasePendingSelection & {
+    selectionType: 'card';
+    /** The player whose cards to select from */
     playerId: number;
+    /** Location of the cards to select from */
+    location: 'hand' | 'deck' | 'discard';
     /** Number of cards to select */
     count: number;
     /** Optional: filter by card type */
@@ -96,7 +97,7 @@ export type PendingMultiTargetSelection = BasePendingSelection & {
 export type PendingSelection = 
     | PendingTargetSelection
     | PendingEnergySelection
-    | PendingCardInHandSelection
+    | PendingCardSelection
     | PendingChoiceSelection
     | PendingMultiTargetSelection;
 
@@ -111,8 +112,8 @@ export function isPendingEnergySelection(selection: PendingSelection): selection
     return selection.selectionType === 'energy';
 }
 
-export function isPendingCardInHandSelection(selection: PendingSelection): selection is PendingCardInHandSelection {
-    return selection.selectionType === 'card-in-hand';
+export function isPendingCardSelection(selection: PendingSelection): selection is PendingCardSelection {
+    return selection.selectionType === 'card';
 }
 
 export function isPendingChoiceSelection(selection: PendingSelection): selection is PendingChoiceSelection {

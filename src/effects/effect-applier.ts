@@ -1,21 +1,11 @@
 import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
-<<<<<<< HEAD
 import { ResolvedTarget } from '../repository/target-types.js';
-=======
-import { FixedTarget, Target, ResolvedTarget } from '../repository/target-types.js';
-import { EffectContext } from './effect-context.js';
-import { PendingSelection, PendingTargetSelection } from './pending-selection-types.js';
-import { ResolutionRequirement, EffectHandler, EffectHandlerMap } from './interfaces/effect-handler-interface.js';
-import { effectHandlers } from './handlers/effect-handlers-map.js';
-import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
-import { getEffectValue } from './effect-utils.js';
->>>>>>> ed465c3 (Add new selection types, handler methods, and response messages)
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
-import { PendingTargetSelection } from './pending-target-selection.js';
+import { PendingTargetSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
@@ -285,12 +275,7 @@ export class EffectApplier {
                 const pendingSelection: PendingTargetSelection = {
                     selectionType: 'target',
                     effect: resolvedEffect,
-<<<<<<< HEAD
                     originalContext,
-                    type: 'target',
-=======
-                    originalContext
->>>>>>> ed465c3 (Add new selection types, handler methods, and response messages)
                 };
                 controllers.turnState.setPendingSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up

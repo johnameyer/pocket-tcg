@@ -1,6 +1,4 @@
 import { Controllers } from '../controllers/controllers.js';
-import { EffectApplier } from './effect-applier.js';
-import { effectHandlers, EffectHandler } from './effect-handler.js';
 import { PendingChoiceSelection } from './pending-selection-types.js';
 import { EffectContext } from './effect-context.js';
 
@@ -33,8 +31,10 @@ export class EffectApplierChoice {
             return;
         }
         
-        // For now, this is a placeholder
-        // TODO: Implement proper choice effect handling when we add effects that need it
+        /*
+         * For now, this is a placeholder
+         * TODO: Implement proper choice effect handling when we add effects that need it
+         */
         console.warn('Choice effect handling not yet implemented');
     }
 }

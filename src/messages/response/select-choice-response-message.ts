@@ -7,8 +7,8 @@ export class SelectChoiceResponseMessage extends Message {
     readonly type = 'select-choice-response';
 
     constructor(
-        public readonly choiceValues: string[]
+        public readonly choiceValues: string[],
     ) {
-        super([`Selected choice(s): ${choiceValues.join(', ')}`]);
+        super([ `Selected choice(s): ${choiceValues.join(', ')}` ]);
     }
 }

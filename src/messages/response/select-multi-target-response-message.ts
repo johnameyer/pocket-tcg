@@ -7,8 +7,8 @@ export class SelectMultiTargetResponseMessage extends Message {
     readonly type = 'select-multi-target-response';
 
     constructor(
-        public readonly targets: Array<{ playerId: number; fieldIndex: number }>
+        public readonly targets: Array<{ playerId: number; fieldIndex: number }>,
     ) {
-        super([`Selected ${targets.length} target(s)`]);
+        super([ `Selected ${targets.length} target(s)` ]);
     }
 }
