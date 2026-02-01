@@ -1,9 +1,9 @@
 import { GenericControllerProvider, GlobalController, GenericHandlerController, SystemHandlerParams } from '@cards-ts/core';
-import { GameCard } from './card-types.js';
-import { FieldCard } from './field-controller.js';
 import { InstancedFieldCard } from '../repository/card-types.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
+import { FieldCard } from './field-controller.js';
+import { GameCard } from './card-types.js';
 
 // Dependencies for this controller
 type DiscardDependencies = {
@@ -17,7 +17,8 @@ export class DiscardControllerProvider implements GenericControllerProvider<Game
     
     initialState(controllers: DiscardDependencies): GameCard[][] {
         // Initialize empty discard pile for each player
-        return new Array(controllers.players.count).fill(undefined).map(() => []);
+        return new Array(controllers.players.count).fill(undefined)
+            .map(() => []);
     }
     
     dependencies() {
@@ -32,7 +33,7 @@ export class DiscardControllerProvider implements GenericControllerProvider<Game
  */
 export class DiscardController extends GlobalController<GameCard[][], DiscardDependencies> {
     validate(): void {
-        if (!Array.isArray(this.state)) {
+        if(!Array.isArray(this.state)) {
             throw new Error('Discard piles must be an array');
         }
     }
@@ -44,7 +45,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
      * @param card The card to discard
      */
     discardCard(playerId: number, card: GameCard): void {
-        if (playerId < 0 || playerId >= this.state.length) {
+        if(playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
@@ -58,7 +59,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
      * @param cards The cards to discard
      */
     discardCards(playerId: number, cards: GameCard[]): void {
-        for (const card of cards) {
+        for(const card of cards) {
             this.discardCard(playerId, card);
         }
     }
@@ -72,18 +73,18 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
      * @param fieldCard The field card to discard
      */
     discardFieldCard(playerId: number, fieldCard: FieldCard | InstancedFieldCard): void {
-        if (playerId < 0 || playerId >= this.state.length) {
+        if(playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         
         // Check if this is an InstancedFieldCard with an evolution stack
-        if ('evolutionStack' in fieldCard) {
+        if('evolutionStack' in fieldCard) {
             // Discard all cards in the evolution stack
-            for (const stackCard of fieldCard.evolutionStack) {
+            for(const stackCard of fieldCard.evolutionStack) {
                 const gameCard: GameCard = {
                     instanceId: stackCard.instanceId,
                     templateId: stackCard.templateId,
-                    type: 'creature'
+                    type: 'creature',
                 };
                 this.state[playerId].push(gameCard);
             }
@@ -92,7 +93,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
             const gameCard: GameCard = {
                 instanceId: fieldCard.instanceId,
                 templateId: fieldCard.templateId,
-                type: 'creature'
+                type: 'creature',
             };
             this.state[playerId].push(gameCard);
         }
@@ -105,7 +106,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
      * @returns Array of discarded cards
      */
     getDiscardPile(playerId: number): GameCard[] {
-        if (playerId < 0 || playerId >= this.state.length) {
+        if(playerId < 0 || playerId >= this.state.length) {
             throw new Error(`Invalid player ID: ${playerId}`);
         }
         

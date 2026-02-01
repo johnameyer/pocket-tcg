@@ -28,7 +28,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
      */
     apply(controllers: Controllers, effect: HandDiscardEffect, context: EffectContext): void {
         // Handle different target types
-        if (effect.target === 'both') {
+        if(effect.target === 'both') {
             // Apply to both players
             this.applyToPlayer(controllers, effect, context, 0);
             this.applyToPlayer(controllers, effect, context, 1);
@@ -50,10 +50,10 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         const hand = controllers.hand.getHand(playerId);
         
         // If the hand is empty, there's nothing to discard
-        if (hand.length === 0) {
+        if(hand.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} has no cards to discard for player ${playerId}!`]
+                components: [ `${context.effectName} has no cards to discard for player ${playerId}!` ],
             });
             return;
         }
@@ -61,30 +61,32 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         // If the discard amount is greater than the hand size, discard the entire hand
         const actualDiscardAmount = Math.min(discardAmount, hand.length);
         
-        // For now, just discard random cards
-        // In a real implementation, this would involve player choice
+        /*
+         * For now, just discard random cards
+         * In a real implementation, this would involve player choice
+         */
         const cardsToDiscard = hand.slice(0, actualDiscardAmount);
         
         // If shuffleIntoDeck is true, shuffle the discarded cards into the deck
-        if (effect.shuffleIntoDeck) {
+        if(effect.shuffleIntoDeck) {
             // Collect indices to remove in descending order for efficient removal
             const indicesToRemove: number[] = [];
-            for (let i = 0; i < actualDiscardAmount; i++) {
+            for(let i = 0; i < actualDiscardAmount; i++) {
                 const card = cardsToDiscard[i];
                 const index = hand.findIndex(c => c.instanceId === card.instanceId);
-                if (index !== -1) {
+                if(index !== -1) {
                     indicesToRemove.push(index);
                 }
             }
             
             // Sort in descending order and remove
             indicesToRemove.sort((a, b) => b - a);
-            for (const index of indicesToRemove) {
+            for(const index of indicesToRemove) {
                 hand.splice(index, 1);
             }
             
             // Add to deck
-            for (const card of cardsToDiscard) {
+            for(const card of cardsToDiscard) {
                 controllers.deck.addCard(playerId, card);
             }
             
@@ -94,7 +96,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             // Send a message about the shuffle
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} shuffles ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}'s hand into the deck!`]
+                components: [ `${context.effectName} shuffles ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}'s hand into the deck!` ],
             });
         } else {
             // Remove the cards from the hand (automatically discards them)
@@ -103,7 +105,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             // Send a message about the discard
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!`]
+                components: [ `${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!` ],
             });
         }
     }

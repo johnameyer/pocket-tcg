@@ -6,8 +6,8 @@ export class SelectTargetResponseMessage extends Message {
 
     constructor(
         public readonly targetPlayerId: number,
-        public readonly targetCreatureIndex: number // 0 = active, 1+ = bench
+        public readonly targetCreatureIndex: number, // 0 = active, 1+ = bench
     ) {
-        super([`Selected target: Player ${targetPlayerId + 1}, creature ${targetCreatureIndex === 0 ? 'Active' : `Bench ${targetCreatureIndex}`}`]);
+        super([ `Selected target: Player ${targetPlayerId + 1}, creature ${targetCreatureIndex === 0 ? 'Active' : `Bench ${targetCreatureIndex}`}` ]);
     }
 }

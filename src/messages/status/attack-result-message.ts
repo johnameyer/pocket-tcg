@@ -23,7 +23,7 @@ export class AttackResultMessage extends Message {
         public readonly attackName: string,
         public readonly damage: number,
         public readonly targetName: string,
-        public readonly remainingHp: number
+        public readonly remainingHp: number,
     ) {
         super(generateMessage(attackerName, attackName, damage, targetName, remainingHp));
     }

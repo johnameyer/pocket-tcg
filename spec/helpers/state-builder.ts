@@ -1,8 +1,7 @@
-import { buildProviders, Controllers } from '../../src/controllers/controllers.js';
-import { GameSetup } from '../../src/game-setup.js';
+import { ControllerState } from '@cards-ts/core';
+import { Controllers } from '../../src/controllers/controllers.js';
 import { EnergyDictionary, AttachableEnergyType } from '../../src/controllers/energy-controller.js';
 import { GameCard } from '../../src/controllers/card-types.js';
-import { ControllerState } from '@cards-ts/core';
 
 // Partial energy dictionary for test convenience
 type PartialEnergyDict = Partial<Record<AttachableEnergyType, number>>;
@@ -10,28 +9,30 @@ type PartialEnergyDict = Partial<Record<AttachableEnergyType, number>>;
 // Helper function to create empty energy dictionary
 const createEmptyEnergyDict = (): EnergyDictionary => ({
     grass: 0, fire: 0, water: 0, lightning: 0,
-    psychic: 0, fighting: 0, darkness: 0, metal: 0
+    psychic: 0, fighting: 0, darkness: 0, metal: 0,
 });
 
-// Helper function to validate creature instance exists
-// Checks if any card has matching fieldInstanceId (persistent ID) or
-// if any card in any evolution stack has matching instanceId (form-specific ID)
-// This is needed because energy/tools are attached using the fieldInstanceId,
-// but we need to find the card even after it evolves to new forms
+/*
+ * Helper function to validate creature instance exists
+ * Checks if any card has matching fieldInstanceId (persistent ID) or
+ * if any card in any evolution stack has matching instanceId (form-specific ID)
+ * This is needed because energy/tools are attached using the fieldInstanceId,
+ * but we need to find the card even after it evolves to new forms
+ */
 const validateCreatureInstance = (state: ControllerState<Controllers>, creatureInstanceId: string): boolean => {
     // Check field instance IDs first (primary ID for attachments)
-    const matchesFieldId = state.field.creatures[0]?.some(p => p.fieldInstanceId === creatureInstanceId) ||
-                           state.field.creatures[1]?.some(p => p.fieldInstanceId === creatureInstanceId);
+    const matchesFieldId = state.field.creatures[0]?.some(p => p.fieldInstanceId === creatureInstanceId)
+                           || state.field.creatures[1]?.some(p => p.fieldInstanceId === creatureInstanceId);
     
-    if (matchesFieldId) return true;
+    if(matchesFieldId) {
+        return true; 
+    }
     
     // Also check individual form instance IDs in evolution stacks (for backward compatibility)
-    return state.field.creatures[0]?.some(p => 
-        p.evolutionStack.some(card => card.instanceId === creatureInstanceId)
-    ) ||
-           state.field.creatures[1]?.some(p => 
-        p.evolutionStack.some(card => card.instanceId === creatureInstanceId)
-    );
+    return state.field.creatures[0]?.some(p => p.evolutionStack.some(card => card.instanceId === creatureInstanceId),
+    )
+           || state.field.creatures[1]?.some(p => p.evolutionStack.some(card => card.instanceId === creatureInstanceId),
+           );
 };
 
 export class StateBuilder {
@@ -47,19 +48,19 @@ export class StateBuilder {
             completed: false,
             state: 'ACTIONLOOP_ACTION_ACTION' as any,
             waiting: { waiting: [], responded: [] },
-            points: [0, 0],
-            names: ['Player 1', 'Player 2'],
+            points: [ 0, 0 ],
+            names: [ 'Player 1', 'Player 2' ],
             players: undefined,
             setup: {
-                playersReady: [true, true]
+                playersReady: [ true, true ],
             },
             params: {
                 maxHandSize: 10,
-                maxTurns: 30
+                maxTurns: 30,
             },
             data: [],
             turnCounter: {
-                turnNumber: 2  // Start at turn 2 to avoid first turn restrictions
+                turnNumber: 2, // Start at turn 2 to avoid first turn restrictions
             },
             turnState: {
                 shouldEndTurn: false,
@@ -76,41 +77,41 @@ export class StateBuilder {
                 evolutionFlexibility: [],
             },
             statusEffects: {
-                activeStatusEffects: [[], []]  // No status effects for either player
+                activeStatusEffects: [[], []], // No status effects for either player
             },
             coinFlip: {
                 nextFlipGuaranteedHeads: false,
                 mockedResults: [],
-                mockedResultIndex: 0
+                mockedResultIndex: 0,
             },
             field: {
                 creatures: [
                     [{ fieldInstanceId: 'basic-creature-1', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-1' }], damageTaken: 0, turnLastPlayed: 0 }],
-                    [{ fieldInstanceId: 'basic-creature-2', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }]
-                ]
+                    [{ fieldInstanceId: 'basic-creature-2', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }],
+                ],
             },
             energy: {
-                currentEnergy: [null, null],
-                nextEnergy: [null, null],
-                availableTypes: [['fire'], ['fire']],
+                currentEnergy: [ null, null ],
+                nextEnergy: [ null, null ],
+                availableTypes: [[ 'fire' ], [ 'fire' ]],
                 isAbsoluteFirstTurn: false,
                 attachedEnergyByInstance: {} as Record<string, EnergyDictionary>,
-                discardedEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()]
+                discardedEnergy: [ createEmptyEnergyDict(), createEmptyEnergyDict() ],
             },
             tools: {
-                attachedTools: {} as Record<string, { templateId: string, instanceId: string }>
+                attachedTools: {} as Record<string, { templateId: string, instanceId: string }>,
             },
             effects: {
-                immediatelyPendingEffects: []
+                immediatelyPendingEffects: [],
             },
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
-            hand: [[], []],  // Array of card arrays for each player
-            discard: [[], []]  // Array of discarded card arrays for each player
+            hand: [[], []], // Array of card arrays for each player
+            discard: [[], []], // Array of discarded card arrays for each player
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided
-        if (customizer) {
+        if(customizer) {
             customizer(state as unknown as ControllerState<Controllers>);
         }
         
@@ -137,26 +138,26 @@ export class StateBuilder {
             state.state = stateName as any;
             
             // Adjust setup based on state
-            if (stateName === 'START_GAME') {
-                state.setup.playersReady = [false, false];
+            if(stateName === 'START_GAME') {
+                state.setup.playersReady = [ false, false ];
                 state.turnCounter.turnNumber = 0;
                 state.field.creatures = [[], []];
                 state.energy.isAbsoluteFirstTurn = true;
             } else {
-                state.setup.playersReady = [true, true];
-                if (state.turnCounter.turnNumber === 0) {
+                state.setup.playersReady = [ true, true ];
+                if(state.turnCounter.turnNumber === 0) {
                     state.turnCounter.turnNumber = 2;
                 }
                 // Ensure creatures exist if not in START_GAME
-                if (state.field.creatures[0].length === 0) {
+                if(state.field.creatures[0].length === 0) {
                     state.field.creatures = [
                         [{ fieldInstanceId: 'basic-creature-1', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-1' }], damageTaken: 0, turnLastPlayed: 0 }],
-                        [{ fieldInstanceId: 'basic-creature-2', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }]
+                        [{ fieldInstanceId: 'basic-creature-2', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-2' }], damageTaken: 0, turnLastPlayed: 0 }],
                     ];
                 }
             }
             
-            if (stateName === 'generateEnergyAndDrawCard') {
+            if(stateName === 'generateEnergyAndDrawCard') {
                 state.energy.isAbsoluteFirstTurn = true;
             }
         };
@@ -172,7 +173,7 @@ export class StateBuilder {
                     fieldInstanceId: activeInstanceId, // Field instance ID stays constant
                     evolutionStack: [{ templateId: active, instanceId: activeInstanceId }],
                     damageTaken: 0, 
-                    turnLastPlayed: 1 
+                    turnLastPlayed: 1, 
                 },
                 ...bench.map((templateId, index) => {
                     const benchInstanceId = `${templateId}-${player}-${index}`;
@@ -180,9 +181,9 @@ export class StateBuilder {
                         fieldInstanceId: benchInstanceId, // Field instance ID stays constant
                         evolutionStack: [{ templateId, instanceId: benchInstanceId }],
                         damageTaken: 0,
-                        turnLastPlayed: 1
+                        turnLastPlayed: 1,
                     };
-                })
+                }),
             ];
         };
     }
@@ -190,16 +191,16 @@ export class StateBuilder {
     static withEnergy(creatureInstanceId: string, energyTypes: PartialEnergyDict) {
         return (state: ControllerState<Controllers>) => {
             StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
-            state.energy.attachedEnergyByInstance[creatureInstanceId] = {...createEmptyEnergyDict(), ...energyTypes};
+            state.energy.attachedEnergyByInstance[creatureInstanceId] = { ...createEmptyEnergyDict(), ...energyTypes };
         };
     }
 
-    static withHand(player: number, cards: Array<{templateId: string, type?: GameCard['type']}>) {
+    static withHand(player: number, cards: Array<{ templateId: string, type?: GameCard['type'] }>) {
         return (state: ControllerState<Controllers>) => {
             state.hand[player] = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-hand-${index}`,
                 templateId: card.templateId,
-                type: card.type || 'creature'
+                type: card.type || 'creature',
             }));
         };
     }
@@ -207,12 +208,12 @@ export class StateBuilder {
     private static validateInstanceIdWithError(state: ControllerState<Controllers>, creatureInstanceId: string): void {
         const creatureExists = validateCreatureInstance(state, creatureInstanceId);
         
-        if (!creatureExists) {
+        if(!creatureExists) {
             const availableInstances = [];
-            for (let player = 0; player < 2; player++) {
-                for (const creature of state.field.creatures[player]) {
+            for(let player = 0; player < 2; player++) {
+                for(const creature of state.field.creatures[player]) {
                     // Add all instanceIds from the evolution stack
-                    for (const card of creature.evolutionStack) {
+                    for(const card of creature.evolutionStack) {
                         availableInstances.push(card.instanceId);
                     }
                 }
@@ -224,9 +225,9 @@ export class StateBuilder {
     static withDamage(creatureInstanceId: string, damage: number) {
         return (state: ControllerState<Controllers>) => {
             // Find and update damage for the specified creature instance
-            for (let player = 0; player < 2; player++) {
-                for (const creature of state.field.creatures[player]) {
-                    if (creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
+            for(let player = 0; player < 2; player++) {
+                for(const creature of state.field.creatures[player]) {
+                    if(creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
                         creature.damageTaken = damage;
                         return;
                     }
@@ -242,11 +243,11 @@ export class StateBuilder {
         return (state: ControllerState<Controllers>) => {
             // Convert string to StatusEffectType enum
             const statusEffectMap: Record<string, string> = {
-                'sleep': 'sleep',
-                'burn': 'burn', 
-                'confusion': 'confusion',
-                'paralysis': 'paralysis',
-                'poison': 'poison'
+                sleep: 'sleep',
+                burn: 'burn', 
+                confusion: 'confusion',
+                paralysis: 'paralysis',
+                poison: 'poison',
             };
             
             const effectType = statusEffectMap[effect] || effect;
@@ -279,12 +280,12 @@ export class StateBuilder {
         };
     }
 
-    static withDeck(player: number, cards: Array<{templateId: string, type?: GameCard['type']}>) {
+    static withDeck(player: number, cards: Array<{ templateId: string, type?: GameCard['type'] }>) {
         return (state: ControllerState<Controllers>) => {
             state.deck[player] = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-deck-${index}`,
                 templateId: card.templateId,
-                type: card.type || 'creature'
+                type: card.type || 'creature',
             }));
         };
     }
@@ -294,7 +295,7 @@ export class StateBuilder {
             StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
             state.tools.attachedTools[creatureInstanceId] = { 
                 templateId: toolCardId, 
-                instanceId: `${toolCardId}-1` 
+                instanceId: `${toolCardId}-1`, 
             };
         };
     }

@@ -1,12 +1,9 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { EnergyEffect } from '../../repository/effect-types.js';
-import { FixedTarget, ResolvedTarget } from '../../repository/target-types.js';
-import { EffectContext, EffectContextFactory } from '../effect-context.js';
+import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
-import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
 import { TriggerProcessor } from '../trigger-processor.js';
 
 /**
@@ -23,10 +20,13 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: EnergyEffect, context: EffectContext): boolean {
-        // Always allow energy effects to be applied
-        // The effect will attach as many energy cards as possible (or none if none are available)
+        /*
+         * Always allow energy effects to be applied
+         * The effect will attach as many energy cards as possible (or none if none are available)
+         */
         return true;
     }
+
     /**
      * Get the resolution requirements for an energy effect.
      * Energy effects require a target to be resolved.
@@ -36,7 +36,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      */
     getResolutionRequirements(effect: EnergyEffect): ResolutionRequirement[] {
         return [
-            { targetProperty: 'target', target: effect.target, required: true }
+            { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
     
@@ -50,7 +50,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      */
     apply(controllers: Controllers, effect: EnergyEffect, context: EffectContext): void {
         // Ensure we have a valid target
-        if (!effect.target) {
+        if(!effect.target) {
             throw new Error('No target specified for energy effect');
         }
 
@@ -63,40 +63,40 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
         // Get the operation (attach or discard)
         const operation = effect.operation;
 
-        if (effect.target.type !== 'resolved') {
+        if(effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if (targets.length === 0) {
+        if(targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} found no valid targets!`]
+                components: [ `${context.effectName} found no valid targets!` ],
             });
             return;
         }
         
-        for (const target of targets) {
+        for(const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // Get the field instance ID for energy/tool operations
             const fieldInstanceId = controllers.field.getFieldInstanceId(playerId, fieldIndex);
-            if (!fieldInstanceId) {
+            if(!fieldInstanceId) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} target creature not found!`]
+                    components: [ `${context.effectName} target creature not found!` ],
                 });
                 continue;
             }
             
             // Get the target creature for display name
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
-            if (!targetCreature) {
+            if(!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} target creature not found!`]
+                    components: [ `${context.effectName} target creature not found!` ],
                 });
                 continue;
             }
@@ -104,18 +104,18 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             const creatureName = targetCreature.data.name;
             
             // Apply the appropriate energy operation
-            if (operation === 'attach' && energyType) {
+            if(operation === 'attach' && energyType) {
                 // Attach energy directly to the creature
                 const success = controllers.energy.attachSpecificEnergyToInstance(
                     fieldInstanceId, 
                     energyType, 
-                    amount
+                    amount,
                 );
                 
-                if (success) {
+                if(success) {
                     controllers.players.messageAll({
                         type: 'status',
-                        components: [`${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}!`]
+                        components: [ `${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}!` ],
                     });
                     
                     // Trigger energy-attachment effects using TriggerProcessor
@@ -124,31 +124,31 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                         playerId,
                         targetCreature.instanceId,
                         targetCreature.templateId,
-                        energyType
+                        energyType,
                     );
                 } else {
                     controllers.players.messageAll({
                         type: 'status',
-                        components: [`${context.effectName} failed to attach ${energyType} energy to ${creatureName}!`]
+                        components: [ `${context.effectName} failed to attach ${energyType} energy to ${creatureName}!` ],
                     });
                 }
-            } else if (operation === 'discard') {
+            } else if(operation === 'discard') {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
                     playerId,
                     fieldInstanceId, 
                     energyType, 
-                    amount
+                    amount,
                 );
                 
-                if (success) {
+                if(success) {
                     controllers.players.messageAll({
                         type: 'status',
-                        components: [`${context.effectName} discarded ${amount} ${energyType || 'random'} energy from ${creatureName}!`]
+                        components: [ `${context.effectName} discarded ${amount} ${energyType || 'random'} energy from ${creatureName}!` ],
                     });
                 } else {
                     controllers.players.messageAll({
                         type: 'status',
-                        components: [`${context.effectName} failed to discard ${energyType || 'random'} energy from ${creatureName}!`]
+                        components: [ `${context.effectName} failed to discard ${energyType || 'random'} energy from ${creatureName}!` ],
                     });
                 }
             } else {

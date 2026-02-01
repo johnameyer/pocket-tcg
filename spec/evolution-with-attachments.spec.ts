@@ -1,22 +1,22 @@
 import { expect } from 'chai';
-import { StateBuilder } from './helpers/state-builder.js';
-import { runTestGame } from './helpers/test-helpers.js';
 import { EvolveResponseMessage } from '../src/messages/response/evolve-response-message.js';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
+import { runTestGame } from './helpers/test-helpers.js';
+import { StateBuilder } from './helpers/state-builder.js';
 
 describe('Evolution with Energy and Tools', () => {
     describe('Energy Retention After Evolution', () => {
         it('should retain energy after evolving', () => {
             const { state } = runTestGame({
-                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1 }),
-                    StateBuilder.withCanEvolve(0, 0)
+                    StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Creature should be evolved
@@ -34,36 +34,38 @@ describe('Evolution with Energy and Tools', () => {
             const { state } = runTestGame({
                 actions: [
                     new EvolveResponseMessage('evolution-creature', 0),
-                    new AttackResponseMessage(0)
+                    new AttackResponseMessage(0),
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2 }), // Evolution creature needs 2 fire energy
-                    StateBuilder.withCanEvolve(0, 0)
+                    StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             // Creature should be evolved
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('evolution-creature');
             
-            // Attack should have succeeded (energy was available)
-            // Check that opponent took damage
+            /*
+             * Attack should have succeeded (energy was available)
+             * Check that opponent took damage
+             */
             expect(state.field.creatures[1][0].damageTaken).to.be.greaterThan(0, 'Opponent should have taken damage from attack');
         });
 
         it('should retain energy when evolving benched creature', () => {
             const { state } = runTestGame({
-                actions: [new EvolveResponseMessage('evolution-creature', 1)],
+                actions: [ new EvolveResponseMessage('evolution-creature', 1) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'high-hp-creature', ['basic-creature']),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withEnergy('basic-creature-0-0', { fire: 2 }),
-                    StateBuilder.withCanEvolve(0, 1)
+                    StateBuilder.withCanEvolve(0, 1),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Benched creature should be evolved
@@ -83,9 +85,9 @@ describe('Evolution with Energy and Tools', () => {
                 actions: [],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withTool('basic-creature-0', 'basic-tool')
+                    StateBuilder.withTool('basic-creature-0', 'basic-tool'),
                 ),
-                maxSteps: 1
+                maxSteps: 1,
             });
 
             // Tool should be attached
@@ -98,15 +100,15 @@ describe('Evolution with Energy and Tools', () => {
 
         it('should keep tool working after evolution (HP bonus)', () => {
             const { state } = runTestGame({
-                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withTool('basic-creature-0', 'basic-tool'),
                     StateBuilder.withCanEvolve(0, 0),
-                    StateBuilder.withDamage('basic-creature-0', 40)
+                    StateBuilder.withDamage('basic-creature-0', 40),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Creature should be evolved
@@ -124,14 +126,14 @@ describe('Evolution with Energy and Tools', () => {
 
         it('should not allow attaching second tool after evolution', () => {
             const { state } = runTestGame({
-                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withTool('basic-creature-0', 'basic-tool'),
-                    StateBuilder.withCanEvolve(0, 0)
+                    StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Creature should be evolved
@@ -146,9 +148,11 @@ describe('Evolution with Energy and Tools', () => {
                 state.field.creatures[0][0].evolutionStack.length - 1
             ].instanceId;
             
-            // If someone tries to attach to the current ID, it should fail because
-            // the original ID already has a tool (need to check using original ID)
-            // This is testing the invariant that canAttachTool should check the original ID
+            /*
+             * If someone tries to attach to the current ID, it should fail because
+             * the original ID already has a tool (need to check using original ID)
+             * This is testing the invariant that canAttachTool should check the original ID
+             */
         });
     });
 
@@ -164,15 +168,15 @@ describe('Evolution with Energy and Tools', () => {
                         const card = state.field.creatures[0][0];
                         card.evolutionStack.push({
                             instanceId: 'evolution-1',
-                            templateId: 'evolution-creature'
+                            templateId: 'evolution-creature',
                         });
                         card.evolutionStack.push({
                             instanceId: 'evolution-2',
-                            templateId: 'high-hp-creature'
+                            templateId: 'high-hp-creature',
                         });
-                    }
+                    },
                 ),
-                maxSteps: 1
+                maxSteps: 1,
             });
 
             // Check the evolution stack

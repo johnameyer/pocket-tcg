@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary } from '../../../src/controllers/energy-controller.js';
@@ -22,7 +21,7 @@ describe('Energy Effect', () => {
 
         it('should return true for attach operation', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
 
             const effect: EnergyEffect = {
@@ -30,7 +29,7 @@ describe('Energy Effect', () => {
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                operation: 'attach'
+                operation: 'attach',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
@@ -42,7 +41,7 @@ describe('Energy Effect', () => {
         it('should return true for discard operation', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: EnergyEffect = {
@@ -50,7 +49,7 @@ describe('Energy Effect', () => {
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                operation: 'discard'
+                operation: 'discard',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
@@ -62,7 +61,7 @@ describe('Energy Effect', () => {
         it('should return true when target has no energy (discard will have no effect)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: EnergyEffect = {
@@ -70,7 +69,7 @@ describe('Energy Effect', () => {
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                operation: 'discard'
+                operation: 'discard',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
@@ -82,7 +81,7 @@ describe('Energy Effect', () => {
 
         it('should return true when no target exists (effect will fail gracefully during apply)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withDeck(10)
+                HandlerDataBuilder.withDeck(10),
             );
 
             const effect: EnergyEffect = {
@@ -90,7 +89,7 @@ describe('Energy Effect', () => {
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                operation: 'attach'
+                operation: 'attach',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
@@ -104,7 +103,7 @@ describe('Energy Effect', () => {
     it('should attach 1 fire energy (basic operation)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['energy-supporter', {
+                [ 'energy-supporter', {
                     templateId: 'energy-supporter',
                     name: 'Energy Supporter',
                     effects: [{
@@ -112,20 +111,20 @@ describe('Energy Effect', () => {
                         energyType: 'fire',
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
+                        operation: 'attach',
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('energy-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('energy-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{ templateId: 'energy-supporter', type: 'supporter' }])
+                StateBuilder.withHand(0, [{ templateId: 'energy-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         const energyState = state.energy as any;
@@ -135,7 +134,7 @@ describe('Energy Effect', () => {
     it('should discard energy instead of attach', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['discard-supporter', {
+                [ 'discard-supporter', {
                     templateId: 'discard-supporter',
                     name: 'Discard Supporter',
                     effects: [{
@@ -143,22 +142,22 @@ describe('Energy Effect', () => {
                         energyType: 'fire',
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'discard'
-                    }]
-                }]
-            ])
+                        operation: 'discard',
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('discard-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('discard-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'discard-supporter', type: 'supporter' }]),
-                StateBuilder.withEnergy('basic-creature-1', { fire: 2, water: 1 })
+                StateBuilder.withEnergy('basic-creature-1', { fire: 2, water: 1 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         const energyState = state.energy as any;
@@ -169,7 +168,7 @@ describe('Energy Effect', () => {
     it('should attach different energy types (water)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['water-supporter', {
+                [ 'water-supporter', {
                     templateId: 'water-supporter',
                     name: 'Water Supporter',
                     effects: [{
@@ -177,20 +176,20 @@ describe('Energy Effect', () => {
                         energyType: 'water',
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
+                        operation: 'attach',
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('water-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('water-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{ templateId: 'water-supporter', type: 'supporter' }])
+                StateBuilder.withHand(0, [{ templateId: 'water-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         const energyState = state.energy as any;
@@ -200,7 +199,7 @@ describe('Energy Effect', () => {
     it('should attach different amounts (2 energy)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['multi-energy-supporter', {
+                [ 'multi-energy-supporter', {
                     templateId: 'multi-energy-supporter',
                     name: 'Multi Energy Supporter',
                     effects: [{
@@ -208,20 +207,20 @@ describe('Energy Effect', () => {
                         energyType: 'fire',
                         amount: { type: 'constant', value: 2 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
+                        operation: 'attach',
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('multi-energy-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('multi-energy-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{ templateId: 'multi-energy-supporter', type: 'supporter' }])
+                StateBuilder.withHand(0, [{ templateId: 'multi-energy-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         const energyState = state.energy as any;
@@ -231,7 +230,7 @@ describe('Energy Effect', () => {
     it('should target different Pokemon (choice)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['choice-energy-supporter', {
+                [ 'choice-energy-supporter', {
                     templateId: 'choice-energy-supporter',
                     name: 'Choice Energy Supporter',
                     effects: [{
@@ -240,24 +239,24 @@ describe('Energy Effect', () => {
                         amount: { type: 'constant', value: 1 },
                         target: {
                             type: 'fixed',
-                            player: 'self', position: 'active'
+                            player: 'self', position: 'active',
                         },
-                        operation: 'attach'
-                    }]
-                }]
-            ])
+                        operation: 'attach',
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('choice-energy-supporter', 'supporter')
+                new PlayCardResponseMessage('choice-energy-supporter', 'supporter'),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{ templateId: 'choice-energy-supporter', type: 'supporter' }])
+                StateBuilder.withHand(0, [{ templateId: 'choice-energy-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         const energyState = state.energy as any;
@@ -267,7 +266,7 @@ describe('Energy Effect', () => {
     it('should cap discard at available energy', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['big-discard-supporter', {
+                [ 'big-discard-supporter', {
                     templateId: 'big-discard-supporter',
                     name: 'Big Discard Supporter',
                     effects: [{
@@ -275,22 +274,22 @@ describe('Energy Effect', () => {
                         energyType: 'fire',
                         amount: { type: 'constant', value: 5 },
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'discard'
-                    }]
-                }]
-            ])
+                        operation: 'discard',
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('big-discard-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('big-discard-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'big-discard-supporter', type: 'supporter' }]),
-                StateBuilder.withEnergy('basic-creature-1', { fire: 2 })
+                StateBuilder.withEnergy('basic-creature-1', { fire: 2 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         const energyState = state.energy as any;
@@ -302,7 +301,7 @@ describe('Energy Effect', () => {
         it('should track discarded energy from discard effects', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map([
-                    ['energy-discard', {
+                    [ 'energy-discard', {
                         templateId: 'energy-discard',
                         name: 'Energy Discard',
                         effects: [{
@@ -310,22 +309,22 @@ describe('Energy Effect', () => {
                             energyType: 'fire',
                             amount: { type: 'constant', value: 2 },
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
-                            operation: 'discard'
-                        }]
-                    }]
-                ])
+                            operation: 'discard',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('energy-discard', 'supporter')],
+                actions: [ new PlayCardResponseMessage('energy-discard', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'energy-discard', type: 'supporter' }]),
-                    StateBuilder.withEnergy('basic-creature-1', { fire: 3, water: 1 })
+                    StateBuilder.withEnergy('basic-creature-1', { fire: 3, water: 1 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[1];
@@ -338,7 +337,7 @@ describe('Energy Effect', () => {
         it('should track discarded energy when creature is knocked out', () => {
             const testRepository = new MockCardRepository({
                 creatures: new Map([
-                    ['attacker', {
+                    [ 'attacker', {
                         templateId: 'attacker',
                         name: 'Attacker',
                         type: 'fire',
@@ -348,30 +347,30 @@ describe('Energy Effect', () => {
                         attacks: [{
                             name: 'Big Attack',
                             damage: 100,
-                            energyRequirements: []
-                        }]
+                            energyRequirements: [],
+                        }],
                     }],
-                    ['defender', {
+                    [ 'defender', {
                         templateId: 'defender',
                         name: 'Defender',
                         type: 'water',
                         maxHp: 50,
                         retreatCost: 1,
                         weakness: 'grass',
-                        attacks: []
-                    }]
-                ])
+                        attacks: [],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'attacker'),
                     StateBuilder.withCreatures(1, 'defender'),
-                    StateBuilder.withEnergy('defender-1', { water: 2, fire: 1 })
+                    StateBuilder.withEnergy('defender-1', { water: 2, fire: 1 }),
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[1];

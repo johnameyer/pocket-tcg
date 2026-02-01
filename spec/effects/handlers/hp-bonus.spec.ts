@@ -12,51 +12,51 @@ describe('HP Bonus Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
             }],
-            ['low-hp-creature', {
+            [ 'low-hp-creature', {
                 templateId: 'low-hp-creature',
                 name: 'Low HP Creature',
                 maxHp: 50,
                 type: 'grass',
                 weakness: 'fire',
                 retreatCost: 1,
-                attacks: [{ name: 'Weak Attack', damage: 60, energyRequirements: [{ type: 'grass', amount: 1 }] }]
-            }]
+                attacks: [{ name: 'Weak Attack', damage: 60, energyRequirements: [{ type: 'grass', amount: 1 }] }],
+            }],
         ]),
         tools: new Map<string, ToolData>([
-            ['hp-tool', {
+            [ 'hp-tool', {
                 templateId: 'hp-tool',
                 name: 'HP Tool',
                 effects: [{
                     type: 'hp-bonus',
-                    amount: { type: 'constant', value: 30 }
-                }]
-            }]
-        ])
+                    amount: { type: 'constant', value: 30 },
+                }],
+            }],
+        ]),
     });
 
     const lowHpCreature = { templateId: 'low-hp-creature', type: 'creature' as const };
 
     it('should allow Pokemon to survive attacks that would normally KO (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-hp-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withTool('basic-creature-1', 'hp-tool'), // HP bonus tool attached
                 StateBuilder.withEnergy('low-hp-creature-0', { grass: 1 }),
-                StateBuilder.withDamage('basic-creature-1', 40) // Pre-damage: would be KO'd at 50 HP base
+                StateBuilder.withDamage('basic-creature-1', 40), // Pre-damage: would be KO'd at 50 HP base
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -66,13 +66,13 @@ describe('HP Bonus Effect', () => {
 
     it('should be attached via tool attachment', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('hp-tool', 'tool', 0, 0)],
+            actions: [ new PlayCardResponseMessage('hp-tool', 'tool', 0, 0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [hpTool])
+                StateBuilder.withHand(0, [ hpTool ]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have attached HP tool');
@@ -82,16 +82,16 @@ describe('HP Bonus Effect', () => {
 
     it('should prevent KO when Pokemon would normally be knocked out', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-hp-creature'),
                 StateBuilder.withCreatures(1, 'low-hp-creature'),
                 StateBuilder.withTool('low-hp-creature-1', 'hp-tool'), // Target has HP bonus
                 StateBuilder.withEnergy('low-hp-creature-0', { grass: 1 }),
-                StateBuilder.withDamage('low-hp-creature-1', 45) // 45 + 60 = 105 damage, would KO 50 HP but not 80 HP
+                StateBuilder.withDamage('low-hp-creature-1', 45), // 45 + 60 = 105 damage, would KO 50 HP but not 80 HP
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -101,13 +101,13 @@ describe('HP Bonus Effect', () => {
 
     it('should work with bench Pokemon', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('hp-tool', 'tool', 0, 1)],
+            actions: [ new PlayCardResponseMessage('hp-tool', 'tool', 0, 1) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['low-hp-creature']),
-                StateBuilder.withHand(0, [hpTool])
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'low-hp-creature' ]),
+                StateBuilder.withHand(0, [ hpTool ]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have attached HP tool to bench');
@@ -117,14 +117,14 @@ describe('HP Bonus Effect', () => {
 
     it('should prevent tool attachment when Pokemon already has one', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('hp-tool', 'tool', 0, 0)],
+            actions: [ new PlayCardResponseMessage('hp-tool', 'tool', 0, 0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withTool('basic-creature-0', 'hp-tool'), // Already has tool
-                StateBuilder.withHand(0, [hpTool])
+                StateBuilder.withHand(0, [ hpTool ]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have attached second tool');

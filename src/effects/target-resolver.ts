@@ -1,16 +1,13 @@
 import { Controllers } from '../controllers/controllers.js';
 import { Effect } from '../repository/effect-types.js';
-import { Target, FixedTarget, SingleChoiceTarget, MultiChoiceTarget, TargetCriteria, SingleTarget, ResolvedTarget } from '../repository/target-types.js';
-import { EffectContext } from './effect-context.js';
-import { getOpponentPlayerId } from './effect-utils.js';
+import { Target, FixedTarget, TargetCriteria, SingleTarget, ResolvedTarget } from '../repository/target-types.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { HandlerData } from '../game-handler.js';
-import { FieldCard } from "../controllers/field-controller.js";
-import { PendingTargetSelection } from './pending-target-selection.js';
+import { FieldCard } from '../controllers/field-controller.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
-import { ConditionEvaluator } from './condition-evaluator.js';
-import { Condition } from '../repository/condition-types.js';
 import { toFieldCard, getCurrentInstanceId } from '../utils/field-card-utils.js';
+import { ConditionEvaluator } from './condition-evaluator.js';
+import { EffectContext } from './effect-context.js';
 
 /**
  * Result of target resolution, indicating whether a target was resolved,
@@ -71,21 +68,21 @@ export class TargetResolver {
     static resolveSingleTarget(
         target: SingleTarget | undefined,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): SingleTargetResolutionResult {
         // Use the general resolveTarget method but ensure we don't get an 'all-matching' result
         const result = this.resolveTarget(target, controllers, context);
         
         // Filter out 'all-matching' results which shouldn't happen with SingleTarget input
-        if (result.type === 'all-matching') {
+        if(result.type === 'all-matching') {
             // If there are targets, return the first one as a resolved target
-            if (result.targets.length > 0) {
+            if(result.targets.length > 0) {
                 return {
                     type: 'resolved',
                     targets: [{
                         playerId: result.targets[0].playerId,
-                        fieldIndex: result.targets[0].fieldIndex
-                    }]
+                        fieldIndex: result.targets[0].fieldIndex,
+                    }],
                 };
             }
             // If no targets, return no-valid-targets
@@ -98,42 +95,42 @@ export class TargetResolver {
     static resolveTarget(
         target: Target | undefined,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): TargetResolutionResult {
         // If no target, can't resolve
-        if (!target) {
+        if(!target) {
             return { type: 'no-valid-targets' };
         }
         
         // Handle all-matching targets
-        if (target.type === 'all-matching') {
+        if(target.type === 'all-matching') {
             const matchingTargets: { playerId: number, fieldIndex: number }[] = [];
             const criteria = target.criteria;
             
             // Determine which players to check based on criteria
             const playerIds: number[] = [];
-            if (!criteria.player || criteria.player === 'self') {
+            if(!criteria.player || criteria.player === 'self') {
                 playerIds.push(context.sourcePlayer);
             }
-            if (!criteria.player || criteria.player === 'opponent') {
+            if(!criteria.player || criteria.player === 'opponent') {
                 playerIds.push(1 - context.sourcePlayer);
             }
             
             // Find all matching creature
-            for (const playerId of playerIds) {
+            for(const playerId of playerIds) {
                 // Get all creature (active and benched)
                 const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
                 const allCreatures = controllers.field.getCards(playerId) || [];
                 
-                for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
+                for(let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                     const creature = allCreatures[fieldIndex];
-                    if (creature && TargetResolver.creatureMatchesCriteria(creature, criteria, handlerData, controllers.cardRepository.cardRepository, fieldIndex)) {
+                    if(creature && TargetResolver.creatureMatchesCriteria(creature, criteria, handlerData, controllers.cardRepository.cardRepository, fieldIndex)) {
                         matchingTargets.push({ playerId, fieldIndex });
                     }
                 }
             }
             
-            if (matchingTargets.length === 0) {
+            if(matchingTargets.length === 0) {
                 return { type: 'no-valid-targets' };
             }
             
@@ -141,29 +138,29 @@ export class TargetResolver {
         }
         
         // If targetPlayerId and targetCreatureIndex are provided in the context, use them directly
-        if (context.targetPlayerId !== undefined && context.targetCreatureIndex !== undefined) {
+        if(context.targetPlayerId !== undefined && context.targetCreatureIndex !== undefined) {
             return { 
                 type: 'resolved', 
                 targets: [{
                     playerId: context.targetPlayerId, 
-                    fieldIndex: context.targetCreatureIndex 
-                }]
+                    fieldIndex: context.targetCreatureIndex, 
+                }],
             };
         }
         
         // Handle fixed targets
-        if (target.type === 'fixed') {
+        if(target.type === 'fixed') {
             // If playerId and fieldIndex are already set, use them directly
-            if ('playerId' in target && 
-                typeof target.playerId === 'number' && 
-                'fieldIndex' in target && 
-                typeof target.fieldIndex === 'number') {
+            if('playerId' in target 
+                && typeof target.playerId === 'number' 
+                && 'fieldIndex' in target 
+                && typeof target.fieldIndex === 'number') {
                 return { 
                     type: 'resolved', 
                     targets: [{
                         playerId: target.playerId, 
-                        fieldIndex: target.fieldIndex 
-                    }]
+                        fieldIndex: target.fieldIndex, 
+                    }],
                 };
             }
             
@@ -171,20 +168,20 @@ export class TargetResolver {
             const playerId = target.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer;
             let fieldIndex: number;
             
-            if (target.position === 'active') {
+            if(target.position === 'active') {
                 fieldIndex = 0;
-            } else if (target.position === 'source') {
+            } else if(target.position === 'source') {
                 // For source targeting, determine position based on context type
-                if (context.type === 'ability') {
+                if(context.type === 'ability') {
                     fieldIndex = context.fieldPosition;
-                } else if (context.type === 'attack') {
+                } else if(context.type === 'attack') {
                     // Attacks are always from active creature
                     fieldIndex = 0;
-                } else if (context.type === 'trigger') {
+                } else if(context.type === 'trigger') {
                     // For triggers, find the field position of the creature that has the trigger
                     const allCreatures = controllers.field.getCards(playerId) || [];
                     fieldIndex = allCreatures.findIndex(creature => creature?.instanceId === context.creatureInstanceId);
-                    if (fieldIndex === -1) {
+                    if(fieldIndex === -1) {
                         throw new Error(`Trigger source creature not found: ${context.creatureInstanceId}`);
                     }
                 } else {
@@ -198,31 +195,33 @@ export class TargetResolver {
                 type: 'resolved',
                 targets: [{
                     playerId,
-                    fieldIndex
-                }]
+                    fieldIndex,
+                }],
             };
         }
         
         // For choice targets, check if there are valid targets
         const availableTargets = this.getAvailableTargets(target, controllers, context);
         
-        if (availableTargets.length === 0) {
+        if(availableTargets.length === 0) {
             return { type: 'no-valid-targets' };
         }
         
-        // If there's only one valid target and it's a single-choice target, auto-resolve as resolved
-        // But don't auto-resolve for bench damage effects to ensure explicit targeting
-        if (availableTargets.length === 1 && target.type === 'single-choice') {
+        /*
+         * If there's only one valid target and it's a single-choice target, auto-resolve as resolved
+         * But don't auto-resolve for bench damage effects to ensure explicit targeting
+         */
+        if(availableTargets.length === 1 && target.type === 'single-choice') {
             // Special case for bench damage effects - require explicit selection
-            if ('criteria' in target && 
-                target.criteria && 
-                target.criteria.position === 'bench' &&
-                context.effectName.includes('damage')) {
+            if('criteria' in target 
+                && target.criteria 
+                && target.criteria.position === 'bench'
+                && context.effectName.includes('damage')) {
                 
                 // Return requires-selection to force the user to explicitly select the bench creature
                 return {
                     type: 'requires-selection',
-                    availableTargets
+                    availableTargets,
                 };
             }
             
@@ -230,15 +229,15 @@ export class TargetResolver {
                 type: 'resolved',
                 targets: [{
                     playerId: availableTargets[0].playerId,
-                    fieldIndex: availableTargets[0].fieldIndex
-                }]
+                    fieldIndex: availableTargets[0].fieldIndex,
+                }],
             };
         }
         
         // Otherwise, requires selection
         return {
             type: 'requires-selection',
-            availableTargets
+            availableTargets,
         };
     }
     
@@ -253,60 +252,60 @@ export class TargetResolver {
     static getAvailableTargets(
         target: Target,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): TargetOption[] {
         const availableTargets: TargetOption[] = [];
         
         // Handle single-choice and multi-choice targets
-        if (target.type === 'single-choice' || target.type === 'multi-choice') {
+        if(target.type === 'single-choice' || target.type === 'multi-choice') {
             const chooserId = target.chooser === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer;
             const criteria = target.criteria;
             
-            if (criteria.location === 'field') {
+            if(criteria.location === 'field') {
                 const playerIds = [];
                 
-                if (!criteria.player || criteria.player === 'self') {
+                if(!criteria.player || criteria.player === 'self') {
                     playerIds.push(context.sourcePlayer);
                 }
                 
-                if (!criteria.player || criteria.player === 'opponent') {
+                if(!criteria.player || criteria.player === 'opponent') {
                     playerIds.push(1 - context.sourcePlayer);
                 }
                 
                 // Create HandlerData view for accessing creature
                 const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
                 
-                for (const playerId of playerIds) {
+                for(const playerId of playerIds) {
                     // Get all creature for this player
                     const allCreatures = controllers.field.getCards(playerId) || [];
                     
-                    for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
+                    for(let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                         const creature = allCreatures[fieldIndex];
                         
                         // Skip if no creature at this position
-                        if (!creature) {
+                        if(!creature) {
                             continue;
                         }
                         
                         // Skip active creature if position is explicitly set to 'bench'
-                        if (target.criteria?.position === 'bench' && fieldIndex === 0) {
+                        if(target.criteria?.position === 'bench' && fieldIndex === 0) {
                             continue;
                         }
                         
                         // Skip bench creature if position is explicitly set to 'active'
-                        if (target.criteria?.position === 'active' && fieldIndex > 0) {
+                        if(target.criteria?.position === 'active' && fieldIndex > 0) {
                             continue;
                         }
                         
                         // Check if creature matches criteria
-                        if (TargetResolver.creatureMatchesCriteria(creature, target.criteria, handlerData, controllers.cardRepository.cardRepository, fieldIndex)) {
+                        if(TargetResolver.creatureMatchesCriteria(creature, target.criteria, handlerData, controllers.cardRepository.cardRepository, fieldIndex)) {
                             const creatureData = controllers.cardRepository.getCreature(creature.templateId);
                             availableTargets.push({
                                 playerId,
                                 fieldIndex,
                                 name: creatureData.name,
                                 hp: Math.max(0, creatureData.maxHp - creature.damageTaken),
-                                position: fieldIndex === 0 ? 'active' : 'bench'
+                                position: fieldIndex === 0 ? 'active' : 'bench',
                             });
                         }
                     }
@@ -331,15 +330,15 @@ export class TargetResolver {
         handlerData: HandlerData,
         context: EffectContext,
         cardRepository: CardRepository,
-        validationFn?: (creature: FieldCard, handlerData: HandlerData) => boolean
+        validationFn?: (creature: FieldCard, handlerData: HandlerData) => boolean,
     ): boolean {
         // Check if the target exists
-        if (!target) {
+        if(!target) {
             return false;
         }
         
         // Use validation function if provided to check if any matching creature pass the validation
-        if (validationFn) {
+        if(validationFn) {
             return this.hasValidTargetsWithValidation(target, handlerData, context, cardRepository, validationFn);
         }
         
@@ -355,30 +354,30 @@ export class TargetResolver {
         handlerData: HandlerData,
         context: EffectContext,
         cardRepository: CardRepository,
-        validationFn: (creature: FieldCard, handlerData: HandlerData) => boolean
+        validationFn: (creature: FieldCard, handlerData: HandlerData) => boolean,
     ): boolean {
         // Handle different target types
-        if (target.type === 'all-matching' || target.type === 'single-choice') {
+        if(target.type === 'all-matching' || target.type === 'single-choice') {
             const criteria = target.criteria;
             
             // Determine which players to check based on criteria
             const playerIds = [];
-            if (!criteria.player || criteria.player === 'self') {
+            if(!criteria.player || criteria.player === 'self') {
                 playerIds.push(context.sourcePlayer);
             }
-            if (!criteria.player || criteria.player === 'opponent') {
+            if(!criteria.player || criteria.player === 'opponent') {
                 playerIds.push(1 - context.sourcePlayer);
             }
             
             // Check if any creature matches criteria AND passes validation
-            for (const playerId of playerIds) {
+            for(const playerId of playerIds) {
                 const allCreatures = handlerData.field.creatures[playerId] || [];
                 
-                for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
+                for(let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                     const creature = allCreatures[fieldIndex];
-                    if (creature && 
-                        TargetResolver.creatureMatchesCriteria(toFieldCard(creature), criteria, handlerData, cardRepository, fieldIndex) &&
-                        validationFn(toFieldCard(creature), handlerData)) {
+                    if(creature 
+                        && TargetResolver.creatureMatchesCriteria(toFieldCard(creature), criteria, handlerData, cardRepository, fieldIndex)
+                        && validationFn(toFieldCard(creature), handlerData)) {
                         return true;
                     }
                 }
@@ -388,7 +387,7 @@ export class TargetResolver {
         }
         
         // For fixed targets, check the specific creature
-        if (target.type === 'fixed') {
+        if(target.type === 'fixed') {
             const creature = this.getFixedTargetCreature(target, handlerData, context);
             return creature ? validationFn(creature, handlerData) : false;
         }
@@ -403,29 +402,29 @@ export class TargetResolver {
         target: Target,
         handlerData: HandlerData,
         context: EffectContext,
-        cardRepository: CardRepository
+        cardRepository: CardRepository,
     ): boolean {
         
         // For most targets, just check if there are any matching creature
-        if (target.type === 'all-matching' || target.type === 'single-choice') {
+        if(target.type === 'all-matching' || target.type === 'single-choice') {
             const criteria = target.criteria;
             
             // Determine which players to check based on criteria
             const playerIds = [];
-            if (!criteria.player || criteria.player === 'self') {
+            if(!criteria.player || criteria.player === 'self') {
                 playerIds.push(context.sourcePlayer);
             }
-            if (!criteria.player || criteria.player === 'opponent') {
+            if(!criteria.player || criteria.player === 'opponent') {
                 playerIds.push(1 - context.sourcePlayer);
             }
             
             // Check if any creature matches the criteria
-            for (const playerId of playerIds) {
+            for(const playerId of playerIds) {
                 const allCreatures = handlerData.field.creatures[playerId] || [];
                 
-                for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
+                for(let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                     const creature = allCreatures[fieldIndex];
-                    if (creature && TargetResolver.creatureMatchesCriteria(toFieldCard(creature), criteria, handlerData, cardRepository, fieldIndex)) {
+                    if(creature && TargetResolver.creatureMatchesCriteria(toFieldCard(creature), criteria, handlerData, cardRepository, fieldIndex)) {
                         return true;
                     }
                 }
@@ -435,7 +434,7 @@ export class TargetResolver {
         }
         
         // For fixed targets, check if the target creature exists
-        if (target.type === 'fixed') {
+        if(target.type === 'fixed') {
             const creature = this.getFixedTargetCreature(target, handlerData, context);
             return !!creature;
         }
@@ -449,26 +448,26 @@ export class TargetResolver {
     private static getFixedTargetCreature(
         target: FixedTarget,
         handlerData: HandlerData,
-        context: EffectContext
+        context: EffectContext,
     ): FieldCard | undefined {
         // Determine player and position from new target structure
         const playerId = target.player === 'self' ? context.sourcePlayer : (1 - context.sourcePlayer);
         let fieldIndex: number;
         
-        if (target.position === 'active') {
+        if(target.position === 'active') {
             fieldIndex = 0;
-        } else if (target.position === 'source') {
+        } else if(target.position === 'source') {
             // For source targeting, determine position based on context type
-            if (context.type === 'ability') {
+            if(context.type === 'ability') {
                 fieldIndex = context.fieldPosition;
-            } else if (context.type === 'attack') {
+            } else if(context.type === 'attack') {
                 // Attacks are always from active creature
                 fieldIndex = 0;
-            } else if (context.type === 'trigger') {
+            } else if(context.type === 'trigger') {
                 // For triggers, find the field position of the creature that has the trigger
                 const allCreatures = handlerData.field.creatures[playerId] || [];
                 fieldIndex = allCreatures.findIndex(creature => creature && getCurrentInstanceId(creature) === context.creatureInstanceId);
-                if (fieldIndex === -1) {
+                if(fieldIndex === -1) {
                     throw new Error(`Trigger source creature not found: ${context.creatureInstanceId}`);
                 }
             } else {
@@ -495,31 +494,33 @@ export class TargetResolver {
         criteria: TargetCriteria,
         handlerData: HandlerData,
         cardRepository: CardRepository,
-        fieldIndex?: number
+        fieldIndex?: number,
     ): boolean {
-        if (!criteria) return true;
+        if(!criteria) {
+            return true; 
+        }
         
         // Check position criteria using field index
-        if (criteria.position === 'active' && fieldIndex !== undefined && fieldIndex !== 0) {
+        if(criteria.position === 'active' && fieldIndex !== undefined && fieldIndex !== 0) {
             return false;
         }
         
-        if (criteria.position === 'bench' && fieldIndex !== undefined && fieldIndex === 0) {
+        if(criteria.position === 'bench' && fieldIndex !== undefined && fieldIndex === 0) {
             return false;
         }
         
         // Check condition using the ConditionEvaluator
-        if (criteria.condition) {
-            if (!ConditionEvaluator.evaluateCondition(criteria.condition, creature, handlerData, cardRepository)) {
+        if(criteria.condition) {
+            if(!ConditionEvaluator.evaluateCondition(criteria.condition, creature, handlerData, cardRepository)) {
                 return false;
             }
         }
         
         // Check creature type criteria
-        if (criteria.fieldCardType) {
+        if(criteria.fieldCardType) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
-                if (creatureData.type !== criteria.fieldCardType) {
+                if(creatureData.type !== criteria.fieldCardType) {
                     return false;
                 }
             } catch (error) {
@@ -528,21 +529,23 @@ export class TargetResolver {
             }
         }
         
-        // Check filter criteria (e.g., 'ultra-beast')
-        // TODO: This should use the condition system instead of a filter property
         /*
-        if (criteria.filter === 'ultra-beast') {
-            try {
-                const creatureData = cardRepository.getCreature(creature.templateId);
-                // Ultra beast check should be handled by condition system
-                // This code path may not be needed if using proper conditions
-                return false;
-            } catch (error) {
-                // If creature not found, criteria doesn't match
-                return false;
-            }
-        }
-        */
+         * Check filter criteria (e.g., 'ultra-beast')
+         * TODO: This should use the condition system instead of a filter property
+         */
+        /*
+         *if (criteria.filter === 'ultra-beast') {
+         *    try {
+         *        const creatureData = cardRepository.getCreature(creature.templateId);
+         *        // Ultra beast check should be handled by condition system
+         *        // This code path may not be needed if using proper conditions
+         *        return false;
+         *    } catch (error) {
+         *        // If creature not found, criteria doesn't match
+         *        return false;
+         *    }
+         *}
+         */
         
         return true;
     }
@@ -557,18 +560,20 @@ export class TargetResolver {
      */
     static requiresTargetSelection(
         target: Target | undefined,
-        context: EffectContext
+        context: EffectContext,
     ): boolean {
         // If no target, no selection needed
-        if (!target) return false;
+        if(!target) {
+            return false; 
+        }
         
         // If fixed target, no selection needed
-        if (target.type === 'fixed') {
+        if(target.type === 'fixed') {
             return false;
         }
         
         // If context already has target information, no selection needed
-        if (context && context.targetPlayerId !== undefined && context.targetCreatureIndex !== undefined) {
+        if(context && context.targetPlayerId !== undefined && context.targetCreatureIndex !== undefined) {
             return false;
         }
         
@@ -590,39 +595,39 @@ export class TargetResolver {
         controllers: Controllers,
         effect: Effect,
         context: EffectContext,
-        target?: Target
+        target?: Target,
     ): boolean {
         // Use the target from the effect if not explicitly provided
         const targetToUse = target || ('target' in effect ? effect.target as Target : undefined);
         
         // If no target, no selection needed
-        if (!targetToUse) {
+        if(!targetToUse) {
             return false;
         }
         
         // For single-choice and multi-choice targets, we need to check if there are multiple options
-        if (targetToUse.type === 'single-choice' || targetToUse.type === 'multi-choice') {
+        if(targetToUse.type === 'single-choice' || targetToUse.type === 'multi-choice') {
             // Resolve target using the TargetResolver
             const resolution = this.resolveTarget(targetToUse, controllers, context);
             
             // If target resolution requires selection, set up pending target selection
-            if (resolution.type === 'requires-selection') {
+            if(resolution.type === 'requires-selection') {
                 controllers.turnState.setPendingTargetSelection({
                     type: 'target',
                     effect: effect,
-                    originalContext: context
+                    originalContext: context,
                 });
                 return true;
             }
             
             // If target is resolved or auto-resolved, no selection needed
-            if (resolution.type === 'resolved' || resolution.type === 'auto-resolved') {
+            if(resolution.type === 'resolved' || resolution.type === 'auto-resolved') {
                 return false;
             }
         }
         
         // For fixed targets, no selection needed
-        if (targetToUse.type === 'fixed') {
+        if(targetToUse.type === 'fixed') {
             return false;
         }
         
@@ -645,16 +650,16 @@ export class TargetResolver {
         targetPlayerId: number,
         targetCreatureIndex: number,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): boolean {
-        if (!target || !('criteria' in target) || !target.criteria) {
+        if(!target || !('criteria' in target) || !target.criteria) {
             return true; // No criteria means any target is valid
         }
 
         const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
         const creature = controllers.field.getCardByPosition(targetPlayerId, targetCreatureIndex);
         
-        if (!creature) {
+        if(!creature) {
             return false; // No creature at the specified position
         }
 

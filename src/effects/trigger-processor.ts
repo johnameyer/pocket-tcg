@@ -1,6 +1,4 @@
 import { Controllers } from '../controllers/controllers.js';
-import { CardRepository } from '../repository/card-repository.js';
-import { EffectApplier } from './effect-applier.js';
 import { EffectContextFactory } from './effect-context.js';
 
 /**
@@ -12,15 +10,15 @@ export class TriggerProcessor {
         playerId: number,
         creatureInstanceId: string,
         creatureCardId: string,
-        damageAmount: number
+        damageAmount: number,
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
         
-        if (tool) {
+        if(tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
             
-            if (toolData && toolData.effects && toolData.trigger?.type === 'damaged') {
+            if(toolData && toolData.effects && toolData.trigger?.type === 'damaged') {
                 const fieldCards = controllers.field.getCards(playerId);
                 const creaturePosition = fieldCards.findIndex(card => card?.instanceId === creatureInstanceId);
                 
@@ -28,7 +26,7 @@ export class TriggerProcessor {
                     playerId,
                     toolData.name,
                     'damaged',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
 
                 // Push to queue instead of applying immediately
@@ -38,14 +36,14 @@ export class TriggerProcessor {
 
         // Process ability triggers
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        if (creatureData && creatureData.ability) {
+        if(creatureData && creatureData.ability) {
             const ability = creatureData.ability;
-            if (ability.trigger?.type === 'damaged' && ability.effects) {
+            if(ability.trigger?.type === 'damaged' && ability.effects) {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
                     'damaged',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
                 
                 // Push to queue instead of applying immediately
@@ -59,24 +57,24 @@ export class TriggerProcessor {
         playerId: number,
         creatureInstanceId: string,
         creatureCardId: string,
-        energyType: string
+        energyType: string,
     ): void {
         // Get the creature data
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
         
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
-        if (tool) {
+        if(tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
-            if (toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
+            if(toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
                 // Check if the trigger is for a specific energy type
-                if (!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
+                if(!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
                     const toolContext = EffectContextFactory.createTriggerContext(
                         playerId,
                         toolData.name,
                         'energy-attachment',
                         creatureInstanceId,
-                        { energyType }
+                        { energyType },
                     );
                     controllers.effects.pushPendingEffect(toolData.effects, toolContext);
                 }
@@ -84,17 +82,17 @@ export class TriggerProcessor {
         }
         
         // Process ability triggers
-        if (creatureData.ability) {
+        if(creatureData.ability) {
             const ability = creatureData.ability;
-            if (ability.trigger?.type === 'energy-attachment' && ability.effects) {
+            if(ability.trigger?.type === 'energy-attachment' && ability.effects) {
                 // Check if the trigger is for a specific energy type
-                if (!ability.trigger.energyType || ability.trigger.energyType === energyType) {
+                if(!ability.trigger.energyType || ability.trigger.energyType === energyType) {
                     const abilityContext = EffectContextFactory.createTriggerContext(
                         playerId,
                         `${creatureData.name}'s ${ability.name}`,
                         'energy-attachment',
                         creatureInstanceId,
-                        { energyType }
+                        { energyType },
                     );
                     controllers.effects.pushPendingEffect(ability.effects, abilityContext);
                 }
@@ -106,20 +104,20 @@ export class TriggerProcessor {
         controllers: Controllers,
         playerId: number,
         creatureInstanceId: string,
-        creatureCardId: string
+        creatureCardId: string,
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
-        if (tool) {
+        if(tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
-            if (toolData && toolData.effects && toolData.trigger?.type === 'end-of-turn') {
+            if(toolData && toolData.effects && toolData.trigger?.type === 'end-of-turn') {
                 const currentPlayer = controllers.turn.get();
                 
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
                     'end-of-turn',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
 
                 // Push to queue instead of applying immediately
@@ -129,12 +127,12 @@ export class TriggerProcessor {
         
         // Process ability triggers
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        if (creatureData && creatureData.ability) {
+        if(creatureData && creatureData.ability) {
             const ability = creatureData.ability;
-            if (ability.trigger?.type === 'end-of-turn' && ability.effects) {
+            if(ability.trigger?.type === 'end-of-turn' && ability.effects) {
                 
                 // Check firstTurnOnly restriction
-                if (ability.trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
+                if(ability.trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
                     return; // Skip this ability if it's not the first turn (turn 0)
                 }
                 
@@ -142,7 +140,7 @@ export class TriggerProcessor {
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
                     'end-of-turn',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
                 
                 // Push to queue instead of applying immediately

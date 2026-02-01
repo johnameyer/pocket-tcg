@@ -1,67 +1,66 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
-import { EndTurnResponseMessage } from '../src/messages/response/end-turn-response-message.js';
+import { CardRepository } from '../src/repository/card-repository.js';
+import { CreatureData, ToolData, SupporterData, ItemData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { mockRepository } from './mock-repository.js';
-import { CardRepository } from '../src/repository/card-repository.js';
-import { CreatureData, ToolData, SupporterData, ItemData } from '../src/repository/card-types.js';
 
 describe('Creature Tools', () => {
     const mockCreatureData = new Map<string, CreatureData>([
-        ['flame-sprite', {
+        [ 'flame-sprite', {
             templateId: 'flame-sprite',
             name: 'Flame Sprite',
             maxHp: 60,
             type: 'fire',
             weakness: 'water',
             retreatCost: 1,
-            attacks: [{ name: 'Ember', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+            attacks: [{ name: 'Ember', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
         }],
-        ['stone-wall', {
+        [ 'stone-wall', {
             templateId: 'stone-wall',
             name: 'Stone Wall',
             maxHp: 100,
             type: 'fighting',
             weakness: 'grass',
             retreatCost: 3,
-            attacks: [{ name: 'Rock Throw', damage: 30, energyRequirements: [{ type: 'fighting', amount: 2 }] }]
+            attacks: [{ name: 'Rock Throw', damage: 30, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
         }],
-        ['basic-creature', {
+        [ 'basic-creature', {
             templateId: 'basic-creature',
             name: 'Basic Creature',
             maxHp: 60,
             type: 'fire',
             weakness: 'water',
             retreatCost: 1,
-            attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+            attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
         }],
-        ['high-hp-creature', {
+        [ 'high-hp-creature', {
             templateId: 'high-hp-creature',
             name: 'High HP Creature',
             maxHp: 180,
             type: 'fighting',
             weakness: 'psychic',
             retreatCost: 3,
-            attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }]
-        }]
+            attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
+        }],
     ]);
 
     const mockSupporterData = new Map<string, SupporterData>();
     const mockItemData = new Map<string, ItemData>();
     
     const mockToolData = new Map<string, ToolData>([
-        ['leftovers', {
+        [ 'leftovers', {
             templateId: 'leftovers',
             name: 'Leftovers',
-            effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' } }],
-            trigger: { type: 'end-of-turn' }
+            effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],
+            trigger: { type: 'end-of-turn' },
         }],
-        ['power-enhancer', {
+        [ 'power-enhancer', {
             templateId: 'power-enhancer',
             name: 'Power Enhancer',
-            effects: []
-        }]
+            effects: [],
+        }],
     ]);
 
     const toolTestRepository = new CardRepository(mockCreatureData, mockSupporterData, mockItemData, mockToolData);
@@ -69,13 +68,13 @@ describe('Creature Tools', () => {
     describe('Tool attachment validation', () => {
         it('should prevent attaching tool when creature already has one', () => {
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)],
+                actions: [ new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'flame-sprite'),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
-                    StateBuilder.withTool('flame-sprite-0', 'power-enhancer')
+                    StateBuilder.withTool('flame-sprite-0', 'power-enhancer'),
                 ),
-                customRepository: toolTestRepository
+                customRepository: toolTestRepository,
             });
 
             expect(state.hand[0]).to.have.length(1, 'Tool should still be in hand');
@@ -86,17 +85,17 @@ describe('Creature Tools', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('leftovers', 'tool', 0, 0),
-                    new PlayCardResponseMessage('leftovers', 'tool', 0, 1)
+                    new PlayCardResponseMessage('leftovers', 'tool', 0, 1),
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'flame-sprite', ['stone-wall']),
+                    StateBuilder.withCreatures(0, 'flame-sprite', [ 'stone-wall' ]),
                     StateBuilder.withHand(0, [
                         { templateId: 'leftovers', type: 'tool' as const },
-                        { templateId: 'leftovers', type: 'tool' as const }
-                    ])
+                        { templateId: 'leftovers', type: 'tool' as const },
+                    ]),
                 ),
                 maxSteps: 10,
-                customRepository: toolTestRepository
+                customRepository: toolTestRepository,
             });
 
             expect(state.tools.attachedTools['flame-sprite-0']?.templateId).to.equal('leftovers');
@@ -105,12 +104,12 @@ describe('Creature Tools', () => {
 
         it('should attach damage boost tool without triggering effects', () => {
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)],
+                actions: [ new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'flame-sprite'),
-                    StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }])
+                    StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
                 ),
-                customRepository: toolTestRepository
+                customRepository: toolTestRepository,
             });
 
             expect(state.tools.attachedTools['flame-sprite-0']?.templateId).to.equal('power-enhancer');
@@ -121,13 +120,13 @@ describe('Creature Tools', () => {
         it('should allow attaching tool to creature', () => {
             const { state } = runTestGame({
                 actions: [
-                    new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)
+                    new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0),
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }])
+                    StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
                 ),
-                customRepository: mockRepository
+                customRepository: mockRepository,
             });
 
             expect(state.hand[0].length).to.equal(0, 'Tool should be removed from hand');
@@ -136,14 +135,14 @@ describe('Creature Tools', () => {
         it('should prevent attaching tool when creature already has one', () => {
             const { state } = runTestGame({
                 actions: [
-                    new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0)
+                    new PlayCardResponseMessage('power-enhancer', 'tool', 0, 0),
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
-                    StateBuilder.withTool('basic-creature-0', 'leftovers')
+                    StateBuilder.withTool('basic-creature-0', 'leftovers'),
                 ),
-                customRepository: mockRepository
+                customRepository: mockRepository,
             });
 
             expect(state.hand[0].length).to.equal(1, 'Tool should remain in hand when creature already has one');
@@ -152,14 +151,14 @@ describe('Creature Tools', () => {
         it('should allow attaching tool to different creature', () => {
             const { state } = runTestGame({
                 actions: [
-                    new PlayCardResponseMessage('power-enhancer', 'tool', 0, 1)
+                    new PlayCardResponseMessage('power-enhancer', 'tool', 0, 1),
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                     StateBuilder.withHand(0, [{ templateId: 'power-enhancer', type: 'tool' as const }]),
-                    StateBuilder.withTool('basic-creature-0', 'leftovers')
+                    StateBuilder.withTool('basic-creature-0', 'leftovers'),
                 ),
-                customRepository: mockRepository
+                customRepository: mockRepository,
             });
 
             expect(state.hand[0].length).to.equal(0, 'Tool should be removed from hand');

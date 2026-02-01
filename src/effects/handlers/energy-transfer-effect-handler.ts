@@ -1,10 +1,10 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { HandlerData } from '../../game-handler.js';
 import { EnergyTransferEffect } from '../../repository/effect-types.js';
-import { FixedTarget, ResolvedTarget, TargetCriteria } from '../../repository/target-types.js';
+import { TargetCriteria } from '../../repository/target-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
-import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
+import { getEffectValue } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
 import { TargetResolver } from '../target-resolver.js';
@@ -27,7 +27,7 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
     getResolutionRequirements(effect: EnergyTransferEffect): ResolutionRequirement[] {
         return [
             { targetProperty: 'source', target: effect.source, required: true },
-            { targetProperty: 'target', target: effect.target, required: true }
+            { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
     
@@ -44,18 +44,20 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         
         // Create validation function to check if creature has required energy
         const hasRequiredEnergy = (creature: FieldCard, handlerData: HandlerData): boolean => {
-            if (!effect.energyTypes || effect.energyTypes.length === 0) {
+            if(!effect.energyTypes || effect.energyTypes.length === 0) {
                 return true; // No specific energy requirement
             }
             
             const fieldInstanceId = getFieldInstanceId(creature);
             const attachedEnergy = handlerData.energy?.attachedEnergyByInstance?.[fieldInstanceId];
-            if (!attachedEnergy) return false;
+            if(!attachedEnergy) {
+                return false; 
+            }
             
             // Check if the creature has any of the required energy types
-            for (const energyType of effect.energyTypes) {
+            for(const energyType of effect.energyTypes) {
                 const energyCount = attachedEnergy[energyType];
-                if (energyCount && energyCount > 0) {
+                if(energyCount && energyCount > 0) {
                     return true;
                 }
             }
@@ -83,57 +85,66 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         position: number,
         criteria: TargetCriteria,
         handlerData: HandlerData,
-        cardRepository: CardRepository
+        cardRepository: CardRepository,
     ): boolean {
-        if (!criteria) return true;
+        if(!criteria) {
+            return true; 
+        }
         
         // Check position criteria
-        if (criteria.position === 'active' && position !== 0) {
+        if(criteria.position === 'active' && position !== 0) {
             return false;
         }
         
-        if (criteria.position === 'bench' && position === 0) {
+        if(criteria.position === 'bench' && position === 0) {
             return false;
         }
         
         // Check condition using the ConditionEvaluator
-        if (criteria.condition) {
+        if(criteria.condition) {
             // Handle componentized conditions
-            if (typeof criteria.condition === 'object') {
-                if (!ConditionEvaluator.evaluateCondition(criteria.condition as Condition, creature, handlerData, cardRepository)) {
+            if(typeof criteria.condition === 'object') {
+                if(!ConditionEvaluator.evaluateCondition(criteria.condition as Condition, creature, handlerData, cardRepository)) {
                     return false;
                 }
-            } 
-            // Handle legacy string conditions
-            else if (typeof criteria.condition === 'string') {
-                // Legacy condition handling
-                if (criteria.condition === 'damaged' && creature.damageTaken <= 0) {
+            } else if(typeof criteria.condition === 'string') {
+                /*
+                 * Handle legacy string conditions
+                 * Legacy condition handling 
+                 */
+                if(criteria.condition === 'damaged' && creature.damageTaken <= 0) {
                     return false;
                 }
                 
-                if (criteria.condition === 'has-energy') {
+                if(criteria.condition === 'has-energy') {
                     // Check if the creature has the specified energy type attached
                     const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
-                    if (!attachedEnergyByInstance) return false;
+                    if(!attachedEnergyByInstance) {
+                        return false; 
+                    }
                     
                     const fieldInstanceId = getFieldInstanceId(creature);
                     const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
-                    if (!creatureEnergy) return false;
+                    if(!creatureEnergy) {
+                        return false; 
+                    }
                     
                     // Check if the creature has any energy
-                    if (!Object.values(creatureEnergy).some(amount => amount > 0)) {
+                    if(!Object.values(creatureEnergy).some(amount => amount > 0)) {
                         return false;
                     }
                 }
                 
-                if (criteria.condition === 'has-water-energy') {
+                if(criteria.condition === 'has-water-energy') {
                     // Check if the creature has water energy attached
                     const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
-                    if (!attachedEnergyByInstance) return false;
+                    if(!attachedEnergyByInstance) {
+                        return false; 
+                    }
                     
                     const fieldInstanceId = getFieldInstanceId(creature);
                     const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
-                    if (!creatureEnergy || !(creatureEnergy.water > 0)) {
+                    if(!creatureEnergy || !(creatureEnergy.water > 0)) {
                         return false;
                     }
                 }
@@ -141,10 +152,10 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         }
         
         // Check creature type criteria
-        if (criteria.fieldCardType) {
+        if(criteria.fieldCardType) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
-                if (creatureData.type !== criteria.fieldCardType) {
+                if(creatureData.type !== criteria.fieldCardType) {
                     return false;
                 }
             } catch (error) {
@@ -161,13 +172,15 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         // Get the amount of energy to transfer
         const amount = getEffectValue(effect.amount, controllers, context);
 
-        // Ensure we have resolved targets
-        // DO NOT REMOVE - Keep error handling for debugging target resolution issues
-        if (!effect.source || !effect.target) {
+        /*
+         * Ensure we have resolved targets
+         * DO NOT REMOVE - Keep error handling for debugging target resolution issues
+         */
+        if(!effect.source || !effect.target) {
             throw new Error(`Expected resolved targets, got source: ${effect.source} target: ${effect.target}`);
         }
 
-        if (effect.source.type !== 'resolved' || effect.target.type !== 'resolved') {
+        if(effect.source.type !== 'resolved' || effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved targets, got source: ${effect.source?.type} target: ${effect.target?.type}`);
         }
 
@@ -180,29 +193,29 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         const targetFieldInstanceId = controllers.field.getFieldInstanceId(targetTarget.playerId, targetTarget.fieldIndex);
 
         // Ensure both creatures exist
-        if (!sourceFieldInstanceId || !targetFieldInstanceId) {
-            throw new Error(`Source or target creature not found`);
+        if(!sourceFieldInstanceId || !targetFieldInstanceId) {
+            throw new Error('Source or target creature not found');
         }
 
         // Get the creatures for display names
         const sourceCreature = controllers.field.getCardByPosition(sourceTarget.playerId, sourceTarget.fieldIndex);
         const targetCreature = controllers.field.getCardByPosition(targetTarget.playerId, targetTarget.fieldIndex);
 
-        if (!sourceCreature || !targetCreature) {
-            throw new Error(`Source or target creature not found`);
+        if(!sourceCreature || !targetCreature) {
+            throw new Error('Source or target creature not found');
         }
 
         // Determine which energy type to transfer
         let energyTypeToTransfer: string | undefined = undefined;
         
-        if (effect.energyTypes && effect.energyTypes.length > 0) {
+        if(effect.energyTypes && effect.energyTypes.length > 0) {
             // Get the attached energy for the source creature
             const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
             
             // Find the first energy type from the effect's energyTypes array that the source creature has
-            for (const energyType of effect.energyTypes) {
+            for(const energyType of effect.energyTypes) {
                 const energyCount = attachedEnergy && attachedEnergy[energyType as keyof typeof attachedEnergy];
-                if (energyCount && energyCount > 0) {
+                if(energyCount && energyCount > 0) {
                     energyTypeToTransfer = energyType;
                     break;
                 }
@@ -210,13 +223,13 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         }
         
         // If no specific energy type was found, use the first one from the effect
-        if (energyTypeToTransfer === undefined && effect.energyTypes && effect.energyTypes.length > 0) {
+        if(energyTypeToTransfer === undefined && effect.energyTypes && effect.energyTypes.length > 0) {
             energyTypeToTransfer = effect.energyTypes[0];
         }
         
         // Make sure we have a valid energy type to transfer
-        if (!energyTypeToTransfer) {
-            throw new Error(`No valid energy type to transfer!`);
+        if(!energyTypeToTransfer) {
+            throw new Error('No valid energy type to transfer!');
         }
         
         // Cap the transfer amount at available energy
@@ -225,13 +238,13 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         const actualAmount = Math.min(amount, availableEnergy);
         
         // If no energy available to transfer, just return without error
-        if (actualAmount <= 0) {
+        if(actualAmount <= 0) {
             return;
         }
         
         // Get creature names for the message
-        let sourceCreatureName = sourceCreature.data.name || 'a creature';
-        let targetCreatureName = targetCreature.data.name || 'a creature';
+        const sourceCreatureName = sourceCreature.data.name || 'a creature';
+        const targetCreatureName = targetCreature.data.name || 'a creature';
         
         // Get the energy state before transfer
         const sourceEnergyBefore = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
@@ -242,15 +255,15 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
             sourceFieldInstanceId,
             targetFieldInstanceId,
             energyTypeToTransfer as AttachableEnergyType,
-            actualAmount
+            actualAmount,
         );
         
         // Get the energy state after transfer
         const sourceEnergyAfter = controllers.energy.getAttachedEnergyByInstance(sourceFieldInstanceId);
         const targetEnergyAfter = controllers.energy.getAttachedEnergyByInstance(targetFieldInstanceId);
         
-        if (!success) {
-            throw new Error(`Failed to transfer energy!`);
+        if(!success) {
+            throw new Error('Failed to transfer energy!');
         }
     }
 }

@@ -1,4 +1,4 @@
-import { AbstractController, GenericControllerProvider, GlobalController, Serializable, ParamsController } from '@cards-ts/core';
+import { GenericControllerProvider, GlobalController, ParamsController } from '@cards-ts/core';
 import { GameParams } from '../game-params.js';
 
 export type TurnCounterState = {
@@ -16,7 +16,7 @@ export class TurnCounterControllerProvider implements GenericControllerProvider<
     
     initialState(): TurnCounterState {
         return {
-            turnNumber: 0
+            turnNumber: 0,
         };
     }
     

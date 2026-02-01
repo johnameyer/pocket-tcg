@@ -23,7 +23,7 @@ export class EffectValidator {
         const context = EffectContextFactory.createCardContext(sourcePlayer, effectName, cardType);
         
         // If no repository provided, assume effects can be applied (for test scenarios)
-        if (!cardRepository) {
+        if(!cardRepository) {
             return true;
         }
         
@@ -34,13 +34,15 @@ export class EffectValidator {
      * Check if a card's effects can be applied using HandlerData (for validation)
      */
     static canApplyCardEffects(cardEffects: Effect[] | undefined, handlerData: HandlerData, sourcePlayer: number, effectName: string, cardType?: 'supporter' | 'item', cardRepository?: CardRepository): boolean {
-        if (!cardEffects || cardEffects.length === 0) {
+        if(!cardEffects || cardEffects.length === 0) {
             return true;
         }
         
-        // For supporter cards, all effects must be applicable
-        // This ensures cards like Erika, Irida, and Lillie can't be played when there are no valid targets
-        if (cardType === 'supporter') {
+        /*
+         * For supporter cards, all effects must be applicable
+         * This ensures cards like Erika, Irida, and Lillie can't be played when there are no valid targets
+         */
+        if(cardType === 'supporter') {
             return this.canApplyAllEffects(cardEffects, handlerData, sourcePlayer, effectName, cardType, cardRepository);
         }
         
@@ -60,7 +62,7 @@ export class EffectValidator {
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
         
         // If there's no handler for this effect type, assume it can be applied
-        if (!handler) {
+        if(!handler) {
             return true;
         }
         
@@ -68,16 +70,16 @@ export class EffectValidator {
         const requirements = handler.getResolutionRequirements(effect);
         
         // If there are requirements, check if all required targets are available
-        if (requirements.length > 0) {
-            for (const requirement of requirements) {
-                if (requirement.required && !TargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
+        if(requirements.length > 0) {
+            for(const requirement of requirements) {
+                if(requirement.required && !TargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
                     return false;
                 }
             }
         }
         
         // If all required targets are available, then check if the handler has additional validation
-        if (handler.canApply) {
+        if(handler.canApply) {
             const canApplyResult = handler.canApply(handlerData, effect, context, cardRepository);
             return canApplyResult;
         }

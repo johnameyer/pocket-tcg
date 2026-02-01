@@ -19,14 +19,14 @@ describe('Evolution Acceleration Effect', () => {
         it('should return true when target is valid basic creature', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withTurnNumber(3)
+                HandlerDataBuilder.withTurnNumber(3),
             );
 
             const effect: EvolutionAccelerationEffect = {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: ['basic-creature-only']
+                restrictions: [ 'basic-creature-only' ],
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -42,7 +42,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: ['basic-creature-only']
+                restrictions: [ 'basic-creature-only' ],
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -54,7 +54,7 @@ describe('Evolution Acceleration Effect', () => {
         it('should return false when creature was played this turn', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withTurnNumber(1)
+                HandlerDataBuilder.withTurnNumber(1),
             );
             // Set creature as played this turn
             handlerData.field.creatures[0][0].turnLastPlayed = 1;
@@ -63,7 +63,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: ['basic-creature-only']
+                restrictions: [ 'basic-creature-only' ],
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -80,16 +80,16 @@ describe('Evolution Acceleration Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 60,
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
             }],
-            ['stage1-creature', {
+            [ 'stage1-creature', {
                 templateId: 'stage1-creature',
                 name: 'Stage 1 Creature',
                 maxHp: 90,
@@ -97,9 +97,9 @@ describe('Evolution Acceleration Effect', () => {
                 weakness: 'water',
                 retreatCost: 2,
                 previousStageName: 'Basic Creature',
-                attacks: [{ name: 'Stage 1 Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }]
+                attacks: [{ name: 'Stage 1 Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }],
             }],
-            ['stage2-creature', {
+            [ 'stage2-creature', {
                 templateId: 'stage2-creature',
                 name: 'Stage 2 Creature',
                 maxHp: 140,
@@ -107,41 +107,41 @@ describe('Evolution Acceleration Effect', () => {
                 weakness: 'water',
                 retreatCost: 3,
                 previousStageName: 'Stage 1 Creature',
-                attacks: [{ name: 'Stage 2 Attack', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }]
-            }]
+                attacks: [{ name: 'Stage 2 Attack', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }],
+            }],
         ]),
         items: new Map<string, ItemData>([
-            ['acceleration-item', {
+            [ 'acceleration-item', {
                 templateId: 'acceleration-item',
                 name: 'Acceleration Item',
                 effects: [{
                     type: 'evolution-acceleration',
                     target: { type: 'fixed', player: 'self', position: 'active' },
                     skipStages: 1,
-                    restrictions: ['basic-creature-only']
-                }]
+                    restrictions: [ 'basic-creature-only' ],
+                }],
             }],
-            ['choice-acceleration-item', {
+            [ 'choice-acceleration-item', {
                 templateId: 'choice-acceleration-item',
                 name: 'Choice Acceleration Item',
                 effects: [{
                     type: 'evolution-acceleration',
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' } },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
                     skipStages: 1,
-                    restrictions: []
-                }]
+                    restrictions: [],
+                }],
             }],
-            ['double-acceleration-item', {
+            [ 'double-acceleration-item', {
                 templateId: 'double-acceleration-item',
                 name: 'Double Acceleration Item',
                 effects: [{
                     type: 'evolution-acceleration',
                     target: { type: 'fixed', player: 'self', position: 'active' },
                     skipStages: 2,
-                    restrictions: ['basic-creature-only']
-                }]
-            }]
-        ])
+                    restrictions: [ 'basic-creature-only' ],
+                }],
+            }],
+        ]),
     });
 
     const choiceAccelerationItem = { templateId: 'choice-acceleration-item', type: 'item' as const };
@@ -150,14 +150,14 @@ describe('Evolution Acceleration Effect', () => {
     it('should allow skipping 1 evolution stage (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item') // Evolution happens immediately
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Evolution happens immediately
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [accelerationItem, stage2Creature])
+                StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -170,14 +170,14 @@ describe('Evolution Acceleration Effect', () => {
             actions: [
                 new PlayCardResponseMessage('choice-acceleration-item', 'item'),
                 // Target selection would be needed here
-                new EvolveResponseMessage('stage1-creature', 0)
+                new EvolveResponseMessage('stage1-creature', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
-                StateBuilder.withHand(0, [choiceAccelerationItem, stage1Creature])
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
+                StateBuilder.withHand(0, [ choiceAccelerationItem, stage1Creature ]),
             ),
-            maxSteps: 20
+            maxSteps: 20,
         });
 
         // This test may fail if target selection is required but not provided
@@ -187,14 +187,14 @@ describe('Evolution Acceleration Effect', () => {
     it('should allow skipping different numbers of stages (2 stages)', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('double-acceleration-item', 'item') // Evolution happens immediately
+                new PlayCardResponseMessage('double-acceleration-item', 'item'), // Evolution happens immediately
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [doubleAccelerationItem, stage2Creature])
+                StateBuilder.withHand(0, [ doubleAccelerationItem, stage2Creature ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed double acceleration item');
@@ -205,14 +205,14 @@ describe('Evolution Acceleration Effect', () => {
     it('should respect evolution restrictions (basic-creature-only)', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item') // Should not evolve - not a basic creature
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Should not evolve - not a basic creature
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'stage1-creature'), // Already evolved, not basic
-                StateBuilder.withHand(0, [accelerationItem, stage2Creature])
+                StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (blocked by validation)');
@@ -223,15 +223,15 @@ describe('Evolution Acceleration Effect', () => {
     it('should preserve damage when accelerating evolution', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item') // Evolution happens immediately
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Evolution happens immediately
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [accelerationItem, stage2Creature]),
-                StateBuilder.withDamage('basic-creature-0', 30) // Pre-damage the basic creature
+                StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
+                StateBuilder.withDamage('basic-creature-0', 30), // Pre-damage the basic creature
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -242,15 +242,15 @@ describe('Evolution Acceleration Effect', () => {
     it('should preserve energy when accelerating evolution', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item') // Evolution happens immediately
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Evolution happens immediately
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [accelerationItem, stage2Creature]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 2 })
+                StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -263,14 +263,14 @@ describe('Evolution Acceleration Effect', () => {
     it('should not allow evolution without proper evolution line', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item') // Should not evolve - no valid Stage 2 in hand
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Should not evolve - no valid Stage 2 in hand
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [accelerationItem]) // No Stage 2 evolution in hand
+                StateBuilder.withHand(0, [ accelerationItem ]), // No Stage 2 evolution in hand
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -281,18 +281,18 @@ describe('Evolution Acceleration Effect', () => {
     it('should not evolve Pokemon played this turn', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item') // Should not evolve - Pokemon played this turn
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Should not evolve - Pokemon played this turn
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [accelerationItem, stage2Creature]),
+                StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
                 (state) => {
                     // Mark Pokemon as played this turn
                     state.field.creatures[0][0].turnLastPlayed = state.turnCounter.turnNumber;
-                }
+                },
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (blocked by validation)');

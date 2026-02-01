@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import { runTestGame } from '../helpers/test-helpers.js';
 import { StateBuilder } from '../helpers/state-builder.js';
-import { AttackResponseMessage } from '../../src/messages/response/attack-response-message.js';
 import { PlayCardResponseMessage } from '../../src/messages/response/play-card-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { CreatureData, SupporterData } from '../../src/repository/card-types.js';
@@ -22,9 +21,9 @@ const createDamageReactiveCreature = (id: string, name: string, counterDamage: n
             type: 'hp',
             amount: { type: 'constant', value: counterDamage },
             target: { type: 'fixed', player: 'opponent', position: 'active' },
-            operation: 'damage'
-        }]
-    }
+            operation: 'damage',
+        }],
+    },
 });
 
 // Helper to create damage supporter
@@ -35,8 +34,8 @@ const createDamageSupporter = (id: string, damage: number): SupporterData => ({
         type: 'hp',
         amount: { type: 'constant', value: damage },
         target: { type: 'fixed', player: 'opponent', position: 'active' },
-        operation: 'damage'
-    }]
+        operation: 'damage',
+    }],
 });
 
 // Helper to create energy supporter
@@ -48,8 +47,8 @@ const createEnergySupporter = (id: string, energyType: AttachableEnergyType): Su
         energyType,
         amount: { type: 'constant', value: 1 },
         target: { type: 'fixed', player: 'self', position: 'active' },
-        operation: 'attach'
-    }]
+        operation: 'attach',
+    }],
 });
 
 describe('Effect Queue - Effects Triggering Other Effects', () => {
@@ -57,19 +56,19 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
         it('should trigger damage-triggered ability when damage effect is applied', () => {
             const repo = new MockCardRepository({
                 creatures: new Map([
-                    ['reactive', createDamageReactiveCreature('reactive', 'Reactive', 10)]
+                    [ 'reactive', createDamageReactiveCreature('reactive', 'Reactive', 10) ],
                 ]),
-                supporters: new Map([['dmg-sup', createDamageSupporter('dmg-sup', 20)]])
+                supporters: new Map([[ 'dmg-sup', createDamageSupporter('dmg-sup', 20) ]]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('dmg-sup', 'supporter')],
+                actions: [ new PlayCardResponseMessage('dmg-sup', 'supporter') ],
                 customRepository: repo,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'reactive'),
-                    StateBuilder.withHand(0, [{ templateId: 'dmg-sup', type: 'supporter' }])
-                )
+                    StateBuilder.withHand(0, [{ templateId: 'dmg-sup', type: 'supporter' }]),
+                ),
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(20);
@@ -79,19 +78,19 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
         it('should handle cascading damage effects', () => {
             const repo = new MockCardRepository({
                 creatures: new Map([
-                    ['reactor', createDamageReactiveCreature('reactor', 'Reactor', 5)]
+                    [ 'reactor', createDamageReactiveCreature('reactor', 'Reactor', 5) ],
                 ]),
-                supporters: new Map([['dmg', createDamageSupporter('dmg', 20)]])
+                supporters: new Map([[ 'dmg', createDamageSupporter('dmg', 20) ]]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('dmg', 'supporter')],
+                actions: [ new PlayCardResponseMessage('dmg', 'supporter') ],
                 customRepository: repo,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'reactor'),
-                    StateBuilder.withHand(0, [{ templateId: 'dmg', type: 'supporter' }])
-                )
+                    StateBuilder.withHand(0, [{ templateId: 'dmg', type: 'supporter' }]),
+                ),
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(20);
@@ -115,24 +114,24 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
                         type: 'hp',
                         amount: { type: 'constant', value: 10 },
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'damage'
-                    }]
-                }
+                        operation: 'damage',
+                    }],
+                },
             };
 
             const repo = new MockCardRepository({
-                creatures: new Map([['energy-react', energyReactive]]),
-                supporters: new Map([['e-sup', createEnergySupporter('e-sup', 'fire')]])
+                creatures: new Map([[ 'energy-react', energyReactive ]]),
+                supporters: new Map([[ 'e-sup', createEnergySupporter('e-sup', 'fire') ]]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('e-sup', 'supporter')],
+                actions: [ new PlayCardResponseMessage('e-sup', 'supporter') ],
                 customRepository: repo,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'energy-react'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
-                    StateBuilder.withHand(0, [{ templateId: 'e-sup', type: 'supporter' }])
-                )
+                    StateBuilder.withHand(0, [{ templateId: 'e-sup', type: 'supporter' }]),
+                ),
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(10);
@@ -149,24 +148,24 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
                 ability: {
                     name: 'Energy Reaction',
                     trigger: { type: 'energy-attachment' },
-                    effects: [{ type: 'draw', amount: { type: 'constant', value: 1 } }]
-                }
+                    effects: [{ type: 'draw', amount: { type: 'constant', value: 1 }}],
+                },
             };
 
             const repo = new MockCardRepository({
-                creatures: new Map([['any-energy', anyEnergyReactive]]),
-                supporters: new Map([['w-sup', createEnergySupporter('w-sup', 'water')]])
+                creatures: new Map([[ 'any-energy', anyEnergyReactive ]]),
+                supporters: new Map([[ 'w-sup', createEnergySupporter('w-sup', 'water') ]]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('w-sup', 'supporter')],
+                actions: [ new PlayCardResponseMessage('w-sup', 'supporter') ],
                 customRepository: repo,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'any-energy'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'w-sup', type: 'supporter' }]),
-                    StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }])
-                )
+                    StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
+                ),
             });
 
             expect(state.hand[0].length).to.equal(1);
@@ -187,24 +186,24 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
                     trigger: { type: 'damaged' },
                     effects: [
                         { type: 'hp', amount: { type: 'constant', value: 5 }, target: { type: 'fixed', player: 'opponent', position: 'active' }, operation: 'damage' },
-                        { type: 'hp', amount: { type: 'constant', value: 5 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' }
-                    ]
-                }
+                        { type: 'hp', amount: { type: 'constant', value: 5 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' },
+                    ],
+                },
             };
 
             const repo = new MockCardRepository({
-                creatures: new Map([['multi', multiReactive]]),
-                supporters: new Map([['dmg', createDamageSupporter('dmg', 20)]])
+                creatures: new Map([[ 'multi', multiReactive ]]),
+                supporters: new Map([[ 'dmg', createDamageSupporter('dmg', 20) ]]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('dmg', 'supporter')],
+                actions: [ new PlayCardResponseMessage('dmg', 'supporter') ],
                 customRepository: repo,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'multi'),
-                    StateBuilder.withHand(0, [{ templateId: 'dmg', type: 'supporter' }])
-                )
+                    StateBuilder.withHand(0, [{ templateId: 'dmg', type: 'supporter' }]),
+                ),
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(15);

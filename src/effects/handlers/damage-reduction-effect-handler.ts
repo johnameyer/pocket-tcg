@@ -1,6 +1,5 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { DamageReductionEffect } from '../../repository/effect-types.js';
-import { ResolvedTarget } from '../../repository/target-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
@@ -25,6 +24,7 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
         // Use TargetResolver to check if the target is available
         return TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
     }
+
     /**
      * Get the resolution requirements for a damage reduction effect.
      * Damage reduction effects require a target to apply the reduction to.
@@ -34,7 +34,7 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
      */
     getResolutionRequirements(effect: DamageReductionEffect): ResolutionRequirement[] {
         return [
-            { targetProperty: 'target', target: effect.target, required: true }
+            { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
     
@@ -48,38 +48,38 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
      */
     apply(controllers: Controllers, effect: DamageReductionEffect, context: EffectContext): void {
         // Ensure we have a valid target
-        if (!effect.target) {
+        if(!effect.target) {
             throw new Error('No target specified for damage reduction effect');
         }
         
         // Get the amount of damage reduction
         const reductionAmount = getEffectValue(effect.amount, controllers, context);
         
-        if (effect.target.type !== 'resolved') {
+        if(effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if (targets.length === 0) {
+        if(targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} found no valid targets!`]
+                components: [ `${context.effectName} found no valid targets!` ],
             });
             return;
         }
         
-        for (const target of targets) {
+        for(const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             
-            if (!targetCreature) {
+            if(!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} target creature not found!`]
+                    components: [ `${context.effectName} target creature not found!` ],
                 });
                 continue;
             }
@@ -93,7 +93,7 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
             // Send a message about the damage reduction
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${creatureName} will take ${reductionAmount} less damage from attacks during opponent's next turn!`]
+                components: [ `${creatureName} will take ${reductionAmount} less damage from attacks during opponent's next turn!` ],
             });
         }
     }

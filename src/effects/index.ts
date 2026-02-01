@@ -3,7 +3,7 @@ export {
     EffectHandler, 
     AbstractEffectHandler, 
     ResolutionRequirement,
-    effectHandlers
+    effectHandlers,
 } from './effect-handler.js';
 
 // Effect handler map type
@@ -21,7 +21,7 @@ export {
     isTargetActiveCreature,
     getBenchIndexFromcreatureIndex,
     evaluateConditionWithContext,
-    getCreatureFromTarget
+    getCreatureFromTarget,
 } from './effect-utils.js';
 
 // Resolver exports

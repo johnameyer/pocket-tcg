@@ -5,37 +5,36 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
-import { getCurrentTemplateId } from '../../src/utils/field-card-utils.js';
 
 describe('Target Matching', () => {
     describe('Fixed Targets', () => {
         it('should target self-active', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['self-target', {
+                    [ 'self-target', {
                         templateId: 'self-target',
                         name: 'Self Target',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'constant', value: 30 },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('self-target', 'supporter')],
+                actions: [ new PlayCardResponseMessage('self-target', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'self-target', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 40),
-                    StateBuilder.withDamage('basic-creature-1', 40)
+                    StateBuilder.withDamage('basic-creature-1', 40),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal self active');
@@ -45,28 +44,28 @@ describe('Target Matching', () => {
         it('should target opponent-active', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['opponent-target', {
+                    [ 'opponent-target', {
                         templateId: 'opponent-target',
                         name: 'Opponent Target',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'constant', value: 25 },
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
-                            operation: 'damage'
-                        }]
-                    }]
-                ])
+                            operation: 'damage',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('opponent-target', 'supporter')],
+                actions: [ new PlayCardResponseMessage('opponent-target', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
-                    StateBuilder.withHand(0, [{ templateId: 'opponent-target', type: 'supporter' }])
+                    StateBuilder.withHand(0, [{ templateId: 'opponent-target', type: 'supporter' }]),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should not damage self');
@@ -78,7 +77,7 @@ describe('Target Matching', () => {
         it('should require target selection', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['choice-target', {
+                    [ 'choice-target', {
                         templateId: 'choice-target',
                         name: 'Choice Target',
                         effects: [{
@@ -87,27 +86,27 @@ describe('Target Matching', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('choice-target', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1)
+                    new SelectTargetResponseMessage(0, 1),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
                     StateBuilder.withHand(0, [{ templateId: 'choice-target', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
-                    StateBuilder.withDamage('basic-creature-0-0', 25) // Damage to first bench creature
+                    StateBuilder.withDamage('basic-creature-0-0', 25), // Damage to first bench creature
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should not heal active');
@@ -117,7 +116,7 @@ describe('Target Matching', () => {
         it('should respect chooser (opponent choice)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['opponent-choice', {
+                    [ 'opponent-choice', {
                         templateId: 'opponent-choice',
                         name: 'Opponent Choice',
                         effects: [{
@@ -126,27 +125,27 @@ describe('Target Matching', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'opponent',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('opponent-choice', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0)
+                    new SelectTargetResponseMessage(0, 0),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-choice', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 20)
+                    StateBuilder.withDamage('basic-creature-0', 20),
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(5, 'Opponent should choose our active');
@@ -157,7 +156,7 @@ describe('Target Matching', () => {
         it('should target all creature in scope', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['all-target', {
+                    [ 'all-target', {
                         templateId: 'all-target',
                         name: 'All Target',
                         effects: [{
@@ -165,16 +164,16 @@ describe('Target Matching', () => {
                             amount: { type: 'constant', value: 10 },
                             target: {
                                 type: 'all-matching',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('all-target', 'supporter')],
+                actions: [ new PlayCardResponseMessage('all-target', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -182,20 +181,20 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id",
-                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id',
+                            evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                             damageTaken: 15,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id-2",
-                            evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id-2',
+                            evolutionStack: [{ instanceId: 'field-card-2', templateId: 'basic-creature' }],
                             damageTaken: 25,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
-                    }
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal active');
@@ -206,7 +205,7 @@ describe('Target Matching', () => {
         it('should filter by condition (damaged only)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['damaged-only', {
+                    [ 'damaged-only', {
                         templateId: 'damaged-only',
                         name: 'Damaged Only',
                         effects: [{
@@ -214,16 +213,16 @@ describe('Target Matching', () => {
                             amount: { type: 'constant', value: 10 },
                             target: {
                                 type: 'all-matching',
-                                criteria: { player: 'self', location: 'field', condition: { hasDamage: true } }
+                                criteria: { player: 'self', location: 'field', condition: { hasDamage: true }},
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('damaged-only', 'supporter')],
+                actions: [ new PlayCardResponseMessage('damaged-only', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -231,20 +230,20 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     (state) => {
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id",
-                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id',
+                            evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                             damageTaken: 0,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id-2",
-                            evolutionStack: [{ instanceId: "field-card-2", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id-2',
+                            evolutionStack: [{ instanceId: 'field-card-2', templateId: 'basic-creature' }],
                             damageTaken: 15,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
-                    }
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal damaged active');
@@ -257,7 +256,7 @@ describe('Target Matching', () => {
         it('should respect self-field scope', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['self-scope', {
+                    [ 'self-scope', {
                         templateId: 'self-scope',
                         name: 'Self Scope',
                         effects: [{
@@ -265,25 +264,25 @@ describe('Target Matching', () => {
                             amount: { type: 'constant', value: 10 },
                             target: {
                                 type: 'all-matching',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('self-scope', 'supporter')],
+                actions: [ new PlayCardResponseMessage('self-scope', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'self-scope', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
-                    StateBuilder.withDamage('basic-creature-1', 20)
+                    StateBuilder.withDamage('basic-creature-1', 20),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal self');
@@ -293,7 +292,7 @@ describe('Target Matching', () => {
         it('should respect opponent-field scope', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['opponent-scope', {
+                    [ 'opponent-scope', {
                         templateId: 'opponent-scope',
                         name: 'Opponent Scope',
                         effects: [{
@@ -301,16 +300,16 @@ describe('Target Matching', () => {
                             amount: { type: 'constant', value: 15 },
                             target: {
                                 type: 'all-matching',
-                                criteria: { player: 'opponent', location: 'field' }
+                                criteria: { player: 'opponent', location: 'field' },
                             },
-                            operation: 'damage'
-                        }]
-                    }]
-                ])
+                            operation: 'damage',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('opponent-scope', 'supporter')],
+                actions: [ new PlayCardResponseMessage('opponent-scope', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -318,14 +317,14 @@ describe('Target Matching', () => {
                     StateBuilder.withHand(0, [{ templateId: 'opponent-scope', type: 'supporter' }]),
                     (state) => {
                         state.field.creatures[1].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0
-                    });
-                    }
+                            fieldInstanceId: 'test-field-id',
+                            evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
+                            damageTaken: 0,
+                            turnLastPlayed: 0,
+                        });
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should not damage self');

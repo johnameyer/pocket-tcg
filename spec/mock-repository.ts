@@ -10,7 +10,7 @@ mockCreatureData.set('basic-creature', {
     type: 'fire',
     weakness: 'water',
     retreatCost: 1,
-    attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+    attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
 });
 
 mockCreatureData.set('high-hp-creature', {
@@ -20,7 +20,7 @@ mockCreatureData.set('high-hp-creature', {
     type: 'fighting',
     weakness: 'psychic',
     retreatCost: 3,
-    attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }]
+    attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
 });
 
 mockCreatureData.set('evolution-creature', {
@@ -31,7 +31,7 @@ mockCreatureData.set('evolution-creature', {
     weakness: 'water',
     retreatCost: 2,
     previousStageName: 'Basic Creature',
-    attacks: [{ name: 'Evolved Attack', damage: 50, energyRequirements: [{ type: 'fire', amount: 2 }] }]
+    attacks: [{ name: 'Evolved Attack', damage: 50, energyRequirements: [{ type: 'fire', amount: 2 }] }],
 });
 
 mockCreatureData.set('tank-creature', {
@@ -41,7 +41,7 @@ mockCreatureData.set('tank-creature', {
     type: 'colorless',
     weakness: 'fighting',
     retreatCost: 3,
-    attacks: [{ name: 'Body Slam', damage: 50, energyRequirements: [{ type: 'colorless', amount: 3 }] }]
+    attacks: [{ name: 'Body Slam', damage: 50, energyRequirements: [{ type: 'colorless', amount: 3 }] }],
 });
 
 mockCreatureData.set('ex-creature', {
@@ -52,7 +52,7 @@ mockCreatureData.set('ex-creature', {
     weakness: 'grass',
     retreatCost: 2,
     attributes: { ex: true },
-    attacks: [{ name: 'Ex Attack', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }]
+    attacks: [{ name: 'Ex Attack', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }],
 });
 
 mockCreatureData.set('mega-ex-creature', {
@@ -63,7 +63,7 @@ mockCreatureData.set('mega-ex-creature', {
     weakness: 'fighting',
     retreatCost: 3,
     attributes: { ex: true, mega: true },
-    attacks: [{ name: 'Mega Attack', damage: 60, energyRequirements: [{ type: 'lightning', amount: 3 }] }]
+    attacks: [{ name: 'Mega Attack', damage: 60, energyRequirements: [{ type: 'lightning', amount: 3 }] }],
 });
 
 const mockSupporterData = new Map<string, SupporterData>();
@@ -74,53 +74,53 @@ mockSupporterData.set('basic-supporter', {
         type: 'hp', 
         amount: { type: 'constant', value: 20 },
         target: { type: 'fixed', player: 'self', position: 'active' },
-        operation: 'heal'
-    }]
+        operation: 'heal',
+    }],
 });
 
 mockSupporterData.set('draw-supporter', {
     templateId: 'draw-supporter',
     name: 'Draw Supporter',
-    effects: []
+    effects: [],
 });
 
 mockSupporterData.set('coin-flip-supporter', {
     templateId: 'coin-flip-supporter',
     name: 'Coin Flip Supporter',
-    effects: []
+    effects: [],
 });
 
 const mockItemData = new Map<string, ItemData>();
 mockItemData.set('basic-item', {
     templateId: 'basic-item',
     name: 'Basic Item',
-    effects: [{ type: 'hp', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' }]
+    effects: [{ type: 'hp', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' }],
 });
 
 mockItemData.set('shuffle-item', {
     templateId: 'shuffle-item',
     name: 'Shuffle Item',
-    effects: []
+    effects: [],
 });
 
 const mockToolData = new Map<string, ToolData>();
 mockToolData.set('basic-tool', {
     templateId: 'basic-tool',
     name: 'Basic Tool',
-    effects: []
+    effects: [],
 });
 
 mockToolData.set('power-enhancer', {
     templateId: 'power-enhancer',
     name: 'Power Enhancer',
-    effects: []
+    effects: [],
 });
 
 mockToolData.set('leftovers', {
     templateId: 'leftovers',
     name: 'Leftovers',
-    effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' } }],
-    trigger: { type: 'end-of-turn' }
+    effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],
+    trigger: { type: 'end-of-turn' },
 });
 
 export interface MockRepositoryExtensions {
@@ -132,10 +132,10 @@ export interface MockRepositoryExtensions {
 
 export class MockCardRepository extends CardRepository {
     constructor(extensions: MockRepositoryExtensions = {}) {
-        const allCreatures = new Map([...Array.from(mockCreatureData), ...Array.from(extensions.creatures || new Map())]);
-        const allSupporters = new Map([...Array.from(mockSupporterData), ...Array.from(extensions.supporters || new Map())]);
-        const allItems = new Map([...Array.from(mockItemData), ...Array.from(extensions.items || new Map())]);
-        const allTools = new Map([...Array.from(mockToolData), ...Array.from(extensions.tools || new Map())]);
+        const allCreatures = new Map([ ...Array.from(mockCreatureData), ...Array.from(extensions.creatures || new Map()) ]);
+        const allSupporters = new Map([ ...Array.from(mockSupporterData), ...Array.from(extensions.supporters || new Map()) ]);
+        const allItems = new Map([ ...Array.from(mockItemData), ...Array.from(extensions.items || new Map()) ]);
+        const allTools = new Map([ ...Array.from(mockToolData), ...Array.from(extensions.tools || new Map()) ]);
         
         super(allCreatures, allSupporters, allItems, allTools);
     }

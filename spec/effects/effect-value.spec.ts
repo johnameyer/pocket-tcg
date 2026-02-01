@@ -10,28 +10,28 @@ describe('Effect Value Calculation', () => {
         it('should use constant value (20)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['constant-20', {
+                    [ 'constant-20', {
                         templateId: 'constant-20',
                         name: 'Constant 20',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'constant', value: 20 },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('constant-20', 'supporter')],
+                actions: [ new PlayCardResponseMessage('constant-20', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'constant-20', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 30)
+                    StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal exactly 20');
@@ -40,28 +40,28 @@ describe('Effect Value Calculation', () => {
         it('should use different constant values (50)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['constant-50', {
+                    [ 'constant-50', {
                         templateId: 'constant-50',
                         name: 'Constant 50',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'constant', value: 50 },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('constant-50', 'supporter')],
+                actions: [ new PlayCardResponseMessage('constant-50', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'constant-50', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 40)
+                    StateBuilder.withDamage('basic-creature-0', 40),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should heal all 40 damage');
@@ -72,21 +72,21 @@ describe('Effect Value Calculation', () => {
         it('should resolve hand-size for self', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['hand-size-heal', {
+                    [ 'hand-size-heal', {
                         templateId: 'hand-size-heal',
                         name: 'Hand Size Heal',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('hand-size-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('hand-size-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -94,11 +94,11 @@ describe('Effect Value Calculation', () => {
                         { templateId: 'hand-size-heal', type: 'supporter' },
                         { templateId: 'basic-creature', type: 'creature' },
                         { templateId: 'basic-creature', type: 'creature' },
-                        { templateId: 'basic-creature', type: 'creature' }
+                        { templateId: 'basic-creature', type: 'creature' },
                     ]),
-                    StateBuilder.withDamage('basic-creature-0', 50)
+                    StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(47, 'Should heal 3 (hand size after playing)');
@@ -107,29 +107,29 @@ describe('Effect Value Calculation', () => {
         it('should resolve hand-size for opponent', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['opp-hand-heal', {
+                    [ 'opp-hand-heal', {
                         templateId: 'opp-hand-heal',
                         name: 'Opponent Hand Heal',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'opponent' },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('opp-hand-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('opp-hand-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opp-hand-heal', type: 'supporter' }]),
                     StateBuilder.withHand(1, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
-                    StateBuilder.withDamage('basic-creature-0', 30)
+                    StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(25, 'Should heal 5 (opponent hand size)');
@@ -138,29 +138,31 @@ describe('Effect Value Calculation', () => {
         it('should resolve current-points', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['points-heal', {
+                    [ 'points-heal', {
                         templateId: 'points-heal',
                         name: 'Points Heal',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('points-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('points-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'points-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
-                    (state) => { state.points = [2, 1]; }
+                    (state) => {
+                        state.points = [ 2, 1 ]; 
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 (current points)');
@@ -169,29 +171,31 @@ describe('Effect Value Calculation', () => {
         it('should resolve points-to-win', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['points-to-win-heal', {
+                    [ 'points-to-win-heal', {
                         templateId: 'points-to-win-heal',
                         name: 'Points To Win Heal',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'player-context-resolved', source: 'points-to-win', playerContext: 'self' },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('points-to-win-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('points-to-win-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'points-to-win-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
-                    (state) => { state.points = [1, 0]; }
+                    (state) => {
+                        state.points = [ 1, 0 ]; 
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 (3 - 1 = 2 points to win)');
@@ -202,32 +206,32 @@ describe('Effect Value Calculation', () => {
         it('should multiply by constant (10 x 2)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['multiply-heal', {
+                    [ 'multiply-heal', {
                         templateId: 'multiply-heal',
                         name: 'Multiply Heal',
                         effects: [{
                             type: 'hp',
                             amount: {
                                 type: 'multiplication',
-                                multiplier: { type: "constant", value: 10 },
-                                base: { type: 'constant', value: 2 }
+                                multiplier: { type: 'constant', value: 10 },
+                                base: { type: 'constant', value: 2 },
                             },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('multiply-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('multiply-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'multiply-heal', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 30)
+                    StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal 20 (10 x 2)');
@@ -236,36 +240,36 @@ describe('Effect Value Calculation', () => {
         it('should multiply by hand size (10 x hand size)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['hand-multiply', {
+                    [ 'hand-multiply', {
                         templateId: 'hand-multiply',
                         name: 'Hand Multiply',
                         effects: [{
                             type: 'hp',
                             amount: {
                                 type: 'multiplication',
-                                multiplier: { type: "constant", value: 10 },
-                                base: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' }
+                                multiplier: { type: 'constant', value: 10 },
+                                base: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
                             },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('hand-multiply', 'supporter')],
+                actions: [ new PlayCardResponseMessage('hand-multiply', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [
                         { templateId: 'hand-multiply', type: 'supporter' },
                         { templateId: 'basic-creature', type: 'creature' },
-                        { templateId: 'basic-creature', type: 'creature' }
+                        { templateId: 'basic-creature', type: 'creature' },
                     ]),
-                    StateBuilder.withDamage('basic-creature-0', 50)
+                    StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should heal 20 (10 x 2 hand size)');
@@ -276,7 +280,7 @@ describe('Effect Value Calculation', () => {
         it('should add multiple values (10 + 5)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['addition-heal', {
+                    [ 'addition-heal', {
                         templateId: 'addition-heal',
                         name: 'Addition Heal',
                         effects: [{
@@ -285,25 +289,25 @@ describe('Effect Value Calculation', () => {
                                 type: 'addition',
                                 values: [
                                     { type: 'constant', value: 10 },
-                                    { type: 'constant', value: 5 }
-                                ]
+                                    { type: 'constant', value: 5 },
+                                ],
                             },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('addition-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('addition-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'addition-heal', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 30)
+                    StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(15, 'Should heal 15 (10 + 5)');
@@ -312,7 +316,7 @@ describe('Effect Value Calculation', () => {
         it('should add constant + context (20 + hand size)', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['mixed-addition', {
+                    [ 'mixed-addition', {
                         templateId: 'mixed-addition',
                         name: 'Mixed Addition',
                         effects: [{
@@ -321,18 +325,18 @@ describe('Effect Value Calculation', () => {
                                 type: 'addition',
                                 values: [
                                     { type: 'constant', value: 20 },
-                                    { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' }
-                                ]
+                                    { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
+                                ],
                             },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('mixed-addition', 'supporter')],
+                actions: [ new PlayCardResponseMessage('mixed-addition', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -340,11 +344,11 @@ describe('Effect Value Calculation', () => {
                         { templateId: 'mixed-addition', type: 'supporter' },
                         { templateId: 'basic-creature', type: 'creature' },
                         { templateId: 'basic-creature', type: 'creature' },
-                        { templateId: 'basic-creature', type: 'creature' }
+                        { templateId: 'basic-creature', type: 'creature' },
                     ]),
-                    StateBuilder.withDamage('basic-creature-0', 50)
+                    StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(27, 'Should heal 23 (20 + 3 hand size)');
@@ -355,21 +359,21 @@ describe('Effect Value Calculation', () => {
         it('should resolve opponent hand-size value', () => {
             const testRepository = new MockCardRepository({ 
                 supporters: new Map([
-                    ['opponent-hand-damage', {
+                    [ 'opponent-hand-damage', {
                         templateId: 'opponent-hand-damage',
                         name: 'Opponent Hand Damage',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'opponent' },
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
-                            operation: 'damage'
-                        }]
-                    }]
-                ])
+                            operation: 'damage',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('opponent-hand-damage', 'supporter')],
+                actions: [ new PlayCardResponseMessage('opponent-hand-damage', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -379,10 +383,10 @@ describe('Effect Value Calculation', () => {
                         { templateId: 'basic-creature', type: 'creature' },
                         { templateId: 'basic-creature', type: 'creature' },
                         { templateId: 'basic-creature', type: 'creature' },
-                        { templateId: 'basic-creature', type: 'creature' }
-                    ])
+                        { templateId: 'basic-creature', type: 'creature' },
+                    ]),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(4, 'Should deal damage equal to opponent hand size (4)');
@@ -391,29 +395,31 @@ describe('Effect Value Calculation', () => {
         it('should resolve points-to-win value', () => {
             const testRepository = new MockCardRepository({ 
                 supporters: new Map([
-                    ['points-heal', {
+                    [ 'points-heal', {
                         templateId: 'points-heal',
                         name: 'Points Heal',
                         effects: [{
                             type: 'hp',
                             amount: { type: 'player-context-resolved', source: 'points-to-win', playerContext: 'self' },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('points-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('points-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'points-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
-                    (state) => { state.points = [1, 0]; } // Player has 1 point, needs 2 more to win
+                    (state) => {
+                        state.points = [ 1, 0 ]; 
+                    }, // Player has 1 point, needs 2 more to win
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 HP (3 points needed - 1 current = 2)');

@@ -6,8 +6,8 @@ export class EvolutionMessage extends Message {
     constructor(
         public readonly fromName: string,
         public readonly toName: string,
-        public readonly playerName: string
+        public readonly playerName: string,
     ) {
-        super([`${playerName}'s ${fromName} evolved into ${toName}!`]);
+        super([ `${playerName}'s ${fromName} evolved into ${toName}!` ]);
     }
 }

@@ -1,11 +1,8 @@
-import { Effect } from '../repository/effect-types.js';
 import { EffectValue } from '../repository/effect-value-types.js';
-import { Target, FixedTarget } from '../repository/target-types.js';
 import { Condition } from '../repository/condition-types.js';
-import { EffectContext } from './effect-context.js';
 import { Controllers } from '../controllers/controllers.js';
-import { TargetResolver } from './target-resolver.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
+import { EffectContext } from './effect-context.js';
 
 // TODO remove
 /**
@@ -19,7 +16,7 @@ import { AttachableEnergyType } from '../repository/energy-types.js';
 export function getCreatureFromTarget(
     controllers: Controllers,
     playerId: number,
-    fieldIndex: number
+    fieldIndex: number,
 ) {
     return controllers.field.getCardByPosition(playerId, fieldIndex);
 }
@@ -30,20 +27,22 @@ export function getCreatureFromTarget(
  * Otherwise, returns the source player as a default.
  */
 export function getResolvedTargetPlayer(context: EffectContext): number {
-    // For effects that explicitly require a target but don't have it, throw an error
-    // We only check this for contexts that should have a target but don't
-    if ('requiresTarget' in context && context.requiresTarget === true && 
-        !('targetPlayerId' in context || context.targetPlayerId === undefined)) {
+    /*
+     * For effects that explicitly require a target but don't have it, throw an error
+     * We only check this for contexts that should have a target but don't
+     */
+    if('requiresTarget' in context && context.requiresTarget === true 
+        && !('targetPlayerId' in context || context.targetPlayerId === undefined)) {
         // For attack contexts, default to opponent's active
-        if (context.type === 'attack') {
+        if(context.type === 'attack') {
             return (context.sourcePlayer + 1) % 2; // Opponent player ID
         }
         
         throw new Error(`Missing targetPlayerId in context for ${context.effectName}`);
     }
     
-    return context.targetPlayerId !== undefined ? 
-        context.targetPlayerId : context.sourcePlayer;
+    return context.targetPlayerId !== undefined 
+        ? context.targetPlayerId : context.sourcePlayer;
 }
 
 /**
@@ -52,20 +51,22 @@ export function getResolvedTargetPlayer(context: EffectContext): number {
  * Otherwise, returns 0 (active creature) as a default.
  */
 export function getResolvedTargetCreatureIndex(context: EffectContext): number {
-    // For effects that explicitly require a target but don't have it, throw an error
-    // We only check this for contexts that should have a target but don't
-    if ('requiresTarget' in context && context.requiresTarget === true && 
-        !('targetCreatureIndex' in context || context.targetCreatureIndex === undefined)) {
+    /*
+     * For effects that explicitly require a target but don't have it, throw an error
+     * We only check this for contexts that should have a target but don't
+     */
+    if('requiresTarget' in context && context.requiresTarget === true 
+        && !('targetCreatureIndex' in context || context.targetCreatureIndex === undefined)) {
         // For attack contexts, default to opponent's active (index 0)
-        if (context.type === 'attack') {
+        if(context.type === 'attack') {
             return 0; // Active creature
         }
         
         throw new Error(`Missing targetCreatureIndex in context for ${context.effectName}`);
     }
     
-    return context.targetCreatureIndex !== undefined ? 
-        context.targetCreatureIndex : 0;
+    return context.targetCreatureIndex !== undefined 
+        ? context.targetCreatureIndex : 0;
 }
 
 /**
@@ -95,9 +96,9 @@ export function getBenchIndexFromcreatureIndex(fieldIndex: number): number {
 
 // New context-based function
 export function getEffectValue(effectValue: EffectValue, controllers: Controllers, context: EffectContext): number {
-    if (effectValue.type === 'constant') {
+    if(effectValue.type === 'constant') {
         return effectValue.value;
-    } else if (effectValue.type === 'resolved') {
+    } else if(effectValue.type === 'resolved') {
         const resolvedTargetPlayer = getResolvedTargetPlayer(context);
         
         switch (effectValue.source) {
@@ -105,9 +106,12 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 // Count Creatures on field for the resolved target player
                 let count = 0;
                 let fieldIndex = 0;
-                while (true) {
+                // eslint-disable-next-line no-constant-condition
+                while(true) {
                     const creature = controllers.field.getCardByPosition(resolvedTargetPlayer, fieldIndex);
-                    if (!creature) break;
+                    if(!creature) {
+                        break; 
+                    }
                     count++;
                     fieldIndex++;
                 }
@@ -117,9 +121,12 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 // Count only benched Creatures (excluding active) for the resolved target player
                 let count = 0;
                 let fieldIndex = 1; // Start from index 1 to skip active creature
-                while (true) {
+                // eslint-disable-next-line no-constant-condition
+                while(true) {
                     const creature = controllers.field.getCardByPosition(resolvedTargetPlayer, fieldIndex);
-                    if (!creature) break;
+                    if(!creature) {
+                        break; 
+                    }
                     count++;
                     fieldIndex++;
                 }
@@ -129,12 +136,15 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 // Count total energy attached to all creatures for the resolved target player
                 let totalEnergy = 0;
                 let fieldIndex = 0;
-                while (true) {
+                // eslint-disable-next-line no-constant-condition
+                while(true) {
                     // Get fieldInstanceId for energy lookup
                     const fieldInstanceId = controllers.field.getFieldInstanceId(resolvedTargetPlayer, fieldIndex);
-                    if (!fieldInstanceId) break;
+                    if(!fieldInstanceId) {
+                        break; 
+                    }
                     const energyState = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
-                    if (energyState) {
+                    if(energyState) {
                         totalEnergy += Object.values(energyState).reduce((sum: number, count: number) => sum + count, 0);
                     }
                     fieldIndex++;
@@ -153,11 +163,11 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
             default:
                 return 0;
         }
-    } else if (effectValue.type === 'player-context-resolved') {
+    } else if(effectValue.type === 'player-context-resolved') {
         // Determine player ID based on playerContext
-        const playerIdToUse = effectValue.playerContext === 'self' ? 
-            context.sourcePlayer : 
-            (context.sourcePlayer + 1) % controllers.players.count;
+        const playerIdToUse = effectValue.playerContext === 'self' 
+            ? context.sourcePlayer 
+            : (context.sourcePlayer + 1) % controllers.players.count;
         
         switch (effectValue.source) {
             case 'hand-size': {
@@ -176,20 +186,20 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
             default:
                 return 0;
         }
-    } else if (effectValue.type === 'multiplication') {
+    } else if(effectValue.type === 'multiplication') {
         const baseValue = getEffectValue(effectValue.base, controllers, context);
         const multiplierValue = getEffectValue(effectValue.multiplier, controllers, context);
         return baseValue * multiplierValue;
-    } else if (effectValue.type === 'coin-flip') {
+    } else if(effectValue.type === 'coin-flip') {
         const isHeads = controllers.coinFlip.performCoinFlip();
         return isHeads ? effectValue.headsValue : effectValue.tailsValue;
-    } else if (effectValue.type === 'addition') {
+    } else if(effectValue.type === 'addition') {
         return effectValue.values.reduce((sum: number, value: EffectValue) => sum + getEffectValue(value, controllers, context), 0);
-    } else if (effectValue.type === 'conditional') {
+    } else if(effectValue.type === 'conditional') {
         const conditionMet = evaluateConditionWithContext(effectValue.condition, controllers, context);
-        return conditionMet ? 
-            getEffectValue(effectValue.trueValue, controllers, context) : 
-            getEffectValue(effectValue.falseValue, controllers, context);
+        return conditionMet 
+            ? getEffectValue(effectValue.trueValue, controllers, context) 
+            : getEffectValue(effectValue.falseValue, controllers, context);
     }
     
     return 0;
@@ -197,16 +207,18 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
 
 // TODO: Consider unifying this with ConditionEvaluator class to eliminate duplication
 export function evaluateConditionWithContext(condition: Condition, controllers: Controllers, context: EffectContext): boolean {
-    if (condition.hasEnergy) {
+    if(condition.hasEnergy) {
         let creatureInstanceId = '';
         
-        if (context.type === 'ability') {
+        if(context.type === 'ability') {
             creatureInstanceId = context.creatureInstanceId;
-        } else if (context.type === 'attack') {
+        } else if(context.type === 'attack') {
             creatureInstanceId = context.attackerInstanceId;
         }
         
-        if (!creatureInstanceId) return false;
+        if(!creatureInstanceId) {
+            return false; 
+        }
         
         // Get the energy type and required count
         const energyType = Object.keys(condition.hasEnergy)[0] as AttachableEnergyType;
@@ -216,20 +228,22 @@ export function evaluateConditionWithContext(condition: Condition, controllers: 
         // Check if the creature has enough energy of the specified type
         const energyCount = controllers.energy.countEnergyTypeByInstance(
             creatureInstanceId, 
-            energyType
+            energyType,
         );
         
         return energyCount >= requiredCount;
-    } else if (condition.hasDamage) {
+    } else if(condition.hasDamage) {
         // For attack context, check if the attacker has damage
-        if (context.type === 'attack') {
+        if(context.type === 'attack') {
             // Get the active creature for the source player (attacker)
             const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-            if (!activecreature) return false;
+            if(!activecreature) {
+                return false; 
+            }
             
             // Check if the creature has any damage
             return activecreature.damageTaken > 0;
-        } else if (context.type === 'ability') {
+        } else if(context.type === 'ability') {
             // TODO: We should pass the creature with the ability in the context from upstream
             return false;
         }

@@ -17,13 +17,13 @@ describe('Damage Reduction Effect', () => {
         it('should return true when target exists', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'defensive-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: DamageReductionEffect = {
                 type: 'damage-reduction',
                 amount: { type: 'constant', value: 20 },
-                target: { type: 'fixed', player: 'self', position: 'active' }
+                target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
@@ -38,7 +38,7 @@ describe('Damage Reduction Effect', () => {
             const effect: DamageReductionEffect = {
                 type: 'damage-reduction',
                 amount: { type: 'constant', value: 20 },
-                target: { type: 'fixed', player: 'self', position: 'active' }
+                target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
@@ -49,13 +49,13 @@ describe('Damage Reduction Effect', () => {
 
         it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'defensive-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'defensive-creature', []),
             );
 
             const effect: DamageReductionEffect = {
                 type: 'damage-reduction',
                 amount: { type: 'constant', value: 20 },
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
@@ -67,7 +67,7 @@ describe('Damage Reduction Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['defensive-creature', {
+            [ 'defensive-creature', {
                 templateId: 'defensive-creature',
                 name: 'Defensive Creature',
                 maxHp: 100,
@@ -81,11 +81,11 @@ describe('Damage Reduction Effect', () => {
                     effects: [{
                         type: 'damage-reduction',
                         amount: { type: 'constant', value: 20 },
-                        target: { type: 'fixed', player: 'self', position: 'active' }
-                    }]
-                }
+                        target: { type: 'fixed', player: 'self', position: 'active' },
+                    }],
+                },
             }],
-            ['high-hp-defensive-creature', {
+            [ 'high-hp-defensive-creature', {
                 templateId: 'high-hp-defensive-creature',
                 name: 'High HP Defensive Creature',
                 maxHp: 180,
@@ -99,11 +99,11 @@ describe('Damage Reduction Effect', () => {
                     effects: [{
                         type: 'damage-reduction',
                         amount: { type: 'constant', value: 20 },
-                        target: { type: 'fixed', player: 'self', position: 'active' }
-                    }]
-                }
+                        target: { type: 'fixed', player: 'self', position: 'active' },
+                    }],
+                },
             }],
-            ['variable-defense-creature', {
+            [ 'variable-defense-creature', {
                 templateId: 'variable-defense-creature',
                 name: 'Variable Defense Creature',
                 maxHp: 90,
@@ -117,11 +117,11 @@ describe('Damage Reduction Effect', () => {
                     effects: [{
                         type: 'damage-reduction',
                         amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
-                        target: { type: 'fixed', player: 'self', position: 'active' }
-                    }]
-                }
+                        target: { type: 'fixed', player: 'self', position: 'active' },
+                    }],
+                },
             }],
-            ['high-hp-creature', {
+            [ 'high-hp-creature', {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
@@ -132,29 +132,29 @@ describe('Damage Reduction Effect', () => {
                     {
                         name: 'Body Slam',
                         damage: 60,
-                        energyRequirements: [{ type: 'fighting', amount: 2 }]
+                        energyRequirements: [{ type: 'fighting', amount: 2 }],
                     },
                     {
                         name: 'Mega Punch',
                         damage: 150,
-                        energyRequirements: [{ type: 'fighting', amount: 4 }]
-                    }
-                ]
-            }]
-        ])
+                        energyRequirements: [{ type: 'fighting', amount: 4 }],
+                    },
+                ],
+            }],
+        ]),
     });
 
     it('should reduce damage by 20 during opponent turn (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 // TODO remove from pocket-tcg entirely
                 StateBuilder.withCreatures(0, 'high-hp-creature'), // Strong attacker
                 StateBuilder.withCreatures(1, 'defensive-creature'), // Has damage reduction
-                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 })
+                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -163,17 +163,17 @@ describe('Damage Reduction Effect', () => {
 
     it('should reduce different amounts (variable based on points)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'variable-defense-creature'),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
-                    state.points = [0, 2]; // Player 1 has 2 points for reduction
-                }
+                    state.points = [ 0, 2 ]; // Player 1 has 2 points for reduction
+                },
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -182,15 +182,15 @@ describe('Damage Reduction Effect', () => {
 
     it('should cap reduction at damage dealt (no negative damage)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 // TODO remove from pocket-tcg entirely
                 StateBuilder.withCreatures(0, 'basic-creature'), // 20 damage attack
                 StateBuilder.withCreatures(1, 'defensive-creature'), // 20 damage reduction
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -199,13 +199,13 @@ describe('Damage Reduction Effect', () => {
 
     it('should not reduce damage when no reduction effect is present', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'), // No damage reduction
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -214,14 +214,14 @@ describe('Damage Reduction Effect', () => {
 
     it('should work with high damage attacks', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new AttackResponseMessage(1)], // Use stronger attack
+            actions: [ new AttackResponseMessage(1) ], // Use stronger attack
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'high-hp-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-defensive-creature'),
-                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 4 })
+                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 4 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');

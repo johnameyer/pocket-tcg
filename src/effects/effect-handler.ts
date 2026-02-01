@@ -3,7 +3,7 @@ export {
     ResolutionRequirement, 
     EffectHandler, 
     AbstractEffectHandler, 
-    EffectHandlerMap 
+    EffectHandlerMap, 
 } from './interfaces/effect-handler-interface.js';
 
 // Re-export effectHandlers from handlers/index.js

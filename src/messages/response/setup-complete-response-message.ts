@@ -5,8 +5,8 @@ export class SetupCompleteResponseMessage extends Message {
 
     constructor(
         public readonly activeCardId: string,
-        public readonly benchCardIds: string[] = []
+        public readonly benchCardIds: string[] = [],
     ) {
-        super(['Setup complete']);
+        super([ 'Setup complete' ]);
     }
 }

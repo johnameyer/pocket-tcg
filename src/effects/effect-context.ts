@@ -1,4 +1,3 @@
-import { Controllers } from '../controllers/controllers.js';
 import { TriggerType } from '../repository/effect-types.js';
 
 // Base context shared by all effect call sites
@@ -7,27 +6,27 @@ type BaseEffectContext = {
     effectName: string;
     targetPlayerId?: number;
     targetCreatureIndex?: number;
-}
+};
 
 // Attack effect context - has attacker info
 export type AttackEffectContext = BaseEffectContext & {
     type: 'attack';
     attackerInstanceId: string;
     resolvedDamage?: number;
-}
+};
 
 // Ability effect context - has creature position info
 export type AbilityEffectContext = BaseEffectContext & {
     type: 'ability';
     creatureInstanceId: string;
     fieldPosition: number; // 0 = active, 1+ = bench
-}
+};
 
 // Card effect context - for trainer cards
 export type CardEffectContext = BaseEffectContext & {
     type: 'trainer';
     cardType: 'supporter' | 'item';
-}
+};
 
 // Trigger effect context - for automatic triggers
 export type TriggerEffectContext = BaseEffectContext & {
@@ -39,7 +38,7 @@ export type TriggerEffectContext = BaseEffectContext & {
         energyType?: string;
         attackerPlayerId?: number;
     };
-}
+};
 
 export type EffectContext = 
     | AttackEffectContext 
@@ -53,14 +52,14 @@ export class EffectContextFactory {
         sourcePlayer: number,
         effectName: string,
         attackerInstanceId: string,
-        resolvedDamage?: number
+        resolvedDamage?: number,
     ): AttackEffectContext {
         return {
             type: 'attack',
             sourcePlayer,
             effectName,
             attackerInstanceId,
-            resolvedDamage
+            resolvedDamage,
         };
     }
 
@@ -68,27 +67,27 @@ export class EffectContextFactory {
         sourcePlayer: number,
         effectName: string,
         creatureInstanceId: string,
-        fieldPosition: number
+        fieldPosition: number,
     ): AbilityEffectContext {
         return {
             type: 'ability',
             sourcePlayer,
             effectName,
             creatureInstanceId,
-            fieldPosition
+            fieldPosition,
         };
     }
 
     static createCardContext(
         sourcePlayer: number,
         effectName: string,
-        cardType: 'supporter' | 'item'
+        cardType: 'supporter' | 'item',
     ): CardEffectContext {
         return {
             type: 'trainer',
             sourcePlayer,
             effectName,
-            cardType
+            cardType,
         };
     }
 
@@ -101,7 +100,7 @@ export class EffectContextFactory {
             damage?: number;
             energyType?: string;
             attackerPlayerId?: number;
-        }
+        },
     ): TriggerEffectContext {
         return {
             type: 'trigger',
@@ -109,7 +108,7 @@ export class EffectContextFactory {
             effectName,
             triggerType,
             creatureInstanceId,
-            triggerData
+            triggerData,
         };
     }
 }

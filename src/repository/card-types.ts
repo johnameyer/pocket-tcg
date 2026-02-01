@@ -1,4 +1,4 @@
-import { Effect, PendingTargetEffect } from './effect-types.js';
+import { Effect } from './effect-types.js';
 import { EffectValue } from './effect-value-types.js';
 
 /**
