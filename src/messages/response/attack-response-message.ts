@@ -4,8 +4,8 @@ export class AttackResponseMessage extends Message {
     readonly type = 'attack-response';
 
     constructor(
-        public readonly attackIndex: number
+        public readonly attackIndex: number,
     ) {
-        super([`Chose to attack with move ${attackIndex + 1}`]);
+        super([ `Chose to attack with move ${attackIndex + 1}` ]);
     }
 }

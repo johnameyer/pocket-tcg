@@ -1,15 +1,13 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { HpEffect } from '../../repository/effect-types.js';
-import { CreatureAbility } from '../../repository/card-types.js';
-import { FixedTarget, ResolvedTarget, TargetCriteria, Target } from '../../repository/target-types.js';
-import { EffectContext, EffectContextFactory } from '../effect-context.js';
+import { Target } from '../../repository/target-types.js';
+import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HealResultMessage } from '../../messages/status/heal-result-message.js';
-import { FieldCard } from "../../controllers/field-controller.js";
+import { FieldCard } from '../../controllers/field-controller.js';
 import { HandlerData } from '../../game-handler.js';
-import { AttachableEnergyType } from '../../repository/energy-types.js';
 import { TargetResolver } from '../target-resolver.js';
 import { toFieldCard } from '../../utils/field-card-utils.js';
 import { TriggerProcessor } from '../trigger-processor.js';
@@ -29,7 +27,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
      */
     getResolutionRequirements(effect: HpEffect): ResolutionRequirement[] {
         return [
-            { targetProperty: 'target', target: effect.target, required: true }
+            { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
     
@@ -44,29 +42,29 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
     apply(controllers: Controllers, effect: HpEffect, context: EffectContext): void {
         const amount = getEffectValue(effect.amount, controllers, context);
         
-        if (effect.target.type !== 'resolved') {
+        if(effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target.type}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if (targets.length === 0) {
+        if(targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} found no valid targets!`]
+                components: [ `${context.effectName} found no valid targets!` ],
             });
             return;
         }
         
-        for (const target of targets) {
+        for(const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // For healing effects, we can only target our own creature
-            if (effect.operation === 'heal' && playerId !== context.sourcePlayer) {
+            if(effect.operation === 'heal' && playerId !== context.sourcePlayer) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} cannot heal opponent's creature!`]
+                    components: [ `${context.effectName} cannot heal opponent's creature!` ],
                 });
                 continue;
             }
@@ -74,15 +72,15 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             
-            if (!targetCreature) {
+            if(!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} target creature not found!`]
+                    components: [ `${context.effectName} target creature not found!` ],
                 });
                 continue;
             }
         
-            if (effect.operation === 'heal') {
+            if(effect.operation === 'heal') {
                 this.applyHealing(controllers, targetCreature, playerId, fieldIndex, amount, context.effectName);
             } else {
                 this.applyDamage(controllers, targetCreature, playerId, fieldIndex, amount, context);
@@ -91,8 +89,8 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
     }
     
     /**
-    
-    /**
+     *
+     * /**
      * Optional validation method to check if an HP effect can be applied.
      * For heal effects, checks if the target has damage to heal.
      * Updated to use HandlerData for validation.
@@ -104,7 +102,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
      */
     canApply(handlerData: HandlerData, effect: HpEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // For heal effects, check if there are any damaged creature that can be healed
-        if (effect.operation === 'heal') {
+        if(effect.operation === 'heal') {
             // Create validation function to check if creature can be healed
             const canBeHealed = (creature: FieldCard, handlerData: HandlerData): boolean => {
                 return creature.damageTaken > 0; // creature must have damage to be healed
@@ -129,9 +127,9 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         const result = [];
         const playercreature = handlerData.field.creatures[playerId] || [];
         
-        for (let i = 0; i < playercreature.length; i++) {
+        for(let i = 0; i < playercreature.length; i++) {
             const creature = playercreature[i];
-            if (creature) {
+            if(creature) {
                 result.push(toFieldCard(creature));
             }
         }
@@ -146,9 +144,9 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
      * @returns True if the target is a choice target
      */
     private isChoiceTarget(target: Target): boolean {
-        return target && typeof target === 'object' && 
-               'type' in target && 
-               (target.type === 'single-choice' || target.type === 'multi-choice');
+        return target && typeof target === 'object' 
+               && 'type' in target 
+               && (target.type === 'single-choice' || target.type === 'multi-choice');
     }
                 
     /**
@@ -167,7 +165,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         playerId: number,
         fieldIndex: number,
         amount: number,
-        effectName: string
+        effectName: string,
     ): void {
         // creature is guaranteed to exist at this point
         
@@ -176,7 +174,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         
         // Use the controller's heal method which returns the actual healing done
         let healedAmount: number;
-        if (fieldIndex === 0) {
+        if(fieldIndex === 0) {
             // Active creature
             healedAmount = controllers.field.healDamage(playerId, amount);
         } else {
@@ -185,7 +183,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         }
         
         // Send healing message if any healing was done
-        if (healedAmount > 0) {
+        if(healedAmount > 0) {
             // Get the creature data - will throw an error if not found
             const creatureData = controllers.cardRepository.getCreature(creature.templateId);
             const creatureName = creatureData.name;
@@ -196,7 +194,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             controllers.players.messageAll(new HealResultMessage(
                 creatureName,
                 healedAmount,
-                currentHp
+                currentHp,
             ));
         }
     }
@@ -219,7 +217,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         fieldIndex: number,
         amount: number,
         context: EffectContext,
-        customName?: string
+        customName?: string,
     ): void {
         // creature is guaranteed to exist at this point
         
@@ -227,24 +225,26 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         const damageDealt = controllers.field.applyDamage(playerId, amount, fieldIndex);
         
         // Send damage message if any damage was dealt
-        if (damageDealt > 0) {
+        if(damageDealt > 0) {
             // Get the creature data - will throw an error if not found
             const creatureData = controllers.cardRepository.getCreature(creature.templateId);
             const creatureName = customName || creatureData.name;
             
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} deals ${damageDealt} damage${customName ? ' to ' + customName : ''}!`]
+                components: [ `${context.effectName} deals ${damageDealt} damage${customName ? ' to ' + customName : ''}!` ],
             });
             
-            // Trigger when-damaged effects by calling TriggerProcessor
-            // which will push them to the queue for processing
+            /*
+             * Trigger when-damaged effects by calling TriggerProcessor
+             * which will push them to the queue for processing
+             */
             TriggerProcessor.processWhenDamaged(
                 controllers,
                 playerId,
                 creature.instanceId,
                 creature.templateId,
-                damageDealt
+                damageDealt,
             );
         }
     }

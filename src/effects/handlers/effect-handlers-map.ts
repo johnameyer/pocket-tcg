@@ -1,4 +1,4 @@
-import { EffectHandler, EffectHandlerMap } from '../interfaces/effect-handler-interface.js';
+import { EffectHandlerMap } from '../interfaces/effect-handler-interface.js';
 import { hpEffectHandler } from './hp-effect-handler.js';
 import { statusEffectHandler } from './status-effect-handler.js';
 import { drawEffectHandler } from './draw-effect-handler.js';
@@ -20,14 +20,14 @@ import { hpBonusEffectHandler } from './hp-bonus-effect-handler.js';
 import { retreatCostReductionEffectHandler } from './retreat-cost-reduction-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
-    'hp': hpEffectHandler,
-    'status': statusEffectHandler,
-    'draw': drawEffectHandler,
-    'energy': energyEffectHandler,
-    'search': searchEffectHandler,
-    'shuffle': shuffleEffectHandler,
+    hp: hpEffectHandler,
+    status: statusEffectHandler,
+    draw: drawEffectHandler,
+    energy: energyEffectHandler,
+    search: searchEffectHandler,
+    shuffle: shuffleEffectHandler,
     'hand-discard': handDiscardEffectHandler,
-    'switch': switchEffectHandler,
+    switch: switchEffectHandler,
     'energy-transfer': energyTransferEffectHandler,
     'prevent-damage': preventDamageEffectHandler,
     'damage-reduction': damageReductionEffectHandler,

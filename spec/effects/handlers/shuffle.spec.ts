@@ -15,12 +15,12 @@ describe('Shuffle Effect', () => {
 
         it('should always return true (shuffle effects can always be applied)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withDeck(0)
+                HandlerDataBuilder.withDeck(0),
             );
 
             const effect: ShuffleEffect = {
                 type: 'shuffle',
-                target: 'self'
+                target: 'self',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
@@ -31,12 +31,12 @@ describe('Shuffle Effect', () => {
 
         it('should return true even when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withDeck(0)
+                HandlerDataBuilder.withDeck(0),
             );
 
             const effect: ShuffleEffect = {
                 type: 'shuffle',
-                target: 'opponent'
+                target: 'opponent',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
@@ -49,28 +49,28 @@ describe('Shuffle Effect', () => {
     it('should shuffle opponent hand and draw 3 (basic operation)', () => {
         const testRepository = new MockCardRepository({
             items: new Map<string, ItemData>([
-                ['shuffle-item', {
+                [ 'shuffle-item', {
                     templateId: 'shuffle-item',
                     name: 'Shuffle Item',
                     effects: [{
                         type: 'shuffle',
                         target: 'opponent',
                         shuffleHand: true,
-                        drawAfter: { type: 'constant', value: 3 }
-                    }]
-                }]
-            ])
+                        drawAfter: { type: 'constant', value: 3 },
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('shuffle-item', 'item')],
+            actions: [ new PlayCardResponseMessage('shuffle-item', 'item') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'shuffle-item', type: 'item' }]),
                 StateBuilder.withHand(1, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
-                StateBuilder.withDeck(1, Array(10).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(1, Array(10).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(state.hand[1].length).to.equal(3, 'Opponent should draw 3 cards');
@@ -80,22 +80,22 @@ describe('Shuffle Effect', () => {
     it('should shuffle different targets (self)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([
-                ['self-shuffle', {
+                [ 'self-shuffle', {
                     templateId: 'self-shuffle',
                     name: 'Self Shuffle',
-                    effects: [{ type: 'shuffle', target: 'self', shuffleHand: true }]
-                }]
-            ])
+                    effects: [{ type: 'shuffle', target: 'self', shuffleHand: true }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('self-shuffle', 'supporter')],
+            actions: [ new PlayCardResponseMessage('self-shuffle', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'self-shuffle', type: 'supporter' }]),
-                StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(state.deck[0].length).to.equal(5, 'Own deck should maintain size');
@@ -104,28 +104,28 @@ describe('Shuffle Effect', () => {
     it('should shuffle both players', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([
-                ['both-shuffle', {
+                [ 'both-shuffle', {
                     templateId: 'both-shuffle',
                     name: 'Both Shuffle',
                     effects: [{
                         type: 'shuffle',
                         target: 'both',
                         shuffleHand: true,
-                        drawAfter: { type: 'constant', value: 1 }
-                    }]
-                }]
-            ])
+                        drawAfter: { type: 'constant', value: 1 },
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('both-shuffle', 'supporter')],
+            actions: [ new PlayCardResponseMessage('both-shuffle', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'both-shuffle', type: 'supporter' }]),
                 StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
-                StateBuilder.withDeck(1, Array(6).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(1, Array(6).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(1, 'Player should draw 1 card');
@@ -135,27 +135,27 @@ describe('Shuffle Effect', () => {
     it('should draw different amounts after shuffle (2 cards)', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([
-                ['shuffle-draw', {
+                [ 'shuffle-draw', {
                     templateId: 'shuffle-draw',
                     name: 'Shuffle Draw',
                     effects: [{
                         type: 'shuffle',
                         target: 'self',
                         shuffleHand: true,
-                        drawAfter: { type: 'constant', value: 2 }
-                    }]
-                }]
-            ])
+                        drawAfter: { type: 'constant', value: 2 },
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('shuffle-draw', 'supporter')],
+            actions: [ new PlayCardResponseMessage('shuffle-draw', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'shuffle-draw', type: 'supporter' }]),
-                StateBuilder.withDeck(0, Array(8).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(0, Array(8).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(2, 'Should draw 2 cards after shuffle');
@@ -165,23 +165,23 @@ describe('Shuffle Effect', () => {
     it('should shuffle without drawing', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([
-                ['pure-shuffle', {
+                [ 'pure-shuffle', {
                     templateId: 'pure-shuffle',
                     name: 'Pure Shuffle',
-                    effects: [{ type: 'shuffle', target: 'opponent', shuffleHand: true }]
-                }]
-            ])
+                    effects: [{ type: 'shuffle', target: 'opponent', shuffleHand: true }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('pure-shuffle', 'supporter')],
+            actions: [ new PlayCardResponseMessage('pure-shuffle', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'pure-shuffle', type: 'supporter' }]),
                 StateBuilder.withHand(1, Array(4).fill({ templateId: 'basic-creature', type: 'creature' })),
-                StateBuilder.withDeck(1, Array(6).fill({ templateId: 'basic-creature', type: 'creature' }))
+                StateBuilder.withDeck(1, Array(6).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(state.hand[1].length).to.equal(0, 'Opponent should not draw cards');
@@ -191,27 +191,27 @@ describe('Shuffle Effect', () => {
     it('should handle empty deck after shuffle', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([
-                ['empty-shuffle', {
+                [ 'empty-shuffle', {
                     templateId: 'empty-shuffle',
                     name: 'Empty Shuffle',
                     effects: [{
                         type: 'shuffle',
                         target: 'self',
                         shuffleHand: true,
-                        drawAfter: { type: 'constant', value: 2 }
-                    }]
-                }]
-            ])
+                        drawAfter: { type: 'constant', value: 2 },
+                    }],
+                }],
+            ]),
         });
 
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('empty-shuffle', 'supporter')],
+            actions: [ new PlayCardResponseMessage('empty-shuffle', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withHand(0, [{ templateId: 'empty-shuffle', type: 'supporter' }]),
-                StateBuilder.withDeck(0, [])
+                StateBuilder.withDeck(0, []),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(0, 'Should not draw from empty deck');
@@ -228,55 +228,55 @@ describe('Shuffle Effect', () => {
 
         const testRepository = new MockCardRepository({
             supporters: new Map([
-                ['shuffle-supporter', {
+                [ 'shuffle-supporter', {
                     templateId: 'shuffle-supporter',
                     name: 'Shuffle Supporter',
                     effects: [{ 
                         type: 'shuffle', 
                         target: 'self',
                         shuffleHand: true,
-                        drawAfter: { type: 'resolved', source: 'cards-in-hand' }
-                    }]
+                        drawAfter: { type: 'resolved', source: 'cards-in-hand' },
+                    }],
                 }],
-                ['draw-supporter', {
+                [ 'draw-supporter', {
                     templateId: 'draw-supporter', 
                     name: 'Draw Supporter',
                     effects: [{ 
                         type: 'draw', 
-                        amount: { type: 'player-context-resolved', source: 'points-to-win', playerContext: 'opponent' }
-                    }]
-                }]
+                        amount: { type: 'player-context-resolved', source: 'points-to-win', playerContext: 'opponent' },
+                    }],
+                }],
             ]),
             items: new Map([
-                ['discard-item', {
+                [ 'discard-item', {
                     templateId: 'discard-item',
                     name: 'Discard Item',
                     effects: [{ 
                         type: 'hand-discard', 
                         amount: { type: 'constant', value: 3 }, 
-                        target: 'opponent' 
-                    }]
-                }]
-            ])
+                        target: 'opponent', 
+                    }],
+                }],
+            ]),
         });
 
         const withShuffleTestState = (player0Hand: any[], player1Hand: any[]) => StateBuilder.combine(
             StateBuilder.withHand(0, player0Hand),
             StateBuilder.withHand(1, player1Hand),
             StateBuilder.withDeck(0, Array(10).fill(basicCreature)),
-            StateBuilder.withDeck(1, Array(10).fill(highHpCreature))
+            StateBuilder.withDeck(1, Array(10).fill(highHpCreature)),
         );
 
         it('should execute shuffle supporter and shuffle both players hands', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [new PlayCardResponseMessage('shuffle-supporter', 'supporter')],
+                actions: [ new PlayCardResponseMessage('shuffle-supporter', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: withShuffleTestState([
-                    shuffleSupporter, basicCreature, healingItem, researchSupporter
+                    shuffleSupporter, basicCreature, healingItem, researchSupporter,
                 ], [
-                    basicCreature, researchSupporter
+                    basicCreature, researchSupporter,
                 ]),
-                maxSteps: 10
+                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed shuffle supporter');
@@ -289,10 +289,10 @@ describe('Shuffle Effect', () => {
 
         it('should execute discard item and opponent draws 3 cards', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [new PlayCardResponseMessage('discard-item', 'item')],
+                actions: [ new PlayCardResponseMessage('discard-item', 'item') ],
                 customRepository: testRepository,
-                stateCustomizer: withShuffleTestState([discardItem], [
-                    basicCreature, researchSupporter, healingItem, highHpCreature, highHpCreature
+                stateCustomizer: withShuffleTestState([ discardItem ], [
+                    basicCreature, researchSupporter, healingItem, highHpCreature, highHpCreature,
                 ]),
                 maxSteps: 10,
             });

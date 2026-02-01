@@ -16,7 +16,7 @@ export type PendingChoiceSelection = PendingTargetSelection & {
     
     /** The index of the selected option (if a choice has been made) */
     selectedIndex?: number;
-}
+};
 
 /**
  * Adds a selectedChoiceIndex property to the effect context.

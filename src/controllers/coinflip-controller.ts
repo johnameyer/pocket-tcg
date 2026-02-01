@@ -1,4 +1,4 @@
-import { GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
+import { GenericControllerProvider, GlobalController } from '@cards-ts/core';
 
 export type CoinFlipState = {
     nextFlipGuaranteedHeads: boolean;
@@ -21,14 +21,16 @@ export class CoinFlipController extends GlobalController<CoinFlipState, {}> {
     }
 
     performCoinFlip(): boolean {
-        // TODO can we remove mockedResults here since we have the mocked coin flip controller in spec
-        // Use mocked results if available (FIFO order)
-        if (this.state.mockedResults.length > 0) {
+        /*
+         * TODO can we remove mockedResults here since we have the mocked coin flip controller in spec
+         * Use mocked results if available (FIFO order)
+         */
+        if(this.state.mockedResults.length > 0) {
             return this.state.mockedResults.splice(0, 1)![0];
         }
 
         // Use guaranteed heads if set
-        if (this.state.nextFlipGuaranteedHeads) {
+        if(this.state.nextFlipGuaranteedHeads) {
             this.state.nextFlipGuaranteedHeads = false;
             return true; // heads
         }
@@ -56,7 +58,7 @@ export class CoinFlipControllerProvider implements GenericControllerProvider<Coi
         return {
             nextFlipGuaranteedHeads: false,
             mockedResults: [],
-            mockedResultIndex: 0
+            mockedResultIndex: 0,
         };
     }
 

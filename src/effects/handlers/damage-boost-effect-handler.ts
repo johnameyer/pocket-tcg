@@ -3,10 +3,6 @@ import { DamageBoostEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue } from '../effect-utils.js';
-import { CardRepository } from '../../repository/card-repository.js';
-import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
-import { ConditionEvaluator } from '../condition-evaluator.js';
 
 /**
  * Handler for damage boost effects that increase the damage dealt by attacks.
@@ -33,7 +29,7 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
     apply(controllers: Controllers, effect: DamageBoostEffect, context: EffectContext): void {
         const amount = getEffectValue(effect.amount, controllers, context);
         const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-        if (!activecreature) {
+        if(!activecreature) {
             throw new Error(`No active creature found for player ${context.sourcePlayer}`);
         }
         
@@ -43,7 +39,7 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
         const conditionText = effect.condition ? ' when condition is met' : '';
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} adds ${amount} damage${targetText}${conditionText}!`]
+            components: [ `${context.effectName} adds ${amount} damage${targetText}${conditionText}!` ],
         });
     }
 }

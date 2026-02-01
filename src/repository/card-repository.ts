@@ -7,12 +7,12 @@ export class CardRepository {
         private creatureData: Map<string, CreatureData> = new Map(),
         private supporterData: Map<string, SupporterData> = new Map(),
         private itemData: Map<string, ItemData> = new Map(),
-        private fieldCardToolData: Map<string, ToolData> = new Map()
+        private fieldCardToolData: Map<string, ToolData> = new Map(),
     ) {
         // Build name-to-creature map at instantiation time for efficient lookups
-        for (const creature of creatureData.values()) {
+        for(const creature of creatureData.values()) {
             // Store first occurrence of each name (multiple creatures may share the same name)
-            if (!this.creatureNameMap.has(creature.name)) {
+            if(!this.creatureNameMap.has(creature.name)) {
                 this.creatureNameMap.set(creature.name, creature);
             }
         }
@@ -20,7 +20,7 @@ export class CardRepository {
 
     public getCreature(templateId: string): CreatureData {
         const fieldCard = this.creatureData.get(templateId);
-        if (!fieldCard) {
+        if(!fieldCard) {
             throw new Error(`FieldCard not found: ${templateId}`);
         }
         return fieldCard;
@@ -44,7 +44,7 @@ export class CardRepository {
      */
     public getCreatureByName(name: string): CreatureData {
         const creature = this.creatureNameMap.get(name);
-        if (!creature) {
+        if(!creature) {
             throw new Error(`Creature not found with name: ${name}`);
         }
         return creature;
@@ -52,7 +52,7 @@ export class CardRepository {
     
     public getSupporter(templateId: string): SupporterData {
         const supporter = this.supporterData.get(templateId);
-        if (!supporter) {
+        if(!supporter) {
             throw new Error(`Supporter not found: ${templateId}`);
         }
         return supporter;
@@ -60,7 +60,7 @@ export class CardRepository {
     
     public getItem(templateId: string): ItemData {
         const item = this.itemData.get(templateId);
-        if (!item) {
+        if(!item) {
             throw new Error(`Item not found: ${templateId}`);
         }
         return item;
@@ -68,7 +68,7 @@ export class CardRepository {
     
     public getTool(templateId: string): ToolData {
         const tool = this.fieldCardToolData.get(templateId);
-        if (!tool) {
+        if(!tool) {
             throw new Error(`Tool not found: ${templateId}`);
         }
         return tool;
@@ -124,19 +124,21 @@ export class CardRepository {
             const fieldCard = this.getCreature(fieldCardId);
             
             // Basic FieldCard have no evolvesFrom property
-            if (!fieldCard.previousStageName) {
+            if(!fieldCard.previousStageName) {
                 return 0; // Basic FieldCard
             }
             
-            // Check if the FieldCard it evolves from is also an evolution FieldCard
-            // evolvesFrom is now a creature name, not a templateId
+            /*
+             * Check if the FieldCard it evolves from is also an evolution FieldCard
+             * evolvesFrom is now a creature name, not a templateId
+             */
             try {
                 const preFieldCard = this.getCreatureByName(fieldCard.previousStageName);
-                if (!preFieldCard.previousStageName) {
+                if(!preFieldCard.previousStageName) {
                     return 1; // Stage 1 FieldCard (evolves from Basic)
-                } else {
-                    return 2; // Stage 2 FieldCard (evolves from Stage 1)
-                }
+                } 
+                return 2; // Stage 2 FieldCard (evolves from Stage 1)
+                
             } catch (error) {
                 // If we can't find the pre-evolution, assume it's a Stage 1
                 return 1;

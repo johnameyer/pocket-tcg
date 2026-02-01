@@ -1,13 +1,13 @@
 #!/usr/bin/env ts-node
 
+import { ControllerHandlerState, HandlerChain, IncrementalIntermediary, InquirerPresenter, SystemHandlerParams } from '@cards-ts/core';
+import { hideBin } from 'yargs/helpers';
+import yargs from 'yargs';
 import { GameHandlerParams } from './game-handler-params.js';
 import { ResponseMessage } from './messages/response-message.js';
 import { GameSetup } from './game-setup.js';
 import { gameFactory } from './game-factory.js';
 import { Controllers } from './controllers/controllers.js';
-import { ControllerHandlerState, HandlerChain, IncrementalIntermediary, InquirerPresenter, SystemHandlerParams } from '@cards-ts/core';
-import { hideBin } from 'yargs/helpers';
-import yargs from 'yargs';
 
 const argv = yargs(hideBin(process.argv))
     .option('players', {

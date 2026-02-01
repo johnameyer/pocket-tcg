@@ -32,7 +32,7 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
         
         // Get the active creature
         const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-        if (!activecreature) {
+        if(!activecreature) {
             return;
         }
         
@@ -42,7 +42,7 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
         // Send a message about the retreat cost reduction
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} reduces retreat cost by ${reductionAmount}!`]
+            components: [ `${context.effectName} reduces retreat cost by ${reductionAmount}!` ],
         });
     }
 }

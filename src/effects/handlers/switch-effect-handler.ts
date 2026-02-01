@@ -1,12 +1,10 @@
-import { Controllers } from "../../controllers/controllers.js";
-import { SwitchEffect } from "../../repository/effect-types.js";
-import { FixedTarget, ResolvedTarget } from "../../repository/target-types.js";
-import { EffectContext } from "../effect-context.js";
-import { AbstractEffectHandler, ResolutionRequirement } from "../interfaces/effect-handler-interface.js";
-import { HandlerData } from "../../game-handler.js";
-import { CardRepository } from "../../repository/card-repository.js";
-import { TargetResolver } from "../target-resolver.js";
-import { ControllerUtils } from "../../utils/controller-utils.js";
+import { Controllers } from '../../controllers/controllers.js';
+import { SwitchEffect } from '../../repository/effect-types.js';
+import { EffectContext } from '../effect-context.js';
+import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
+import { HandlerData } from '../../game-handler.js';
+import { CardRepository } from '../../repository/card-repository.js';
+import { TargetResolver } from '../target-resolver.js';
 
 /**
  * Handler for switch effects that move a creature from the bench to the active position
@@ -23,7 +21,7 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
      */
     canApply(handlerData: HandlerData, effect: SwitchEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // If there's no switchWith target, we can't apply the effect
-        if (!effect.switchWith) {
+        if(!effect.switchWith) {
             return false;
         }
         
@@ -37,33 +35,35 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
 
     apply(controllers: Controllers, effect: SwitchEffect, context: EffectContext): void {
         // Check if we have a valid target
-        if (!effect.switchWith) {
+        if(!effect.switchWith) {
             return;
         }
 
         // Targets are always resolved by EffectApplier
-        if (effect.switchWith.type !== 'resolved') {
+        if(effect.switchWith.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.switchWith?.type || effect.switchWith}`);
         }
         
         const targets = effect.switchWith.targets;
         
-        if (targets.length === 0) {
+        if(targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} found no valid targets!`]
+                components: [ `${context.effectName} found no valid targets!` ],
             });
             return;
         }
         
-        for (const target of targets) {
+        for(const target of targets) {
             const { playerId, fieldIndex } = target;
 
             // Only proceed if we're switching with a bench creature (index > 0)
-            if (fieldIndex > 0) {
-                // For SelectTargetResponseMessage and throughout the codebase, we now use consistent indexing:
-                // 0 = active, 1-3 = bench positions
-                // The forceSwitch method expects a 0-based bench index (0, 1, 2)
+            if(fieldIndex > 0) {
+                /*
+                 * For SelectTargetResponseMessage and throughout the codebase, we now use consistent indexing:
+                 * 0 = active, 1-3 = bench positions
+                 * The forceSwitch method expects a 0-based bench index (0, 1, 2)
+                 */
                 const benchIndex = fieldIndex - 1;
                 
                 controllers.field.forceSwitch(playerId, benchIndex);
@@ -82,7 +82,7 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
     private notifySwitch(controllers: Controllers, playerId: number): void {
         const newActivecreature = controllers.field.getCardByPosition(playerId, 0);
 
-        if (!newActivecreature) {
+        if(!newActivecreature) {
             return;
         }
 
@@ -92,7 +92,7 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
 
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${pokemonName} was switched to active position!`]
+                components: [ `${pokemonName} was switched to active position!` ],
             });
         } catch (error) {
             // Error handling for notification

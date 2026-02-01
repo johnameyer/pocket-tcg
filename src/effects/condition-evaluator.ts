@@ -1,6 +1,6 @@
 import { Condition } from '../repository/condition-types.js';
 import { HandlerData } from '../game-handler.js';
-import { FieldCard } from "../controllers/field-controller.js";
+import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { CreatureData } from '../repository/card-types.js';
@@ -24,42 +24,48 @@ export class ConditionEvaluator {
         condition: Condition | undefined,
         creature: FieldCard,
         handlerData: HandlerData,
-        cardRepository: CardRepository
+        cardRepository: CardRepository,
     ): boolean {
         // If no condition, always match
-        if (!condition) return true;
+        if(!condition) {
+            return true; 
+        }
         
         // Check each condition property
         
         // Check hasEnergy condition
-        if (condition.hasEnergy !== undefined) {
+        if(condition.hasEnergy !== undefined) {
             const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
-            if (!attachedEnergyByInstance) return false;
+            if(!attachedEnergyByInstance) {
+                return false; 
+            }
             
             const fieldInstanceId = getFieldInstanceId(creature);
             const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
-            if (!creatureEnergy) return false;
+            if(!creatureEnergy) {
+                return false; 
+            }
             
             // Get the energy type and required count
             const energyType = Object.keys(condition.hasEnergy)[0] as AttachableEnergyType;
             const requiredCount = condition.hasEnergy[energyType] || 1; // Default to 1 if undefined
             
-            if ((creatureEnergy[energyType] || 0) < requiredCount) {
+            if((creatureEnergy[energyType] || 0) < requiredCount) {
                 return false;
             }
         }
         
         // Check hasDamage condition
-        if (condition.hasDamage === true && creature.damageTaken <= 0) {
+        if(condition.hasDamage === true && creature.damageTaken <= 0) {
             return false;
         }
         
         // Check stage condition
-        if (condition.stage !== undefined) {
+        if(condition.stage !== undefined) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
                 const actualStage = this.calculateStage(creatureData, cardRepository);
-                if (condition.stage !== actualStage) {
+                if(condition.stage !== actualStage) {
                     return false;
                 }
             } catch (error) {
@@ -68,27 +74,27 @@ export class ConditionEvaluator {
         }
         
         // Check attributes condition
-        if (condition.attributes !== undefined) {
+        if(condition.attributes !== undefined) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
                 
-                if (condition.attributes.ex !== undefined) {
+                if(condition.attributes.ex !== undefined) {
                     const isEx = creatureData.attributes?.ex || false;
-                    if (condition.attributes.ex !== isEx) {
+                    if(condition.attributes.ex !== isEx) {
                         return false;
                     }
                 }
                 
-                if (condition.attributes.mega !== undefined) {
+                if(condition.attributes.mega !== undefined) {
                     const isMega = creatureData.attributes?.mega || false;
-                    if (condition.attributes.mega !== isMega) {
+                    if(condition.attributes.mega !== isMega) {
                         return false;
                     }
                 }
                 
-                if (condition.attributes.ultraBeast !== undefined) {
+                if(condition.attributes.ultraBeast !== undefined) {
                     const isUltraBeast = creatureData.attributes?.ultraBeast || false;
-                    if (condition.attributes.ultraBeast !== isUltraBeast) {
+                    if(condition.attributes.ultraBeast !== isUltraBeast) {
                         return false;
                     }
                 }
@@ -98,10 +104,10 @@ export class ConditionEvaluator {
         }
         
         // Check evolvesFrom condition
-        if (condition.previousStageName !== undefined) {
+        if(condition.previousStageName !== undefined) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
-                if (!creatureData.previousStageName || creatureData.previousStageName.toLowerCase() !== condition.previousStageName.toLowerCase()) {
+                if(!creatureData.previousStageName || creatureData.previousStageName.toLowerCase() !== condition.previousStageName.toLowerCase()) {
                     return false;
                 }
             } catch (error) {
@@ -110,10 +116,10 @@ export class ConditionEvaluator {
         }
         
         // Check isCreatureType condition
-        if (condition.isType !== undefined) {
+        if(condition.isType !== undefined) {
             try {
                 const creatureData = cardRepository.getCreature(creature.templateId);
-                if (creatureData.type !== condition.isType) {
+                if(creatureData.type !== condition.isType) {
                     return false;
                 }
             } catch (error) {
@@ -131,17 +137,17 @@ export class ConditionEvaluator {
      * Stage 2 = Evolves from Stage 1
      */
     private static calculateStage(creatureData: CreatureData, cardRepository: CardRepository): number {
-        if (!creatureData.previousStageName) {
+        if(!creatureData.previousStageName) {
             return 0; // Basic creature
         }
         
         try {
             const prevStageData = cardRepository.getCreature(creatureData.previousStageName);
-            if (!prevStageData.previousStageName) {
+            if(!prevStageData.previousStageName) {
                 return 1; // Stage 1 (evolves from Basic)
-            } else {
-                return 2; // Stage 2 (evolves from Stage 1)
-            }
+            } 
+            return 2; // Stage 2 (evolves from Stage 1)
+            
         } catch (error) {
             return 0; // Default to Basic if can't resolve evolution chain
         }

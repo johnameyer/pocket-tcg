@@ -10,20 +10,20 @@ describe('Supporters', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('basic-supporter', 'supporter'),
-                new PlayCardResponseMessage('basic-supporter', 'supporter')
+                new PlayCardResponseMessage('basic-supporter', 'supporter'),
             ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withHand(0, [basicSupporter, basicSupporter]),
+                StateBuilder.withHand(0, [ basicSupporter, basicSupporter ]),
                 StateBuilder.withCreatures(0, 'basic-creature'), // Add active creature for HP effect target
                 StateBuilder.withDamage('basic-creature-0', 30), // Add damage so healing can work
                 StateBuilder.withDeck(0, [
                     { templateId: 'basic-creature', type: 'creature' }, 
                     { templateId: 'basic-creature', type: 'creature' }, 
                     { templateId: 'basic-creature', type: 'creature' }, 
-                    { templateId: 'basic-creature', type: 'creature' }
-                ])
+                    { templateId: 'basic-creature', type: 'creature' },
+                ]),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         // Only first supporter should execute, second should be blocked

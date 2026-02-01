@@ -18,14 +18,14 @@ describe('Switch Effect', () => {
 
         it('should return true when there are benched creatures to switch with', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: SwitchEffect = {
                 type: 'switch',
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+                switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
@@ -36,13 +36,13 @@ describe('Switch Effect', () => {
 
         it('should return false when there are no benched creatures (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
 
             const effect: SwitchEffect = {
                 type: 'switch',
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+                switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
@@ -53,13 +53,13 @@ describe('Switch Effect', () => {
 
         it('should return false when switchWith is not provided', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature'])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
             );
 
             const effect: SwitchEffect = {
                 type: 'switch',
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                switchWith: undefined as any
+                switchWith: undefined as any,
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
@@ -71,63 +71,63 @@ describe('Switch Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 60,
                 type: 'colorless',
                 weakness: 'fire',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'colorless', amount: 1 }] }]
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
             }],
-            ['high-hp-creature', {
+            [ 'high-hp-creature', {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
                 type: 'colorless',
                 weakness: 'fire',
                 retreatCost: 2,
-                attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'colorless', amount: 2 }] }]
-            }]
+                attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'colorless', amount: 2 }] }],
+            }],
         ]),
         supporters: new Map<string, SupporterData>([
-            ['switch-supporter', {
+            [ 'switch-supporter', {
                 templateId: 'switch-supporter',
                 name: 'Switch Supporter',
                 effects: [{
                     type: 'switch',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' } }
-                }]
+                    switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
+                }],
             }],
-            ['damage-switch-supporter', {
+            [ 'damage-switch-supporter', {
                 templateId: 'damage-switch-supporter',
                 name: 'Damage Switch Supporter',
                 effects: [{
                     type: 'switch',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench', condition: { hasDamage: true } } }
-                }]
-            }]
-        ])
+                    switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench', condition: { hasDamage: true }}},
+                }],
+            }],
+        ]),
     });
 
     it('should force opponent to switch (basic operation)', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1)
+                new SelectTargetResponseMessage(1, 1),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
-                StateBuilder.withDamage('high-hp-creature-1-0', 20)
+                StateBuilder.withDamage('high-hp-creature-1-0', 20),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent bench should be active');
@@ -139,18 +139,18 @@ describe('Switch Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('damage-switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1)
+                new SelectTargetResponseMessage(1, 1),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withHand(0, [{ templateId: 'damage-switch-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
-                StateBuilder.withDamage('high-hp-creature-1-0', 30)
+                StateBuilder.withDamage('high-hp-creature-1-0', 30),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Damaged bench should be active');
@@ -160,7 +160,7 @@ describe('Switch Effect', () => {
     it('should preserve energy when switching', () => {
         const testRepository = new MockCardRepository({
             supporters: new Map<string, SupporterData>([
-                ['switch-supporter', {
+                [ 'switch-supporter', {
                     templateId: 'switch-supporter',
                     name: 'Switch Supporter',
                     effects: [{
@@ -169,25 +169,25 @@ describe('Switch Effect', () => {
                         switchWith: {
                             type: 'single-choice',
                             chooser: 'self',
-                            criteria: { player: 'opponent', location: 'field', position: 'bench' }
-                        }
-                    }]
-                }]
-            ])
+                            criteria: { player: 'opponent', location: 'field', position: 'bench' },
+                        },
+                    }],
+                }],
+            ]),
         });
 
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1) // Select opponent's bench Pokemon
+                new SelectTargetResponseMessage(1, 1), // Select opponent's bench Pokemon
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature', 'evolution-creature']), // Multiple bench Pokemon for choice
-                StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }])
+                StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature', 'evolution-creature' ]), // Multiple bench Pokemon for choice
+                StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed switch supporter and target selection');
@@ -195,17 +195,17 @@ describe('Switch Effect', () => {
 
     it('should fail when no bench Pokemon available', () => {
         const { state } = runTestGame({
-            actions: [new PlayCardResponseMessage('switch-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('switch-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
-                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }])
+                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
                 // No bench Pokemon for opponent
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('basic-creature', 'Active should remain unchanged');
@@ -213,24 +213,26 @@ describe('Switch Effect', () => {
     });
 
     it('should handle different choosers (self vs opponent)', () => {
-        // Switch supporter lets self choose which bench Pokemon to switch
-        // NOTE: Currently only works with single bench Pokemon due to target resolution bug
+        /*
+         * Switch supporter lets self choose which bench Pokemon to switch
+         * NOTE: Currently only works with single bench Pokemon due to target resolution bug
+         */
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1) // Select first bench Pokemon (high-hp-creature)
+                new SelectTargetResponseMessage(1, 1), // Select first bench Pokemon (high-hp-creature)
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature', 'evolution-creature']),
+                StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature', 'evolution-creature' ]),
                 StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDamage('high-hp-creature-1-0', 10),
-                StateBuilder.withDamage('evolution-creature-1-1', 20)
+                StateBuilder.withDamage('evolution-creature-1-1', 20),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Should switch to chosen Pokemon');
@@ -243,17 +245,17 @@ describe('Switch Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1)
+                new SelectTargetResponseMessage(1, 1),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
-                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }])
+                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Should complete switch');

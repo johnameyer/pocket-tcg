@@ -1,15 +1,14 @@
 import { Intermediary } from '@cards-ts/core';
-import { HandlerData } from '../game-handler.js';
 import { HandlerResponsesQueue } from '@cards-ts/core';
+import { HandlerData } from '../game-handler.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { ActionValidator } from '../effects/action-validator.js';
-import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, RetreatResponseMessage, UseAbilityResponseMessage } from '../messages/response/index.js';
+import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage } from '../messages/response/index.js';
 import { GameCard } from '../controllers/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
-import { EnergyDictionary } from '../controllers/energy-controller.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
 
 interface SelectionOption {
@@ -32,7 +31,7 @@ export function buildFieldCardOptions(cardRepository: CardRepository, field: Fie
         
         return {
             name: `${fieldCardData.name} (${hp}/${maxHp} HP)`,
-            value: i
+            value: i,
         };
     });
 }
@@ -46,7 +45,7 @@ export function buildFieldCardOptions(cardRepository: CardRepository, field: Fie
 export function buildEnergyOptions(energyTypes: string[]): SelectionOption[] {
     return energyTypes.map(type => ({
         name: `${type.charAt(0).toUpperCase() + type.slice(1)} Energy`,
-        value: type
+        value: type,
     }));
 }
 
@@ -59,9 +58,9 @@ export function buildEnergyOptions(energyTypes: string[]): SelectionOption[] {
  */
 export function getStatusDisplayText(handlerData: HandlerData, playerId: number): string {
     const statusEffects = handlerData.statusEffects;
-    return statusEffects ? 
-        (statusEffects.activeStatusEffects[playerId] as unknown as StatusEffect[])?.length > 0 ? 
-            ` [${(statusEffects.activeStatusEffects[playerId] as unknown as StatusEffect[]).map((e: StatusEffect) => e.type.toUpperCase()).join(', ')}]` : '' 
+    return statusEffects 
+        ? (statusEffects.activeStatusEffects[playerId] as unknown as StatusEffect[])?.length > 0 
+            ? ` [${(statusEffects.activeStatusEffects[playerId] as unknown as StatusEffect[]).map((e: StatusEffect) => e.type.toUpperCase()).join(', ')}]` : '' 
         : '';
 }
 
@@ -75,19 +74,21 @@ export function getStatusDisplayText(handlerData: HandlerData, playerId: number)
 export async function handleAttack(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
     const currentPlayer = handlerData.turn;
     
-    // Check if FieldCard can attack using ActionValidator
-    // Get status effects for the current player
-    const statusEffects = handlerData.statusEffects ? 
-        (handlerData.statusEffects.activeStatusEffects[currentPlayer] as unknown as StatusEffect[]) : 
-        [];
+    /*
+     * Check if FieldCard can attack using ActionValidator
+     * Get status effects for the current player
+     */
+    const statusEffects = handlerData.statusEffects 
+        ? (handlerData.statusEffects.activeStatusEffects[currentPlayer] as unknown as StatusEffect[]) 
+        : [];
     const isAsleep = statusEffects.some((e: StatusEffect) => e.type === 'sleep');
     const isParalyzed = statusEffects.some((e: StatusEffect) => e.type === 'paralysis');
     
-    if (isAsleep || isParalyzed) {
+    if(isAsleep || isParalyzed) {
         const condition = isAsleep ? 'asleep' : 'paralyzed';
         await intermediary.form({ 
             type: 'print', 
-            message: [`Your FieldCard is ${condition} and cannot attack!`] 
+            message: [ `Your FieldCard is ${condition} and cannot attack!` ], 
         });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
@@ -97,7 +98,7 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     const activeFieldCard = toFieldCard(handlerData.field.creatures[currentPlayer][0]); // Position 0 is active
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
     
-    if (!fieldCardData) {
+    if(!fieldCardData) {
         return;
     }
     
@@ -109,7 +110,7 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
         
         return {
             name: `${attack.name} (${attack.damage} damage)${energyText}${statusText}`,
-            value: index
+            value: index,
         };
     });
     
@@ -121,24 +122,24 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
     const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, instanceId);
     const attachedEnergy = EnergyController.getAttachedEnergyByInstance(handlerData.energy, instanceId);
     const energyTypes = Object.entries(attachedEnergy)
-        .filter(([_, count]) => (count as number) > 0)
-        .map(([type, count]) => `${count}${type.charAt(0).toUpperCase()}`)
+        .filter(([ _, count ]) => (count as number) > 0)
+        .map(([ type, count ]) => `${count}${type.charAt(0).toUpperCase()}`)
         .join(', ');
     const energyTypesDisplay = energyTypes.length > 0 ? energyTypes : 'None';
     
-    const [sent, received] = intermediary.form({ 
+    const [ sent, received ] = intermediary.form({ 
         type: 'list', 
         message: [
             `Player ${currentPlayer + 1}, choose your attack with ${fieldCardData.name}:`,
-            `Current Energy: ${energyCount} (${energyTypes})`
+            `Current Energy: ${energyCount} (${energyTypes})`,
         ],
-        choices: attackOptions
+        choices: attackOptions,
     });
     
     const attackIndex = (await received)[0] as number;
     
     // Handle back option
-    if (attackIndex === -1) {
+    if(attackIndex === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -160,8 +161,8 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     // Get the player's hand
     const hand = handlerData.hand;
     
-    if (!hand || hand.length === 0) {
-        await intermediary.form({ type: 'print', message: ['Your hand is empty. Wait for your next turn to draw a card.'] });
+    if(!hand || hand.length === 0) {
+        await intermediary.form({ type: 'print', message: [ 'Your hand is empty. Wait for your next turn to draw a card.' ] });
         // Return to action selection instead of sending an invalid play action
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
@@ -172,73 +173,73 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
         let cardName: string;
         let cardDescription = '';
         
-        if (card.type === 'creature') {
+        if(card.type === 'creature') {
             const fieldCardData = cardRepository.getCreature(card.templateId);
-            if (!fieldCardData) {
+            if(!fieldCardData) {
                 throw new Error(`FieldCard not found: ${card.templateId}`);
             }
             cardName = fieldCardData.name;
             
             // Check if card can be played using ActionValidator
-            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if (fieldCardData.previousStageName) {
+            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if(fieldCardData.previousStageName) {
                     cardDescription = ' (Cannot play evolved FieldCard directly!)';
                 } else {
                     cardDescription = ' (Bench is full!)';
                 }
             }
-        } else if (card.type === 'item') {
+        } else if(card.type === 'item') {
             const itemData = cardRepository.getItem(card.templateId);
-            if (!itemData) {
+            if(!itemData) {
                 throw new Error(`Item not found: ${card.templateId}`);
             }
             cardName = itemData.name;
             
             // Check if card can be played using ActionValidator
-            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if (itemData.templateId === 'potion') {
+            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if(itemData.templateId === 'potion') {
                     cardDescription = ' (No FieldCard need healing!)';
                 } else {
                     cardDescription = ' (Cannot play this card now)';
                 }
             } else {
                 // Get the effect type if available
-                cardDescription = itemData.effects && itemData.effects.length > 0 && itemData.effects[0].type ? 
-                    ` - ${itemData.effects[0].type}` : 
-                    ' - Unknown effect';
+                cardDescription = itemData.effects && itemData.effects.length > 0 && itemData.effects[0].type 
+                    ? ` - ${itemData.effects[0].type}` 
+                    : ' - Unknown effect';
             }
-        } else if (card.type === 'supporter') {
+        } else if(card.type === 'supporter') {
             const supporterData = cardRepository.getSupporter(card.templateId);
-            if (!supporterData) {
+            if(!supporterData) {
                 throw new Error(`Supporter not found: ${card.templateId}`);
             }
             cardName = supporterData.name;
             
             // Check if card can be played using ActionValidator
-            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
-                if (handlerData.turnState.supporterPlayedThisTurn) {
+            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if(handlerData.turnState.supporterPlayedThisTurn) {
                     cardDescription = ' (Already played a Supporter this turn!)';
-                } else if (supporterData.templateId === 'sabrina') {
+                } else if(supporterData.templateId === 'sabrina') {
                     cardDescription = ' (Opponent has no bench FieldCard!)';
-                } else if (supporterData.templateId === 'lillie') {
+                } else if(supporterData.templateId === 'lillie') {
                     cardDescription = ' (No FieldCard need healing!)';
                 } else {
                     cardDescription = ' (Cannot play this card now)';
                 }
-            } else if (supporterData.effects && supporterData.effects.length > 0) {
+            } else if(supporterData.effects && supporterData.effects.length > 0) {
                 cardDescription = ` - ${supporterData.effects[0].type}`;
             }
-        } else if (card.type === 'tool') {
+        } else if(card.type === 'tool') {
             const toolData = cardRepository.getTool(card.templateId);
-            if (!toolData) {
+            if(!toolData) {
                 throw new Error(`Tool not found: ${card.templateId}`);
             }
             cardName = toolData.name;
             
             // Check if card can be played using ActionValidator
-            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+            if(!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
                 cardDescription = ' (Cannot attach tool now)';
-            } else if (toolData.effects && toolData.effects.length > 0) {
+            } else if(toolData.effects && toolData.effects.length > 0) {
                 cardDescription = ` - ${toolData.effects[0].type}`;
             }
         } else {
@@ -249,23 +250,23 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
         
         return {
             name: `[${card.type.toUpperCase()}] ${cardName}${cardDescription} (Card ${index + 1})`,
-            value: index
+            value: index,
         };
     });
     
     // Add back option
     cardOptions.push({ name: 'Back', value: -1 });
     
-    const [sent, received] = intermediary.form({
+    const [ sent, received ] = intermediary.form({
         type: 'list',
-        message: [`Player ${currentPlayer + 1}, choose a card to play:`],
-        choices: cardOptions
+        message: [ `Player ${currentPlayer + 1}, choose a card to play:` ],
+        choices: cardOptions,
     });
     
     const cardIndex = (await received)[0] as number;
     
     // Handle back option
-    if (cardIndex === -1) {
+    if(cardIndex === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -273,14 +274,14 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     const selectedCard = hand[cardIndex];
     
     // For item cards, ask for a target
-    let targetPlayerId = currentPlayer; // Default to self
+    const targetPlayerId = currentPlayer; // Default to self
     let targetFieldCardIndex = 0; // Default to active FieldCard
     
-    if (selectedCard.type === 'item') {
+    if(selectedCard.type === 'item') {
         const itemData = cardRepository.getItem(selectedCard.templateId);
         
         // Only ask for target if it's a healing item like potion
-        if (itemData && itemData.templateId === 'potion') {
+        if(itemData && itemData.templateId === 'potion') {
             // Create options for player's FieldCard (active + bench)
             const fieldCardOptions = [];
             
@@ -290,7 +291,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             const activeHp = Math.max(0, activeCreatureData.maxHp - activeFieldCard.damageTaken);
             fieldCardOptions.push({
                 name: `${activeCreatureData.name} (${activeHp} HP) - Active`,
-                value: 0
+                value: 0,
             });
             
             // Add benched FieldCard
@@ -300,23 +301,23 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                 const hp = Math.max(0, fieldCardData.maxHp - fieldCard.damageTaken);
                 fieldCardOptions.push({
                     name: `${fieldCardData.name} (${hp} HP) - Bench`,
-                    value: index + 1
+                    value: index + 1,
                 });
             });
             
             // Add back option
             fieldCardOptions.push({ name: 'Back', value: -1 });
             
-            const [targetSent, targetReceived] = intermediary.form({
+            const [ targetSent, targetReceived ] = intermediary.form({
                 type: 'list',
-                message: [`Choose a FieldCard to heal with your ${itemData.name}:`],
-                choices: fieldCardOptions
+                message: [ `Choose a FieldCard to heal with your ${itemData.name}:` ],
+                choices: fieldCardOptions,
             });
             
             targetFieldCardIndex = (await targetReceived)[0] as number;
             
             // Handle back option
-            if (targetFieldCardIndex === -1) {
+            if(targetFieldCardIndex === -1) {
                 await handlePlayCard(cardRepository, intermediary, handlerData, responsesQueue);
                 return;
             }
@@ -324,11 +325,11 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     }
     
     // Create a play card action
-    if (selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item') {
+    if(selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item') {
         responsesQueue.push(new PlayCardResponseMessage(selectedCard.templateId, selectedCard.type, targetPlayerId, targetFieldCardIndex));
     } else {
         // Handle tool cards or other unsupported types
-        await intermediary.form({ type: 'print', message: [`Cannot play ${selectedCard.type} cards yet.`] });
+        await intermediary.form({ type: 'print', message: [ `Cannot play ${selectedCard.type} cards yet.` ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
     }
 }
@@ -349,48 +350,48 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     const allFieldCards = handlerData.field.creatures[currentPlayer]?.map(toFieldCard) || [];
     
     allFieldCards.forEach((fieldCard: FieldCard, position: number) => {
-        if (ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
+        if(ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)) {
             const currentData = cardRepository.getCreature(fieldCard.templateId);
             const evolution = allFieldCard.find(id => {
                 const data = cardRepository.getCreature(id);
                 return data.previousStageName === currentData.name;
             });
             
-            if (evolution) {
+            if(evolution) {
                 const evolutionData = cardRepository.getCreature(evolution);
                 
-                if (position === 0) { // Active FieldCard
+                if(position === 0) { // Active FieldCard
                     fieldCardOptions.push({
                         name: `${currentData?.name} → ${evolutionData?.name} (Active)`,
-                        value: { evolutionId: evolution, isActive: true }
+                        value: { evolutionId: evolution, isActive: true },
                     });
                 } else { // Bench FieldCard
                     fieldCardOptions.push({
                         name: `${currentData?.name} → ${evolutionData?.name} (Bench)`,
-                        value: { evolutionId: evolution, isActive: false, benchIndex: position - 1 }
+                        value: { evolutionId: evolution, isActive: false, benchIndex: position - 1 },
                     });
                 }
             }
         }
     });
     
-    if (fieldCardOptions.length === 0) {
-        await intermediary.form({ type: 'print', message: ['No FieldCard can evolve right now.'] });
+    if(fieldCardOptions.length === 0) {
+        await intermediary.form({ type: 'print', message: [ 'No FieldCard can evolve right now.' ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
     
     fieldCardOptions.push({ name: 'Back', value: null });
     
-    const [sent, received] = intermediary.form({
+    const [ sent, received ] = intermediary.form({
         type: 'list',
-        message: [`Choose a FieldCard to evolve:`],
-        choices: fieldCardOptions
+        message: [ 'Choose a FieldCard to evolve:' ],
+        choices: fieldCardOptions,
     });
     
     const selection = (await received)[0] as { evolutionId: string; isActive: boolean; benchIndex?: number } | null;
     
-    if (!selection) {
+    if(!selection) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -412,40 +413,40 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     const currentPlayer = handlerData.turn;
     
     // Check if energy can be attached using ActionValidator
-    if (!ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
-        const message = handlerData.energy.isAbsoluteFirstTurn ? 
-            'Cannot attach energy on first turn as first player.' : 
-            'Cannot attach energy this turn.';
-        await intermediary.form({ type: 'print', message: [message] });
+    if(!ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
+        const message = handlerData.energy.isAbsoluteFirstTurn 
+            ? 'Cannot attach energy on first turn as first player.' 
+            : 'Cannot attach energy this turn.';
+        await intermediary.form({ type: 'print', message: [ message ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
     
     // Get available energy types
     const availableTypes = EnergyController.getAvailableEnergyTypes(handlerData.energy, currentPlayer);
-    if (availableTypes.length === 0) {
-        await intermediary.form({ type: 'print', message: ['No energy available to attach.'] });
+    if(availableTypes.length === 0) {
+        await intermediary.form({ type: 'print', message: [ 'No energy available to attach.' ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
     
     // If multiple energy types available, let player choose
     let selectedEnergyType = availableTypes[0];
-    if (availableTypes.length > 1) {
+    if(availableTypes.length > 1) {
         const energyOptions = availableTypes.map((type: string) => ({
             name: type.charAt(0).toUpperCase() + type.slice(1),
-            value: type
+            value: type,
         }));
         energyOptions.push({ name: 'Back', value: 'back' });
         
-        const [energySent, energyReceived] = intermediary.form({
+        const [ energySent, energyReceived ] = intermediary.form({
             type: 'list',
-            message: ['Choose energy type to attach:'],
-            choices: energyOptions
+            message: [ 'Choose energy type to attach:' ],
+            choices: energyOptions,
         });
         
         const selectedValue = (await energyReceived)[0] as string;
-        if (selectedValue === 'back') {
+        if(selectedValue === 'back') {
             await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
             return;
         }
@@ -459,7 +460,7 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
     const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
     fieldCardOptions.push({
         name: `${activeCreatureData.name} (Active)`,
-        value: 0
+        value: 0,
     });
     
     // Add benched FieldCard
@@ -468,21 +469,21 @@ export async function handleAttachEnergy(cardRepository: CardRepository, interme
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
         fieldCardOptions.push({
             name: `${fieldCardData.name} (Bench)`,
-            value: index + 1
+            value: index + 1,
         });
     });
     
     fieldCardOptions.push({ name: 'Back', value: -1 });
     
-    const [sent, received] = intermediary.form({
+    const [ sent, received ] = intermediary.form({
         type: 'list',
-        message: [`Attach ${selectedEnergyType} energy to which FieldCard?`],
-        choices: fieldCardOptions
+        message: [ `Attach ${selectedEnergyType} energy to which FieldCard?` ],
+        choices: fieldCardOptions,
     });
     
     const fieldCardPosition = (await received)[0] as number;
     
-    if (fieldCardPosition === -1) {
+    if(fieldCardPosition === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
@@ -504,15 +505,15 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
     const benchedFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
     
     // Check if retreat is possible using ActionValidator
-    if (!ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
-        if (benchedFieldCards.length === 0) {
-            await intermediary.form({ type: 'print', message: ['No bench FieldCard to retreat to.'] });
+    if(!ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
+        if(benchedFieldCards.length === 0) {
+            await intermediary.form({ type: 'print', message: [ 'No bench FieldCard to retreat to.' ] });
         } else {
             const retreatCost = fieldCardData.retreatCost;
             const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, activeFieldCard.instanceId);
             await intermediary.form({ 
                 type: 'print', 
-                message: [`Cannot retreat: Need ${retreatCost} energy, but only have ${energyCount} attached.`] 
+                message: [ `Cannot retreat: Need ${retreatCost} energy, but only have ${energyCount} attached.` ], 
             });
         }
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
@@ -524,7 +525,7 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
         const hp = Math.max(0, data.maxHp - fieldCard.damageTaken);
         return {
             name: `${data.name} (${hp} HP)`,
-            value: index
+            value: index,
         };
     });
     
@@ -533,21 +534,21 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
     // Get retreat cost
     const retreatCost = fieldCardData.retreatCost || 0;
     
-    const [sent, received] = intermediary.form({
+    const [ sent, received ] = intermediary.form({
         type: 'list',
-        message: [`Retreat ${fieldCardData.name} (Cost: ${retreatCost} energy) - Choose replacement:`],
-        choices: benchOptions
+        message: [ `Retreat ${fieldCardData.name} (Cost: ${retreatCost} energy) - Choose replacement:` ],
+        choices: benchOptions,
     });
     
     const benchIndex = (await received)[0] as number;
     
-    if (benchIndex === -1) {
+    if(benchIndex === -1) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
         return;
     }
     
     // For now, retreat functionality is not fully implemented
-    await intermediary.form({ type: 'print', message: ['Retreat functionality coming soon!'] });
+    await intermediary.form({ type: 'print', message: [ 'Retreat functionality coming soon!' ] });
     await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
 }
 
@@ -564,7 +565,7 @@ export async function handleAbility(cardRepository: CardRepository, intermediary
     const position = parts[1]; // 'active' or 'bench'
     
     let fieldCardPosition = 0;
-    if (position === 'bench') {
+    if(position === 'bench') {
         fieldCardPosition = parseInt(parts[2]) + 1; // bench index + 1
     }
     
@@ -589,11 +590,10 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
     
     // Use ActionValidator to check if attack is possible
-    const hasUsableAttack = fieldCardData && fieldCardData.attacks && fieldCardData.attacks.some((_, index) => 
-        ActionValidator.canUseAttack(handlerData, cardRepository, currentPlayer, index)
+    const hasUsableAttack = fieldCardData && fieldCardData.attacks && fieldCardData.attacks.some((_, index) => ActionValidator.canUseAttack(handlerData, cardRepository, currentPlayer, index),
     );
     
-    if (hasUsableAttack) {
+    if(hasUsableAttack) {
         actionOptions.push({ name: 'Attack', value: 'attack' });
     }
     
@@ -602,19 +602,18 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     // Check if any FieldCard can evolve
     const allFieldCards = handlerData.field.creatures[currentPlayer].map(toFieldCard);
     
-    const canEvolve = allFieldCards.some((_, position) => 
-        ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position)
+    const canEvolve = allFieldCards.some((_, position) => ActionValidator.canEvolveCreature(handlerData, cardRepository, currentPlayer, position),
     );
     
-    if (canEvolve) {
+    if(canEvolve) {
         actionOptions.push({ name: 'Evolve FieldCard', value: 'evolve' });
     }
     
     // Check for usable abilities on active FieldCard
     const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
-    if (activeCreatureData && activeCreatureData.ability) {
-        if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0)) {
-            actionOptions.push({ name: `Use ${activeCreatureData.ability.name} (Active)`, value: `ability-active` });
+    if(activeCreatureData && activeCreatureData.ability) {
+        if(ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0)) {
+            actionOptions.push({ name: `Use ${activeCreatureData.ability.name} (Active)`, value: 'ability-active' });
         }
     }
     
@@ -622,51 +621,51 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const benchFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard); // Positions 1+ are benched
     benchFieldCards.forEach((fieldCard: FieldCard, benchIndex: number) => {
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
-        if (fieldCardData && fieldCardData.ability) {
-            if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
+        if(fieldCardData && fieldCardData.ability) {
+            if(ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
                 actionOptions.push({ name: `Use ${fieldCardData.ability.name} (${fieldCardData.name})`, value: `ability-bench-${benchIndex}` });
             }
         }
     });
     
     // Check if energy can be attached
-    if (ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
+    if(ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
         actionOptions.push({ name: 'Attach Energy', value: 'attachEnergy' });
     }
     
     // Check if retreat is possible
-    if (ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
+    if(ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
         actionOptions.push({ name: 'Retreat', value: 'retreat' });
     }
     
     actionOptions.push({ name: 'End turn', value: 'endTurn' });
     
     // Ask player to choose an action
-    const [actionSent, actionReceived] = intermediary.form({
+    const [ actionSent, actionReceived ] = intermediary.form({
         type: 'list',
-        message: [`Player ${currentPlayer + 1}, choose your action:`],
-        choices: actionOptions
+        message: [ `Player ${currentPlayer + 1}, choose your action:` ],
+        choices: actionOptions,
     });
     
     const actionType = (await actionReceived)[0] as string;
     
-    if (actionType === 'attack') {
+    if(actionType === 'attack') {
         await handleAttack(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if (actionType === 'play') {
+    } else if(actionType === 'play') {
         await handlePlayCard(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if (actionType === 'evolve') {
+    } else if(actionType === 'evolve') {
         await handleEvolve(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if (actionType === 'attachEnergy') {
+    } else if(actionType === 'attachEnergy') {
         await handleAttachEnergy(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if (actionType === 'retreat') {
+    } else if(actionType === 'retreat') {
         await handleRetreat(cardRepository, intermediary, handlerData, responsesQueue);
-    } else if (actionType.startsWith('ability-')) {
+    } else if(actionType.startsWith('ability-')) {
         await handleAbility(cardRepository, intermediary, handlerData, responsesQueue, actionType);
-    } else if (actionType === 'endTurn') {
+    } else if(actionType === 'endTurn') {
         // Inform the player
         await intermediary.form({ 
             type: 'print', 
-            message: ['Ending your turn.'] 
+            message: [ 'Ending your turn.' ], 
         });
         
         // Send an endTurn action response
@@ -695,8 +694,8 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     const activeEnergyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, activeFieldCard.instanceId);
     const attachedEnergy = EnergyController.getAttachedEnergyByInstance(handlerData.energy, activeFieldCard.instanceId);
     const activeEnergyTypes = Object.entries(attachedEnergy)
-        .filter(([_, count]) => (count as number) > 0)
-        .map(([type, count]) => `${count}${type.charAt(0).toUpperCase()}`)
+        .filter(([ _, count ]) => (count as number) > 0)
+        .map(([ type, count ]) => `${count}${type.charAt(0).toUpperCase()}`)
         .join(',') || '';
     
     // Get bench FieldCard info with energy
@@ -708,8 +707,8 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
         const energyCount = EnergyController.getTotalEnergyByInstance(handlerData.energy, fieldCard.instanceId);
         const energy = EnergyController.getAttachedEnergyByInstance(handlerData.energy, fieldCard.instanceId);
         const energyTypes = Object.entries(energy)
-            .filter(([_, count]) => (count as number) > 0)
-            .map(([type, count]) => `${count}${type.charAt(0).toUpperCase()}`)
+            .filter(([ _, count ]) => (count as number) > 0)
+            .map(([ type, count ]) => `${count}${type.charAt(0).toUpperCase()}`)
             .join(',') || '';
         const energyDisplay = energyCount > 0 ? ` [${energyCount}${energyTypes ? ':' + energyTypes : ''}]` : '';
         return `${name} (${hp}/${maxHp})${energyDisplay}`;
@@ -717,20 +716,20 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     
     // Get status effects display using computed field
     const statusEffectsData = handlerData.statusEffects;
-    const statusText = statusEffectsData ? 
-        (statusEffectsData.activeStatusEffects[playerId] as unknown as StatusEffect[])?.length > 0 ? 
-            ` [${(statusEffectsData.activeStatusEffects[playerId] as unknown as StatusEffect[]).map((e: StatusEffect) => e.type.toUpperCase()).join(', ')}]` : '' 
+    const statusText = statusEffectsData 
+        ? (statusEffectsData.activeStatusEffects[playerId] as unknown as StatusEffect[])?.length > 0 
+            ? ` [${(statusEffectsData.activeStatusEffects[playerId] as unknown as StatusEffect[]).map((e: StatusEffect) => e.type.toUpperCase()).join(', ')}]` : '' 
         : '';
     
     // Get hand summary
     const handSummary = hand.map((card) => {
-        if (card.type === 'creature') {
+        if(card.type === 'creature') {
             const data = cardRepository.getCreature(card.templateId);
             return data.name;
-        } else if (card.type === 'supporter') {
+        } else if(card.type === 'supporter') {
             const data = cardRepository.getSupporter(card.templateId);
             return data.name;
-        } else if (card.type === 'item') {
+        } else if(card.type === 'item') {
             const data = cardRepository.getItem(card.templateId);
             return data.name;
         }
@@ -759,11 +758,11 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
         `Energy Zone: ${currentEnergy} (Next: ${nextEnergy}) - Attached this turn: ${energyAttached ? 'Yes' : 'No'}`,
         `Hand (${hand.length} cards): ${handSummary.join(', ')}`,
         `Supporter played this turn: ${supporterPlayed ? 'Yes' : 'No'}`,
-        `================`
+        '================',
     ].join('\n');
     
     await intermediary.form({
         type: 'print',
-        message: [statusLines]
+        message: [ statusLines ],
     });
 }

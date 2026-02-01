@@ -1,6 +1,5 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { RetreatPreventionEffect } from '../../repository/effect-types.js';
-import { FixedTarget, ResolvedTarget } from '../../repository/target-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getCreatureFromTarget } from '../effect-utils.js';
@@ -36,7 +35,7 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
      */
     getResolutionRequirements(effect: RetreatPreventionEffect): ResolutionRequirement[] {
         return [
-            { targetProperty: 'target', target: effect.target, required: true }
+            { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
     
@@ -50,35 +49,35 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
      */
     apply(controllers: Controllers, effect: RetreatPreventionEffect, context: EffectContext): void {
         // Ensure we have a valid target
-        if (!effect.target) {
+        if(!effect.target) {
             throw new Error('No target specified for retreat prevention effect');
         }
         
-        if (effect.target.type !== 'resolved') {
+        if(effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
         
         // Get resolved targets directly
         const targets = effect.target.targets;
         
-        if (targets.length === 0) {
+        if(targets.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} found no valid targets!`]
+                components: [ `${context.effectName} found no valid targets!` ],
             });
             return;
         }
         
-        for (const target of targets) {
+        for(const target of targets) {
             const { playerId, fieldIndex } = target;
             
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             
-            if (!targetCreature) {
+            if(!targetCreature) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} target creature not found!`]
+                    components: [ `${context.effectName} target creature not found!` ],
                 });
                 continue;
             }
@@ -92,7 +91,7 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
             // Send a message about the retreat prevention
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${creatureName} cannot retreat during the next turn!`]
+                components: [ `${creatureName} cannot retreat during the next turn!` ],
             });
         }
     }

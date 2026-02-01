@@ -9,24 +9,24 @@ interface CreatureInfo {
 function generateMessage(myCreature: CreatureInfo, opponentCreature: CreatureInfo, myBench: CreatureInfo[], opponentBench: CreatureInfo[], handCards: string, drawnCardName?: string): Presentable[] {
     const components = [
         `Opponent's ${opponentCreature.name}: ${opponentCreature.hp}/${opponentCreature.maxHp} HP`,
-        `Your ${myCreature.name}: ${myCreature.hp}/${myCreature.maxHp} HP`
+        `Your ${myCreature.name}: ${myCreature.hp}/${myCreature.maxHp} HP`,
     ];
     
-    if (opponentBench.length > 0) {
-        components.push(`Opponent's Bench:`);
+    if(opponentBench.length > 0) {
+        components.push('Opponent\'s Bench:');
         opponentBench.forEach(p => components.push(`  ${p.name}: ${p.hp}/${p.maxHp} HP`));
     }
     
-    if (myBench.length > 0) {
-        components.push(`Your Bench:`);
+    if(myBench.length > 0) {
+        components.push('Your Bench:');
         myBench.forEach(p => components.push(`  ${p.name}: ${p.hp}/${p.maxHp} HP`));
     }
     
     components.push(`Hand: ${handCards}`);
     
-    if (drawnCardName) {
+    if(drawnCardName) {
         components.unshift(`You drew ${drawnCardName}`);
-    } else if (drawnCardName === null) {
+    } else if(drawnCardName === null) {
         components.unshift('Your deck is empty!');
     }
     

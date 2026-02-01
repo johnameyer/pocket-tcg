@@ -47,7 +47,7 @@ export class EvolutionFlexibilityEffectHandler extends AbstractEffectHandler<Evo
         // Show a message about the evolution flexibility
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} allows more flexible evolution!`]
+            components: [ `${context.effectName} allows more flexible evolution!` ],
         });
     }
 }

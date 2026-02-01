@@ -7,8 +7,8 @@ export class PlayCardResponseMessage extends Message {
         public readonly templateId: string,
         public readonly cardType: 'creature' | 'item' | 'supporter' | 'tool',
         public readonly targetPlayerId?: number,
-        public readonly targetFieldIndex?: number
+        public readonly targetFieldIndex?: number,
     ) {
-        super([`Chose to play card ${templateId}`]);
+        super([ `Chose to play card ${templateId}` ]);
     }
 }

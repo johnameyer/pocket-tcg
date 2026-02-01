@@ -18,12 +18,12 @@ describe('Prevent Damage Effect', () => {
         it('should return true when target exists', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: PreventDamageEffect = {
                 type: 'prevent-damage',
-                target: { type: 'fixed', player: 'self', position: 'active' }
+                target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
@@ -37,7 +37,7 @@ describe('Prevent Damage Effect', () => {
 
             const effect: PreventDamageEffect = {
                 type: 'prevent-damage',
-                target: { type: 'fixed', player: 'self', position: 'active' }
+                target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
@@ -48,11 +48,11 @@ describe('Prevent Damage Effect', () => {
 
         it('should return true when no target specified (protects self)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
 
             const effect: PreventDamageEffect = {
-                type: 'prevent-damage'
+                type: 'prevent-damage',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
@@ -69,16 +69,16 @@ describe('Prevent Damage Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+                attacks: [{ name: 'Basic Attack', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] }],
             }],
-            ['ex-creature', {
+            [ 'ex-creature', {
                 templateId: 'ex-creature',
                 name: 'Ex Creature',
                 maxHp: 180,
@@ -86,9 +86,9 @@ describe('Prevent Damage Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attributes: { ex: true },
-                attacks: [{ name: 'Ex Attack', damage: 60, energyRequirements: [{ type: 'water', amount: 2 }] }]
+                attacks: [{ name: 'Ex Attack', damage: 60, energyRequirements: [{ type: 'water', amount: 2 }] }],
             }],
-            ['mega-ex-creature', {
+            [ 'mega-ex-creature', {
                 templateId: 'mega-ex-creature',
                 name: 'Mega Ex Creature',
                 maxHp: 220,
@@ -96,28 +96,28 @@ describe('Prevent Damage Effect', () => {
                 weakness: 'fighting',
                 retreatCost: 3,
                 attributes: { ex: true, mega: true },
-                attacks: [{ name: 'Mega Attack', damage: 90, energyRequirements: [{ type: 'lightning', amount: 3 }] }]
-            }]
+                attacks: [{ name: 'Mega Attack', damage: 90, energyRequirements: [{ type: 'lightning', amount: 3 }] }],
+            }],
         ]),
         items: new Map<string, ItemData>([
-            ['prevent-item', {
+            [ 'prevent-item', {
                 templateId: 'prevent-item',
                 name: 'Prevent Item',
                 effects: [{ 
                     type: 'prevent-damage',
-                    target: { type: 'fixed', player: 'opponent', position: 'active' }
-                }]
+                    target: { type: 'fixed', player: 'opponent', position: 'active' },
+                }],
             }],
-            ['prevent-ex-item', {
+            [ 'prevent-ex-item', {
                 templateId: 'prevent-ex-item',
                 name: 'Prevent Ex Item',
                 effects: [{
                     type: 'prevent-damage',
                     source: 'ex-creature',
-                    target: { type: 'fixed', player: 'opponent', position: 'active' }
-                }]
-            }]
-        ])
+                    target: { type: 'fixed', player: 'opponent', position: 'active' },
+                }],
+            }],
+        ]),
     });
 
     const preventExItem = { templateId: 'prevent-ex-item', type: 'item' as const };
@@ -126,16 +126,16 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-item', 'item'),
-                new AttackResponseMessage(0) // Attack should deal no damage
+                new AttackResponseMessage(0), // Attack should deal no damage
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withHand(0, [preventItem]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                StateBuilder.withHand(0, [ preventItem ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');
@@ -146,16 +146,16 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-ex-item', 'item'),
-                new AttackResponseMessage(0) // Ex creature attack should be prevented
+                new AttackResponseMessage(0), // Ex creature attack should be prevented
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'ex-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withHand(0, [preventExItem]),
-                StateBuilder.withEnergy('ex-creature-0', { water: 2 })
+                StateBuilder.withHand(0, [ preventExItem ]),
+                StateBuilder.withEnergy('ex-creature-0', { water: 2 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
@@ -166,16 +166,16 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-ex-item', 'item'),
-                new AttackResponseMessage(0) // Mega ex attack should be prevented
+                new AttackResponseMessage(0), // Mega ex attack should be prevented
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'mega-ex-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withHand(0, [preventExItem]),
-                StateBuilder.withEnergy('mega-ex-creature-0', { lightning: 3 })
+                StateBuilder.withHand(0, [ preventExItem ]),
+                StateBuilder.withEnergy('mega-ex-creature-0', { lightning: 3 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
@@ -186,16 +186,16 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-ex-item', 'item'),
-                new AttackResponseMessage(0) // Basic creature attack should not be prevented
+                new AttackResponseMessage(0), // Basic creature attack should not be prevented
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withHand(0, [preventExItem]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                StateBuilder.withHand(0, [ preventExItem ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
@@ -206,16 +206,16 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-item', 'item'),
-                new AttackResponseMessage(0) // Attack should be prevented
+                new AttackResponseMessage(0), // Attack should be prevented
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withHand(0, [preventItem]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 2 }) // Enough energy for attack
+                StateBuilder.withHand(0, [ preventItem ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 2 }), // Enough energy for attack
             ),
-            maxSteps: 20
+            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');
@@ -226,16 +226,16 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-item', 'item'),
-                new AttackResponseMessage(0) // Fire vs Water with weakness
+                new AttackResponseMessage(0), // Fire vs Water with weakness
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'), // Fire type
                 StateBuilder.withCreatures(1, 'ex-creature'), // Water type (weak to grass, not fire)
-                StateBuilder.withHand(0, [preventItem]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                StateBuilder.withHand(0, [ preventItem ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');
@@ -246,17 +246,17 @@ describe('Prevent Damage Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-item', 'item'),
-                new AttackResponseMessage(0) // Attack that would normally KO
+                new AttackResponseMessage(0), // Attack that would normally KO
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'ex-creature'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withHand(0, [preventItem]),
+                StateBuilder.withHand(0, [ preventItem ]),
                 StateBuilder.withEnergy('ex-creature-0', { water: 2 }),
-                StateBuilder.withDamage('basic-creature-1', 50) // Pre-damage: 50 + 60 = 110 > 80 HP
+                StateBuilder.withDamage('basic-creature-1', 50), // Pre-damage: 50 + 60 = 110 > 80 HP
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');

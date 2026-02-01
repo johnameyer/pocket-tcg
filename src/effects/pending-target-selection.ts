@@ -13,4 +13,4 @@ export type PendingTargetSelection = {
     effect: Effect;
     /** The original context in which the effect was triggered */
     originalContext: EffectContext;
-}
+};

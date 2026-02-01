@@ -14,7 +14,7 @@ export type TurnStateData = {
     retreatPreventions: string[]; // Instance IDs of creatures that cannot retreat
     damagePrevention: Array<{ sourcePlayer: number; effectName: string }>;
     evolutionFlexibility: Array<{ sourcePlayer: number; effectName: string }>;
-}
+};
 
 type TurnStateDependencies = {};
 
@@ -81,7 +81,7 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     }
     
     public markEvolvedThisTurn(instanceId: string): void {
-        if (!this.state.evolvedInstancesThisTurn.includes(instanceId)) {
+        if(!this.state.evolvedInstancesThisTurn.includes(instanceId)) {
             this.state.evolvedInstancesThisTurn.push(instanceId);
         }
     }
@@ -92,10 +92,10 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     
     public markAbilityUsed(instanceId: string, abilityName: string): void {
         const abilityKey = `${instanceId}-${abilityName}`;
-        if (!this.state.usedAbilitiesThisTurn) {
+        if(!this.state.usedAbilitiesThisTurn) {
             this.state.usedAbilitiesThisTurn = [];
         }
-        if (!this.state.usedAbilitiesThisTurn.includes(abilityKey)) {
+        if(!this.state.usedAbilitiesThisTurn.includes(abilityKey)) {
             this.state.usedAbilitiesThisTurn.push(abilityKey);
         }
     }
@@ -146,7 +146,7 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     }
 
     public addRetreatPrevention(instanceId: string): void {
-        if (!this.state.retreatPreventions.includes(instanceId)) {
+        if(!this.state.retreatPreventions.includes(instanceId)) {
             this.state.retreatPreventions.push(instanceId);
         }
     }

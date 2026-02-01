@@ -5,40 +5,39 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
-import { getCurrentTemplateId } from '../../src/utils/field-card-utils.js';
 
 describe('Pending Target Selection', () => {
     describe('Dual Target Selection', () => {
         it('should handle sequential target selection in resolution order', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['dual-target-supporter', {
+                    [ 'dual-target-supporter', {
                         templateId: 'dual-target-supporter',
                         name: 'Dual Target Supporter',
                         effects: [{
                             type: 'energy-transfer',
-                            source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' } },
-                            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } },
+                            source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                             amount: { type: 'constant', value: 1 },
-                            energyTypes: ['fire']
-                        }]
-                    }]
-                ])
+                            energyTypes: [ 'fire' ],
+                        }],
+                    }],
+                ]),
             });
 
             const { state, getExecutedCount } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('dual-target-supporter', 'supporter'),
                     new SelectTargetResponseMessage(0, 0), // First: source (active)
-                    new SelectTargetResponseMessage(0, 1)  // Second: target (bench)
+                    new SelectTargetResponseMessage(0, 1), // Second: target (bench)
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                     StateBuilder.withHand(0, [{ templateId: 'dual-target-supporter', type: 'supporter' }]),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 2 })
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             expect(getExecutedCount()).to.equal(3, 'Should execute supporter + 2 target selections');
@@ -53,7 +52,7 @@ describe('Pending Target Selection', () => {
         it('should create pending selection for single-choice target', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['pending-heal', {
+                    [ 'pending-heal', {
                         templateId: 'pending-heal',
                         name: 'Pending Heal',
                         effects: [{
@@ -62,25 +61,25 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             // Test without target selection - should create pending state
             const { state: pendingState } = runTestGame({
-                actions: [new PlayCardResponseMessage('pending-heal', 'supporter')],
+                actions: [ new PlayCardResponseMessage('pending-heal', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
                     StateBuilder.withHand(0, [{ templateId: 'pending-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 40),
-                    StateBuilder.withDamage('basic-creature-0-0', 20)
+                    StateBuilder.withDamage('basic-creature-0-0', 20),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             // Should have pending target effect
@@ -92,7 +91,7 @@ describe('Pending Target Selection', () => {
         it('should resolve pending selection when target provided', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['resolve-heal', {
+                    [ 'resolve-heal', {
                         templateId: 'resolve-heal',
                         name: 'Resolve Heal',
                         effects: [{
@@ -101,18 +100,18 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('resolve-heal', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1)
+                    new SelectTargetResponseMessage(0, 1),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -121,14 +120,14 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 40),
                     (state) => {
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id",
-                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id',
+                            evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                             damageTaken: 30,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
-                    }
+                    },
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             // Should resolve and heal selected target
@@ -142,7 +141,7 @@ describe('Pending Target Selection', () => {
         it('should handle opponent chooser', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['opponent-select', {
+                    [ 'opponent-select', {
                         templateId: 'opponent-select',
                         name: 'Opponent Select',
                         effects: [{
@@ -151,18 +150,18 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'opponent',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('opponent-select', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0)
+                    new SelectTargetResponseMessage(0, 0),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -172,14 +171,14 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 35),
                     (state) => {
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id",
-                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id',
+                            evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                             damageTaken: 25,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
-                    }
+                    },
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(15, 'Opponent should choose our active');
@@ -191,7 +190,7 @@ describe('Pending Target Selection', () => {
         it('should handle multiple effects requiring selection', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['multi-select', {
+                    [ 'multi-select', {
                         templateId: 'multi-select',
                         name: 'Multi Select',
                         effects: [
@@ -201,34 +200,34 @@ describe('Pending Target Selection', () => {
                                 target: {
                                     type: 'single-choice',
                                     chooser: 'self',
-                                    criteria: { player: 'self', location: 'field' }
+                                    criteria: { player: 'self', location: 'field' },
                                 },
-                                operation: 'heal'
+                                operation: 'heal',
                             },
                             {
                                 type: 'hp',
                                 amount: { type: 'constant', value: 15 },
                                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                                operation: 'damage'
-                            }
-                        ]
-                    }]
-                ])
+                                operation: 'damage',
+                            },
+                        ],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('multi-select', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0)
+                    new SelectTargetResponseMessage(0, 0),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'multi-select', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 20)
+                    StateBuilder.withDamage('basic-creature-0', 20),
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal selected self');
@@ -240,7 +239,7 @@ describe('Pending Target Selection', () => {
         it('should handle invalid target selection gracefully', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['invalid-target', {
+                    [ 'invalid-target', {
                         templateId: 'invalid-target',
                         name: 'Invalid Target',
                         effects: [{
@@ -249,26 +248,26 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('invalid-target', 'supporter'),
-                    new SelectTargetResponseMessage(0, 5) // Invalid index
+                    new SelectTargetResponseMessage(0, 5), // Invalid index
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'invalid-target', type: 'supporter' }]),
-                    StateBuilder.withDamage('basic-creature-0', 30)
+                    StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             // Should handle gracefully - either no effect or default to valid target
@@ -278,7 +277,7 @@ describe('Pending Target Selection', () => {
         it('should handle selection with no valid targets', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['no-targets', {
+                    [ 'no-targets', {
                         templateId: 'no-targets',
                         name: 'No Targets',
                         effects: [{
@@ -287,23 +286,23 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field', condition: { hasDamage: true } }
+                                criteria: { player: 'self', location: 'field', condition: { hasDamage: true }},
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('no-targets', 'supporter')],
+                actions: [ new PlayCardResponseMessage('no-targets', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{ templateId: 'no-targets', type: 'supporter' }])
+                    StateBuilder.withHand(0, [{ templateId: 'no-targets', type: 'supporter' }]),
                     // No damage on any Pokemon
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             // Should handle gracefully when no valid targets
@@ -315,7 +314,7 @@ describe('Pending Target Selection', () => {
         it('should track effect name in pending selection', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map<string, SupporterData>([
-                    ['named-effect', {
+                    [ 'named-effect', {
                         templateId: 'named-effect',
                         name: 'Named Effect',
                         effects: [{
@@ -324,16 +323,16 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field' }
+                                criteria: { player: 'self', location: 'field' },
                             },
-                            operation: 'heal'
-                        }]
-                    }]
-                ])
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('named-effect', 'supporter')],
+                actions: [ new PlayCardResponseMessage('named-effect', 'supporter') ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
@@ -341,19 +340,19 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 25),
                     (state) => {
                         state.field.creatures[0].push({
-                            fieldInstanceId: "test-field-id",
-                            evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                            fieldInstanceId: 'test-field-id',
+                            evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                             damageTaken: 15,
-                            turnLastPlayed: 0
+                            turnLastPlayed: 0,
                         });
-                    }
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             // Should have effect name in pending selection
             expect(state.turnState.pendingTargetSelection).to.not.be.null;
-            if (state.turnState.pendingTargetSelection) {
+            if(state.turnState.pendingTargetSelection) {
                 expect((state.turnState.pendingTargetSelection as any).originalContext.effectName).to.equal('Named Effect');
             }
         });

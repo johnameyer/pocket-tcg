@@ -1,15 +1,14 @@
 import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
-import { FixedTarget, Target, ResolvedTarget } from '../repository/target-types.js';
-import { EffectContext } from './effect-context.js';
-import { PendingTargetSelection } from './pending-target-selection.js';
-import { ResolutionRequirement, EffectHandler, EffectHandlerMap } from './interfaces/effect-handler-interface.js';
-import { effectHandlers } from './handlers/effect-handlers-map.js';
-import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
-import { getEffectValue } from './effect-utils.js';
+import { ResolvedTarget } from '../repository/target-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
+import { EffectContext } from './effect-context.js';
+import { PendingTargetSelection } from './pending-target-selection.js';
+import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
+import { effectHandlers } from './handlers/effect-handlers-map.js';
+import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
 
 export class EffectApplier {
     /**
@@ -23,28 +22,28 @@ export class EffectApplier {
      */
     static applyEffects(effects: Effect[], controllers: Controllers, context: EffectContext): void {
         // Guard against undefined/null effects
-        if (!effects || !Array.isArray(effects)) {
+        if(!effects || !Array.isArray(effects)) {
             return;
         }
 
         // Create HandlerData view for validation
         const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
 
-        for (const effect of effects) {
+        for(const effect of effects) {
             // Skip undefined/null effects
-            if (!effect || !effect.type) {
+            if(!effect || !effect.type) {
                 continue;
             }
 
             // Get the handler for this effect type with proper type safety
             const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
             
-            if (!handler) {
+            if(!handler) {
                 continue;
             }
 
             // Validate using HandlerData
-            if (!this.canApplyEffect(effect, handlerData, context, controllers.cardRepository.cardRepository)) {
+            if(!this.canApplyEffect(effect, handlerData, context, controllers.cardRepository.cardRepository)) {
                 continue;
             }
 
@@ -53,7 +52,7 @@ export class EffectApplier {
 
             // Handle resolution for all requirements
             const resolvedEffect = this.resolveEffectRequirements(effect, requirements, controllers, context);
-            if (!resolvedEffect) {
+            if(!resolvedEffect) {
                 // Pending selection or no valid targets
                 return;
             }
@@ -76,15 +75,17 @@ export class EffectApplier {
         effect: Effect,
         requirements: ResolutionRequirement[],
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): Effect | null {
-        // TODO: Replace deep copy hack with proper effect cloning mechanism
-        // Deep copy the effect to avoid modifying the original
+        /*
+         * TODO: Replace deep copy hack with proper effect cloning mechanism
+         * Deep copy the effect to avoid modifying the original
+         */
         let resolvedEffect = JSON.parse(JSON.stringify(effect));
         
-        for (const requirement of requirements) {
+        for(const requirement of requirements) {
             // Check if this target needs selection
-            if (TargetResolver.handleTargetSelection(controllers, effect, context, requirement.target)) {
+            if(TargetResolver.handleTargetSelection(controllers, effect, context, requirement.target)) {
                 return null; // Pending selection
             }
             
@@ -92,10 +93,10 @@ export class EffectApplier {
             const target = requirement.target;
             let resolvedTarget: ResolvedTarget | undefined;
             
-            if (!target) {
+            if(!target) {
                 // No target specified
                 resolvedTarget = undefined;
-            } else if (target.type === 'all-matching' || target.type === 'multi-choice') {
+            } else if(target.type === 'all-matching' || target.type === 'multi-choice') {
                 // Multi-target: use resolveTarget and convert to array
                 const resolution = TargetResolver.resolveTarget(target, controllers, context);
                 resolvedTarget = this.convertResolutionToResolvedTargets(resolution, context);
@@ -105,14 +106,14 @@ export class EffectApplier {
                 resolvedTarget = this.convertSingleResolutionToResolvedTarget(resolution, context);
             }
             
-            if (!resolvedTarget && requirement.required) {
+            if(!resolvedTarget && requirement.required) {
                 return null; // No valid targets for required property
             }
             
             // Set resolved target on the effect using spread operator for type safety
             resolvedEffect = {
                 ...resolvedEffect,
-                [requirement.targetProperty]: resolvedTarget
+                [requirement.targetProperty]: resolvedTarget,
             };
         }
         
@@ -128,7 +129,7 @@ export class EffectApplier {
      */
     private static convertSingleResolutionToResolvedTarget(
         resolution: SingleTargetResolutionResult,
-        context: EffectContext
+        context: EffectContext,
     ): ResolvedTarget | undefined {
         switch (resolution.type) {
             case 'resolved':
@@ -138,8 +139,8 @@ export class EffectApplier {
                     type: 'resolved',
                     targets: [{
                         playerId: resolution.playerId,
-                        fieldIndex: resolution.fieldIndex
-                    }]
+                        fieldIndex: resolution.fieldIndex,
+                    }],
                 };
                 
             default:
@@ -157,7 +158,7 @@ export class EffectApplier {
      */
     private static convertResolutionToResolvedTargets(
         resolution: TargetResolutionResult,
-        context: EffectContext
+        context: EffectContext,
     ): ResolvedTarget {
         switch (resolution.type) {
             case 'resolved':
@@ -167,8 +168,8 @@ export class EffectApplier {
                     type: 'resolved',
                     targets: [{
                         playerId: resolution.playerId,
-                        fieldIndex: resolution.fieldIndex
-                    }]
+                        fieldIndex: resolution.fieldIndex,
+                    }],
                 };
                 
             case 'all-matching':
@@ -176,14 +177,14 @@ export class EffectApplier {
                     type: 'resolved',
                     targets: resolution.targets.map(t => ({
                         playerId: t.playerId,
-                        fieldIndex: t.fieldIndex
-                    }))
+                        fieldIndex: t.fieldIndex,
+                    })),
                 };
                 
             default:
                 return {
                     type: 'resolved',
-                    targets: []
+                    targets: [],
                 };
         }
     }
@@ -201,25 +202,29 @@ export class EffectApplier {
     static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingTargetSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
         const { effect, originalContext, type = 'target' } = pendingSelection;
 
-        // Target validation is now handled at the event handler level
-        // If we reach here, the target is valid
+        /*
+         * Target validation is now handled at the event handler level
+         * If we reach here, the target is valid
+         */
         
         // Create a resolved target from the selection
         const resolvedTarget = {
             type: 'resolved' as const,
             targets: [{
                 playerId: targetPlayerId,
-                fieldIndex: targetCreatureIndex
-            }]
+                fieldIndex: targetCreatureIndex,
+            }],
         };
         
-        // TODO: Replace deep copy hack with proper effect cloning mechanism
-        // Create a deep copy of the effect
+        /*
+         * TODO: Replace deep copy hack with proper effect cloning mechanism
+         * Create a deep copy of the effect
+         */
         let resolvedEffect = JSON.parse(JSON.stringify(effect));
         
         // Get the handler for this effect type with proper type safety
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
-        if (!handler) {
+        if(!handler) {
             console.warn(`No handler found for effect type: ${effect.type}`);
             return false;
         }
@@ -230,18 +235,18 @@ export class EffectApplier {
         // Find the first unresolved requirement that needs selection (in order)
         let targetPropertyUpdated = false;
         
-        for (const requirement of requirements) {
+        for(const requirement of requirements) {
             const currentTarget = resolvedEffect[requirement.targetProperty];
             const target = requirement.target;
             
             // Check if this requirement is unresolved and needs selection
-            if (target && typeof target === 'object' && 
-                (target.type === 'single-choice' || target.type === 'multi-choice') &&
-                (!currentTarget || currentTarget.type !== 'resolved')) {
+            if(target && typeof target === 'object' 
+                && (target.type === 'single-choice' || target.type === 'multi-choice')
+                && (!currentTarget || currentTarget.type !== 'resolved')) {
                 // This is the next target that needs selection
                 resolvedEffect = {
                     ...resolvedEffect,
-                    [requirement.targetProperty]: resolvedTarget
+                    [requirement.targetProperty]: resolvedTarget,
                 };
                 targetPropertyUpdated = true;
                 break;
@@ -249,26 +254,28 @@ export class EffectApplier {
         }
         
         // If no property was updated, log a warning
-        if (!targetPropertyUpdated) {
+        if(!targetPropertyUpdated) {
             console.warn(`Could not determine which property needs the resolved target for effect type: ${effect.type}`);
             return false;
         }
         
         // Check if there are still unresolved targets that need selection
-        for (const requirement of requirements) {
+        for(const requirement of requirements) {
             const currentTarget = resolvedEffect[requirement.targetProperty];
             const target = requirement.target;
             
             // Check if this requirement is still unresolved and needs selection
-            if (target && typeof target === 'object' && 
-                (target.type === 'single-choice' || target.type === 'multi-choice') &&
-                (!currentTarget || currentTarget.type !== 'resolved')) {
-                // There's still another target that needs selection
-                // Set up pending selection for the next target
+            if(target && typeof target === 'object' 
+                && (target.type === 'single-choice' || target.type === 'multi-choice')
+                && (!currentTarget || currentTarget.type !== 'resolved')) {
+                /*
+                 * There's still another target that needs selection
+                 * Set up pending selection for the next target
+                 */
                 const pendingSelection: PendingTargetSelection = {
                     effect: resolvedEffect,
                     originalContext,
-                    type: 'target'
+                    type: 'target',
                 };
                 controllers.turnState.setPendingTargetSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up
@@ -295,7 +302,7 @@ export class EffectApplier {
         // Get the handler for this effect type with proper type safety
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
         
-        if (!handler) {
+        if(!handler) {
             console.warn(`No handler found for effect type: ${effect.type}`);
             return false;
         }
@@ -304,16 +311,16 @@ export class EffectApplier {
         const requirements = handler.getResolutionRequirements(effect);
         
         // If there are requirements, check if all required targets are available
-        if (requirements.length > 0) {
-            for (const requirement of requirements) {
-                if (requirement.required && !TargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
+        if(requirements.length > 0) {
+            for(const requirement of requirements) {
+                if(requirement.required && !TargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
                     return false;
                 }
             }
         }
         
         // If all required targets are available, then check if the handler has additional validation
-        if (handler.canApply) {
+        if(handler.canApply) {
             return handler.canApply(handlerData, effect, context, cardRepository);
         }
         
@@ -332,7 +339,7 @@ export class EffectApplier {
         // Get the handler for this effect type with proper type safety
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
         
-        if (!handler) {
+        if(!handler) {
             console.warn(`No handler found for effect type: ${effect.type}`);
             return false;
         }
@@ -341,8 +348,8 @@ export class EffectApplier {
         const requirements = handler.getResolutionRequirements(effect);
         
         // Check if any target requires selection
-        for (const requirement of requirements) {
-            if (TargetResolver.requiresTargetSelection(requirement.target, context)) {
+        for(const requirement of requirements) {
+            if(TargetResolver.requiresTargetSelection(requirement.target, context)) {
                 return true;
             }
         }

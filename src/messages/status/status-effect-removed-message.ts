@@ -7,15 +7,15 @@ export enum StatusEffectRemovalReason {
     RETREAT = 'retreat', 
     EVOLUTION = 'evolution',
     TURN_END = 'turn-end',
-    CARD_EFFECT = 'card-effect'
+    CARD_EFFECT = 'card-effect',
 }
 
 function generateMessage(fieldCardName: string, effect: StatusEffectType, playerId: number, reason: StatusEffectRemovalReason): Presentable[] {
-    const reasonText = reason === StatusEffectRemovalReason.COIN_FLIP ? 'due to coin flip' : 
-                      reason === StatusEffectRemovalReason.RETREAT ? 'due to retreating' :
-                      reason === StatusEffectRemovalReason.EVOLUTION ? 'due to evolution' :
-                      reason === StatusEffectRemovalReason.TURN_END ? 'at turn end' : 'due to card effect';
-    return [`${fieldCardName} (Player ${playerId + 1}) is no longer ${effect} ${reasonText}.`];
+    const reasonText = reason === StatusEffectRemovalReason.COIN_FLIP ? 'due to coin flip' 
+        : reason === StatusEffectRemovalReason.RETREAT ? 'due to retreating'
+            : reason === StatusEffectRemovalReason.EVOLUTION ? 'due to evolution'
+                : reason === StatusEffectRemovalReason.TURN_END ? 'at turn end' : 'due to card effect';
+    return [ `${fieldCardName} (Player ${playerId + 1}) is no longer ${effect} ${reasonText}.` ];
 }
 
 /**
@@ -34,7 +34,7 @@ export class StatusEffectRemovedMessage extends Message {
         public readonly playerId: number,
         public readonly fieldCardName: string,
         public readonly effect: StatusEffectType,
-        public readonly reason: StatusEffectRemovalReason
+        public readonly reason: StatusEffectRemovalReason,
     ) {
         super(generateMessage(fieldCardName, effect, playerId, reason));
     }
