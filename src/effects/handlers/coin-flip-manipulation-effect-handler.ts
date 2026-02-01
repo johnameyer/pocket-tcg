@@ -29,16 +29,17 @@ export class CoinFlipManipulationEffectHandler extends AbstractEffectHandler<Coi
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: CoinFlipManipulationEffect, context: EffectContext): void {
-        // Register as a passive effect with until-end-of-turn duration
+        // Register as a passive effect
         // This is consumed during the next coin flip
-        controllers.passiveEffects.registerPassiveEffect(
+        controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
             {
                 type: 'coin-flip-manipulation',
                 guaranteeNextHeads: effect.guaranteeNextHeads,
+                duration: effect.duration,
             },
-            { type: 'until-end-of-turn' },
+            effect.duration,
             controllers.turnCounter.getTurnNumber()
         );
         

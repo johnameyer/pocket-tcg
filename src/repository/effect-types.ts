@@ -96,14 +96,14 @@ export type PreventDamageEffect = {
     type: 'prevent-damage';
     target?: Target;
     source?: string;
-    duration?: Duration;
+    duration: Duration;
 };
 
 export type DamageReductionEffect = {
     type: 'damage-reduction';
     amount: EffectValue;
     target: Target;
-    duration?: Duration;
+    duration: Duration;
 };
 
 export type RetreatPreventionEffect = {
@@ -123,6 +123,7 @@ export type EvolutionFlexibilityEffect = {
     type: 'evolution-flexibility';
     target: string;
     baseForm: string;
+    duration: Duration;
 };
 
 export type EndTurnEffect = {
@@ -132,6 +133,7 @@ export type EndTurnEffect = {
 export type CoinFlipManipulationEffect = {
     type: 'coin-flip-manipulation';
     guaranteeNextHeads: boolean;
+    duration: Duration;
 };
 
 export type DamageBoostEffect = {
@@ -139,18 +141,19 @@ export type DamageBoostEffect = {
     amount: EffectValue;
     target?: Target;
     condition?: Condition;
-    duration?: Duration;
+    duration: Duration;
 };
 
 export type HpBonusEffect = {
     type: 'hp-bonus';
     amount: EffectValue;
+    duration: Duration;
 };
 
 export type RetreatCostReductionEffect = {
     type: 'retreat-cost-reduction';
     amount: EffectValue;
-    duration?: Duration;
+    duration: Duration;
 };
 
 /**

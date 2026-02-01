@@ -86,12 +86,13 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
             const creatureName = controllers.cardRepository.getCreature(targetCreature.templateId).name;
             
             // Register as a passive effect with the specified duration
-            controllers.passiveEffects.registerPassiveEffect(
+            controllers.effects.registerPassiveEffect(
                 context.sourcePlayer,
                 context.effectName,
                 {
                     type: 'retreat-prevention',
                     target: effect.target,
+                    duration: effect.duration,
                 },
                 effect.duration,
                 controllers.turnCounter.getTurnNumber()

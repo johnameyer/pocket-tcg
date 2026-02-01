@@ -36,18 +36,16 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
             return;
         }
         
-        // Determine duration - default to until-end-of-turn if not specified
-        const duration = effect.duration || { type: 'until-end-of-turn' as const };
-        
         // Register as a passive effect
-        controllers.passiveEffects.registerPassiveEffect(
+        controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
             {
                 type: 'retreat-cost-reduction',
                 amount: effect.amount,
+                duration: effect.duration,
             },
-            duration,
+            effect.duration,
             controllers.turnCounter.getTurnNumber()
         );
         

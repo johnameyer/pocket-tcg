@@ -41,16 +41,17 @@ export class EvolutionFlexibilityEffectHandler extends AbstractEffectHandler<Evo
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: EvolutionFlexibilityEffect, context: EffectContext): void {
-        // Register as a passive effect with until-end-of-turn duration
-        controllers.passiveEffects.registerPassiveEffect(
+        // Register as a passive effect
+        controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
             {
                 type: 'evolution-flexibility',
                 target: effect.target,
                 baseForm: effect.baseForm,
+                duration: effect.duration,
             },
-            { type: 'until-end-of-turn' },
+            effect.duration,
             controllers.turnCounter.getTurnNumber()
         );
         

@@ -33,11 +33,8 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
             throw new Error(`No active creature found for player ${context.sourcePlayer}`);
         }
         
-        // Determine duration - default to until-end-of-turn if not specified
-        const duration = effect.duration || { type: 'until-end-of-turn' as const };
-        
         // Register as a passive effect
-        controllers.passiveEffects.registerPassiveEffect(
+        controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
             {
@@ -45,8 +42,9 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
                 amount: effect.amount,
                 target: effect.target,
                 condition: effect.condition,
+                duration: effect.duration,
             },
-            duration,
+            effect.duration,
             controllers.turnCounter.getTurnNumber(),
             effect.condition
         );

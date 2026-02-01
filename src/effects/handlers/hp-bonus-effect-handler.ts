@@ -31,40 +31,16 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
         // Get the amount of HP to add
         const amount = getEffectValue(effect.amount, controllers, context);
         
-        // Determine duration based on context
-        // For tools, use while-attached duration if we can identify the tool
-        // For abilities, use while-in-play duration if we can identify the creature
-        // Otherwise, use until-end-of-turn
-        let duration: any = { type: 'until-end-of-turn' as const };
-        
-        if (context.type === 'trainer' && context.cardInstanceId) {
-            // Tool being attached - use while-attached duration
-            // This requires knowing which creature the tool is attached to
-            const activeCreature = controllers.field.getRawCardByPosition(context.sourcePlayer, 0);
-            if (activeCreature) {
-                duration = {
-                    type: 'while-attached' as const,
-                    toolInstanceId: context.cardInstanceId,
-                    cardInstanceId: activeCreature.instanceId,
-                };
-            }
-        } else if ((context.type === 'ability' || context.type === 'trigger') && context.creatureInstanceId) {
-            // Ability from a creature - use while-in-play duration
-            duration = {
-                type: 'while-in-play' as const,
-                instanceId: context.creatureInstanceId,
-            };
-        }
-        
         // Register as a passive effect
-        controllers.passiveEffects.registerPassiveEffect(
+        controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
             {
                 type: 'hp-bonus',
                 amount: effect.amount,
+                duration: effect.duration,
             },
-            duration,
+            effect.duration,
             controllers.turnCounter.getTurnNumber()
         );
         

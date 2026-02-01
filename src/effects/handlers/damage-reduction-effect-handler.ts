@@ -87,19 +87,17 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
             // Get creature data for messaging
             const creatureName = controllers.cardRepository.getCreature(targetCreature.templateId).name;
             
-            // Determine duration - default to until-end-of-next-turn if not specified
-            const duration = effect.duration || { type: 'until-end-of-next-turn' as const };
-            
             // Register as a passive effect
-            controllers.passiveEffects.registerPassiveEffect(
+            controllers.effects.registerPassiveEffect(
                 context.sourcePlayer,
                 context.effectName,
                 {
                     type: 'damage-reduction',
                     amount: effect.amount,
                     target: effect.target,
+                    duration: effect.duration,
                 },
-                duration,
+                effect.duration,
                 controllers.turnCounter.getTurnNumber()
             );
             

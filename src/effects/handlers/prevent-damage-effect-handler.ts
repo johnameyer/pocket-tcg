@@ -100,22 +100,20 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
         }
         
         if (creatureInstanceId) {
-            // Determine duration - default to until-end-of-next-turn if not specified
-            const duration = effect.duration || { type: 'until-end-of-next-turn' as const };
-            
             /*
              * Register the damage prevention effect as a passive effect
              * This will be checked during damage calculation
              */
-            controllers.passiveEffects.registerPassiveEffect(
+            controllers.effects.registerPassiveEffect(
                 context.sourcePlayer,
                 context.effectName,
                 {
                     type: 'prevent-damage',
                     target: effect.target,
                     source: effect.source,
+                    duration: effect.duration,
                 },
-                duration,
+                effect.duration,
                 controllers.turnCounter.getTurnNumber()
             );
             
