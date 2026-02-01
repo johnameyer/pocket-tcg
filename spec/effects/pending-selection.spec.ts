@@ -28,8 +28,8 @@ describe('Pending Target Selection', () => {
             const { state, getExecutedCount } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('dual-target-supporter', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0), // First: source (active)
-                    new SelectTargetResponseMessage(0, 1), // Second: target (bench)
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]), // First: source (active)
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]), // Second: target (bench)
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -111,7 +111,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('resolve-heal', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -161,7 +161,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('opponent-select', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -218,7 +218,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('multi-select', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -259,7 +259,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('invalid-target', 'supporter'),
-                    new SelectTargetResponseMessage(0, 5), // Invalid index
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 5 }]), // Invalid index
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(

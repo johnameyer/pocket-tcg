@@ -116,7 +116,7 @@ describe('Switch Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1),
+                new SelectTargetResponseMessage([{ playerId: 1, fieldIndex: 1 }]),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -139,7 +139,7 @@ describe('Switch Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('damage-switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1),
+                new SelectTargetResponseMessage([{ playerId: 1, fieldIndex: 1 }]),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -179,7 +179,7 @@ describe('Switch Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1), // Select opponent's bench Pokemon
+                new SelectTargetResponseMessage([{ playerId: 1, fieldIndex: 1 }]), // Select opponent's bench Pokemon
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -220,7 +220,7 @@ describe('Switch Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1), // Select first bench Pokemon (high-hp-creature)
+                new SelectTargetResponseMessage([{ playerId: 1, fieldIndex: 1 }]), // Select first bench Pokemon (high-hp-creature)
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -245,7 +245,7 @@ describe('Switch Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('switch-supporter', 'supporter'),
-                new SelectTargetResponseMessage(1, 1),
+                new SelectTargetResponseMessage([{ playerId: 1, fieldIndex: 1 }]),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(

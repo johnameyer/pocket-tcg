@@ -309,10 +309,10 @@ const handlePendingSelections = loop<Controllers>({
     breakingIf: (controllers: Controllers) => !hasPendingSelection(controllers),
     run: sequence<Controllers>([
         conditionalState({
-            id: 'handleTargetSelection',
+            id: 'handleFieldSelection',
             condition: (controllers: Controllers) => {
                 const pending = controllers.turnState.getPendingSelection();
-                return pending?.selectionType === 'target';
+                return pending?.selectionType === 'field';
             },
             truthy: handleSingle({
                 handler: 'selectTarget',

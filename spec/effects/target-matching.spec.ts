@@ -97,7 +97,7 @@ describe('Target Matching', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('choice-target', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -136,7 +136,7 @@ describe('Target Matching', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('opponent-choice', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
