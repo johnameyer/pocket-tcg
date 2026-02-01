@@ -1,9 +1,8 @@
-import { AbstractController, GenericControllerProvider, IndexedControllers, GlobalController, ParamsController } from '@cards-ts/core';
-import { Card, CreatureCard, SupporterCard, ItemCard, GameCard } from './card-types.js';
+import { AbstractController, GenericControllerProvider, ParamsController } from '@cards-ts/core';
+import { GameParams } from '../game-params.js';
+import { GameCard } from './card-types.js';
 import { DeckController } from './deck-controller.js';
 import { DiscardController } from './discard-controller.js';
-import { CardRepository } from '../repository/card-repository.js';
-import { GameParams } from '../game-params.js';
 
 type HandDependencies = {
     deck: DeckController;
@@ -140,8 +139,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     // Remove specific cards from hand and discard them
     removeCards(playerId: number, cardsToRemove: GameCard[]): void {
         for (const cardToRemove of cardsToRemove) {
-            const index = this.state[playerId].findIndex(card => 
-                card.templateId === cardToRemove.templateId && card.type === cardToRemove.type
+            const index = this.state[playerId].findIndex(card => card.templateId === cardToRemove.templateId && card.type === cardToRemove.type,
             );
             if (index !== -1) {
                 const removedCard = this.state[playerId].splice(index, 1)[0];
@@ -153,8 +151,7 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Check if player has specific card
     hasCard(cardToCheck: GameCard, playerId: number): boolean {
-        return this.state[playerId].some(card => 
-            card.templateId === cardToCheck.templateId && card.type === cardToCheck.type
+        return this.state[playerId].some(card => card.templateId === cardToCheck.templateId && card.type === cardToCheck.type,
         );
     }
     

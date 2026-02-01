@@ -20,13 +20,13 @@ describe('Retreat Prevention Effect', () => {
         it('should return true when target exists', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: RetreatPreventionEffect = {
                 type: 'retreat-prevention',
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: 'turn'
+                duration: 'turn',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
@@ -37,13 +37,13 @@ describe('Retreat Prevention Effect', () => {
 
         it('should return false when target does not exist (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
 
             const effect: RetreatPreventionEffect = {
                 type: 'retreat-prevention',
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: 'turn'
+                duration: 'turn',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
@@ -55,13 +55,13 @@ describe('Retreat Prevention Effect', () => {
         it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
             const effect: RetreatPreventionEffect = {
                 type: 'retreat-prevention',
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' } },
-                duration: 'turn'
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
+                duration: 'turn',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
@@ -77,63 +77,63 @@ describe('Retreat Prevention Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
             }],
-            ['high-hp-creature', {
+            [ 'high-hp-creature', {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 180,
                 type: 'water',
                 weakness: 'grass',
                 retreatCost: 2,
-                attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }]
-            }]
+                attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
+            }],
         ]),
         items: new Map<string, ItemData>([
-            ['prevention-item', {
+            [ 'prevention-item', {
                 templateId: 'prevention-item',
                 name: 'Prevention Item',
                 effects: [{
                     type: 'retreat-prevention',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    duration: 'opponent-next-turn'
-                }]
+                    duration: 'opponent-next-turn',
+                }],
             }],
-            ['self-prevention-item', {
+            [ 'self-prevention-item', {
                 templateId: 'self-prevention-item',
                 name: 'Self Prevention Item',
                 effects: [{
                     type: 'retreat-prevention',
                     target: { type: 'fixed', player: 'self', position: 'active' },
-                    duration: 'self-next-turn'
-                }]
+                    duration: 'self-next-turn',
+                }],
             }],
-            ['choice-prevention-item', {
+            [ 'choice-prevention-item', {
                 templateId: 'choice-prevention-item',
                 name: 'Choice Prevention Item',
                 effects: [{
                     type: 'retreat-prevention',
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field' } },
-                    duration: 'opponent-next-turn'
-                }]
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field' }},
+                    duration: 'opponent-next-turn',
+                }],
             }],
-            ['all-prevention-item', {
+            [ 'all-prevention-item', {
                 templateId: 'all-prevention-item',
                 name: 'All Prevention Item',
                 effects: [{
                     type: 'retreat-prevention',
-                    target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' } },
-                    duration: 'opponent-next-turn'
-                }]
-            }]
-        ])
+                    target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }},
+                    duration: 'opponent-next-turn',
+                }],
+            }],
+        ]),
     });
 
     const selfPreventionItem = { templateId: 'self-prevention-item', type: 'item' as const };
@@ -145,24 +145,24 @@ describe('Retreat Prevention Effect', () => {
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new EndTurnResponseMessage(),
-                new RetreatResponseMessage(0) // Opponent tries to retreat
+                new RetreatResponseMessage(0), // Opponent tries to retreat
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [preventionItem]),
+                StateBuilder.withHand(0, [ preventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 20
+            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevention item and end turn (retreat blocked)');
@@ -173,24 +173,24 @@ describe('Retreat Prevention Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('self-prevention-item', 'item'),
-                new RetreatResponseMessage(0) // Try to retreat own active
+                new RetreatResponseMessage(0), // Try to retreat own active
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [selfPreventionItem]),
+                StateBuilder.withHand(0, [ selfPreventionItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
                     state.field.creatures[0].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'high-hp-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'high-hp-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed prevention item only (retreat blocked)');
@@ -203,24 +203,24 @@ describe('Retreat Prevention Effect', () => {
                 new PlayCardResponseMessage('choice-prevention-item', 'item'),
                 // Target selection would be needed here for single-choice
                 new EndTurnResponseMessage(),
-                new RetreatResponseMessage(0)
+                new RetreatResponseMessage(0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [choicePreventionItem]),
+                StateBuilder.withHand(0, [ choicePreventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 20
+            maxSteps: 20,
         });
 
         // This test may fail if target selection is required but not provided
@@ -232,24 +232,24 @@ describe('Retreat Prevention Effect', () => {
             actions: [
                 new PlayCardResponseMessage('all-prevention-item', 'item'),
                 new EndTurnResponseMessage(),
-                new RetreatResponseMessage(0) // Opponent tries to retreat active
+                new RetreatResponseMessage(0), // Opponent tries to retreat active
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [allPreventionItem]),
+                StateBuilder.withHand(0, [ allPreventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 20
+            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed all prevention item and end turn (retreat blocked)');
@@ -261,23 +261,23 @@ describe('Retreat Prevention Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
-                new EndTurnResponseMessage() // This should clear the prevention
+                new EndTurnResponseMessage(), // This should clear the prevention
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [preventionItem]),
+                StateBuilder.withHand(0, [ preventionItem ]),
                 (state) => {
                     state.field.creatures[1].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         // Check that retreat preventions are cleared after end turn
@@ -288,24 +288,24 @@ describe('Retreat Prevention Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
-                new RetreatResponseMessage(0) // Same turn retreat (should work)
+                new RetreatResponseMessage(0), // Same turn retreat (should work)
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [preventionItem]),
+                StateBuilder.withHand(0, [ preventionItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 (state) => {
                     state.field.creatures[0].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'high-hp-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'high-hp-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevention item and retreat');
@@ -318,24 +318,24 @@ describe('Retreat Prevention Effect', () => {
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new EndTurnResponseMessage(),
-                new RetreatResponseMessage(0) // Opponent tries to retreat
+                new RetreatResponseMessage(0), // Opponent tries to retreat
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [preventionItem, preventionItem]),
+                StateBuilder.withHand(0, [ preventionItem, preventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
                 (state) => {
                     state.field.creatures[1].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'basic-creature' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'basic-creature' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 25
+            maxSteps: 25,
         });
 
         expect(getExecutedCount()).to.equal(3, 'Should have executed both prevention items and end turn (retreat blocked)');

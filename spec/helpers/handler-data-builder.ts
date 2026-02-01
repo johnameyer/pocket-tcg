@@ -9,7 +9,7 @@ type PartialEnergyDict = Partial<Record<AttachableEnergyType, number>>;
 // Helper function to create empty energy dictionary
 const createEmptyEnergyDict = (): EnergyDictionary => ({
     grass: 0, fire: 0, water: 0, lightning: 0,
-    psychic: 0, fighting: 0, darkness: 0, metal: 0
+    psychic: 0, fighting: 0, darkness: 0, metal: 0,
 });
 
 // Type for customizer function, analogous to StateBuilder
@@ -34,8 +34,10 @@ export class HandlerDataBuilder {
      * @param customizers Optional functions to modify the default data
      */
     static default(...customizers: HandlerDataCustomizer[]): HandlerData {
-        // Create minimal HandlerData for unit testing
-        // This is a partial representation - only includes properties needed for canApply tests
+        /*
+         * Create minimal HandlerData for unit testing
+         * This is a partial representation - only includes properties needed for canApply tests
+         */
         const data = {
             deck: 0,
             hand: [],
@@ -53,19 +55,19 @@ export class HandlerDataBuilder {
                 retreatCostReductions: [],
                 retreatPreventions: [],
                 damagePrevention: [],
-                evolutionFlexibility: []
+                evolutionFlexibility: [],
             },
             energy: { 
-                currentEnergy: [null, null], 
+                currentEnergy: [ null, null ], 
                 isAbsoluteFirstTurn: false,
-                nextEnergy: [null, null],
+                nextEnergy: [ null, null ],
                 attachedEnergyByInstance: {},
                 availableTypes: [[], []],
-                discardedEnergy: [createEmptyEnergyDict(), createEmptyEnergyDict()]
+                discardedEnergy: [ createEmptyEnergyDict(), createEmptyEnergyDict() ],
             },
             statusEffects: {
-                activeStatusEffects: [[], []]
-            }
+                activeStatusEffects: [[], []],
+            },
         };
         
         // Apply customizers
@@ -102,12 +104,12 @@ export class HandlerDataBuilder {
      * Set the hand.
      * @param cards Array of cards in hand
      */
-    static withHand(cards: Array<{templateId: string, type?: GameCard['type']}>): HandlerDataCustomizer {
+    static withHand(cards: Array<{ templateId: string, type?: GameCard['type'] }>): HandlerDataCustomizer {
         return (data: HandlerData) => {
             data.hand = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-hand-${index}`,
                 templateId: card.templateId,
-                type: card.type || 'creature'
+                type: card.type || 'creature',
             }));
         };
     }
@@ -126,7 +128,7 @@ export class HandlerDataBuilder {
                 ...bench.map((templateId, index) => {
                     const benchInstanceId = `${templateId}-${player}-bench-${index}`;
                     return createInstancedFieldCard(benchInstanceId, templateId, 1);
-                })
+                }),
             ];
         };
     }

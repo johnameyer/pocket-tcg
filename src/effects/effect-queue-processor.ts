@@ -15,8 +15,10 @@ export class EffectQueueProcessor {
      * @param controllers Game controllers
      */
     static processQueue(controllers: Controllers): void {
-        // Process effects one by one until the queue is empty
-        // Using a while loop ensures that effects triggered by other effects are also processed
+        /*
+         * Process effects one by one until the queue is empty
+         * Using a while loop ensures that effects triggered by other effects are also processed
+         */
         while (controllers.effects.hasPendingEffects()) {
             const pendingEffect = controllers.effects.popPendingEffect();
             

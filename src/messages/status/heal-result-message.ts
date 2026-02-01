@@ -6,8 +6,8 @@ export class HealResultMessage extends Message {
     constructor(
         public readonly fieldCardName: string,
         public readonly healing: number,
-        public readonly currentHp: number
+        public readonly currentHp: number,
     ) {
-        super([`${fieldCardName} was healed for ${healing} HP! (Current HP: ${currentHp})`]);
+        super([ `${fieldCardName} was healed for ${healing} HP! (Current HP: ${currentHp})` ]);
     }
 }

@@ -7,7 +7,7 @@ export class CardRepository {
         private creatureData: Map<string, CreatureData> = new Map(),
         private supporterData: Map<string, SupporterData> = new Map(),
         private itemData: Map<string, ItemData> = new Map(),
-        private fieldCardToolData: Map<string, ToolData> = new Map()
+        private fieldCardToolData: Map<string, ToolData> = new Map(),
     ) {
         // Build name-to-creature map at instantiation time for efficient lookups
         for (const creature of creatureData.values()) {
@@ -128,15 +128,17 @@ export class CardRepository {
                 return 0; // Basic FieldCard
             }
             
-            // Check if the FieldCard it evolves from is also an evolution FieldCard
-            // evolvesFrom is now a creature name, not a templateId
+            /*
+             * Check if the FieldCard it evolves from is also an evolution FieldCard
+             * evolvesFrom is now a creature name, not a templateId
+             */
             try {
                 const preFieldCard = this.getCreatureByName(fieldCard.previousStageName);
                 if (!preFieldCard.previousStageName) {
                     return 1; // Stage 1 FieldCard (evolves from Basic)
-                } else {
-                    return 2; // Stage 2 FieldCard (evolves from Stage 1)
-                }
+                } 
+                return 2; // Stage 2 FieldCard (evolves from Stage 1)
+                
             } catch (error) {
                 // If we can't find the pre-evolution, assume it's a Stage 1
                 return 1;

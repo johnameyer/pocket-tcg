@@ -1,8 +1,8 @@
-import { AbstractController, GenericControllerProvider, IndexedControllers, ParamsController } from '@cards-ts/core';
-import { GameCard } from './card-types.js';
+import { AbstractController, GenericControllerProvider, ParamsController } from '@cards-ts/core';
 import { AttachableEnergyType } from '../repository/energy-types.js';
-import { CardRepositoryController } from './card-repository-controller.js';
 import { GameParams } from '../game-params.js';
+import { GameCard } from './card-types.js';
+import { CardRepositoryController } from './card-repository-controller.js';
 
 // Dependencies for this controller
 type DeckDependencies = {
@@ -24,10 +24,13 @@ export class DeckControllerProvider implements GenericControllerProvider<GameCar
     }
 }
 
-// TODO: Handler should know what cards are remaining but not in order - need to make this clear to handlers
-// This is important for maintaining game integrity while providing necessary information
+/*
+ * TODO: Handler should know what cards are remaining but not in order - need to make this clear to handlers
+ * This is important for maintaining game integrity while providing necessary information
+ */
 export class DeckController extends AbstractController<GameCard[][], DeckDependencies, number> {
     private playerCount: number = 0;
+
     private nextCardInstanceId: number = 1;
     
     initialize(playerCount: number, initialDecks?: GameCard[][] | string[][]): void {
@@ -48,12 +51,12 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
                         return {
                             instanceId: `card-${this.nextCardInstanceId++}`,
                             type: type as 'creature' | 'supporter' | 'item' | 'tool',
-                            templateId: templateId
+                            templateId: templateId,
                         } as GameCard;
                     });
                 } else {
                     // Use GameCard objects directly
-                    this.state[i] = [...(initialDecks as GameCard[][])[i]];
+                    this.state[i] = [ ...(initialDecks as GameCard[][])[i] ];
                 }
                 
                 // Shuffle the deck
@@ -81,10 +84,10 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
         
         // Fallback to hardcoded values
         const playerEnergyTypes: AttachableEnergyType[][] = [
-            ['metal'], // Player 1: Metal
-            ['lightning'], // Player 2: Lightning
+            [ 'metal' ], // Player 1: Metal
+            [ 'lightning' ], // Player 2: Lightning
         ];
-        return playerEnergyTypes[playerId] || ['fire'];
+        return playerEnergyTypes[playerId] || [ 'fire' ];
     }
     
     // Get player count
@@ -97,7 +100,7 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
         const deck = this.state[playerId];
         for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
+            [ deck[i], deck[j] ] = [ deck[j], deck[i] ];
         }
     }
     
@@ -123,8 +126,10 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
         return this.state[playerId].length;
     }
     
-    // Required by AbstractController
-    // Return only the deck size, not the full deck data
+    /*
+     * Required by AbstractController
+     * Return only the deck size, not the full deck data
+     */
     getFor(position: number): number {
         return this.getDeckSize(position);
     }

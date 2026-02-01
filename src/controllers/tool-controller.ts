@@ -1,11 +1,13 @@
-import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, SystemHandlerParams } from '@cards-ts/core';
 import { CardRepository } from '../repository/card-repository.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
 
 export type ToolState = {
     // Map of FieldCard instance ID to attached tool info
-    attachedTools: { [fieldCardInstanceId: string]: { templateId: string; instanceId: string } };
+    attachedTools: {
+        [fieldCardInstanceId: string]: { templateId: string; instanceId: string };
+    };
 };
 
 type ToolDependencies = {
@@ -21,7 +23,7 @@ export class ToolControllerProvider implements GenericControllerProvider<ToolSta
     
     initialState(): ToolState {
         return {
-            attachedTools: {}
+            attachedTools: {},
         };
     }
     
@@ -34,7 +36,7 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
     constructor(
         state: ToolState,
         controllers: ToolDependencies,
-        private cardRepository: CardRepository
+        private cardRepository: CardRepository,
     ) {
         super(state, controllers);
     }
@@ -63,7 +65,7 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
         
         this.state.attachedTools[fieldCardInstanceId] = { 
             templateId: toolTemplateId, 
-            instanceId: toolInstanceId 
+            instanceId: toolInstanceId, 
         };
         return true;
     }
@@ -78,14 +80,20 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
         return !this.state.attachedTools[fieldCardInstanceId];
     }
     
-    // TODO: Probably shouldn't be handled in this class
-    // Calculate HP bonus from attached tool
+    /*
+     * TODO: Probably shouldn't be handled in this class
+     * Calculate HP bonus from attached tool
+     */
     public getHpBonus(fieldCardInstanceId: string): number {
         const tool = this.getAttachedTool(fieldCardInstanceId);
-        if (!tool) return 0;
+        if (!tool) {
+            return 0; 
+        }
         
         const toolData = this.cardRepository.getTool(tool.templateId);
-        if (!toolData || !toolData.effects) return 0;
+        if (!toolData || !toolData.effects) {
+            return 0; 
+        }
         
         let hpBonus = 0;
         

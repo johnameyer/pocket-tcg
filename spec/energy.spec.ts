@@ -8,11 +8,11 @@ describe('Energy System', () => {
     describe('Energy Validation', () => {
         it('should allow attack with sufficient energy', () => {
             const { getExecutedCount } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
-                )
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                ),
             });
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed attack with sufficient energy');
@@ -20,11 +20,11 @@ describe('Energy System', () => {
 
         it('should prevent attack with insufficient energy', () => {
             const { getExecutedCount } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'high-hp-creature'),
-                    StateBuilder.withEnergy('high-hp-creature-0', { fighting: 1 }) // Needs 2 fighting
-                )
+                    StateBuilder.withEnergy('high-hp-creature-0', { fighting: 1 }), // Needs 2 fighting
+                ),
             });
 
             expect(getExecutedCount()).to.be.greaterThanOrEqual(0, 'Action should be attempted but energy validation should trigger');
@@ -32,12 +32,12 @@ describe('Energy System', () => {
 
         it('should validate energy types match creature attack requirements', () => {
             const { state } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'), // Fire creature
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withEnergy('basic-creature-0', { water: 2 }) // Wrong energy type for fire attack
-                )
+                    StateBuilder.withEnergy('basic-creature-0', { water: 2 }), // Wrong energy type for fire attack
+                ),
             });
 
             // Verify no damage was dealt since the attack should be blocked
@@ -48,14 +48,14 @@ describe('Energy System', () => {
     describe('Energy Attachment Validation', () => {
         it('should prevent energy attachment on first turn', () => {
             const { state } = runTestGame({
-                actions: [new AttachEnergyResponseMessage(0)],
+                actions: [ new AttachEnergyResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTurnNumber(1),
                     StateBuilder.withFirstTurnRestriction(true),
-                    StateBuilder.withNoEnergy(0)
+                    StateBuilder.withNoEnergy(0),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Energy should not be attached on first turn
@@ -68,14 +68,14 @@ describe('Energy System', () => {
             const { state } = runTestGame({
                 actions: [
                     new AttachEnergyResponseMessage(0),
-                    new AttachEnergyResponseMessage(0)
+                    new AttachEnergyResponseMessage(0),
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTurnNumber(2),
-                    StateBuilder.withCurrentEnergy(0, 'fire') // Provide initial energy
+                    StateBuilder.withCurrentEnergy(0, 'fire'), // Provide initial energy
                 ),
-                maxSteps: 3 // Reduce steps to prevent turn transitions
+                maxSteps: 3, // Reduce steps to prevent turn transitions
             });
 
             // Should only have one energy attached (currentEnergy becomes null after first attachment)
@@ -88,13 +88,13 @@ describe('Energy System', () => {
     describe('Mixed Energy Coverage', () => {
         it('should use Fire Storm with exact energy requirements', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'evolution-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withEnergy('evolution-creature-0', { fire: 2 })
+                    StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed Fire Storm');
@@ -103,13 +103,13 @@ describe('Energy System', () => {
 
         it('should use Fire Storm with excess fire energy', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'evolution-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withEnergy('evolution-creature-0', { fire: 5 })
+                    StateBuilder.withEnergy('evolution-creature-0', { fire: 5 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed Fire Storm with excess fire');
@@ -118,13 +118,13 @@ describe('Energy System', () => {
 
         it('should use Ember to prepare for evolution', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [new AttackResponseMessage(0)],
+                actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed Ember');

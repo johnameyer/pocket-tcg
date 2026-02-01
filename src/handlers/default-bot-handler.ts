@@ -1,7 +1,7 @@
+import { HandlerResponsesQueue } from '@cards-ts/core';
 import { GameHandler, HandlerData } from '../game-handler.js';
 import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage } from '../messages/response/index.js';
 import { ResponseMessage } from '../messages/response-message.js';
-import { HandlerResponsesQueue } from '@cards-ts/core';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 
@@ -90,8 +90,7 @@ export class DefaultBotHandler extends GameHandler {
                 
                 if (attachedEnergy) {
                     // Calculate total energy
-                    const totalEnergy = Object.values(attachedEnergy).reduce((sum: number, count: unknown) => 
-                        sum + (typeof count === 'number' ? count : 0), 0);
+                    const totalEnergy = Object.values(attachedEnergy).reduce((sum: number, count: unknown) => sum + (typeof count === 'number' ? count : 0), 0);
                     
                     // Check if we can use the attack
                     let canAttack = true;
@@ -143,13 +142,13 @@ export class DefaultBotHandler extends GameHandler {
             // Create a setup complete message with the selected cards
             responsesQueue.push(new SetupCompleteResponseMessage(
                 activeCard.templateId,
-                benchCards.map(card => card.templateId)
+                benchCards.map(card => card.templateId),
             ));
         } else {
             // No creature cards in hand, just complete setup with default
             responsesQueue.push(new SetupCompleteResponseMessage(
                 'basic-creature', // Use a default creature ID
-                []
+                [],
             ));
         }
     }

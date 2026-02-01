@@ -1,4 +1,4 @@
-import { GenericControllerProvider, GlobalController, Serializable } from '@cards-ts/core';
+import { GenericControllerProvider, GlobalController } from '@cards-ts/core';
 import { CardRepository } from '../repository/card-repository.js';
 
 export type CardRepositoryState = {};
@@ -10,8 +10,13 @@ export class CardRepositoryControllerProvider implements GenericControllerProvid
         return new CardRepositoryController(state, controllers, this.repository);
     }
     
-    initialState(): CardRepositoryState { return {}; }
-    dependencies() { return {} as const; }
+    initialState(): CardRepositoryState {
+        return {}; 
+    }
+
+    dependencies() {
+        return {} as const; 
+    }
 }
 
 /**
@@ -26,13 +31,39 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
         return this.repository;
     }
 
-    getCreature(id: string) { return this.repository.getCreature(id); }
-    getCreatureByName(name: string) { return this.repository.getCreatureByName(name); }
-    getSupporter(id: string) { return this.repository.getSupporter(id); }
-    getItem(id: string) { return this.repository.getItem(id); }
-    getTool(id: string) { return this.repository.getTool(id); }
-    getAllCreatureIds() { return this.repository.getAllCreatureIds(); }
-    getAllSupporterIds() { return this.repository.getAllSupporterIds(); }
-    getAllItemIds() { return this.repository.getAllItemIds(); }
-    getCard(id: string) { return this.repository.getCard(id); }
+    getCreature(id: string) {
+        return this.repository.getCreature(id); 
+    }
+
+    getCreatureByName(name: string) {
+        return this.repository.getCreatureByName(name); 
+    }
+
+    getSupporter(id: string) {
+        return this.repository.getSupporter(id); 
+    }
+
+    getItem(id: string) {
+        return this.repository.getItem(id); 
+    }
+
+    getTool(id: string) {
+        return this.repository.getTool(id); 
+    }
+
+    getAllCreatureIds() {
+        return this.repository.getAllCreatureIds(); 
+    }
+
+    getAllSupporterIds() {
+        return this.repository.getAllSupporterIds(); 
+    }
+
+    getAllItemIds() {
+        return this.repository.getAllItemIds(); 
+    }
+
+    getCard(id: string) {
+        return this.repository.getCard(id); 
+    }
 }

@@ -34,7 +34,7 @@ export class MockCoinFlipControllerProvider implements GenericControllerProvider
             mockedResults: [],
             mockedResultIndex: 0,
             mockCoinFlipResults: undefined,
-            mockCoinFlipIndex: 0
+            mockCoinFlipIndex: 0,
         };
     }
 

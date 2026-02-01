@@ -3,10 +3,9 @@ import { GameHandler, HandlerData } from '../../src/game-handler.js';
 import { ResponseMessage } from '../../src/messages/response-message.js';
 import { gameFactory } from '../../src/game-factory.js';
 import { GameSetup } from '../../src/game-setup.js';
-import { StateBuilder } from './state-builder.js';
-import { Controllers, buildProviders } from '../../src/controllers/controllers.js';
+import { Controllers } from '../../src/controllers/controllers.js';
 import { mockRepository, MockCardRepository } from '../mock-repository.js';
-import { eventHandler } from '../../src/event-handler.js';
+import { StateBuilder } from './state-builder.js';
 
 export function createTestPlayers(actionHandler: (handlerData: any, responses: any) => void, messageHandler?: (handlerData: any, message: any) => void) {
     const gameHandler: () => GameHandler = () => ({
@@ -16,19 +15,17 @@ export function createTestPlayers(actionHandler: (handlerData: any, responses: a
         handleSelectTarget: actionHandler,
         handleSelectMultiTarget: actionHandler,
         handleSetup: actionHandler,
-        handleMessage: messageHandler || (() => {})
+        handleMessage: messageHandler || (() => {}),
     });
 
-    return Array.from({ length: 2 }, () => 
-        // @ts-expect-error
-        new HandlerChain([gameHandler()])
-    );
+    // @ts-expect-error - HandlerChain constructor typing
+    return Array.from({ length: 2 }, () => new HandlerChain([ gameHandler() ]));
 }
 
 export function createTestPlayersWithDifferentHandlers(
     player0Handler: (handlerData: any, responses: any) => void,
     player1Handler: (handlerData: any, responses: any) => void,
-    messageHandler?: (handlerData: any, message: any) => void
+    messageHandler?: (handlerData: any, message: any) => void,
 ) {
     const createGameHandler = (handler: (handlerData: any, responses: any) => void): () => GameHandler => () => ({
         handleAction: handler,
@@ -37,14 +34,14 @@ export function createTestPlayersWithDifferentHandlers(
         handleSelectTarget: handler,
         handleSelectMultiTarget: handler,
         handleSetup: handler,
-        handleMessage: messageHandler || (() => {})
+        handleMessage: messageHandler || (() => {}),
     });
 
     return [
         // @ts-expect-error
-        new HandlerChain([createGameHandler(player0Handler)()]),
+        new HandlerChain([ createGameHandler(player0Handler)() ]),
         // @ts-expect-error
-        new HandlerChain([createGameHandler(player1Handler)()])
+        new HandlerChain([ createGameHandler(player1Handler)() ]),
     ];
 }
 
@@ -69,10 +66,12 @@ export interface TestGameConfig {
 }
 
 export function runTestGame(config: TestGameConfig) {
-    // TODO: State resumption has issues where the game gets stuck in waiting states
-    // and the action tracker handler is never called to provide new actions.
-    // The game remains in ACTIONLOOP_noop waiting for responses that never come.
-    // For same-turn effects, use single runTestGame with multiple actions instead.
+    /*
+     * TODO: State resumption has issues where the game gets stuck in waiting states
+     * and the action tracker handler is never called to provide new actions.
+     * The game remains in ACTIONLOOP_noop waiting for responses that never come.
+     * For same-turn effects, use single runTestGame with multiple actions instead.
+     */
     
     let validatedCount = 0;
     const tracker = createActionTracker(config.actions);
@@ -91,15 +90,15 @@ export function runTestGame(config: TestGameConfig) {
     
     const repository = config.customRepository || mockRepository;
     
-    const driver = gameFactory(repository).getGameDriver(players, params, ['TestPlayer', 'OpponentPlayer'], preConfiguredState as any);
+    const driver = gameFactory(repository).getGameDriver(players, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState as any);
     
     driver.resume();
     const maxSteps = config.maxSteps !== undefined ? config.maxSteps : 5;
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        for(const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
-            if(message) {
+        for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+            if (message) {
                 let payload, data;
-                if(Array.isArray(message)) {
+                if (Array.isArray(message)) {
                     ([ payload, data ] = message);
                 } else {
                     payload = message;
@@ -118,7 +117,7 @@ export function runTestGame(config: TestGameConfig) {
     return {
         driver,
         getExecutedCount: () => validatedCount,
-        state
+        state,
     };
 }
 
@@ -131,10 +130,10 @@ export function runTestGame(config: TestGameConfig) {
 export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['getGameDriver']>, maxSteps: number) {
     driver.resume();
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        for(const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
-            if(message) {
+        for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+            if (message) {
                 let payload, data;
-                if(Array.isArray(message)) {
+                if (Array.isArray(message)) {
                     ([ payload, data ] = message);
                 } else {
                     payload = message;
@@ -165,10 +164,10 @@ export function runBotGame(config: {
     
     const params = {
         ...factory.getGameSetup().getDefaultParams(),
-        initialDecks: config.initialDecks
+        initialDecks: config.initialDecks,
     };
     
-    const names = ['Player1', 'Player2'];
+    const names = [ 'Player1', 'Player2' ];
     const driver = factory.getGameDriver(handlers, params, names);
     
     driver.resume();

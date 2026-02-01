@@ -1,6 +1,4 @@
 import { Controllers } from '../controllers/controllers.js';
-import { CardRepository } from '../repository/card-repository.js';
-import { EffectApplier } from './effect-applier.js';
 import { EffectContextFactory } from './effect-context.js';
 
 /**
@@ -12,7 +10,7 @@ export class TriggerProcessor {
         playerId: number,
         creatureInstanceId: string,
         creatureCardId: string,
-        damageAmount: number
+        damageAmount: number,
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
@@ -28,7 +26,7 @@ export class TriggerProcessor {
                     playerId,
                     toolData.name,
                     'damaged',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
 
                 // Push to queue instead of applying immediately
@@ -45,7 +43,7 @@ export class TriggerProcessor {
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
                     'damaged',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
                 
                 // Push to queue instead of applying immediately
@@ -59,7 +57,7 @@ export class TriggerProcessor {
         playerId: number,
         creatureInstanceId: string,
         creatureCardId: string,
-        energyType: string
+        energyType: string,
     ): void {
         // Get the creature data
         const creatureData = controllers.cardRepository.getCreature(creatureCardId);
@@ -76,7 +74,7 @@ export class TriggerProcessor {
                         toolData.name,
                         'energy-attachment',
                         creatureInstanceId,
-                        { energyType }
+                        { energyType },
                     );
                     controllers.effects.pushPendingEffect(toolData.effects, toolContext);
                 }
@@ -94,7 +92,7 @@ export class TriggerProcessor {
                         `${creatureData.name}'s ${ability.name}`,
                         'energy-attachment',
                         creatureInstanceId,
-                        { energyType }
+                        { energyType },
                     );
                     controllers.effects.pushPendingEffect(ability.effects, abilityContext);
                 }
@@ -106,7 +104,7 @@ export class TriggerProcessor {
         controllers: Controllers,
         playerId: number,
         creatureInstanceId: string,
-        creatureCardId: string
+        creatureCardId: string,
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
@@ -119,7 +117,7 @@ export class TriggerProcessor {
                     playerId,
                     toolData.name,
                     'end-of-turn',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
 
                 // Push to queue instead of applying immediately
@@ -142,7 +140,7 @@ export class TriggerProcessor {
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
                     'end-of-turn',
-                    creatureInstanceId
+                    creatureInstanceId,
                 );
                 
                 // Push to queue instead of applying immediately

@@ -1,11 +1,9 @@
 import { Controllers } from '../controllers/controllers.js';
-import { CardRepository } from '../repository/card-repository.js';
-import { EffectContext, EffectContextFactory } from './effect-context.js';
-import { getEffectValue, evaluateConditionWithContext } from './effect-utils.js';
 import { CreatureAttack } from '../repository/card-types.js';
-import { Target } from '../repository/target-types.js';
 import { Condition } from '../repository/condition-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
+import { EffectContext, EffectContextFactory } from './effect-context.js';
+import { getEffectValue, evaluateConditionWithContext } from './effect-utils.js';
 
 /**
  * Utility class for resolving attack damage based on various damage calculation types.
@@ -25,10 +23,12 @@ export class AttackDamageResolver {
         controllers: Controllers,
         currentPlayer: number,
         attackIndex: number,
-        playercreatureInstanceId: string
+        playercreatureInstanceId: string,
     ): number | undefined {
-        // TODO: Do we not have a method on the field controller to find by instance id? Can we add one? Or should we change how this is defined to be by player id / bench index
-        // Find the creature by instance ID - check active and bench
+        /*
+         * TODO: Do we not have a method on the field controller to find by instance id? Can we add one? Or should we change how this is defined to be by player id / bench index
+         * Find the creature by instance ID - check active and bench
+         */
         let playercreature = controllers.field.getCardByPosition(currentPlayer, 0);
         
         // If not the active creature, check the bench
@@ -43,7 +43,9 @@ export class AttackDamageResolver {
         }
         
         // If creature not found at all, return undefined
-        if (!playercreature) return undefined;
+        if (!playercreature) {
+            return undefined; 
+        }
         
         const creatureData = controllers.cardRepository.getCreature(playercreature.templateId);
         if (!creatureData || !creatureData.attacks || attackIndex >= creatureData.attacks.length) {
@@ -56,7 +58,7 @@ export class AttackDamageResolver {
         const context = EffectContextFactory.createAttackContext(
             currentPlayer,
             `${creatureData.name}'s ${attack.name}`,
-            playercreature.instanceId
+            playercreature.instanceId,
         );
         
         // Calculate base damage
@@ -155,8 +157,10 @@ export class AttackDamageResolver {
             return attack.damage || 0;
         }
         
-        // TODO can we swap this all for getEffectValue(attack.damage)?
-        // Handle different damage calculation types
+        /*
+         * TODO can we swap this all for getEffectValue(attack.damage)?
+         * Handle different damage calculation types
+         */
         if (attack.damage.type === 'multiplication') {
             const subValue = getEffectValue(attack.damage.base, controllers, context);
             const multiplierValue = getEffectValue(attack.damage.multiplier, controllers, context);
@@ -167,13 +171,12 @@ export class AttackDamageResolver {
             return isHeads ? attack.damage.headsValue : attack.damage.tailsValue;
         } else if (attack.damage.type === 'addition') {
             // Handle addition damage (like Poipole's 2-Step)
-            return attack.damage.values.reduce((sum: number, value) => 
-                sum + getEffectValue(value, controllers, context), 0);
+            return attack.damage.values.reduce((sum: number, value) => sum + getEffectValue(value, controllers, context), 0);
         } else if (attack.damage.type === 'conditional') {
             // Handle conditional damage
             const conditionMet = evaluateConditionWithContext(attack.damage.condition, controllers, context);
-            return conditionMet ? 
-                getEffectValue(attack.damage.trueValue, controllers, context) : 0;
+            return conditionMet 
+                ? getEffectValue(attack.damage.trueValue, controllers, context) : 0;
         } else if (attack.damage.type === 'constant') {
             // Handle constant damage
             return attack.damage.value;
@@ -189,12 +192,16 @@ export class AttackDamageResolver {
         boost: { sourcePlayer: number; amount: number; effectName: string },
         targetcreature: FieldCard | undefined,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): boolean {
-        if (!targetcreature) return false;
+        if (!targetcreature) {
+            return false; 
+        }
         
-        // Find the original effect that created this boost to check its conditions
-        // For now, we'll use a simple heuristic based on the effect name
+        /*
+         * Find the original effect that created this boost to check its conditions
+         * For now, we'll use a simple heuristic based on the effect name
+         */
         const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
         
         // Check if this is an evolution-based boost
@@ -225,12 +232,16 @@ export class AttackDamageResolver {
         prevention: { sourcePlayer: number; effectName: string },
         sourcecreature: FieldCard | undefined,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): boolean {
-        if (!sourcecreature) return false;
+        if (!sourcecreature) {
+            return false; 
+        }
         
-        // Find the original effect that created this prevention to check its source restrictions
-        // For now, we'll use a simple heuristic based on the effect name
+        /*
+         * Find the original effect that created this prevention to check its source restrictions
+         * For now, we'll use a simple heuristic based on the effect name
+         */
         const sourceData = controllers.cardRepository.getCreature(sourcecreature.templateId);
         
         // Check if this prevention only applies to ex sources
@@ -250,7 +261,7 @@ export class AttackDamageResolver {
         condition: Condition,
         attackingCreature: FieldCard,
         controllers: Controllers,
-        context: EffectContext
+        context: EffectContext,
     ): boolean {
         // Check hasDamage condition
         if (condition.hasDamage === true) {

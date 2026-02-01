@@ -6,7 +6,7 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../effect-handler.
 /**
  * Handler for coin flip manipulation effects that guarantee the next coin flip result.
  * TODO: Why do all effects need to extend from an abstract class? Why can they not just implement an interface?
- // TODO: Why do all effects need to extend from an abstract class? Why can they not just implement an interface?
+ * // TODO: Why do all effects need to extend from an abstract class? Why can they not just implement an interface?
  * This architectural decision should be reviewed for better flexibility and testability.
  */
 export class CoinFlipManipulationEffectHandler extends AbstractEffectHandler<CoinFlipManipulationEffect> {
@@ -37,7 +37,7 @@ export class CoinFlipManipulationEffectHandler extends AbstractEffectHandler<Coi
         // Send a message about the coin flip manipulation
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} guarantees the next coin flip will be ${effect.guaranteeNextHeads ? 'heads' : 'tails'}!`]
+            components: [ `${context.effectName} guarantees the next coin flip will be ${effect.guaranteeNextHeads ? 'heads' : 'tails'}!` ],
         });
     }
 }

@@ -1,7 +1,7 @@
-import { AbstractController, GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
-import { FieldController } from './field-controller.js';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, SystemHandlerParams } from '@cards-ts/core';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
+import { FieldController } from './field-controller.js';
 
 export type SetupState = {
     playersReady: boolean[];
@@ -19,7 +19,7 @@ export class SetupControllerProvider implements GenericControllerProvider<SetupS
     
     initialState(controllers: SetupDependencies): SetupState {
         return {
-            playersReady: new Array(controllers.players.count).fill(false)
+            playersReady: new Array(controllers.players.count).fill(false),
         };
     }
     

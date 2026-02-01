@@ -78,7 +78,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                 console.warn(`[SearchEffectHandler] Unsupported search target: ${target}`);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} cannot search ${target}!`]
+                    components: [ `${context.effectName} cannot search ${target}!` ],
                 });
                 break;
         }
@@ -98,7 +98,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         effect: SearchEffect,
         context: EffectContext,
         searchAmount: number,
-        destination: string
+        destination: string,
     ): void {
         // Get the player's deck
         const deck = controllers.deck.getDeck(context.sourcePlayer);
@@ -107,13 +107,13 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         if (deck.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} has no cards to search for!`]
+                components: [ `${context.effectName} has no cards to search for!` ],
             });
             return;
         }
         
         // Filter the deck based on the search criteria
-        let filteredDeck = [...deck];
+        let filteredDeck = [ ...deck ];
         
         // Use a generic approach to handle search criteria
         if (effect.criteria || effect.cardType) {
@@ -124,7 +124,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         if (filteredDeck.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} found no matching cards!`]
+                components: [ `${context.effectName} found no matching cards!` ],
             });
             return;
         }
@@ -132,8 +132,10 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Limit the number of cards to search for
         const actualSearchAmount = Math.min(searchAmount, filteredDeck.length);
         
-        // For now, just take the first matching cards
-        // In a real implementation, this would involve player choice
+        /*
+         * For now, just take the first matching cards
+         * In a real implementation, this would involve player choice
+         */
         const cardsToMove = filteredDeck.slice(0, actualSearchAmount);
         
         // Move the cards to the destination
@@ -142,7 +144,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Send a message about the search
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} found ${actualSearchAmount} card${actualSearchAmount !== 1 ? 's' : ''}!`]
+            components: [ `${context.effectName} found ${actualSearchAmount} card${actualSearchAmount !== 1 ? 's' : ''}!` ],
         });
         
         // Shuffle the deck after searching
@@ -151,7 +153,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Send a message about the shuffle
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} shuffles the deck!`]
+            components: [ `${context.effectName} shuffles the deck!` ],
         });
     }
     
@@ -164,7 +166,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * @returns Filtered deck
      */
     private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], effect: SearchEffect): GameCard[] {
-        let filteredDeck = [...deck];
+        let filteredDeck = [ ...deck ];
         
         // Handle criteria field
         if (effect.criteria) {
@@ -187,9 +189,8 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                     console.warn(`[SearchEffectHandler] Unknown search criteria: ${effect.criteria}`);
                     break;
             }
-        }
-        // Handle cardType field
-        else if (effect.cardType) {
+        } else if (effect.cardType) {
+            // Handle cardType field
             switch (effect.cardType) {
                 case 'basic-creature':
                     filteredDeck = filteredDeck.filter(card => {
@@ -215,7 +216,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                     filteredDeck = filteredDeck.filter(card => card.type === 'creature');
                     break;
                     
-                default:
+                default: {
                     // Map search cardType to GameCard type
                     let gameCardType: 'creature' | 'supporter' | 'item' | 'tool' | undefined;
                     switch (effect.cardType) {
@@ -225,8 +226,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                             break;
                         case 'trainer':
                             // Trainer could be supporter or item, so we need to handle both
-                            filteredDeck = filteredDeck.filter(card => 
-                                card.type === 'supporter' || card.type === 'item'
+                            filteredDeck = filteredDeck.filter(card => card.type === 'supporter' || card.type === 'item',
                             );
                             return filteredDeck;
                         default:
@@ -237,6 +237,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                         filteredDeck = filteredDeck.filter(card => card.type === gameCardType);
                     }
                     break;
+                }
             }
         }
         
@@ -257,7 +258,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         deck: GameCard[],
         cardsToMove: GameCard[],
         destination: string,
-        context: EffectContext
+        context: EffectContext,
     ): void {
         // Remove the cards from the deck
         for (const card of cardsToMove) {

@@ -3,10 +3,6 @@ import { DamageBoostEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue } from '../effect-utils.js';
-import { CardRepository } from '../../repository/card-repository.js';
-import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
-import { ConditionEvaluator } from '../condition-evaluator.js';
 
 /**
  * Handler for damage boost effects that increase the damage dealt by attacks.
@@ -43,7 +39,7 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
         const conditionText = effect.condition ? ' when condition is met' : '';
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} adds ${amount} damage${targetText}${conditionText}!`]
+            components: [ `${context.effectName} adds ${amount} damage${targetText}${conditionText}!` ],
         });
     }
 }

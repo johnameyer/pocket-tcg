@@ -1,16 +1,15 @@
+import { Intermediary } from '@cards-ts/core';
+import { HandlerResponsesQueue } from '@cards-ts/core';
 import { GameHandler, HandlerData } from '../game-handler.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { SelectActiveCardResponseMessage, SelectTargetResponseMessage } from '../messages/response/index.js';
 import { SetupCompleteResponseMessage } from '../messages/response/index.js';
-import { Intermediary } from '@cards-ts/core';
-import { HandlerResponsesQueue } from '@cards-ts/core';
 import { Controllers } from '../controllers/controllers.js';
 import { TargetResolver } from '../effects/target-resolver.js';
-import { EnergyController } from '../controllers/energy-controller.js';
-import * as helpers from './intermediary-handler-helpers.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
+import * as helpers from './intermediary-handler-helpers.js';
 
 export class IntermediaryHandler extends GameHandler {
     
@@ -49,7 +48,7 @@ export class IntermediaryHandler extends GameHandler {
             return {
                 ...card,
                 name,
-                hp: Math.max(0, maxHp - card.damageTaken)
+                hp: Math.max(0, maxHp - card.damageTaken),
             };
         });
         
@@ -59,14 +58,14 @@ export class IntermediaryHandler extends GameHandler {
                 const cardData = this.cardRepository.getCreature(card.templateId);
                 return {
                     name: `${cardData.name} (HP: ${cardData.maxHp})`,
-                    value: index
+                    value: index,
                 };
             });
             
             const [ sent, received ] = this.intermediary.form({ 
                 type: 'list', 
                 message: [ `Player ${playerId + 1}, select a card to make active:` ],
-                choices: benchOptions
+                choices: benchOptions,
             });
             
             const benchIndex = (await received)[0] as number;
@@ -92,8 +91,10 @@ export class IntermediaryHandler extends GameHandler {
             return;
         }
         
-        // Use TargetResolver with Controllers (converted from HandlerData)
-        // TODO: This is a temporary solution until we fully refactor all methods to use HandlerData
+        /*
+         * Use TargetResolver with Controllers (converted from HandlerData)
+         * TODO: This is a temporary solution until we fully refactor all methods to use HandlerData
+         */
         const controllers = handlerData as unknown as Controllers;
         const resolution = TargetResolver.resolveTarget(target, controllers, context);
         
@@ -104,7 +105,7 @@ export class IntermediaryHandler extends GameHandler {
         // Convert available targets to options for the form
         const targetOptions = resolution.availableTargets.map(target => ({
             name: `${target.name} (${target.hp} HP) - ${target.position === 'active' ? 'Active' : 'Bench'}`,
-            value: { playerId: target.playerId, fieldIndex: target.fieldIndex }
+            value: { playerId: target.playerId, fieldIndex: target.fieldIndex },
         }));
         
         // Determine the appropriate message based on the effect type
@@ -117,10 +118,10 @@ export class IntermediaryHandler extends GameHandler {
             }
         }
             
-        const [sent, received] = this.intermediary.form({
+        const [ sent, received ] = this.intermediary.form({
             type: 'list',
-            message: [effectMessage],
-            choices: targetOptions
+            message: [ effectMessage ],
+            choices: targetOptions,
         });
         
         const selection = (await received)[0] as unknown as { playerId: number; fieldIndex: number };
@@ -128,16 +129,19 @@ export class IntermediaryHandler extends GameHandler {
     }
     
     async handleSelectMultiTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
-        // Placeholder for multi-target selection
-        // This would be similar to handleSelectTarget but allow multiple selections
+        /*
+         * Placeholder for multi-target selection
+         * This would be similar to handleSelectTarget but allow multiple selections
+         */
     }
+
     async handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
         const currentPlayer = handlerData.turn;
         const hand = handlerData.hand;
         
         await this.intermediary.form({
             type: 'print',
-            message: [`Player ${currentPlayer + 1}, setup phase: Select cards for your team.`]
+            message: [ `Player ${currentPlayer + 1}, setup phase: Select cards for your team.` ],
         });
         
         const creatureCards = hand.filter(card => card.type === 'creature');
@@ -145,7 +149,7 @@ export class IntermediaryHandler extends GameHandler {
         if (creatureCards.length === 0) {
             await this.intermediary.form({
                 type: 'print',
-                message: ['No creature cards in hand. Finishing setup.']
+                message: [ 'No creature cards in hand. Finishing setup.' ],
             });
             responsesQueue.push(new SetupCompleteResponseMessage('basic-creature', []));
             return;
@@ -157,19 +161,23 @@ export class IntermediaryHandler extends GameHandler {
             const originalIndex = hand.findIndex(handCard => handCard === card);
             return {
                 name: creatureData?.name || 'Creature',
-                value: originalIndex
+                value: originalIndex,
             };
         });
         
-        const [checkboxSent, checkboxReceived] = this.intermediary.form({
+        const [ checkboxSent, checkboxReceived ] = this.intermediary.form({
             type: 'checkbox',
-            message: ['Select creatures for your team (1 active + up to 3 bench):'],
+            message: [ 'Select creatures for your team (1 active + up to 3 bench):' ],
             choices: creatureOptions,
             validate: (selected: number[]) => {
-                if (selected.length === 0) return 'Must select at least one creature';
-                if (selected.length > 4) return 'Can select maximum 4 creatures (1 active + 3 bench)';
+                if (selected.length === 0) {
+                    return 'Must select at least one creature'; 
+                }
+                if (selected.length > 4) {
+                    return 'Can select maximum 4 creatures (1 active + 3 bench)'; 
+                }
                 return true;
-            }
+            },
         });
         
         const selectedIndices = (await checkboxReceived)[0] as number[];
@@ -185,14 +193,14 @@ export class IntermediaryHandler extends GameHandler {
             const creatureData = this.cardRepository.getCreature(card.templateId);
             return {
                 name: creatureData?.name || 'Creature',
-                value: card.templateId
+                value: card.templateId,
             };
         });
         
-        const [activeSent, activeReceived] = this.intermediary.form({
+        const [ activeSent, activeReceived ] = this.intermediary.form({
             type: 'list',
-            message: ['Choose your active creature:'],
-            choices: activeOptions
+            message: [ 'Choose your active creature:' ],
+            choices: activeOptions,
         });
         
         const activeCardId = (await activeReceived)[0] as string;

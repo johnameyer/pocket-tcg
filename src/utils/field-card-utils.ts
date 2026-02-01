@@ -1,4 +1,4 @@
-import { InstancedFieldCard, EvolutionStackCard } from '../repository/card-types.js';
+import { InstancedFieldCard } from '../repository/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 
 /**
@@ -60,7 +60,7 @@ export function toFieldCard(card: InstancedFieldCard): FieldCard {
         instanceId: current.instanceId,
         templateId: current.templateId,
         damageTaken: card.damageTaken,
-        turnPlayed: card.turnLastPlayed
+        turnPlayed: card.turnLastPlayed,
     };
 }
 
@@ -70,13 +70,13 @@ export function toFieldCard(card: InstancedFieldCard): FieldCard {
 export function createInstancedFieldCard(
     instanceId: string,
     templateId: string,
-    turnPlayed: number = 0
+    turnPlayed: number = 0,
 ): InstancedFieldCard {
     return {
         fieldInstanceId: instanceId, // Use the first instance ID as the field instance ID
         evolutionStack: [{ instanceId, templateId }],
         damageTaken: 0,
-        turnLastPlayed: turnPlayed
+        turnLastPlayed: turnPlayed,
     };
 }
 
@@ -87,11 +87,11 @@ export function addEvolution(
     card: InstancedFieldCard,
     instanceId: string,
     templateId: string,
-    turnPlayed: number
+    turnPlayed: number,
 ): InstancedFieldCard {
     return {
         ...card,
-        evolutionStack: [...card.evolutionStack, { instanceId, templateId }],
-        turnLastPlayed: turnPlayed
+        evolutionStack: [ ...card.evolutionStack, { instanceId, templateId }],
+        turnLastPlayed: turnPlayed,
     };
 }

@@ -14,7 +14,7 @@ export type TurnStateData = {
     retreatPreventions: string[]; // Instance IDs of creatures that cannot retreat
     damagePrevention: Array<{ sourcePlayer: number; effectName: string }>;
     evolutionFlexibility: Array<{ sourcePlayer: number; effectName: string }>;
-}
+};
 
 type TurnStateDependencies = {};
 

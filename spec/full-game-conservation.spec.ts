@@ -1,10 +1,9 @@
 import { expect } from 'chai';
-import { MockCardRepository } from './mock-repository.js';
-import { CreatureData } from '../src/repository/card-types.js';
-import { runBotGame } from './helpers/test-helpers.js';
-import { Controllers } from '../src/controllers/controllers.js';
 import { ControllerState } from '@cards-ts/core';
-import { getCurrentInstanceId } from '../src/utils/field-card-utils.js';
+import { CreatureData } from '../src/repository/card-types.js';
+import { Controllers } from '../src/controllers/controllers.js';
+import { MockCardRepository } from './mock-repository.js';
+import { runBotGame } from './helpers/test-helpers.js';
 
 /**
  * Full End-to-End Game Conservation Test
@@ -18,7 +17,7 @@ describe('Full Game Conservation', () => {
     // Create a repository with a variety of interesting cards
     const gameRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-fire', {
+            [ 'basic-fire', {
                 templateId: 'basic-fire',
                 name: 'Basic Fire',
                 maxHp: 70,
@@ -26,10 +25,10 @@ describe('Full Game Conservation', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [
-                    { name: 'Ember', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] }
-                ]
+                    { name: 'Ember', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] },
+                ],
             }],
-            ['evolved-fire', {
+            [ 'evolved-fire', {
                 templateId: 'evolved-fire',
                 name: 'Evolved Fire',
                 maxHp: 120,
@@ -38,10 +37,10 @@ describe('Full Game Conservation', () => {
                 weakness: 'water',
                 retreatCost: 2,
                 attacks: [
-                    { name: 'Flame Burst', damage: 60, energyRequirements: [{ type: 'fire', amount: 2 }] }
-                ]
+                    { name: 'Flame Burst', damage: 60, energyRequirements: [{ type: 'fire', amount: 2 }] },
+                ],
             }],
-            ['basic-water', {
+            [ 'basic-water', {
                 templateId: 'basic-water',
                 name: 'Basic Water',
                 maxHp: 60,
@@ -49,10 +48,10 @@ describe('Full Game Conservation', () => {
                 weakness: 'lightning',
                 retreatCost: 1,
                 attacks: [
-                    { name: 'Bubble', damage: 20, energyRequirements: [{ type: 'water', amount: 1 }] }
-                ]
+                    { name: 'Bubble', damage: 20, energyRequirements: [{ type: 'water', amount: 1 }] },
+                ],
             }],
-            ['tank-creature', {
+            [ 'tank-creature', {
                 templateId: 'tank-creature',
                 name: 'Tank',
                 maxHp: 140,
@@ -60,10 +59,10 @@ describe('Full Game Conservation', () => {
                 weakness: 'psychic',
                 retreatCost: 3,
                 attacks: [
-                    { name: 'Heavy Strike', damage: 50, energyRequirements: [{ type: 'fighting', amount: 2 }] }
-                ]
-            }]
-        ])
+                    { name: 'Heavy Strike', damage: 50, energyRequirements: [{ type: 'fighting', amount: 2 }] },
+                ],
+            }],
+        ]),
     });
 
     /**
@@ -79,7 +78,7 @@ describe('Full Game Conservation', () => {
             
             // Evolution cards (5)
             'evolved-fire', 'evolved-fire', 'evolved-fire',
-            'basic-fire', 'basic-fire'
+            'basic-fire', 'basic-fire',
         ];
     }
 
@@ -104,7 +103,9 @@ describe('Full Game Conservation', () => {
         // Field
         const fieldCards = state.field?.creatures[playerId] || [];
         for (const card of fieldCards) {
-            if (!card) continue;
+            if (!card) {
+                continue; 
+            }
             // For InstancedFieldCard, all cards from evolution stack
             if (card.evolutionStack) {
                 // Evolution stack contains both pre-evolution forms and evolution cards used
@@ -145,17 +146,19 @@ describe('Full Game Conservation', () => {
         // Attached energy
         const fieldCards = state.field?.creatures[playerId] || [];
         for (const card of fieldCards) {
-            if (!card) continue;
+            if (!card) {
+                continue; 
+            }
             // Use fieldInstanceId to access attached energy
             const attached = state.energy.attachedEnergyByInstance[card.fieldInstanceId] || {};
-            for (const [type, count] of Object.entries(attached)) {
+            for (const [ type, count ] of Object.entries(attached)) {
                 energyByType[type] = (energyByType[type] || 0) + (count as number);
             }
         }
         
         // Discarded energy
         const discarded = state.energy.discardedEnergy[playerId] || {};
-        for (const [type, count] of Object.entries(discarded)) {
+        for (const [ type, count ] of Object.entries(discarded)) {
             energyByType[type] = (energyByType[type] || 0) + (count as number);
         }
         
@@ -220,7 +223,9 @@ describe('Full Game Conservation', () => {
          * Helper to check energy conservation for a player
          */
         function checkPlayerEnergyConservation(playerId: number, playerName: string, currentState: ControllerState<Controllers>, step: number) {
-            if (!previousState) return;
+            if (!previousState) {
+                return; 
+            }
             
             const currentEnergyByType = countPlayerEnergyByType(currentState, playerId);
             const previousEnergyByType = playerId === 0 ? previousPlayer1EnergyByType : previousPlayer2EnergyByType;
@@ -248,7 +253,7 @@ describe('Full Game Conservation', () => {
         
         runBotGame({
             customRepository: gameRepository,
-            initialDecks: [player1Deck, player2Deck],
+            initialDecks: [ player1Deck, player2Deck ],
             maxSteps: 500,
             integrityCheck: (currentState, step) => {
                 // Capture initial instance IDs on first step
@@ -266,10 +271,12 @@ describe('Full Game Conservation', () => {
                 checkPlayerEnergyConservation(1, 'Player 2', currentState, step);
                 
                 previousState = currentState;
-            }
+            },
         });
         
-        // Verification is done in the integrity check after each step
-        // No need for additional final verification
+        /*
+         * Verification is done in the integrity check after each step
+         * No need for additional final verification
+         */
     });
 });

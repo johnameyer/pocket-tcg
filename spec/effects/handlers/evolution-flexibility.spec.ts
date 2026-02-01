@@ -17,13 +17,13 @@ describe('Evolution Flexibility Effect', () => {
 
         it('should always return true (evolution flexibility effects can always be applied)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'flexible-basic', [])
+                HandlerDataBuilder.withCreatures(0, 'flexible-basic', []),
             );
 
             const effect: EvolutionFlexibilityEffect = {
                 type: 'evolution-flexibility',
                 target: 'flexible-evolution-water',
-                baseForm: 'flexible-basic'
+                baseForm: 'flexible-basic',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
@@ -38,7 +38,7 @@ describe('Evolution Flexibility Effect', () => {
             const effect: EvolutionFlexibilityEffect = {
                 type: 'evolution-flexibility',
                 target: 'flexible-evolution-water',
-                baseForm: 'flexible-basic'
+                baseForm: 'flexible-basic',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
@@ -56,16 +56,16 @@ describe('Evolution Flexibility Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['flexible-basic', {
+            [ 'flexible-basic', {
                 templateId: 'flexible-basic',
                 name: 'Flexible Basic',
                 maxHp: 60,
                 type: 'colorless',
                 weakness: 'fighting',
                 retreatCost: 1,
-                attacks: [{ name: 'Tackle', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }]
+                attacks: [{ name: 'Tackle', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
             }],
-            ['flexible-evolution-water', {
+            [ 'flexible-evolution-water', {
                 templateId: 'flexible-evolution-water',
                 name: 'Flexible Evolution Water',
                 maxHp: 90,
@@ -73,9 +73,9 @@ describe('Evolution Flexibility Effect', () => {
                 weakness: 'lightning',
                 retreatCost: 2,
                 previousStageName: 'Flexible Basic',
-                attacks: [{ name: 'Water Gun', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }]
+                attacks: [{ name: 'Water Gun', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }],
             }],
-            ['flexible-evolution-lightning', {
+            [ 'flexible-evolution-lightning', {
                 templateId: 'flexible-evolution-lightning',
                 name: 'Flexible Evolution Lightning',
                 maxHp: 90,
@@ -83,9 +83,9 @@ describe('Evolution Flexibility Effect', () => {
                 weakness: 'fighting',
                 retreatCost: 1,
                 previousStageName: 'Flexible Basic',
-                attacks: [{ name: 'Shock', damage: 40, energyRequirements: [{ type: 'lightning', amount: 2 }] }]
+                attacks: [{ name: 'Shock', damage: 40, energyRequirements: [{ type: 'lightning', amount: 2 }] }],
             }],
-            ['flexible-evolution-fire', {
+            [ 'flexible-evolution-fire', {
                 templateId: 'flexible-evolution-fire',
                 name: 'Flexible Evolution Fire',
                 maxHp: 90,
@@ -93,29 +93,29 @@ describe('Evolution Flexibility Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 previousStageName: 'Flexible Basic',
-                attacks: [{ name: 'Flame', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }]
+                attacks: [{ name: 'Flame', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }],
             }],
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
                 type: 'grass',
                 weakness: 'fire',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'grass', amount: 1 }] }]
-            }]
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'grass', amount: 1 }] }],
+            }],
         ]),
         items: new Map<string, ItemData>([
-            ['flexibility-item', {
+            [ 'flexibility-item', {
                 templateId: 'flexibility-item',
                 name: 'Flexibility Item',
                 effects: [{
                     type: 'evolution-flexibility',
                     target: 'flexible-evolution-water',
-                    baseForm: 'flexible-basic'
-                }]
-            }]
-        ])
+                    baseForm: 'flexible-basic',
+                }],
+            }],
+        ]),
     });
 
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
@@ -124,14 +124,14 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-water', 0)
+                new EvolveResponseMessage('flexible-evolution-water', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'flexible-basic'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionWater])
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -142,14 +142,14 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-lightning', 0)
+                new EvolveResponseMessage('flexible-evolution-lightning', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'flexible-basic'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionLightning])
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionLightning ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -160,14 +160,14 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-fire', 0)
+                new EvolveResponseMessage('flexible-evolution-fire', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'flexible-basic'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionWater, flexibleEvolutionLightning, flexibleEvolutionFire])
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater, flexibleEvolutionLightning, flexibleEvolutionFire ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -179,14 +179,14 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-water', 0)
+                new EvolveResponseMessage('flexible-evolution-water', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionWater])
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed flexibility item only (evolution blocked)');
@@ -197,15 +197,15 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-water', 0)
+                new EvolveResponseMessage('flexible-evolution-water', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'flexible-basic'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionWater]),
-                StateBuilder.withDamage('flexible-basic-0', 20)
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater ]),
+                StateBuilder.withDamage('flexible-basic-0', 20),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -217,15 +217,15 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-lightning', 0)
+                new EvolveResponseMessage('flexible-evolution-lightning', 0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'flexible-basic'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionLightning]),
-                StateBuilder.withEnergy('flexible-basic-0', { lightning: 2 })
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionLightning ]),
+                StateBuilder.withEnergy('flexible-basic-0', { lightning: 2 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -239,14 +239,14 @@ describe('Evolution Flexibility Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
-                new EvolveResponseMessage('flexible-evolution-fire', 1)
+                new EvolveResponseMessage('flexible-evolution-fire', 1),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['flexible-basic']),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionFire])
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'flexible-basic' ]),
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionFire ]),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -259,22 +259,22 @@ describe('Evolution Flexibility Effect', () => {
             actions: [
                 new PlayCardResponseMessage('flexibility-item', 'item'),
                 new EvolveResponseMessage('flexible-evolution-water', 0),
-                new EvolveResponseMessage('flexible-evolution-lightning', 1)
+                new EvolveResponseMessage('flexible-evolution-lightning', 1),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'flexible-basic'),
-                StateBuilder.withHand(0, [flexibilityItem, flexibleEvolutionWater, flexibleEvolutionLightning]),
+                StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater, flexibleEvolutionLightning ]),
                 (state) => {
                     state.field.creatures[0].push({
-                        fieldInstanceId: "test-field-id",
-                        evolutionStack: [{ instanceId: "field-card-1", templateId: 'flexible-basic' }],
+                        fieldInstanceId: 'test-field-id',
+                        evolutionStack: [{ instanceId: 'field-card-1', templateId: 'flexible-basic' }],
                         damageTaken: 0,
-                        turnLastPlayed: 0
+                        turnLastPlayed: 0,
                     });
-                }
+                },
             ),
-            maxSteps: 20
+            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.be.greaterThanOrEqual(2, 'Should have executed flexibility item and at least one evolution');

@@ -1,7 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { StatusEffectType } from '../../controllers/status-effect-controller.js';
 import { StatusEffect } from '../../repository/effect-types.js';
-import { ResolvedTarget } from '../../repository/target-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getCreatureFromTarget } from '../effect-utils.js';
@@ -22,7 +21,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
      */
     getResolutionRequirements(effect: StatusEffect): ResolutionRequirement[] {
         return [
-            { targetProperty: 'target', target: effect.target, required: true }
+            { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
     
@@ -114,7 +113,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
         effect: StatusEffect,
         context: EffectContext,
         targetPlayerId: number,
-        creatureName: string
+        creatureName: string,
     ): void {
         // TODO can we just have the message generation as a map and then send it generically / DRY controllers.players.messageAll?
         switch (effect.condition) {
@@ -122,7 +121,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
                 controllers.statusEffects.applyStatusEffect(targetPlayerId, StatusEffectType.POISONED);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} inflicts poison on ${creatureName}!`]
+                    components: [ `${context.effectName} inflicts poison on ${creatureName}!` ],
                 });
                 break;
                 
@@ -130,7 +129,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
                 controllers.statusEffects.applyStatusEffect(targetPlayerId, StatusEffectType.BURNED);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} inflicts burn on ${creatureName}!`]
+                    components: [ `${context.effectName} inflicts burn on ${creatureName}!` ],
                 });
                 break;
                 
@@ -138,7 +137,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
                 controllers.statusEffects.applyStatusEffect(targetPlayerId, StatusEffectType.PARALYZED);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} inflicts paralysis on ${creatureName}!`]
+                    components: [ `${context.effectName} inflicts paralysis on ${creatureName}!` ],
                 });
                 break;
                 
@@ -146,7 +145,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
                 controllers.statusEffects.applyStatusEffect(targetPlayerId, StatusEffectType.ASLEEP);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} puts ${creatureName} to sleep!`]
+                    components: [ `${context.effectName} puts ${creatureName} to sleep!` ],
                 });
                 break;
                 
@@ -154,17 +153,19 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
                 controllers.statusEffects.applyStatusEffect(targetPlayerId, StatusEffectType.CONFUSED);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} confuses ${creatureName}!`]
+                    components: [ `${context.effectName} confuses ${creatureName}!` ],
                 });
                 break;
                 
             default:
-                // TODO throw an error
-                // Log a warning for unknown status conditions
+                /*
+                 * TODO throw an error
+                 * Log a warning for unknown status conditions
+                 */
                 console.warn(`[StatusEffectHandler] Unknown status condition: ${effect.condition}`);
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} tried to apply unknown status '${effect.condition}'!`]
+                    components: [ `${context.effectName} tried to apply unknown status '${effect.condition}'!` ],
                 });
                 break;
         }

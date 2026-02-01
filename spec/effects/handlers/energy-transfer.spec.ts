@@ -17,20 +17,20 @@ describe('Energy Transfer Effect', () => {
 
         it('should return true when source has required energy', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature'])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
             );
             // Set up energy on active creature
             handlerData.energy.attachedEnergyByInstance['basic-creature-0'] = {
                 grass: 0, fire: 2, water: 0, lightning: 0,
-                psychic: 0, fighting: 0, darkness: 0, metal: 0
+                psychic: 0, fighting: 0, darkness: 0, metal: 0,
             };
 
             const effect: EnergyTransferEffect = {
                 type: 'energy-transfer',
-                energyTypes: ['fire'],
+                energyTypes: [ 'fire' ],
                 amount: { type: 'constant', value: 1 },
                 source: { type: 'fixed', player: 'self', position: 'active' },
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
@@ -41,20 +41,20 @@ describe('Energy Transfer Effect', () => {
 
         it('should return false when source has no required energy (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', ['basic-creature'])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
             );
             // No energy on active creature
             handlerData.energy.attachedEnergyByInstance['basic-creature-0'] = {
                 grass: 0, fire: 0, water: 0, lightning: 0,
-                psychic: 0, fighting: 0, darkness: 0, metal: 0
+                psychic: 0, fighting: 0, darkness: 0, metal: 0,
             };
 
             const effect: EnergyTransferEffect = {
                 type: 'energy-transfer',
-                energyTypes: ['fire'],
+                energyTypes: [ 'fire' ],
                 amount: { type: 'constant', value: 1 },
                 source: { type: 'fixed', player: 'self', position: 'active' },
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
@@ -65,19 +65,19 @@ describe('Energy Transfer Effect', () => {
 
         it('should return false when no valid destination (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', [])
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
             handlerData.energy.attachedEnergyByInstance['basic-creature-0'] = {
                 grass: 0, fire: 2, water: 0, lightning: 0,
-                psychic: 0, fighting: 0, darkness: 0, metal: 0
+                psychic: 0, fighting: 0, darkness: 0, metal: 0,
             };
 
             const effect: EnergyTransferEffect = {
                 type: 'energy-transfer',
-                energyTypes: ['fire'],
+                energyTypes: [ 'fire' ],
                 amount: { type: 'constant', value: 1 },
                 source: { type: 'fixed', player: 'self', position: 'active' },
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } }
+                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
@@ -93,82 +93,82 @@ describe('Energy Transfer Effect', () => {
 
     const testRepository = new MockCardRepository({
         creatures: new Map<string, CreatureData>([
-            ['basic-creature', {
+            [ 'basic-creature', {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
                 type: 'fire',
                 weakness: 'water',
                 retreatCost: 1,
-                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }]
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
             }],
-            ['high-hp-creature', {
+            [ 'high-hp-creature', {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
                 type: 'water',
                 weakness: 'grass',
                 retreatCost: 2,
-                attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }]
-            }]
+                attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
+            }],
         ]),
         supporters: new Map<string, SupporterData>([
-            ['transfer-supporter', {
+            [ 'transfer-supporter', {
                 templateId: 'transfer-supporter',
                 name: 'Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
                     source: { type: 'fixed', player: 'self', position: 'active' },
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     amount: { type: 'constant', value: 1 },
-                    energyTypes: ['fire']
-                }]
+                    energyTypes: [ 'fire' ],
+                }],
             }],
-            ['choice-transfer-supporter', {
+            [ 'choice-transfer-supporter', {
                 templateId: 'choice-transfer-supporter',
                 name: 'Choice Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
-                    source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' } },
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } },
+                    source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     amount: { type: 'constant', value: 1 },
-                    energyTypes: ['fire', 'water']
-                }]
+                    energyTypes: [ 'fire', 'water' ],
+                }],
             }],
-            ['multi-transfer-supporter', {
+            [ 'multi-transfer-supporter', {
                 templateId: 'multi-transfer-supporter',
                 name: 'Multi Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
                     source: { type: 'fixed', player: 'self', position: 'active' },
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     amount: { type: 'constant', value: 2 },
-                    energyTypes: ['fire']
-                }]
+                    energyTypes: [ 'fire' ],
+                }],
             }],
-            ['water-transfer-supporter', {
+            [ 'water-transfer-supporter', {
                 templateId: 'water-transfer-supporter',
                 name: 'Water Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
                     source: { type: 'fixed', player: 'self', position: 'active' },
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     amount: { type: 'constant', value: 1 },
-                    energyTypes: ['water']
-                }]
+                    energyTypes: [ 'water' ],
+                }],
             }],
-            ['any-energy-transfer-supporter', {
+            [ 'any-energy-transfer-supporter', {
                 templateId: 'any-energy-transfer-supporter',
                 name: 'Any Energy Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
                     source: { type: 'fixed', player: 'self', position: 'active' },
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' } },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     amount: { type: 'constant', value: 1 },
-                    energyTypes: ['fire', 'water', 'grass', 'lightning', 'psychic', 'fighting', 'darkness', 'metal']
-                }]
-            }]
-        ])
+                    energyTypes: [ 'fire', 'water', 'grass', 'lightning', 'psychic', 'fighting', 'darkness', 'metal' ],
+                }],
+            }],
+        ]),
     });
 
     const choiceTransferSupporter = { templateId: 'choice-transfer-supporter', type: 'supporter' as const };
@@ -178,15 +178,15 @@ describe('Energy Transfer Effect', () => {
 
     it('should transfer 1 fire energy from active to bench (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('transfer-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('transfer-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [transferSupporter]),
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ transferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
-                StateBuilder.withEnergy('high-hp-creature-0-0', { water: 1 })
+                StateBuilder.withEnergy('high-hp-creature-0-0', { water: 1 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
@@ -199,14 +199,14 @@ describe('Energy Transfer Effect', () => {
 
     it('should transfer different energy types (water)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('water-transfer-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('water-transfer-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [waterTransferSupporter]),
-                StateBuilder.withEnergy('basic-creature-0', { water: 2, fire: 1 })
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ waterTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { water: 2, fire: 1 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed water transfer supporter');
@@ -219,14 +219,14 @@ describe('Energy Transfer Effect', () => {
 
     it('should transfer different amounts (2 energy)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('multi-transfer-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('multi-transfer-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [multiTransferSupporter]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 3 })
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ multiTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 3 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi transfer supporter');
@@ -241,15 +241,15 @@ describe('Energy Transfer Effect', () => {
             actions: [
                 new PlayCardResponseMessage('choice-transfer-supporter', 'supporter'),
                 new SelectTargetResponseMessage(0, 0), // Source: self active
-                new SelectTargetResponseMessage(0, 1)  // Target: self bench
+                new SelectTargetResponseMessage(0, 1), // Target: self bench
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [choiceTransferSupporter]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 2 })
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ choiceTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(3, 'Should have executed supporter and both target selections');
@@ -261,14 +261,14 @@ describe('Energy Transfer Effect', () => {
 
     it('should handle multiple energy types (any energy)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('any-energy-transfer-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('any-energy-transfer-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [anyEnergyTransferSupporter]),
-                StateBuilder.withEnergy('basic-creature-0', { psychic: 1, lightning: 1 })
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ anyEnergyTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { psychic: 1, lightning: 1 }),
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed any energy transfer supporter');
@@ -282,14 +282,14 @@ describe('Energy Transfer Effect', () => {
 
     it('should cap transfer at available energy', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('multi-transfer-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('multi-transfer-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [multiTransferSupporter]),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }) // Only 1 energy, but effect wants to transfer 2
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ multiTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }), // Only 1 energy, but effect wants to transfer 2
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi transfer supporter');
@@ -301,14 +301,14 @@ describe('Energy Transfer Effect', () => {
 
     it('should fail when source has no required energy type', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [new PlayCardResponseMessage('transfer-supporter', 'supporter')],
+            actions: [ new PlayCardResponseMessage('transfer-supporter', 'supporter') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withHand(0, [transferSupporter]),
-                StateBuilder.withEnergy('basic-creature-0', { water: 2 }) // Has water but effect needs fire
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ transferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { water: 2 }), // Has water but effect needs fire
             ),
-            maxSteps: 10
+            maxSteps: 10,
         });
 
         // Should fail validation and not execute

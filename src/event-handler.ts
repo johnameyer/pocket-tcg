@@ -1,9 +1,9 @@
 // @ts-nocheck
+import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
-import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage } from './messages/response/index.js';
-import { AttackResultMessage, HealResultMessage, EvolutionMessage } from './messages/status/index.js';
+import { AttackResultMessage, EvolutionMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
 import { EffectContextFactory } from './effects/effect-context.js';
@@ -69,9 +69,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const newActiveCard = controllers.field.getCardByPosition(sourceHandler, 0);
             controllers.players.messageAll({
                 type: 'card-switch',
-                components: [`Player ${sourceHandler + 1} sent out ${newActiveCard.name}!`]
+                components: [ `Player ${sourceHandler + 1} sent out ${newActiveCard.name}!` ],
             });
-        }
+        },
     },
     'attack-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -84,7 +84,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
                 EventHandler.validate('Insufficient energy for attack', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
                     const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
-                    if (!fieldInstanceId) return true; // No card, can't attack
+                    if (!fieldInstanceId) {
+                        return true; 
+                    } // No card, can't attack
                     const playerCard = controllers.field.getCardByPosition(source, 0);
                     const { attacks } = controllers.cardRepository.getCreature(playerCard.templateId);
                     const attack = attacks[message.attackIndex];
@@ -115,7 +117,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${playerCard.templateId} is confused and hurt itself in its confusion!`]
+                    components: [ `${playerCard.templateId} is confused and hurt itself in its confusion!` ],
                 });
                 controllers.turnState.setShouldEndTurn(true);
                 return;
@@ -144,7 +146,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 controllers,
                 sourceHandler,
                 message.attackIndex,
-                playerCard.instanceId
+                playerCard.instanceId,
             );
             
             const attackResult = controllers.field.attack(sourceHandler, message.attackIndex, resolvedDamage);
@@ -167,7 +169,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         targetPlayerId,
                         attackResult.target.instanceId,
                         attackResult.target.templateId,
-                        attackResult.damage
+                        attackResult.damage,
                     );
                     
                     // Process any effects that were triggered by the damage
@@ -194,11 +196,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 attack.name,
                 attackResult.damage,
                 attackResult.target.name,
-                attackResult.target.hp
+                attackResult.target.hp,
             ));
             
             controllers.turnState.setShouldEndTurn(true);
-        }
+        },
     },
     'play-card-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -223,15 +225,21 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.cardType === 'creature' && benchSize >= 3;
                 }),
                 EventHandler.validate('Cannot attach tool when creature already has one', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
-                    if (message.cardType !== 'tool') return false;
+                    if (message.cardType !== 'tool') {
+                        return false; 
+                    }
                     const targetPlayerId = message.targetPlayerId ?? source;
                     const targetFieldIndex = message.targetFieldIndex ?? 0;
                     const fieldInstanceId = controllers.field.getFieldInstanceId(targetPlayerId, targetFieldIndex);
-                    if (!fieldInstanceId) return true;
+                    if (!fieldInstanceId) {
+                        return true; 
+                    }
                     return !controllers.tools.canAttachTool(fieldInstanceId);
                 }),
                 EventHandler.validate('Item effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
-                    if (message.cardType !== 'item') return false;
+                    if (message.cardType !== 'item') {
+                        return false; 
+                    }
                     
                     // Create proper HandlerData structure from controllers
                     const handlerData = ControllerUtils.createPlayerView(controllers, source);
@@ -240,7 +248,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return !ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
                 }),
                 EventHandler.validate('Supporter effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
-                    if (message.cardType !== 'supporter') return false;
+                    if (message.cardType !== 'supporter') {
+                        return false; 
+                    }
                     
                     // Create proper HandlerData structure from controllers
                     const handlerData = ControllerUtils.createPlayerView(controllers, source);
@@ -280,7 +290,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const { name } = controllers.cardRepository.getCreature(message.templateId);
                 controllers.players.messageAll({
                     type: 'card-played',
-                    components: [`Player ${sourceHandler + 1} played ${name} to the bench!`]
+                    components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
                 });
             } else if (message.cardType === 'supporter') {
                 controllers.turnState.setSupporterPlayedThisTurn(true);
@@ -336,11 +346,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const targetCard = controllers.field.getCards(targetPlayerId)[targetFieldIndex];
                     controllers.players.messageAll({
                         type: 'card-played',
-                        components: [`Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!`]
+                        components: [ `Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!` ],
                     });
                 }
             }
-        }
+        },
     },
     'end-turn-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -354,7 +364,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers,
                     currentPlayer,
                     activeCard.instanceId,
-                    activeCard.templateId
+                    activeCard.templateId,
                 );
                 
                 // Process any effects that were triggered by end-of-turn
@@ -364,16 +374,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Clear guaranteed coin flip heads at end of turn (Will supporter effect)
             controllers.coinFlip.clearGuaranteedHeads();
             
-            // Clear retreat preventions that expire at end of turn
-            // TODO: Implement proper duration tracking instead of clearing all
+            /*
+             * Clear retreat preventions that expire at end of turn
+             * TODO: Implement proper duration tracking instead of clearing all
+             */
             controllers.turnState.clearRetreatPreventions();
 
             controllers.players.messageAll({
                 type: 'turn-ended',
-                components: [`Player ${sourceHandler + 1} ended their turn.`]
+                components: [ `Player ${sourceHandler + 1} ended their turn.` ],
             });
             controllers.turnState.setShouldEndTurn(true);
-        }
+        },
     },
     'setup-complete': {
         canRespond: EventHandler.isTurn('turn'),
@@ -385,8 +397,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
                 EventHandler.validate('Invalid bench cards', (controllers: Controllers, source: number, message: SetupCompleteResponseMessage) => {
                     const hand = controllers.hand.getHand(source);
-                    return message.benchCardIds.some(cardId => 
-                        !hand.some(card => card.templateId === cardId && card.type === 'creature')
+                    return message.benchCardIds.some(cardId => !hand.some(card => card.templateId === cardId && card.type === 'creature'),
                     );
                 }),
             ],
@@ -413,8 +424,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const hand = controllers.hand.getHand(source);
             
             // Find and play the active card from hand
-            const activeCardIndex = hand.findIndex(card => 
-                card.templateId === message.activeCardId && card.type === 'creature'
+            const activeCardIndex = hand.findIndex(card => card.templateId === message.activeCardId && card.type === 'creature',
             );
             let activeInstanceId: string | undefined;
             if (activeCardIndex !== -1) {
@@ -425,8 +435,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             // Find and play bench cards from hand
             for (const cardId of message.benchCardIds) {
-                const benchCardIndex = hand.findIndex(card => 
-                    card.templateId === cardId && card.type === 'creature'
+                const benchCardIndex = hand.findIndex(card => card.templateId === cardId && card.type === 'creature',
                 );
                 if (benchCardIndex !== -1) {
                     const benchCard = controllers.hand.playCard(source, benchCardIndex);
@@ -435,7 +444,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             }
             
             controllers.setup.setPlayerReady(source);
-        }
+        },
     },
     'evolve-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -448,10 +457,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Invalid evolution target', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     if (message.position === 0) {
                         return !controllers.field.getCardByPosition(source, 0);
-                    } else {
-                        const benchedCards = controllers.field.getCards(source).slice(1);
-                        return message.position < 1 || message.position > benchedCards.length;
-                    }
+                    } 
+                    const benchedCards = controllers.field.getCards(source).slice(1);
+                    return message.position < 1 || message.position > benchedCards.length;
+                    
                 }),
                 EventHandler.validate('Creature already evolved this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     let targetCard;
@@ -499,7 +508,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             const hand = controllers.hand.getHand(sourceHandler);
             const evolutionCardIndex = hand.findIndex(card => card.templateId === message.evolutionId);
-            if (evolutionCardIndex === -1) return;
+            if (evolutionCardIndex === -1) {
+                return; 
+            }
             
             // Get the evolution card's instanceId before playing it
             const evolutionCard = controllers.hand.playCard(sourceHandler, evolutionCardIndex);
@@ -534,9 +545,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.players.messageAll(new EvolutionMessage(
                 'Previous Form',
                 name,
-                `Player ${sourceHandler + 1}`
+                `Player ${sourceHandler + 1}`,
             ));
-        }
+        },
     },
     'attach-energy-response': {
         validateEvent: {
@@ -574,7 +585,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             if (success) {
                 controllers.players.messageAll({
                     type: 'energy-attached',
-                    components: [`Player ${currentPlayer + 1} attached ${energyType} energy!`]
+                    components: [ `Player ${currentPlayer + 1} attached ${energyType} energy!` ],
                 });
                 
                 // Process energy-attachment triggers for all field cards (all players)
@@ -585,20 +596,20 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         const cardData = controllers.cardRepository.getCreature(card.templateId);
                         if (cardData.ability) {
                             const ability = cardData.ability;
-                            if (ability.trigger?.type === 'energy-attachment' && 
-                                (!ability.trigger.energyType || ability.trigger.energyType === energyType)) {
+                            if (ability.trigger?.type === 'energy-attachment' 
+                                && (!ability.trigger.energyType || ability.trigger.energyType === energyType)) {
                                 
                                 const context = EffectContextFactory.createAbilityContext(
                                     playerId,
                                     `${cardData.name}'s ${ability.name}`,
                                     card.instanceId,
-                                    fieldPosition
+                                    fieldPosition,
                                 );
                                 
                                 EffectApplier.applyEffects(
                                     ability.effects,
                                     controllers,
-                                    context
+                                    context,
                                 );
                             }
                         }
@@ -609,7 +620,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EffectQueueProcessor.processQueue(controllers);
             }
             
-        }
+        },
     },
     'use-ability-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -622,17 +633,23 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot use ability - no ability', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                     const fieldCards = controllers.field.getPlayedCards(source);
                     const fieldCard = fieldCards[message.fieldCardPosition];
-                    if (!fieldCard) return true;
+                    if (!fieldCard) {
+                        return true; 
+                    }
                     const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
                     return !cardData.ability;
                 }),
                 EventHandler.validate('Cannot use ability - already used this turn', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                     const fieldCards = controllers.field.getPlayedCards(source);
                     const fieldCard = fieldCards[message.fieldCardPosition];
-                    if (!fieldCard) return false;
+                    if (!fieldCard) {
+                        return false; 
+                    }
                     const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
                     const ability = cardData.ability;
-                    if (!ability) return false;
+                    if (!ability) {
+                        return false; 
+                    }
                     
                     // Allow unlimited abilities to be used multiple times
                     if (ability.trigger?.unlimited) {
@@ -640,12 +657,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     return controllers.turnState.hasAbilityBeenUsedThisTurn(fieldCard.instanceId, ability.name);
-                })
+                }),
             ],
             fallback: (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                 controllers.waiting.removePosition(source);
                 return undefined as any;
-            }
+            },
         },
         merge: (controllers: Controllers, sourceHandler: number, message: UseAbilityResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
@@ -666,7 +683,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         sourceHandler,
                         effectName,
                         fieldCard.instanceId,
-                        message.fieldCardPosition
+                        message.fieldCardPosition,
                     );
                     
                     EffectApplier.applyEffects(ability.effects, controllers, context);
@@ -676,7 +693,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
             }
             
-        }
+        },
     },
     'retreat-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -695,10 +712,14 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
                 EventHandler.validate('Insufficient energy for retreat', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
-                    if (!fieldInstanceId) return true;
+                    if (!fieldInstanceId) {
+                        return true; 
+                    }
                     
                     const activeCard = controllers.field.getCardByPosition(source, 0);
-                    if (!activeCard) return true;
+                    if (!activeCard) {
+                        return true; 
+                    }
                     
                     const creatureData = controllers.cardRepository.getCreature(activeCard.templateId);
                     const retreatCost = creatureData.retreatCost;
@@ -712,7 +733,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
                 EventHandler.validate('Cannot retreat - retreat prevented', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     const activeCard = controllers.field.getCardByPosition(source, 0);
-                    if (!activeCard) return false;
+                    if (!activeCard) {
+                        return false; 
+                    }
                     
                     return controllers.turnState.isRetreatPrevented(activeCard.instanceId);
                 }),
@@ -725,11 +748,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(sourceHandler);
             
             const activeCard = controllers.field.getCardByPosition(sourceHandler, 0);
-            if (!activeCard) return;
+            if (!activeCard) {
+                return; 
+            }
             
             // Get field instance ID for energy operations
             const fieldInstanceId = controllers.field.getFieldInstanceId(sourceHandler, 0);
-            if (!fieldInstanceId) return;
+            if (!fieldInstanceId) {
+                return; 
+            }
             
             // Calculate retreat cost after reductions
             const creatureData = controllers.cardRepository.getCreature(activeCard.templateId);
@@ -740,8 +767,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             let energyToRemove = retreatCost;
             
             // Remove energy in order of availability
-            for (const [energyType, amount] of Object.entries(attachedEnergy)) {
-                if (energyToRemove <= 0) break;
+            for (const [ energyType, amount ] of Object.entries(attachedEnergy)) {
+                if (energyToRemove <= 0) {
+                    break; 
+                }
                 const toRemove = Math.min(amount, energyToRemove);
                 controllers.energy.discardSpecificEnergyFromInstance(sourceHandler, fieldInstanceId, energyType as AttachableEnergyType, toRemove);
                 energyToRemove -= toRemove;
@@ -756,7 +785,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Mark that retreat has been used this turn
             controllers.turnState.setRetreatedThisTurn(true);
             
-        }
+        },
     },
     'select-target-response': {
         canRespond: EventHandler.isTurn('turn'),
@@ -784,9 +813,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             const currentTarget = effect[requirement.targetProperty];
                             const target = requirement.target;
                             
-                            if (target && typeof target === 'object' && 
-                                (target.type === 'single-choice' || target.type === 'multi-choice') &&
-                                (!currentTarget || currentTarget.type !== 'resolved')) {
+                            if (target && typeof target === 'object' 
+                                && (target.type === 'single-choice' || target.type === 'multi-choice')
+                                && (!currentTarget || currentTarget.type !== 'resolved')) {
                                 targetToValidate = target;
                                 break;
                             }
@@ -810,19 +839,19 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             message.targetPlayerId,
                             message.targetCreatureIndex,
                             controllers,
-                            originalContext
+                            originalContext,
                         );
                         return !isValidTarget; // Return true when validation FAILS (EventHandler convention)
                     }
                     
                     return false; // No target to validate, so it's valid (return false)
-                })
+                }),
             ],
             fallback: (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
                 controllers.waiting.removePosition(source);
                 controllers.turnState.clearPendingTargetSelection(); // Clear pending selection on validation failure
                 return undefined as any;
-            }
+            },
         },
         merge: (controllers: Controllers, sourceHandler: number, message: SelectTargetResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
@@ -834,7 +863,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers,
                     pendingSelection,
                     message.targetPlayerId,
-                    message.targetCreatureIndex
+                    message.targetCreatureIndex,
                 );
                 
                 // Only clear pending selection if we didn't set up a new one
@@ -843,6 +872,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
             }
             
-        }
-    }
+        },
+    },
 });

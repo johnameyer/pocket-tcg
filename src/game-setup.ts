@@ -1,5 +1,5 @@
-import { GameParams } from './game-params.js';
 import { GenericGameSetup, Intermediary } from '@cards-ts/core';
+import { GameParams } from './game-params.js';
 import { CardRepository } from './repository/card-repository.js';
 
 export class GameSetup implements GenericGameSetup<GameParams> {
@@ -9,7 +9,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         return {
             initialDecks: [],
             maxHandSize: 10,
-            maxTurns: 30
+            maxTurns: 30,
         };
     }
     
@@ -37,7 +37,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         const errors: { initialDecks?: string; playerEnergyTypes?: string; maxHandSize?: string; maxTurns?: string; } = {};
         
         try {
-            if(!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
+            if (!Number(params.maxHandSize) || Number(params.maxHandSize) <= 0) {
                 throw new Error();
             }
         } catch (e) {
@@ -45,7 +45,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         }
         
         try {
-            if(!Number(params.maxTurns) || Number(params.maxTurns) <= 0) {
+            if (!Number(params.maxTurns) || Number(params.maxTurns) <= 0) {
                 throw new Error();
             }
         } catch (e) {
@@ -60,14 +60,14 @@ export class GameSetup implements GenericGameSetup<GameParams> {
             maxHandSize: {
                 type: 'number',
                 description: 'Maximum hand size (default: 10)',
-                default: 10
+                default: 10,
             },
             maxTurns: {
                 type: 'number',
                 description: 'Maximum turns before tie (default: 30)',
-                default: 30
-            }
-        } satisfies {[key: string]: import('yargs').Options};
+                default: 30,
+            },
+        } satisfies { [key: string]: import('yargs').Options };
     }
 
     setupForYargs(params: Record<string, unknown>): GameParams {
@@ -75,7 +75,7 @@ export class GameSetup implements GenericGameSetup<GameParams> {
         return {
             initialDecks: [],
             maxHandSize: typeof params.maxHandSize === 'number' ? params.maxHandSize : defaults.maxHandSize,
-            maxTurns: typeof params.maxTurns === 'number' ? params.maxTurns : defaults.maxTurns
+            maxTurns: typeof params.maxTurns === 'number' ? params.maxTurns : defaults.maxTurns,
         };
     }
 }

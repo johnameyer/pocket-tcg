@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
+import { EnergyDictionary } from '../src/controllers/energy-controller.js';
+import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { MockCardRepository } from './mock-repository.js';
-import { EnergyDictionary } from '../src/controllers/energy-controller.js';
-import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 // Helper to get total energy from an energy dictionary
 function getTotalEnergy(energyDict: EnergyDictionary): number {
@@ -15,12 +15,12 @@ function getTotalEnergy(energyDict: EnergyDictionary): number {
 describe('Creature Retreat System', () => {
     it('should allow retreat with sufficient energy', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(0)],
+            actions: [ new RetreatResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
-                StateBuilder.withDamage('basic-creature-0', 10)
-            )
+                StateBuilder.withDamage('basic-creature-0', 10),
+            ),
         });
         
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
@@ -28,12 +28,12 @@ describe('Creature Retreat System', () => {
 
     it('should prevent retreat with insufficient energy', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(0)],
+            actions: [ new RetreatResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withEnergy('basic-creature-0', {}),
-                StateBuilder.withDamage('basic-creature-0', 10)
-            )
+                StateBuilder.withDamage('basic-creature-0', 10),
+            ),
         });
         
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature');
@@ -41,13 +41,13 @@ describe('Creature Retreat System', () => {
 
     it('should clear status effects on retreat', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(0)],
+            actions: [ new RetreatResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 StateBuilder.withDamage('basic-creature-0', 10),
-                StateBuilder.withStatusEffect(0, 'poison')
-            )
+                StateBuilder.withStatusEffect(0, 'poison'),
+            ),
         });
         
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
@@ -55,11 +55,11 @@ describe('Creature Retreat System', () => {
 
     it('should require exact retreat cost energy', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(0)],
+            actions: [ new RetreatResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'evolution-creature', ['high-hp-creature']),
-                StateBuilder.withEnergy('evolution-creature-0', { fire: 2 })
-            )
+                StateBuilder.withCreatures(0, 'evolution-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }),
+            ),
         });
         
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
@@ -67,11 +67,11 @@ describe('Creature Retreat System', () => {
 
     it('should allow retreat with any energy type for colorless cost', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(0)],
+            actions: [ new RetreatResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'evolution-creature', ['high-hp-creature']),
-                StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }) // Fire energy can pay colorless retreat cost
-            )
+                StateBuilder.withCreatures(0, 'evolution-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }), // Fire energy can pay colorless retreat cost
+            ),
         });
         
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
@@ -79,12 +79,12 @@ describe('Creature Retreat System', () => {
 
     it('should allow player to choose which bench creature becomes active on retreat', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(1)],
+            actions: [ new RetreatResponseMessage(1) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature', 'basic-creature' ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
-                StateBuilder.withDamage('basic-creature-0', 10)
-            )
+                StateBuilder.withDamage('basic-creature-0', 10),
+            ),
         });
         
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature');
@@ -95,11 +95,11 @@ describe('Creature Retreat System', () => {
 
     it('should consume energy when retreating', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(0)],
+            actions: [ new RetreatResponseMessage(0) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 2 })
-            )
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
+            ),
         });
         
         // Energy should be consumed from the retreated creature (now on bench)
@@ -110,15 +110,17 @@ describe('Creature Retreat System', () => {
 
     it('should preserve bench ordering when retreating', () => {
         const { state } = runTestGame({
-            actions: [new RetreatResponseMessage(1)], // Select middle creature (Squirtle)
+            actions: [ new RetreatResponseMessage(1) ], // Select middle creature (Squirtle)
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature', 'high-hp-creature']),
-                StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
-            )
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature', 'basic-creature', 'high-hp-creature' ]),
+                StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+            ),
         });
         
-        // After retreat: Squirtle becomes active, Charmander goes to bench
-        // Bench ordering should be: [Snorlax, Charmander, Snorlax]
+        /*
+         * After retreat: Squirtle becomes active, Charmander goes to bench
+         * Bench ordering should be: [Snorlax, Charmander, Snorlax]
+         */
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Froakie should be active');
         expect(state.field.creatures[0].length).to.equal(4, 'Should have 4 creatures total (1 active + 3 bench)');
         expect(getCurrentTemplateId(state.field.creatures[0][1])).to.equal('high-hp-creature', 'Snorlax should stay at index 1');
@@ -129,11 +131,11 @@ describe('Creature Retreat System', () => {
     describe('Retreat Validation Edge Cases', () => {
         it('should prevent retreat with negative bench index', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(-1)],
+                actions: [ new RetreatResponseMessage(-1) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
-                )
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                ),
             });
 
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Negative bench index should be blocked');
@@ -141,11 +143,11 @@ describe('Creature Retreat System', () => {
 
         it('should prevent retreat with out-of-range bench index', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(5)],
+                actions: [ new RetreatResponseMessage(5) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
-                )
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                ),
             });
 
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Out-of-range bench index should be blocked');
@@ -153,11 +155,11 @@ describe('Creature Retreat System', () => {
 
         it('should prevent retreat when no bench creatures available', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(0)],
+                actions: [ new RetreatResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature', []),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
-                )
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                ),
             });
 
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should not retreat with empty bench');
@@ -167,15 +169,15 @@ describe('Creature Retreat System', () => {
             const { state } = runTestGame({
                 actions: [
                     new RetreatResponseMessage(0), // Should succeed: Charmander -> Snorlax  
-                    new RetreatResponseMessage(1)  // Should fail: blocked by once-per-turn rule
+                    new RetreatResponseMessage(1), // Should fail: blocked by once-per-turn rule
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature', 'basic-creature' ]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     StateBuilder.withEnergy('high-hp-creature-0-0', { lightning: 1 }),
-                    StateBuilder.withEnergy('basic-creature-0-1', { water: 1 })
+                    StateBuilder.withEnergy('basic-creature-0-1', { water: 1 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
@@ -185,15 +187,15 @@ describe('Creature Retreat System', () => {
             const { state } = runTestGame({
                 actions: [
                     new RetreatResponseMessage(0), // Charmander -> Snorlax (succeeds)
-                    new RetreatResponseMessage(1)  // Try Snorlax -> Froakie (blocked)
+                    new RetreatResponseMessage(1), // Try Snorlax -> Froakie (blocked)
                 ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature', 'basic-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature', 'basic-creature' ]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     StateBuilder.withEnergy('high-hp-creature-0-0', { lightning: 1 }),
-                    StateBuilder.withEnergy('basic-creature-0-1', { water: 1 })
+                    StateBuilder.withEnergy('basic-creature-0-1', { water: 1 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             // First retreat succeeds, second is blocked by once-per-turn validation
@@ -204,12 +206,12 @@ describe('Creature Retreat System', () => {
     describe('Energy Discard Tracking', () => {
         it('should track discarded energy when retreating (2 cost)', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(0)],
+                actions: [ new RetreatResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'evolution-creature', ['basic-creature']),  // retreat cost = 2
-                    StateBuilder.withEnergy('evolution-creature-0', { fire: 2, water: 1 })
+                    StateBuilder.withCreatures(0, 'evolution-creature', [ 'basic-creature' ]), // retreat cost = 2
+                    StateBuilder.withEnergy('evolution-creature-0', { fire: 2, water: 1 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -220,12 +222,12 @@ describe('Creature Retreat System', () => {
 
         it('should track multiple energy types discarded during retreat (3 cost)', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(0)],
+                actions: [ new RetreatResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'high-hp-creature', ['basic-creature']),  // retreat cost = 3
-                    StateBuilder.withEnergy('high-hp-creature-0', { fire: 1, water: 1, grass: 1 })
+                    StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]), // retreat cost = 3
+                    StateBuilder.withEnergy('high-hp-creature-0', { fire: 1, water: 1, grass: 1 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -239,12 +241,12 @@ describe('Creature Retreat System', () => {
 
         it('should track discarded energy for basic retreat (1 cost)', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(0)],
+                actions: [ new RetreatResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),  // retreat cost = 1
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 2 })
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]), // retreat cost = 1
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -256,7 +258,7 @@ describe('Creature Retreat System', () => {
         it('should accumulate discarded energy across multiple retreats in different turns', () => {
             const testRepository = new MockCardRepository({
                 supporters: new Map([
-                    ['energy-discard', {
+                    [ 'energy-discard', {
                         templateId: 'energy-discard',
                         name: 'Energy Discard',
                         effects: [{
@@ -264,24 +266,24 @@ describe('Creature Retreat System', () => {
                             energyType: 'fire',
                             amount: { type: 'constant', value: 1 },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'discard'
-                        }]
-                    }]
-                ])
+                            operation: 'discard',
+                        }],
+                    }],
+                ]),
             });
 
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('energy-discard', 'supporter'),
-                    new RetreatResponseMessage(0)
+                    new RetreatResponseMessage(0),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'evolution-creature', ['basic-creature']),  // retreat cost = 2
+                    StateBuilder.withCreatures(0, 'evolution-creature', [ 'basic-creature' ]), // retreat cost = 2
                     StateBuilder.withHand(0, [{ templateId: 'energy-discard', type: 'supporter' }]),
-                    StateBuilder.withEnergy('evolution-creature-0', { fire: 4 })
+                    StateBuilder.withEnergy('evolution-creature-0', { fire: 4 }),
                 ),
-                maxSteps: 15
+                maxSteps: 15,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];

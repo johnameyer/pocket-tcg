@@ -1,14 +1,17 @@
-import { AbstractHandsController, Card, GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, TurnController, SystemHandlerParams } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
 import { StatusCondition } from '../repository/effect-types.js';
+
+import { TurnCounterController } from './turn-counter-controller.js';
+import { CoinFlipController } from './coinflip-controller.js';
 
 export enum StatusEffectType {
     ASLEEP = 'sleep',
     BURNED = 'burn', 
     CONFUSED = 'confusion',
     PARALYZED = 'paralysis',
-    POISONED = 'poison'
+    POISONED = 'poison',
 }
 
 export interface StatusEffect {
@@ -17,13 +20,12 @@ export interface StatusEffect {
 }
 
 export type StatusEffectState = {
-    // Status effects for active FieldCard [playerId] - stored as arrays
-    // TODO properly strongly type this
+    /*
+     * Status effects for active FieldCard [playerId] - stored as arrays
+     * TODO properly strongly type this
+     */
     activeStatusEffects: Serializable[];
 };
-
-import { TurnCounterController } from './turn-counter-controller.js';
-import { CoinFlipController } from './coinflip-controller.js';
 
 type StatusEffectDependencies = { 
     players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>,
@@ -38,7 +40,8 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
 
     initialState(controllers: StatusEffectDependencies): StatusEffectState {
         return {
-            activeStatusEffects: new Array(controllers.players.count).fill(null).map(() => [] as Serializable)
+            activeStatusEffects: new Array(controllers.players.count).fill(null)
+                .map(() => [] as Serializable),
         };
     }
     
@@ -56,7 +59,7 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
             canRetreat: (state: StatusEffectState) => {
                 const effects = (state.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
                 return !effects.some(e => e.type === StatusEffectType.ASLEEP || e.type === StatusEffectType.PARALYZED);
-            }
+            },
         };
     }
 
@@ -72,15 +75,17 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         }
     }
     
-    // TODO remove this and just generate a single const object from the array of lowercase Object.fromEntries(['poison']) => { POISONED: 'poison' } over the enum
-    // Convert StatusCondition to StatusEffectType
-    // Status condition to type mapping
+    /*
+     * TODO remove this and just generate a single const object from the array of lowercase Object.fromEntries(['poison']) => { POISONED: 'poison' } over the enum
+     * Convert StatusCondition to StatusEffectType
+     * Status condition to type mapping
+     */
     private static readonly STATUS_CONDITION_MAP = {
-        'sleep': StatusEffectType.ASLEEP,
-        'burn': StatusEffectType.BURNED,
-        'confusion': StatusEffectType.CONFUSED,
-        'paralysis': StatusEffectType.PARALYZED,
-        'poison': StatusEffectType.POISONED
+        sleep: StatusEffectType.ASLEEP,
+        burn: StatusEffectType.BURNED,
+        confusion: StatusEffectType.CONFUSED,
+        paralysis: StatusEffectType.PARALYZED,
+        poison: StatusEffectType.POISONED,
     } as const;
 
     private statusConditionToType(condition: StatusCondition): StatusEffectType {
@@ -96,8 +101,10 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         return this.applyStatusEffect(playerId, this.statusConditionToType(condition));
     }
     
-    // Helper methods to work with serializable arrays
-    // TODO can we fix how these are considered serializable to remove the casts
+    /*
+     * Helper methods to work with serializable arrays
+     * TODO can we fix how these are considered serializable to remove the casts
+     */
     private getActiveEffects(playerId: number): StatusEffect[] {
         const effects = (this.state.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
         return effects;
@@ -116,10 +123,9 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         
         // Remove conflicting status effects (only one of asleep, confused, paralyzed can be active)
         if (effect === StatusEffectType.ASLEEP || effect === StatusEffectType.CONFUSED || effect === StatusEffectType.PARALYZED) {
-            effects = effects.filter(e => 
-                e.type !== StatusEffectType.ASLEEP && 
-                e.type !== StatusEffectType.CONFUSED && 
-                e.type !== StatusEffectType.PARALYZED
+            effects = effects.filter(e => e.type !== StatusEffectType.ASLEEP 
+                && e.type !== StatusEffectType.CONFUSED 
+                && e.type !== StatusEffectType.PARALYZED,
             );
         }
         
@@ -131,7 +137,6 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         this.setActiveEffects(playerId, effects);
         return true;
     }
-
 
 
     // Remove status effect from active FieldCard
@@ -150,7 +155,7 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
 
     // Get active FieldCard status effects
     public getActiveStatusEffects(playerId: number): StatusEffect[] {
-        return [...this.getActiveEffects(playerId)];
+        return [ ...this.getActiveEffects(playerId) ];
     }
 
     // Check if FieldCard has specific status effect (only active FieldCard can have status effects)
@@ -240,9 +245,9 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         if (coinFlip) {
             // On heads (success), FieldCard can attack with no self-damage
             return { canAttack: true, selfDamage: 0 };
-        } else {
-            // On tails (failure), attack fails and FieldCard takes 30 damage to itself
-            return { canAttack: false, selfDamage: 30 };
-        }
+        } 
+        // On tails (failure), attack fails and FieldCard takes 30 damage to itself
+        return { canAttack: false, selfDamage: 30 };
+        
     }
 }

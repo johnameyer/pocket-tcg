@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { StateBuilder } from './helpers/state-builder.js';
 import { ControllerState } from '@cards-ts/core';
 import { Controllers } from '../src/controllers/controllers.js';
+import { StateBuilder } from './helpers/state-builder.js';
 
 describe('StateBuilder Validation', () => {
     it('should throw an error when attaching energy to non-existent creature', () => {
@@ -16,7 +16,7 @@ describe('StateBuilder Validation', () => {
             StateBuilder.withEnergy('non-existent-creature', { fire: 1 })(state as ControllerState<Controllers>);
         };
         
-        expect(attachEnergy).to.throw(Error, "Creature instance 'non-existent-creature' not found");
+        expect(attachEnergy).to.throw(Error, 'Creature instance \'non-existent-creature\' not found');
     });
     
     it('should throw an error when attaching a tool to non-existent creature', () => {
@@ -26,7 +26,7 @@ describe('StateBuilder Validation', () => {
             StateBuilder.withTool('non-existent-creature', 'giant-cape')(state as ControllerState<Controllers>);
         };
         
-        expect(attachTool).to.throw(Error, "Creature instance 'non-existent-creature' not found");
+        expect(attachTool).to.throw(Error, 'Creature instance \'non-existent-creature\' not found');
     });
     
     it('should successfully attach energy to existing creature', () => {

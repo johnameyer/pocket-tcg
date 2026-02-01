@@ -15,11 +15,10 @@ describe('Creature Pocket TCG Game', () => {
     };
 
     it('should create and run a basic game with bot handlers', () => {
-        const handlers = Array.from({ length: 2 }, () => 
-            factory.getDefaultBotHandlerChain()
+        const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain(),
         );
         
-        const names = ['Player1', 'Player2'];
+        const names = [ 'Player1', 'Player2' ];
         const driver = factory.getGameDriver(handlers, params, names);
 
         driver.resume();
@@ -58,13 +57,13 @@ describe('Creature Pocket TCG Game', () => {
     describe('Attack Index Validation', () => {
         it('should prevent attack with negative index', () => {
             const { state } = runTestGame({
-                actions: [new AttackResponseMessage(-1)],
+                actions: [ new AttackResponseMessage(-1) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Attack should be blocked with invalid index
@@ -73,13 +72,13 @@ describe('Creature Pocket TCG Game', () => {
 
         it('should prevent attack with out-of-range index', () => {
             const { state } = runTestGame({
-                actions: [new AttackResponseMessage(5)],
+                actions: [ new AttackResponseMessage(5) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
-                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 })
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             // Attack should be blocked with invalid index
@@ -90,12 +89,12 @@ describe('Creature Pocket TCG Game', () => {
     describe('Card Play Validation', () => {
         it('should prevent playing card not in hand', () => {
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('basic-supporter', 'supporter')],
+                actions: [ new PlayCardResponseMessage('basic-supporter', 'supporter') ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [])
+                    StateBuilder.withHand(0, []),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             expect(state.hand[0]).to.have.length(0, 'Card not in hand should not be playable');
@@ -103,12 +102,12 @@ describe('Creature Pocket TCG Game', () => {
 
         it('should prevent playing Creature when bench is full', () => {
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('basic-creature', 'creature')],
+                actions: [ new PlayCardResponseMessage('basic-creature', 'creature') ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature', 'high-hp-creature', 'evolution-creature']),
-                    StateBuilder.withHand(0, [{templateId: 'basic-creature', type: 'creature' as const}])
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'high-hp-creature', 'evolution-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'basic-creature', type: 'creature' as const }]),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             expect(state.field.creatures[0].slice(1)).to.have.length(3, 'Should not exceed bench limit');
@@ -116,12 +115,12 @@ describe('Creature Pocket TCG Game', () => {
 
         it('should prevent playing evolved Creature directly', () => {
             const { state } = runTestGame({
-                actions: [new PlayCardResponseMessage('evolution-creature', 'creature')],
+                actions: [ new PlayCardResponseMessage('evolution-creature', 'creature') ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature' as const}])
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' as const }]),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             expect(state.field.creatures[0].slice(1)).to.have.length(0, 'Evolved Creature should not be playable directly');
@@ -182,9 +181,9 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withGameState('generateEnergyAndDrawCard'),
                     (customState) => {
                         customState.params = { ...customState.params, maxHandSize };
-                    }
+                    },
                 ),
-                maxSteps: 1
+                maxSteps: 1,
             });
         }
 
@@ -213,27 +212,28 @@ describe('Creature Pocket TCG Game', () => {
         });
 
         describe('Turn Limit', () => {
-            // Note: This test has issues with bot handlers when resuming from mid-game state.
-            // The simplified energy system (null vs dictionary) exposes a pre-existing issue
-            // where resumed state with bot handlers doesn't properly handle turn progression.
-            // See TODO comment in resumeGame() about state resumption issues.
+            /*
+             * Note: This test has issues with bot handlers when resuming from mid-game state.
+             * The simplified energy system (null vs dictionary) exposes a pre-existing issue
+             * where resumed state with bot handlers doesn't properly handle turn progression.
+             * See TODO comment in resumeGame() about state resumption issues.
+             */
             it.skip('should end game in tie when turn limit is reached', () => {
                 // Start earlier (turn 4) to let the game naturally progress to the limit
                 const params = {
                     ...new GameSetup().getDefaultParams(),
-                    maxTurns: 6 // Very low limit for testing
+                    maxTurns: 6, // Very low limit for testing
                 };
                 
-                const handlers = Array.from({ length: 2 }, () => 
-                    factory.getDefaultBotHandlerChain()
+                const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain(),
                 );
                 
                 // Start at turn 4, game will progress to 5, then 6 and hit the limit
                 const preConfiguredState = StateBuilder.createActionPhaseState(
-                    StateBuilder.withTurnNumber(4)
+                    StateBuilder.withTurnNumber(4),
                 );
                 
-                const driver = factory.getGameDriver(handlers, params, ['TestPlayer', 'OpponentPlayer'], preConfiguredState);
+                const driver = factory.getGameDriver(handlers, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState);
                 
                 const state = resumeGame(driver, 200); // Increase even more
                 
@@ -245,18 +245,17 @@ describe('Creature Pocket TCG Game', () => {
             it('should not end game before turn limit is reached', () => {
                 const params = {
                     ...new GameSetup().getDefaultParams(),
-                    maxTurns: 30
+                    maxTurns: 30,
                 };
                 
-                const handlers = Array.from({ length: 2 }, () => 
-                    factory.getDefaultBotHandlerChain()
+                const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain(),
                 );
                 
                 const preConfiguredState = StateBuilder.createActionPhaseState(
-                    StateBuilder.withTurnNumber(2)
+                    StateBuilder.withTurnNumber(2),
                 );
                 
-                const driver = factory.getGameDriver(handlers, params, ['TestPlayer', 'OpponentPlayer'], preConfiguredState);
+                const driver = factory.getGameDriver(handlers, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState);
                 
                 const state = resumeGame(driver, 5);
                 

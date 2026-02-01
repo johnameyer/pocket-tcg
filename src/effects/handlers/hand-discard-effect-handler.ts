@@ -53,7 +53,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         if (hand.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} has no cards to discard for player ${playerId}!`]
+                components: [ `${context.effectName} has no cards to discard for player ${playerId}!` ],
             });
             return;
         }
@@ -61,8 +61,10 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         // If the discard amount is greater than the hand size, discard the entire hand
         const actualDiscardAmount = Math.min(discardAmount, hand.length);
         
-        // For now, just discard random cards
-        // In a real implementation, this would involve player choice
+        /*
+         * For now, just discard random cards
+         * In a real implementation, this would involve player choice
+         */
         const cardsToDiscard = hand.slice(0, actualDiscardAmount);
         
         // If shuffleIntoDeck is true, shuffle the discarded cards into the deck
@@ -94,7 +96,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             // Send a message about the shuffle
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} shuffles ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}'s hand into the deck!`]
+                components: [ `${context.effectName} shuffles ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}'s hand into the deck!` ],
             });
         } else {
             // Remove the cards from the hand (automatically discards them)
@@ -103,7 +105,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             // Send a message about the discard
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!`]
+                components: [ `${context.effectName} discards ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} from player ${playerId}!` ],
             });
         }
     }

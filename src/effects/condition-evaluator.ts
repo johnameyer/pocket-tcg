@@ -1,6 +1,6 @@
 import { Condition } from '../repository/condition-types.js';
 import { HandlerData } from '../game-handler.js';
-import { FieldCard } from "../controllers/field-controller.js";
+import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { CreatureData } from '../repository/card-types.js';
@@ -24,21 +24,27 @@ export class ConditionEvaluator {
         condition: Condition | undefined,
         creature: FieldCard,
         handlerData: HandlerData,
-        cardRepository: CardRepository
+        cardRepository: CardRepository,
     ): boolean {
         // If no condition, always match
-        if (!condition) return true;
+        if (!condition) {
+            return true; 
+        }
         
         // Check each condition property
         
         // Check hasEnergy condition
         if (condition.hasEnergy !== undefined) {
             const attachedEnergyByInstance = handlerData.energy?.attachedEnergyByInstance;
-            if (!attachedEnergyByInstance) return false;
+            if (!attachedEnergyByInstance) {
+                return false; 
+            }
             
             const fieldInstanceId = getFieldInstanceId(creature);
             const creatureEnergy = attachedEnergyByInstance[fieldInstanceId];
-            if (!creatureEnergy) return false;
+            if (!creatureEnergy) {
+                return false; 
+            }
             
             // Get the energy type and required count
             const energyType = Object.keys(condition.hasEnergy)[0] as AttachableEnergyType;
@@ -139,9 +145,9 @@ export class ConditionEvaluator {
             const prevStageData = cardRepository.getCreature(creatureData.previousStageName);
             if (!prevStageData.previousStageName) {
                 return 1; // Stage 1 (evolves from Basic)
-            } else {
-                return 2; // Stage 2 (evolves from Stage 1)
-            }
+            } 
+            return 2; // Stage 2 (evolves from Stage 1)
+            
         } catch (error) {
             return 0; // Default to Basic if can't resolve evolution chain
         }

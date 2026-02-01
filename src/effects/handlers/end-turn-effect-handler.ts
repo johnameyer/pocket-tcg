@@ -32,7 +32,7 @@ export class EndTurnEffectHandler extends AbstractEffectHandler<EndTurnEffect> {
         // Send a message about the turn ending
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} ends the turn!`]
+            components: [ `${context.effectName} ends the turn!` ],
         });
     }
 }

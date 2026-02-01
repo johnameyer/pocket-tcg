@@ -1,7 +1,5 @@
 import { Controllers } from '../controllers/controllers.js';
-import { Effect } from '../repository/effect-types.js';
 import { EffectApplier } from './effect-applier.js';
-import { effectHandlers, EffectHandler } from './effect-handler.js';
 import { PendingChoiceSelection, ChoiceEffectContext } from './pending-choice-selection.js';
 
 /**
@@ -27,11 +25,13 @@ export class EffectApplierChoice {
         // Get the selected sub-effect
         const selectedEffect = availableOptions[selectedIndex];
         
-        // Apply the selected sub-effect through the normal pipeline
-        // This allows choice effects to contain effects with targets
-        EffectApplier.applyEffects([selectedEffect], controllers, {
+        /*
+         * Apply the selected sub-effect through the normal pipeline
+         * This allows choice effects to contain effects with targets
+         */
+        EffectApplier.applyEffects([ selectedEffect ], controllers, {
             ...originalContext,
-            selectedChoiceIndex: selectedIndex
+            selectedChoiceIndex: selectedIndex,
         } as ChoiceEffectContext);
     }
 }

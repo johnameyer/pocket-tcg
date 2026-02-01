@@ -23,6 +23,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         // Shuffle effects can always be applied
         return true;
     }
+
     /**
      * Shuffle effects don't have targets to resolve.
      * 
@@ -79,7 +80,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         controllers: Controllers,
         effect: ShuffleEffect,
         context: EffectContext,
-        playerId: number
+        playerId: number,
     ): void {
         // Calculate draw amount BEFORE shuffling if specified
         let drawAmount = 0;
@@ -88,7 +89,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         }
         
         // Shuffle the hand into the deck
-        const hand = [...controllers.hand.getHand(playerId)];
+        const hand = [ ...controllers.hand.getHand(playerId) ];
         controllers.hand.removeCards(playerId, hand);
         
         for (const card of hand) {
@@ -101,7 +102,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         // Send a message about the shuffle
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} shuffles the ${effect.target === 'self' ? 'hand' : 'opponent\'s hand'} into the deck!`]
+            components: [ `${context.effectName} shuffles the ${effect.target === 'self' ? 'hand' : 'opponent\'s hand'} into the deck!` ],
         });
         
         // Draw cards if specified
@@ -122,7 +123,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         controllers: Controllers,
         effect: ShuffleEffect,
         context: EffectContext,
-        playerId: number
+        playerId: number,
     ): void {
         // Shuffle the deck
         controllers.deck.shuffle(playerId);
@@ -130,7 +131,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         // Send a message about the shuffle
         controllers.players.messageAll({
             type: 'status',
-            components: [`${context.effectName} shuffles the deck!`]
+            components: [ `${context.effectName} shuffles the deck!` ],
         });
         
         // Draw cards if specified
@@ -154,7 +155,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         playerId: number,
         drawAmount: number,
         context: EffectContext,
-        target?: PlayerTarget
+        target?: PlayerTarget,
     ): void {
         if (drawAmount <= 0) {
             return;
@@ -167,7 +168,7 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         if (deckSize === 0) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} couldn't draw any cards because the deck is empty!`]
+                components: [ `${context.effectName} couldn't draw any cards because the deck is empty!` ],
             });
             return;
         }
@@ -184,15 +185,15 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
         controllers.players.messageAll({
             type: 'status',
             components: [
-                `${context.effectName} ${target === 'self' ? 'draws' : 'makes the opponent draw'} ${actualDrawAmount} card${actualDrawAmount !== 1 ? 's' : ''}!`
-            ]
+                `${context.effectName} ${target === 'self' ? 'draws' : 'makes the opponent draw'} ${actualDrawAmount} card${actualDrawAmount !== 1 ? 's' : ''}!`,
+            ],
         });
         
         // If we couldn't draw all the requested cards, show a message
         if (actualDrawAmount < drawAmount) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} couldn't draw all ${drawAmount} cards because the deck only had ${deckSize} cards!`]
+                components: [ `${context.effectName} couldn't draw all ${drawAmount} cards because the deck only had ${deckSize} cards!` ],
             });
         }
     }

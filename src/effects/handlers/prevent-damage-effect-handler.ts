@@ -38,7 +38,7 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
     getResolutionRequirements(effect: PreventDamageEffect): ResolutionRequirement[] {
         if (effect.target) {
             return [
-                { targetProperty: 'target', target: effect.target, required: true }
+                { targetProperty: 'target', target: effect.target, required: true },
             ];
         }
         return []; // No target requirements if no target specified
@@ -67,7 +67,7 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
             if (targets.length === 0) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [`${context.effectName} found no valid targets!`]
+                    components: [ `${context.effectName} found no valid targets!` ],
                 });
                 return;
             }
@@ -79,7 +79,7 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
                 if (!targetCreature) {
                     controllers.players.messageAll({
                         type: 'status',
-                        components: [`${context.effectName} target creature not found!`]
+                        components: [ `${context.effectName} target creature not found!` ],
                     });
                     continue;
                 }
@@ -100,15 +100,17 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
         }
         
         if (creatureInstanceId) {
-            // Register the damage prevention effect with the turn state controller
-            // This will be checked during damage calculation
+            /*
+             * Register the damage prevention effect with the turn state controller
+             * This will be checked during damage calculation
+             */
             controllers.turnState.registerDamagePrevention(context.sourcePlayer, context.effectName);
             
             // Show a message about the damage prevention
             const sourceText = effect.source ? `from ${effect.source}` : '';
             controllers.players.messageAll({
                 type: 'status',
-                components: [`${context.effectName} prevents damage ${sourceText}!`]
+                components: [ `${context.effectName} prevents damage ${sourceText}!` ],
             });
         } else {
             console.warn('[PreventDamageEffectHandler] No creature instance ID in context, cannot apply prevent damage effect');

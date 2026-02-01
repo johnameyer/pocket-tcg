@@ -1,20 +1,20 @@
 import { expect } from 'chai';
 import { EvolveResponseMessage } from '../src/messages/response/evolve-response-message.js';
 import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
+import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
-import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 
 describe('Evolution Mechanics', () => {
     it('should evolve basic creature to evolution', () => {
         const { getExecutedCount } = runTestGame({
-            actions: [new EvolveResponseMessage('evolution-creature', 0)],
+            actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                 StateBuilder.withDamage('basic-creature-0', 20),
-                StateBuilder.withCanEvolve(0, 0)
-            )
+                StateBuilder.withCanEvolve(0, 0),
+            ),
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed evolution action');
@@ -22,13 +22,13 @@ describe('Evolution Mechanics', () => {
 
     it('should keep previous form in evolution stack when evolving', () => {
         const { state } = runTestGame({
-            actions: [new EvolveResponseMessage('evolution-creature', 0)],
+            actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
-                StateBuilder.withCanEvolve(0, 0)
+                StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                StateBuilder.withCanEvolve(0, 0),
             ),
-            maxSteps: 5
+            maxSteps: 5,
         });
 
         // Player 0's basic creature should remain in the evolution stack, not in discard pile
@@ -48,13 +48,13 @@ describe('Evolution Mechanics', () => {
 
     it('should keep previous form in evolution stack when evolving benched creature', () => {
         const { state } = runTestGame({
-            actions: [new EvolveResponseMessage('evolution-creature', 1)],
+            actions: [ new EvolveResponseMessage('evolution-creature', 1) ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['basic-creature']),
-                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
-                StateBuilder.withCanEvolve(0, 0)
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
+                StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                StateBuilder.withCanEvolve(0, 0),
             ),
-            maxSteps: 5
+            maxSteps: 5,
         });
 
         // Player 0's benched basic creature should remain in the evolution stack, not in discard pile
@@ -70,12 +70,12 @@ describe('Evolution Mechanics', () => {
 
     it('should prevent evolution on first turn', () => {
         const { state } = runTestGame({
-            actions: [new EvolveResponseMessage('evolution-creature', 0)],
+            actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
-                (state) => state.turn = 1
-            )
+                StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                (state) => state.turn = 1,
+            ),
         });
 
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Evolution should be prevented on first turn');
@@ -88,13 +88,13 @@ describe('Evolution Mechanics', () => {
             actions: [
                 new EvolveResponseMessage('evolution-creature', 0),
                 new RetreatResponseMessage(0),
-                new EvolveResponseMessage('evolution-creature', 0+1)
+                new EvolveResponseMessage('evolution-creature', 0 + 1),
             ],
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                 StateBuilder.withHand(0, [
-                    {templateId: 'evolution-creature', type: 'creature'},
-                    {templateId: 'evolution-creature', type: 'creature'}
+                    { templateId: 'evolution-creature', type: 'creature' },
+                    { templateId: 'evolution-creature', type: 'creature' },
                 ]),
                 StateBuilder.withCanEvolve(0, 0),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 3 }),
@@ -103,9 +103,9 @@ describe('Evolution Mechanics', () => {
                     if (creatureData) {
                         creatureData.turnLastPlayed = 0;
                     }
-                }
+                },
             ),
-            maxSteps: 15
+            maxSteps: 15,
         });
 
         // After evolution and retreat, the evolved creature should be on bench
@@ -118,11 +118,11 @@ describe('Evolution Mechanics', () => {
         it('should clear all status effects when creature evolves', () => {
             const { state } = runTestGame({
                 actions: [
-                    new EvolveResponseMessage('evolution-creature', 0)
+                    new EvolveResponseMessage('evolution-creature', 0),
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
@@ -130,9 +130,9 @@ describe('Evolution Mechanics', () => {
                         if (creatureData) {
                             creatureData.turnLastPlayed = 0;
                         }
-                    }
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             const statusEffects = state.statusEffects.activeStatusEffects[0];
@@ -143,11 +143,11 @@ describe('Evolution Mechanics', () => {
         it('should preserve damage when evolving with status effects', () => {
             const { state } = runTestGame({
                 actions: [
-                    new EvolveResponseMessage('evolution-creature', 0)
+                    new EvolveResponseMessage('evolution-creature', 0),
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
@@ -156,9 +156,9 @@ describe('Evolution Mechanics', () => {
                             creatureData.turnLastPlayed = 0;
                             creatureData.damageTaken = 60;
                         }
-                    }
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(60, 'Damage should be preserved during evolution');
@@ -168,16 +168,16 @@ describe('Evolution Mechanics', () => {
 
         it('should clear status effects when retreating', () => {
             const { state } = runTestGame({
-                actions: [new RetreatResponseMessage(0)],
+                actions: [ new RetreatResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'basic-creature', ['high-hp-creature']),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
-                    }
+                    },
                 ),
-                maxSteps: 10
+                maxSteps: 10,
             });
 
             const statusEffects = state.statusEffects.activeStatusEffects[0] as any[];
@@ -191,7 +191,7 @@ describe('Evolution Mechanics', () => {
                 stateCustomizer: (state) => {
                     state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }, { type: 'burn' }];
                 },
-                maxSteps: 3
+                maxSteps: 3,
             });
 
             const effects = state.statusEffects.activeStatusEffects[0] as any[];
@@ -202,13 +202,13 @@ describe('Evolution Mechanics', () => {
             const { state } = runTestGame({
                 actions: [],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'high-hp-creature', ['basic-creature']),
+                    StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]),
                     StateBuilder.withDamage('high-hp-creature-0', 90),
                     (state) => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
-                    }
+                    },
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             expect(state.field.creatures[0][0]).to.exist;
@@ -223,12 +223,12 @@ describe('Evolution Mechanics', () => {
         
         it('should allow basic-variant to evolve based on name', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
-                    StateBuilder.withCanEvolve(0, 0)
-                )
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                    StateBuilder.withCanEvolve(0, 0),
+                ),
             });
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed evolution action');
@@ -237,13 +237,13 @@ describe('Evolution Mechanics', () => {
 
         it('should preserve evolution stack showing original templateId', () => {
             const { state } = runTestGame({
-                actions: [new EvolveResponseMessage('evolution-creature', 0)],
+                actions: [ new EvolveResponseMessage('evolution-creature', 0) ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature'),
-                    StateBuilder.withHand(0, [{templateId: 'evolution-creature', type: 'creature'}]),
-                    StateBuilder.withCanEvolve(0, 0)
+                    StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                    StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 5
+                maxSteps: 5,
             });
 
             const activeCard = state.field.creatures[0][0];

@@ -1,7 +1,6 @@
+import { sequence, loop, game, conditionalState, handleSingle } from '@cards-ts/state-machine';
 import { Controllers } from './controllers/controllers.js';
 import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messages/status/index.js';
-import { sequence, loop, game, conditionalState, handleSingle, named } from '@cards-ts/state-machine';
-import { TriggerProcessor } from './effects/trigger-processor.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { CreatureData } from './repository/card-types.js';
 
@@ -11,9 +10,9 @@ const calculateKnockoutPoints = (creatureData: CreatureData): number => {
         return 3; // Mega ex cards
     } else if (creatureData.attributes?.ex) {
         return 2; // Regular ex cards
-    } else {
-        return 1; // Basic cards
-    }
+    } 
+    return 1; // Basic cards
+    
 };
 
 // Check if any card was knocked out (has 0 HP)
@@ -136,7 +135,7 @@ const processKnockouts = {
                 }
             }
         }
-    }
+    },
 };
 
 // Check for game over conditions and handle them
@@ -154,12 +153,12 @@ const handleGameOver = sequence<Controllers>([
                     controllers.players.messageAll(new GameOverMessage(winnerName));
                 }
             }
-        }
+        },
     },
     { 
         name: 'completeGame', 
-        run: (controllers: Controllers) => controllers.completed.complete()
-    }
+        run: (controllers: Controllers) => controllers.completed.complete(),
+    },
 ]);
 
 // Handle card knockout
@@ -180,13 +179,13 @@ const handleKnockout = sequence<Controllers>([
                 breakingIf: (controllers: Controllers) => getPlayerNeedingSelection(controllers) === -1,
                 run: handleSingle({
                     handler: 'selectActiveCard',
-                    position: getPlayerNeedingSelection
+                    position: getPlayerNeedingSelection,
                 }),
                 // TODO Condition is not re-evaluated for some reason without afterEach...
                 afterEach: () => {},
-            })
-        })
-    })
+            }),
+        }),
+    }),
 ]);
 
 // Get the winner of the game
@@ -228,25 +227,25 @@ const drawCardAndShowSummary = {
         const myCardInfo = myCard ? {
             name: cardRepo.getCreature(myCard.templateId).name,
             hp: Math.max(0, cardRepo.getCreature(myCard.templateId).maxHp - myCard.damageTaken),
-            maxHp: cardRepo.getCreature(myCard.templateId).maxHp
+            maxHp: cardRepo.getCreature(myCard.templateId).maxHp,
         } : { name: 'None', hp: 0, maxHp: 0 };
         
         const opponentCardInfo = opponentCard ? {
             name: cardRepo.getCreature(opponentCard.templateId).name,
             hp: Math.max(0, cardRepo.getCreature(opponentCard.templateId).maxHp - opponentCard.damageTaken),
-            maxHp: cardRepo.getCreature(opponentCard.templateId).maxHp
+            maxHp: cardRepo.getCreature(opponentCard.templateId).maxHp,
         } : { name: 'None', hp: 0, maxHp: 0 };
         
         const myBenchInfo = myBench.map(card => ({
             name: cardRepo.getCreature(card.templateId).name,
             hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
-            maxHp: cardRepo.getCreature(card.templateId).maxHp
+            maxHp: cardRepo.getCreature(card.templateId).maxHp,
         }));
         
         const opponentBenchInfo = opponentBench.map(card => ({
             name: cardRepo.getCreature(card.templateId).name,
             hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
-            maxHp: cardRepo.getCreature(card.templateId).maxHp
+            maxHp: cardRepo.getCreature(card.templateId).maxHp,
         }));
         
         const handCards = controllers.hand.getHand(currentPlayer)
@@ -256,7 +255,7 @@ const drawCardAndShowSummary = {
         const drawnCardName = card ? cardRepo.getCreature(card.templateId).name : undefined;
         
         controllers.players.message(currentPlayer, new TurnSummaryMessage(myCardInfo, opponentCardInfo, myBenchInfo, opponentBenchInfo, handCards, drawnCardName));
-    }
+    },
 };
 
 // Handle player actions
@@ -267,7 +266,7 @@ const handlePlayerActions = loop<Controllers>({
         // Handle player action
         handleSingle({
             handler: 'action',
-            position: (controllers: Controllers) => controllers.turn.get()
+            position: (controllers: Controllers) => controllers.turn.get(),
         }),
         {
             // TODO why is this needed?
@@ -279,7 +278,7 @@ const handlePlayerActions = loop<Controllers>({
             id: 'checkKnockouts',
             condition: isCardKnockedOut,
             truthy: handleKnockout,
-        })
+        }),
     ]),
     // TODO Condition is not re-evaluated for some reason without afterEach...
     afterEach: () => {},
@@ -297,7 +296,7 @@ const gameTurn = loop<Controllers>({
                 const currentPlayer = controllers.turn.get();
                 controllers.turnState.startTurn();
                 // No need to reset energy flags - energy attachment is tracked by currentEnergy being null
-            }
+            },
         },
         
         // Generate energy and draw card
@@ -324,25 +323,25 @@ const gameTurn = loop<Controllers>({
                 const myActiveInfo = myActive ? {
                     name: cardRepo.getCreature(myActive.templateId).name,
                     hp: Math.max(0, cardRepo.getCreature(myActive.templateId).maxHp - myActive.damageTaken),
-                    maxHp: cardRepo.getCreature(myActive.templateId).maxHp
+                    maxHp: cardRepo.getCreature(myActive.templateId).maxHp,
                 } : { name: 'None', hp: 0, maxHp: 0 };
                 
                 const opponentActiveInfo = opponentActive ? {
                     name: cardRepo.getCreature(opponentActive.templateId).name,
                     hp: Math.max(0, cardRepo.getCreature(opponentActive.templateId).maxHp - opponentActive.damageTaken),
-                    maxHp: cardRepo.getCreature(opponentActive.templateId).maxHp
+                    maxHp: cardRepo.getCreature(opponentActive.templateId).maxHp,
                 } : { name: 'None', hp: 0, maxHp: 0 };
                 
                 const myBenchInfo = myBench.map(card => ({
                     name: cardRepo.getCreature(card.templateId).name,
                     hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
-                    maxHp: cardRepo.getCreature(card.templateId).maxHp
+                    maxHp: cardRepo.getCreature(card.templateId).maxHp,
                 }));
                 
                 const opponentBenchInfo = opponentBench.map(card => ({
                     name: cardRepo.getCreature(card.templateId).name,
                     hp: Math.max(0, cardRepo.getCreature(card.templateId).maxHp - card.damageTaken),
-                    maxHp: cardRepo.getCreature(card.templateId).maxHp
+                    maxHp: cardRepo.getCreature(card.templateId).maxHp,
                 }));
                 
                 const handCards = controllers.hand.getHand(currentPlayer)
@@ -356,9 +355,9 @@ const gameTurn = loop<Controllers>({
                             return cardRepo.getItem(card.templateId).name;
                         } else if (card.type === 'tool') {
                             return cardRepo.getTool(card.templateId).name;
-                        } else {
-                            return (card as { templateId?: string }).templateId || 'unknown'; // fallback
-                        }
+                        } 
+                        return (card as { templateId?: string }).templateId || 'unknown'; // fallback
+                        
                     })
                     .join(', ');
                 
@@ -372,13 +371,13 @@ const gameTurn = loop<Controllers>({
                         return cardRepo.getItem(card.templateId).name;
                     } else if (card.type === 'tool') {
                         return cardRepo.getTool(card.templateId).name;
-                    } else {
-                        return (card as { templateId?: string }).templateId || 'unknown'; // fallback
-                    }
+                    } 
+                    return (card as { templateId?: string }).templateId || 'unknown'; // fallback
+                    
                 })() : undefined;
                 
                 controllers.players.message(currentPlayer, new TurnSummaryMessage(myActiveInfo, opponentActiveInfo, myBenchInfo, opponentBenchInfo, handCards, drawnCardName));
-            }
+            },
         },
         
         // Handle player actions until a card is knocked out or turn ends
@@ -397,27 +396,27 @@ const gameTurn = loop<Controllers>({
                     try {
                         // Make sure the card exists before applying damage
                         const activeCard = controllers.field.getCardByPosition(playerId, 0);
-                    if (activeCard) {
-                        if (damageResult.poisonDamage > 0) {
-                            const actualDamage = controllers.field.applyDamage(playerId, damageResult.poisonDamage);
-                            controllers.players.messageAll({
-                                type: 'status-effect-damage',
-                                components: [`Player ${playerId + 1}'s card takes ${damageResult.poisonDamage} poison damage!`]
-                            });
-                        }
+                        if (activeCard) {
+                            if (damageResult.poisonDamage > 0) {
+                                const actualDamage = controllers.field.applyDamage(playerId, damageResult.poisonDamage);
+                                controllers.players.messageAll({
+                                    type: 'status-effect-damage',
+                                    components: [ `Player ${playerId + 1}'s card takes ${damageResult.poisonDamage} poison damage!` ],
+                                });
+                            }
                         
-                        if (damageResult.burnDamage > 0) {
-                            const actualDamage = controllers.field.applyDamage(playerId, damageResult.burnDamage);
-                            controllers.players.messageAll({
-                                type: 'status-effect-damage', 
-                                components: [`Player ${playerId + 1}'s card takes ${damageResult.burnDamage} burn damage!`]
-                            });
+                            if (damageResult.burnDamage > 0) {
+                                const actualDamage = controllers.field.applyDamage(playerId, damageResult.burnDamage);
+                                controllers.players.messageAll({
+                                    type: 'status-effect-damage', 
+                                    components: [ `Player ${playerId + 1}'s card takes ${damageResult.burnDamage} burn damage!` ],
+                                });
+                            }
                         }
-                    }
-                } catch (error) {
+                    } catch (error) {
                     // If the card doesn't exist (e.g., knocked out), log the error but don't crash
-                    console.error(`Error applying status effect damage to player ${playerId}:`, error);
-                }
+                        console.error(`Error applying status effect damage to player ${playerId}:`, error);
+                    }
                 }
                 
                 // Process end-of-turn status effect checks for current player
@@ -427,7 +426,7 @@ const gameTurn = loop<Controllers>({
                 EffectQueueProcessor.processQueue(controllers);
                 
                 // Clear persistent effects at end of turn (they last "during opponent's next turn")
-            }
+            },
         },
         
         // Check for knockouts after checkup phase
@@ -453,8 +452,8 @@ const gameTurn = loop<Controllers>({
                         controllers.turnCounter.advanceTurn();
                     }
                 }
-            }
-        }
+            },
+        },
     ]),
     // TODO Condition is not re-evaluated for some reason without afterEach...
     afterEach: () => {},
@@ -495,7 +494,7 @@ export const stateMachine = game<Controllers>(
             breakingIf: (controllers: Controllers) => controllers.setup.isSetupComplete(),
             run: handleSingle({
                 handler: 'setup',
-                position: (controllers: Controllers) => controllers.turn.get()
+                position: (controllers: Controllers) => controllers.turn.get(),
             }),
             afterEach: (controllers: Controllers) => {
                 if (!controllers.setup.isSetupComplete()) {
@@ -513,7 +512,7 @@ export const stateMachine = game<Controllers>(
             id: 'turnLimitCheck',
             condition: (controllers: Controllers) => controllers.turnCounter.isMaxTurnsReached(),
             truthy: handleGameOver,
-        })
+        }),
     ]),
     (controllers: Controllers) => {
         // Game over logic is handled in the turn handler

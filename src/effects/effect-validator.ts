@@ -38,8 +38,10 @@ export class EffectValidator {
             return true;
         }
         
-        // For supporter cards, all effects must be applicable
-        // This ensures cards like Erika, Irida, and Lillie can't be played when there are no valid targets
+        /*
+         * For supporter cards, all effects must be applicable
+         * This ensures cards like Erika, Irida, and Lillie can't be played when there are no valid targets
+         */
         if (cardType === 'supporter') {
             return this.canApplyAllEffects(cardEffects, handlerData, sourcePlayer, effectName, cardType, cardRepository);
         }

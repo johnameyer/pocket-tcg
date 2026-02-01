@@ -1,9 +1,9 @@
 import { GenericControllerProvider, GlobalController, GenericHandlerController, SystemHandlerParams } from '@cards-ts/core';
-import { GameCard } from './card-types.js';
-import { FieldCard } from './field-controller.js';
 import { InstancedFieldCard } from '../repository/card-types.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
+import { FieldCard } from './field-controller.js';
+import { GameCard } from './card-types.js';
 
 // Dependencies for this controller
 type DiscardDependencies = {
@@ -17,7 +17,8 @@ export class DiscardControllerProvider implements GenericControllerProvider<Game
     
     initialState(controllers: DiscardDependencies): GameCard[][] {
         // Initialize empty discard pile for each player
-        return new Array(controllers.players.count).fill(undefined).map(() => []);
+        return new Array(controllers.players.count).fill(undefined)
+            .map(() => []);
     }
     
     dependencies() {
@@ -83,7 +84,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
                 const gameCard: GameCard = {
                     instanceId: stackCard.instanceId,
                     templateId: stackCard.templateId,
-                    type: 'creature'
+                    type: 'creature',
                 };
                 this.state[playerId].push(gameCard);
             }
@@ -92,7 +93,7 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
             const gameCard: GameCard = {
                 instanceId: fieldCard.instanceId,
                 templateId: fieldCard.templateId,
-                type: 'creature'
+                type: 'creature',
             };
             this.state[playerId].push(gameCard);
         }

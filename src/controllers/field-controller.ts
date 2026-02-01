@@ -1,14 +1,13 @@
-import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, SystemHandlerParams } from '@cards-ts/core';
+import { CreatureData, InstancedFieldCard } from '../repository/card-types.js';
+import { ResponseMessage } from '../messages/response-message.js';
+import { GameHandlerParams } from '../game-handler-params.js';
+import { getCurrentTemplateId, getFieldInstanceId, toFieldCard, createInstancedFieldCard, addEvolution } from '../utils/field-card-utils.js';
 import { CardRepositoryController } from './card-repository-controller.js';
 import { ToolController } from './tool-controller.js';
 import { EnergyController } from './energy-controller.js';
 import { StatusEffectController } from './status-effect-controller.js';
 import { DiscardController } from './discard-controller.js';
-import { CreatureData, InstancedFieldCard } from '../repository/card-types.js';
-import { AttackDamageResolver } from '../effects/attack-damage-resolver.js';
-import { ResponseMessage } from '../messages/response-message.js';
-import { GameHandlerParams } from '../game-handler-params.js';
-import { getCurrentInstanceId, getCurrentTemplateId, getFieldInstanceId, toFieldCard, createInstancedFieldCard, addEvolution } from '../utils/field-card-utils.js';
 
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
@@ -20,8 +19,10 @@ export type FieldCard = {
 export type EnrichedFieldCard = FieldCard & { data: CreatureData };
 
 export type FieldState = {
-    // Creatures for each player - position 0 is active, 1+ are bench
-    // Internal state uses InstancedFieldCard for evolution tracking
+    /*
+     * Creatures for each player - position 0 is active, 1+ are bench
+     * Internal state uses InstancedFieldCard for evolution tracking
+     */
     creatures: InstancedFieldCard[][];
     // Track if each player can evolve their active card
     canEvolveActive?: boolean[];
@@ -46,7 +47,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
         return {
             creatures: new Array(controllers.players.count).fill(undefined)
                 .map(() => []),
-            canEvolveActive: new Array(controllers.players.count).fill(false)
+            canEvolveActive: new Array(controllers.players.count).fill(false),
         };
     }
 
@@ -65,7 +66,9 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     // Get the card at a specific position for a player
     public getCardByPosition(playerId: number, position: number): EnrichedFieldCard | undefined {
         const card = this.state.creatures[playerId]?.[position];
-        if (!card) return undefined;
+        if (!card) {
+            return undefined; 
+        }
         
         const fieldCard = toFieldCard(card);
         const data = this.controllers.cardRepository.getCreature(fieldCard.templateId);
@@ -84,15 +87,21 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     // Get raw field card data (without enrichment) - for internal use
     public getRawCardByPosition(playerId: number, position: number): FieldCard | undefined {
         const card = this.state.creatures[playerId]?.[position];
-        if (!card) return undefined;
+        if (!card) {
+            return undefined; 
+        }
         return toFieldCard(card);
     }
 
-    // Get the field instance ID for a card at a specific position
-    // This ID persists through evolution and is used for energy/tool attachments
+    /*
+     * Get the field instance ID for a card at a specific position
+     * This ID persists through evolution and is used for energy/tool attachments
+     */
     public getFieldInstanceId(playerId: number, position: number): string | undefined {
         const card = this.state.creatures[playerId]?.[position];
-        if (!card) return undefined;
+        if (!card) {
+            return undefined; 
+        }
         return getFieldInstanceId(card);
     }
 
@@ -220,7 +229,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             attacker: this.getCardByPosition(attackerId, 0),
             target: this.getCardByPosition(targetId, 0),
             damage: actualDamage,
-            isKnockedOut: isKnockedOut
+            isKnockedOut: isKnockedOut,
         };
     }
 
@@ -301,7 +310,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         this.state.creatures[playerId][0] = createInstancedFieldCard(
             cardInstanceId,
             templateId,
-            0
+            0,
         );
     }
     
@@ -330,7 +339,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         this.state.creatures[playerId].push(createInstancedFieldCard(
             cardInstanceId,
             templateId,
-            0
+            0,
         ));
         
         return true;
@@ -377,8 +386,10 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         
         const oldCard = this.state.creatures[playerId][0];
         
-        // Use the evolution card's instanceId for the new form (it will be added to evolutionStack)
-        // Note: evolutionInstanceId comes from the card in hand
+        /*
+         * Use the evolution card's instanceId for the new form (it will be added to evolutionStack)
+         * Note: evolutionInstanceId comes from the card in hand
+         */
         const newInstanceId = evolutionInstanceId ?? `${evolutionTemplateId}-${Date.now()}-${Math.random()}`;
         
         // Add the evolution to the stack (keeping all previous forms)
@@ -386,7 +397,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             oldCard,
             newInstanceId,
             evolutionTemplateId,
-            turnNumber ?? 0
+            turnNumber ?? 0,
         );
         
         return true;
@@ -418,7 +429,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
             oldCard,
             newInstanceId,
             evolutionTemplateId,
-            turnNumber ?? 0
+            turnNumber ?? 0,
         );
         
         return true;
