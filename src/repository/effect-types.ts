@@ -98,7 +98,11 @@ export type SwitchEffect = {
 
 /**
  * Represents an effect that transfers energy between cards.
- * Can now target energy in discard pile as well as on field cards.
+ * Can target energy in discard pile as well as on field cards.
+ * 
+ * TODO: Refactor to use EnergyTarget structure more directly - currently uses
+ * FieldTarget/EnergyTarget for source/target but has separate amount and energyTypes fields.
+ * Could consolidate by having EnergyTarget include amount/criteria directly.
  */
 export type EnergyTransferEffect = {
     type: 'energy-transfer';
