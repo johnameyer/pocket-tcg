@@ -22,7 +22,7 @@ describe('Search Effect', () => {
             const effect: SearchEffect = {
                 type: 'search',
                 amount: { type: 'constant', value: 1 },
-                criteria: 'basic-creature',
+                legacyCriteria: 'basic-creature',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
@@ -39,7 +39,7 @@ describe('Search Effect', () => {
             const effect: SearchEffect = {
                 type: 'search',
                 amount: { type: 'constant', value: 1 },
-                criteria: 'basic-creature',
+                legacyCriteria: 'basic-creature',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
@@ -61,7 +61,7 @@ describe('Search Effect', () => {
             const effect: SearchEffect = {
                 type: 'search',
                 amount: { type: 'constant', value: 1 },
-                criteria: 'basic-creature',
+                legacyCriteria: 'basic-creature',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'supporter');
@@ -106,8 +106,8 @@ describe('Search Effect', () => {
                 name: 'Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'basic-creature',
+                    legacyTarget: 'deck',
+                    legacyCardType: 'basic-creature',
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
@@ -117,8 +117,8 @@ describe('Search Effect', () => {
                 name: 'Multi Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'fieldCard',
+                    legacyTarget: 'deck',
+                    legacyCardType: 'fieldCard',
                     amount: { type: 'constant', value: 2 },
                     destination: 'hand',
                 }],
@@ -128,8 +128,8 @@ describe('Search Effect', () => {
                 name: 'Trainer Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'trainer',
+                    legacyTarget: 'deck',
+                    legacyCardType: 'trainer',
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
@@ -139,8 +139,8 @@ describe('Search Effect', () => {
                 name: 'Variable Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'basic-creature',
+                    legacyTarget: 'deck',
+                    legacyCardType: 'basic-creature',
                     amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
                     destination: 'hand',
                 }],
@@ -150,7 +150,7 @@ describe('Search Effect', () => {
                 name: 'Any Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
+                    legacyTarget: 'deck',
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
