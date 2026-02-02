@@ -377,10 +377,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.coinFlip.clearGuaranteedHeads();
             
             /*
-             * Clear retreat preventions that expire at end of turn
-             * TODO: Implement proper duration tracking instead of clearing all
+             * Clear end-of-turn passive effects
              */
-            controllers.turnState.clearRetreatPreventions();
+            controllers.effects.clearEndOfTurnEffects();
 
             controllers.players.messageAll({
                 type: 'turn-ended',
@@ -736,10 +735,24 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot retreat - retreat prevented', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     const activeCard = controllers.field.getCardByPosition(source, 0);
                     if (!activeCard) {
-                        return false; 
+                        return false; // No active card means validation passes (no prevention)
                     }
                     
-                    return controllers.turnState.isRetreatPrevented(activeCard.instanceId);
+                    // Check if there are any retreat-prevention passive effects targeting this creature
+                    const retreatPreventionEffects = controllers.effects.getPassiveEffectsByType('retreat-prevention');
+                    for (const passiveEffect of retreatPreventionEffects) {
+                        // Check if this effect applies to the active creature
+                        const effect = passiveEffect.effect;
+                        if (effect.target.type === 'resolved') {
+                            for (const target of effect.target.targets) {
+                                if (target.playerId === source && target.fieldIndex === 0) {
+                                    return true; // Retreat IS prevented - validation FAILS
+                                }
+                            }
+                        }
+                    }
+                    
+                    return false; // No prevention found - validation passes
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: RetreatResponseMessage) => {

@@ -130,15 +130,42 @@ export class AttackDamageResolver {
         const damageReductionEffects = controllers.effects.getPassiveEffectsByType('damage-reduction');
         for (const passiveEffect of damageReductionEffects) {
             const reduction = passiveEffect.effect;
-            const amount = typeof reduction.amount === 'object' && 'value' in reduction.amount ? reduction.amount.value : 0;
+            // Create minimal context for effect value resolution
+            // We use the passive effect's stored context information
+            const reductionContext = EffectContextFactory.createAbilityContext(
+                passiveEffect.sourcePlayer,
+                passiveEffect.effectName,
+                '', // creatureInstanceId - not needed for point-based values
+                0, // fieldPosition - not needed for point-based values
+            );
+            const amount = getEffectValue(reduction.amount, controllers, reductionContext);
             totalDamage = Math.max(0, totalDamage - amount);
         }
         
         // Check for damage prevention from passive effects
         const damagePreventionEffects = controllers.effects.getPassiveEffectsByType('prevent-damage');
-        if (damagePreventionEffects.length > 0) {
-            // If any damage prevention effect is active, prevent all damage
+        for (const passiveEffect of damagePreventionEffects) {
+            const prevention = passiveEffect.effect;
+            // Check if source filter applies
+            if (prevention.source) {
+                // If source is specified, check if attacker matches
+                if (playercreature) {
+                    // Get source creature data to check attributes
+                    const sourceCreatureData = controllers.cardRepository.getCreature(prevention.source);
+                    const attackerCreatureData = controllers.cardRepository.getCreature(playercreature.templateId);
+                    
+                    // If source has 'ex' attribute, check if attacker also has it
+                    if (sourceCreatureData.attributes?.ex && !attackerCreatureData.attributes?.ex) {
+                        continue; // Attacker doesn't have ex attribute, skip this prevention
+                    } else if (!sourceCreatureData.attributes?.ex && playercreature.templateId !== prevention.source) {
+                        // No ex attribute, so match by exact templateId
+                        continue; // Attacker doesn't match, skip this prevention
+                    }
+                }
+            }
+            // If we get here, damage should be prevented
             totalDamage = 0;
+            break;
         }
         
         // Ensure damage is not negative

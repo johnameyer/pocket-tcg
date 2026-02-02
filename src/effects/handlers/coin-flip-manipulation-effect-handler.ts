@@ -22,26 +22,21 @@ export class CoinFlipManipulationEffectHandler extends AbstractEffectHandler<Coi
     
     /**
      * Apply a coin flip manipulation effect.
-     * This registers a passive effect that guarantees the next coin flip result.
+     * This sets a flag that guarantees the next coin flip result.
      * 
      * @param controllers Game controllers
      * @param effect The coin flip manipulation effect to apply
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: CoinFlipManipulationEffect, context: EffectContext): void {
-        // Register as a passive effect
-        // This is consumed during the next coin flip
-        controllers.effects.registerPassiveEffect(
-            context.sourcePlayer,
-            context.effectName,
-            {
-                type: 'coin-flip-manipulation',
-                guaranteeNextHeads: effect.guaranteeNextHeads,
-                duration: effect.duration,
-            },
-            effect.duration,
-            controllers.turnCounter.getTurnNumber()
-        );
+        // Set the coin flip guarantee directly on the coin flip controller
+        // This is consumed automatically during the next coin flip
+        if (effect.guaranteeNextHeads) {
+            controllers.coinFlip.setNextFlipGuaranteedHeads();
+        } else {
+            // For tails guarantee, we can use mocked results
+            controllers.coinFlip.setMockedResults([false]);
+        }
         
         // Send a message about the coin flip manipulation
         controllers.players.messageAll({
