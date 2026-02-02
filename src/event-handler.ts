@@ -18,6 +18,7 @@ import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { Target } from './repository/target-types.js';
 import { getCurrentTemplateId } from './utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from './effects/pending-selection-types.js';
+import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -739,20 +740,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     // Check if there are any retreat-prevention passive effects targeting this creature
-                    const retreatPreventionEffects = controllers.effects.getPassiveEffectsByType('retreat-prevention');
-                    for (const passiveEffect of retreatPreventionEffects) {
-                        // Check if this effect applies to the active creature
-                        const effect = passiveEffect.effect;
-                        if (effect.target.type === 'resolved') {
-                            for (const target of effect.target.targets) {
-                                if (target.playerId === source && target.fieldIndex === 0) {
-                                    return true; // Retreat IS prevented - validation FAILS
-                                }
-                            }
-                        }
-                    }
+                    const applicableEffects = PassiveEffectMatcher.getApplicableRetreatPreventions(controllers, source, 0);
                     
-                    return false; // No prevention found - validation passes
+                    // If any applicable effects found, retreat is prevented
+                    return applicableEffects.length > 0;
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: RetreatResponseMessage) => {

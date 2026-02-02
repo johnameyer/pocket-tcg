@@ -289,10 +289,50 @@ export class StateBuilder {
     static withTool(creatureInstanceId: string, toolCardId: string) {
         return (state: ControllerState<Controllers>) => {
             StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
+            const toolInstanceId = `${toolCardId}-1`;
             state.tools.attachedTools[creatureInstanceId] = { 
                 templateId: toolCardId, 
-                instanceId: `${toolCardId}-1`, 
+                instanceId: toolInstanceId, 
             };
+            
+            // Automatically register passive effects from the tool
+            // This is needed for tools with HP bonuses or other passive effects
+            // Note: We can only do this if the card repository is available and is an actual CardRepository instance
+            // In many tests, state.cardRepository is just {} so we skip this
+            if (state.cardRepository && 'getTool' in state.cardRepository) {
+                try {
+                    const repo = state.cardRepository as any; // Cast to bypass type checking
+                    const toolData = repo.getTool(toolCardId);
+                    if (toolData.effects) {
+                        for (const effect of toolData.effects) {
+                            // Check if this is a modifier effect that should be registered as passive
+                            if ('duration' in effect && effect.duration) {
+                                // Register the passive effect
+                                const passiveEffect = {
+                                    id: `${state.effects.nextEffectId++}`, // Convert to string
+                                    sourcePlayer: 0, // Assume player 0 for test setup
+                                    effectName: `${toolData.name}`,
+                                    effect: {
+                                        ...effect,
+                                        // For while-attached effects, populate the IDs
+                                        duration: effect.duration.type === 'while-attached' 
+                                            ? { type: 'while-attached' as const, toolInstanceId, cardInstanceId: creatureInstanceId }
+                                            : effect.duration,
+                                    },
+                                    duration: effect.duration.type === 'while-attached'
+                                        ? { type: 'while-attached' as const, toolInstanceId, cardInstanceId: creatureInstanceId }
+                                        : effect.duration,
+                                    createdTurn: state.turnCounter.turnNumber,
+                                };
+                                state.effects.activePassiveEffects.push(passiveEffect);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // If tool not found or no repository, skip passive effect registration
+                    // This is okay for tests that don't need the actual effects
+                }
+            }
         };
     }
 

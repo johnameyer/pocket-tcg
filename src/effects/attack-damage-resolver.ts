@@ -4,6 +4,7 @@ import { Condition } from '../repository/condition-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { EffectContext, EffectContextFactory } from './effect-context.js';
 import { getEffectValue, evaluateConditionWithContext } from './effect-utils.js';
+import { PassiveEffectMatcher } from './passive-effect-matcher.js';
 
 /**
  * Utility class for resolving attack damage based on various damage calculation types.
@@ -143,29 +144,14 @@ export class AttackDamageResolver {
         }
         
         // Check for damage prevention from passive effects
-        const damagePreventionEffects = controllers.effects.getPassiveEffectsByType('prevent-damage');
-        for (const passiveEffect of damagePreventionEffects) {
-            const prevention = passiveEffect.effect;
-            // Check if source filter applies
-            if (prevention.source) {
-                // If source is specified, check if attacker matches
-                if (playercreature) {
-                    // Get source creature data to check attributes
-                    const sourceCreatureData = controllers.cardRepository.getCreature(prevention.source);
-                    const attackerCreatureData = controllers.cardRepository.getCreature(playercreature.templateId);
-                    
-                    // If source has 'ex' attribute, check if attacker also has it
-                    if (sourceCreatureData.attributes?.ex && !attackerCreatureData.attributes?.ex) {
-                        continue; // Attacker doesn't have ex attribute, skip this prevention
-                    } else if (!sourceCreatureData.attributes?.ex && playercreature.templateId !== prevention.source) {
-                        // No ex attribute, so match by exact templateId
-                        continue; // Attacker doesn't match, skip this prevention
-                    }
-                }
+        if (playercreature) {
+            const applicablePreventions = PassiveEffectMatcher.getApplicableDamagePreventions(
+                controllers,
+                playercreature.templateId
+            );
+            if (applicablePreventions.length > 0) {
+                totalDamage = 0;
             }
-            // If we get here, damage should be prevented
-            totalDamage = 0;
-            break;
         }
         
         // Ensure damage is not negative
