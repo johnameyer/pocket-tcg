@@ -109,33 +109,36 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
                 
                 // Check criteria if provided
                 if (effect.evolutionCriteria) {
-                    // Check stage
-                    if (effect.evolutionCriteria.stage !== undefined) {
-                        if (evolutionData.stage !== effect.evolutionCriteria.stage) {
-                            continue;
+                    // Only check creature-specific properties if cardType is 'creature'
+                    if (effect.evolutionCriteria.cardType === 'creature') {
+                        // Check stage
+                        if (effect.evolutionCriteria.stage !== undefined) {
+                            if (evolutionData.stage !== effect.evolutionCriteria.stage) {
+                                continue;
+                            }
+                        }
+                        
+                        // Check energy type
+                        if (effect.evolutionCriteria.energyType !== undefined) {
+                            if (evolutionData.type !== effect.evolutionCriteria.energyType) {
+                                continue;
+                            }
+                        }
+                        
+                        // Check HP
+                        if (effect.evolutionCriteria.hpGreaterThan !== undefined) {
+                            if (evolutionData.maxHp <= effect.evolutionCriteria.hpGreaterThan) {
+                                continue;
+                            }
+                        }
+                        if (effect.evolutionCriteria.hpLessThan !== undefined) {
+                            if (evolutionData.maxHp >= effect.evolutionCriteria.hpLessThan) {
+                                continue;
+                            }
                         }
                     }
                     
-                    // Check energy type
-                    if (effect.evolutionCriteria.energyType !== undefined) {
-                        if (evolutionData.type !== effect.evolutionCriteria.energyType) {
-                            continue;
-                        }
-                    }
-                    
-                    // Check HP
-                    if (effect.evolutionCriteria.hpGreaterThan !== undefined) {
-                        if (evolutionData.maxHp <= effect.evolutionCriteria.hpGreaterThan) {
-                            continue;
-                        }
-                    }
-                    if (effect.evolutionCriteria.hpLessThan !== undefined) {
-                        if (evolutionData.maxHp >= effect.evolutionCriteria.hpLessThan) {
-                            continue;
-                        }
-                    }
-                    
-                    // Check specific names
+                    // Check specific names (applies to all card types)
                     if (effect.evolutionCriteria.names) {
                         if (!effect.evolutionCriteria.names.includes(evolutionData.name)) {
                             continue;

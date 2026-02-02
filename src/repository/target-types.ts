@@ -12,30 +12,63 @@ export type PlayerTarget = 'self' | 'opponent' | 'both';
 export type CardLocation = 'hand' | 'deck' | 'discard' | 'field';
 
 /**
- * Represents card type filters for card targeting.
+ * Base criteria shared by all card types.
  */
-export type CardTypeFilter = 'creature' | 'basic-creature' | 'evolution-creature' | 'trainer' | 'item' | 'supporter' | 'tool' | 'energy';
-
-/**
- * Represents criteria for targeting cards in hand, deck, or discard.
- * Used to filter which cards can be selected.
- */
-export type CardCriteria = {
-    /** Card type filter */
-    cardType?: CardTypeFilter;
+export type BaseCardCriteria = {
     /** Specific card names (exact match) */
     names?: string[];
+};
+
+/**
+ * Criteria specific to creature cards.
+ */
+export type CreatureCardCriteria = BaseCardCriteria & {
+    cardType: 'creature';
     /** Evolution stage (0=Basic, 1=Stage 1, 2=Stage 2) */
     stage?: 0 | 1 | 2;
-    /** Energy type filter for creatures */
+    /** Energy type filter */
     energyType?: AttachableEnergyType;
     /** HP greater than this value */
     hpGreaterThan?: number;
     /** HP less than this value */
     hpLessThan?: number;
-    /** Creature-specific condition (only applicable if cardType filters to creatures) */
+    /** Creature-specific condition */
     condition?: Condition;
 };
+
+/**
+ * Criteria for tool cards.
+ */
+export type ToolCardCriteria = BaseCardCriteria & {
+    cardType: 'tool';
+};
+
+/**
+ * Criteria for supporter cards.
+ */
+export type SupporterCardCriteria = BaseCardCriteria & {
+    cardType: 'supporter';
+};
+
+/**
+ * Criteria for item cards.
+ */
+export type ItemCardCriteria = BaseCardCriteria & {
+    cardType: 'item';
+};
+
+/**
+ * Criteria for trainer cards (items or supporters).
+ */
+export type TrainerCardCriteria = BaseCardCriteria & {
+    cardType: 'trainer';
+};
+
+/**
+ * Represents criteria for targeting cards in hand, deck, or discard.
+ * Used to filter which cards can be selected.
+ */
+export type CardCriteria = CreatureCardCriteria | ToolCardCriteria | SupporterCardCriteria | ItemCardCriteria | TrainerCardCriteria;
 
 /**
  * Represents a fixed card target (specific location).
@@ -78,8 +111,6 @@ export type CardTarget = FixedCardTarget | SingleChoiceCardTarget | MultiChoiceC
 export type EnergyCriteria = {
     /** Specific energy types to target */
     energyTypes?: AttachableEnergyType[];
-    /** Whether to select random energy if not specified */
-    random?: boolean;
 };
 
 /**
@@ -88,7 +119,7 @@ export type EnergyCriteria = {
 export type FieldEnergyTarget = {
     type: 'field';
     /** The field card to target energy on */
-    fieldTarget: Target;
+    fieldTarget: FieldTarget;
     /** Criteria for which energy to target */
     criteria?: EnergyCriteria;
     /** Number of energy to target */
@@ -127,7 +158,7 @@ export type TargetCriteria = {
 /**
  * Represents a fixed target that doesn't require selection.
  */
-export type FixedTarget = {
+export type FixedFieldTarget = {
     type: 'fixed';
     player: 'self' | 'opponent';
     position: 'active' | 'source';
@@ -136,7 +167,7 @@ export type FixedTarget = {
 /**
  * Represents a target that has been resolved to a specific card.
  */
-export type ResolvedTarget = {
+export type ResolvedFieldTarget = {
     type: 'resolved';
     targets: Array<{
         playerId: number;
@@ -147,7 +178,7 @@ export type ResolvedTarget = {
 /**
  * Represents a target that requires a single choice from available options.
  */
-export type SingleChoiceTarget = {
+export type SingleChoiceFieldTarget = {
     type: 'single-choice';
     chooser: 'self' | 'opponent';
     criteria: TargetCriteria;
@@ -156,7 +187,7 @@ export type SingleChoiceTarget = {
 /**
  * Represents a target that requires multiple choices from available options.
  */
-export type MultiChoiceTarget = {
+export type MultiChoiceFieldTarget = {
     type: 'multi-choice';
     chooser: 'self' | 'opponent';
     criteria: TargetCriteria;
@@ -166,7 +197,7 @@ export type MultiChoiceTarget = {
 /**
  * Represents a target that matches all creature meeting certain criteria.
  */
-export type AllMatchingTarget = {
+export type AllMatchingFieldTarget = {
     type: 'all-matching';
     criteria: TargetCriteria;
 };
@@ -174,15 +205,25 @@ export type AllMatchingTarget = {
 /**
  * Union type for single targets (fixed, resolved, or choice-based).
  */
-export type SingleTarget = FixedTarget | SingleChoiceTarget | ResolvedTarget;
+export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget;
 
 /**
  * Union type for multi-targets (choice-based or all-matching).
  */
-export type MultiTarget = MultiChoiceTarget | AllMatchingTarget;
+export type MultiFieldTarget = MultiChoiceFieldTarget | AllMatchingFieldTarget;
 
 /**
- * Union type representing all possible target specifications.
- * Used to specify the target(s) of an effect.
+ * Union type representing all possible field target specifications.
+ * Used to specify the target(s) of an effect on field cards.
  */
-export type Target = SingleTarget | MultiTarget;
+export type FieldTarget = SingleFieldTarget | MultiFieldTarget;
+
+// Legacy aliases for backward compatibility
+export type FixedTarget = FixedFieldTarget;
+export type ResolvedTarget = ResolvedFieldTarget;
+export type SingleChoiceTarget = SingleChoiceFieldTarget;
+export type MultiChoiceTarget = MultiChoiceFieldTarget;
+export type AllMatchingTarget = AllMatchingFieldTarget;
+export type SingleTarget = SingleFieldTarget;
+export type MultiTarget = MultiFieldTarget;
+export type Target = FieldTarget;

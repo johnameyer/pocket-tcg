@@ -68,12 +68,6 @@ export type SearchEffect = {
     amount: EffectValue;
     /** Where to put found cards (defaults to 'hand') */
     destination?: 'hand' | 'deck' | 'field';
-    /** Legacy support - string-based criteria (deprecated) */
-    legacyCriteria?: string;
-    /** Legacy support - string-based card type (deprecated) */
-    legacyCardType?: string;
-    /** Legacy support - string-based target (deprecated) */
-    legacyTarget?: string;
 };
 
 /**

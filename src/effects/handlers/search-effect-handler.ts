@@ -31,19 +31,12 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: SearchEffect, context: EffectContext, cardRepository?: CardRepository): boolean {
-        // Default target is deck (support legacy 'target' field via legacyTarget)
-        const target = effect.legacyTarget || 'deck';
-        
         // For deck searches, check if deck has cards
-        if (target === 'deck') {
-            const deckSize = handlerData.deck;
-            
-            // Only block items when deck is empty, supporters can still be played
-            if (deckSize === 0 && context.type === 'trainer' && context.cardType === 'item') {
-                return false;
-            }
-            
-            return true;
+        const deckSize = handlerData.deck;
+        
+        // Only block items when deck is empty, supporters can still be played
+        if (deckSize === 0 && context.type === 'trainer' && context.cardType === 'item') {
+            return false;
         }
         
         return true;
@@ -61,27 +54,11 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Get the amount of cards to search for
         const searchAmount = getEffectValue(effect.amount, controllers, context);
         
-        // Default target is deck (support legacy 'target' field)
-        const target = effect.legacyTarget || 'deck';
-        
         // Default destination is hand
         const destination = effect.destination || 'hand';
         
-        // Use a switch statement for better readability and extensibility
-        switch (target) {
-            case 'deck':
-                this.handleDeckSearch(controllers, effect, context, searchAmount, destination);
-                break;
-                
-            default:
-                // For unsupported targets, log a warning
-                console.warn(`[SearchEffectHandler] Unsupported search target: ${target}`);
-                controllers.players.messageAll({
-                    type: 'status',
-                    components: [ `${context.effectName} cannot search ${target}!` ],
-                });
-                break;
-        }
+        // Currently only deck search is supported
+        this.handleDeckSearch(controllers, effect, context, searchAmount, destination);
     }
     
     /**
@@ -115,9 +92,9 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Filter the deck based on the search criteria
         let filteredDeck = [ ...deck ];
         
-        // Use a generic approach to handle search criteria
-        if (effect.legacyCriteria || effect.legacyCardType) {
-            filteredDeck = this.filterDeckBySearchCriteria(controllers, filteredDeck, effect);
+        // Apply criteria filter if specified
+        if (effect.criteria) {
+            filteredDeck = this.filterDeckBySearchCriteria(controllers, filteredDeck, effect.criteria);
         }
             
         // If there are no matching cards, inform the player
@@ -162,83 +139,91 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * 
      * @param controllers Game controllers
      * @param deck The deck to filter
-     * @param effect The search effect with criteria
+     * @param criteria The card criteria to filter by
      * @returns Filtered deck
      */
-    private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], effect: SearchEffect): GameCard[] {
+    private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], criteria: import('../../repository/target-types.js').CardCriteria): GameCard[] {
         let filteredDeck = [ ...deck ];
         
-        // Handle legacy criteria field
-        if (effect.legacyCriteria) {
-            switch (effect.legacyCriteria) {
-                case 'basic-creature':
-                    filteredDeck = filteredDeck.filter(card => {
-                        if (card.type === 'creature') {
-                            try {
-                                const creatureData = controllers.cardRepository.getCreature(card.templateId);
-                                return !creatureData.previousStageName;
-                            } catch (error) {
+        // Filter by card type using discriminated union
+        switch (criteria.cardType) {
+            case 'creature':
+                filteredDeck = filteredDeck.filter(card => {
+                    if (card.type !== 'creature') {
+                        return false;
+                    }
+                    
+                    try {
+                        const creatureData = controllers.cardRepository.getCreature(card.templateId);
+                        
+                        // Check stage if specified
+                        if (criteria.stage !== undefined) {
+                            const cardStage = creatureData.previousStageName ? (creatureData.stage || 1) : 0;
+                            if (cardStage !== criteria.stage) {
                                 return false;
                             }
                         }
-                        return false;
-                    });
-                    break;
-                    
-                default:
-                    console.warn(`[SearchEffectHandler] Unknown search criteria: ${effect.legacyCriteria}`);
-                    break;
-            }
-        } else if (effect.legacyCardType) {
-            // Handle legacy cardType field
-            switch (effect.legacyCardType) {
-                case 'basic-creature':
-                    filteredDeck = filteredDeck.filter(card => {
-                        if (card.type === 'creature') {
-                            try {
-                                const creatureData = controllers.cardRepository.getCreature(card.templateId);
-                                return !creatureData.previousStageName;
-                            } catch (error) {
-                                return false;
-                            }
+                        
+                        // Check energy type if specified
+                        if (criteria.energyType && creatureData.type !== criteria.energyType) {
+                            return false;
                         }
+                        
+                        // Check HP constraints
+                        if (criteria.hpGreaterThan !== undefined && creatureData.maxHp <= criteria.hpGreaterThan) {
+                            return false;
+                        }
+                        if (criteria.hpLessThan !== undefined && creatureData.maxHp >= criteria.hpLessThan) {
+                            return false;
+                        }
+                        
+                        return true;
+                    } catch (error) {
                         return false;
-                    });
-                    break;
-                    
-                case 'trainer':
-                    // Trainer cards include both items and supporters
-                    filteredDeck = filteredDeck.filter(card => card.type === 'item' || card.type === 'supporter');
-                    break;
-                    
-                case 'fieldCard':
-                    // Field cards are creature/creatures that can be played on the field
-                    filteredDeck = filteredDeck.filter(card => card.type === 'creature');
-                    break;
-                    
-                default: {
-                    // Map search cardType to GameCard type
-                    let gameCardType: 'creature' | 'supporter' | 'item' | 'tool' | undefined;
-                    switch (effect.legacyCardType) {
-                        case 'basic-creature':
-                        case 'fieldCard':
-                            gameCardType = 'creature';
-                            break;
-                        case 'trainer':
-                            // Trainer could be supporter or item, so we need to handle both
-                            filteredDeck = filteredDeck.filter(card => card.type === 'supporter' || card.type === 'item',
-                            );
-                            return filteredDeck;
-                        default:
-                            return filteredDeck; // No filtering if cardType is unknown
                     }
-                    
-                    if (gameCardType) {
-                        filteredDeck = filteredDeck.filter(card => card.type === gameCardType);
+                });
+                break;
+                
+            case 'tool':
+                filteredDeck = filteredDeck.filter(card => card.type === 'tool');
+                break;
+                
+            case 'supporter':
+                filteredDeck = filteredDeck.filter(card => card.type === 'supporter');
+                break;
+                
+            case 'item':
+                filteredDeck = filteredDeck.filter(card => card.type === 'item');
+                break;
+                
+            case 'trainer':
+                // Trainer cards include both items and supporters
+                filteredDeck = filteredDeck.filter(card => card.type === 'item' || card.type === 'supporter');
+                break;
+        }
+        
+        // Filter by specific names if provided
+        if (criteria.names && criteria.names.length > 0) {
+            filteredDeck = filteredDeck.filter(card => {
+                try {
+                    if (card.type === 'creature') {
+                        const data = controllers.cardRepository.getCreature(card.templateId);
+                        return criteria.names?.includes(data.name);
+                    } else if (card.type === 'supporter') {
+                        const data = controllers.cardRepository.getSupporter(card.templateId);
+                        return criteria.names?.includes(data.name);
+                    } else if (card.type === 'item') {
+                        const data = controllers.cardRepository.getItem(card.templateId);
+                        return criteria.names?.includes(data.name);
+                    } else if (card.type === 'tool') {
+                        const data = controllers.cardRepository.getTool(card.templateId);
+                        return criteria.names?.includes(data.name);
                     }
-                    break;
+                } catch (error) {
+                    return false;
                 }
-            }
+                return false;
+            });
         }
         
         return filteredDeck;
