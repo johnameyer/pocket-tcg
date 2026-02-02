@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
+import { GameCard } from '../src/controllers/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 
@@ -31,6 +32,6 @@ describe('Supporters', () => {
         expect(state.hand[0].length).to.equal(1, 'Second supporter should remain in hand');
         
         // Card conservation: supporter moved to discard
-        expect(state.discard[0].some((card: any) => card.templateId === 'basic-supporter')).to.be.true;
+        expect(state.discard[0].some((card: GameCard) => card.templateId === 'basic-supporter')).to.be.true;
     });
 });

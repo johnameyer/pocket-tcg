@@ -4,6 +4,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
+import { GameCard } from '../../../src/controllers/card-types.js';
 import { ShuffleEffectHandler } from '../../../src/effects/handlers/shuffle-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { ShuffleEffect } from '../../../src/repository/effect-types.js';
@@ -260,7 +261,7 @@ describe('Shuffle Effect', () => {
             ]),
         });
 
-        const withShuffleTestState = (player0Hand: any[], player1Hand: any[]) => StateBuilder.combine(
+        const withShuffleTestState = (player0Hand: Array<{ templateId: string; type?: GameCard['type'] }>, player1Hand: Array<{ templateId: string; type?: GameCard['type'] }>) => StateBuilder.combine(
             StateBuilder.withHand(0, player0Hand),
             StateBuilder.withHand(1, player1Hand),
             StateBuilder.withDeck(0, Array(10).fill(basicCreature)),

@@ -7,6 +7,8 @@ This is an implementation of a trading card game battle system in Typescript wri
 ```bash
 pnpm install
 pnpm run build
+# Run eslint
+pnpm run lint
 # Run all tests
 pnpm test
 # Run specific tests

@@ -158,7 +158,7 @@ export class EffectController extends GlobalController<EffectState, EffectContro
         effect: ModifierEffect,
         duration: Duration,
         createdTurn: number,
-        condition?: Condition
+        condition?: Condition,
     ): string {
         const id = `passive-effect-${this.state.nextEffectId++}`;
         
@@ -184,11 +184,10 @@ export class EffectController extends GlobalController<EffectState, EffectContro
      * @returns Array of matching passive effects
      */
     public getPassiveEffectsByType<T extends ModifierEffect['type']>(
-        effectType: T
+        effectType: T,
     ): Array<PassiveEffect & { effect: Extract<ModifierEffect, { type: T }> }> {
         return this.state.activePassiveEffects.filter(
-            (pe): pe is PassiveEffect & { effect: Extract<ModifierEffect, { type: T }> } =>
-                pe.effect.type === effectType
+            (pe): pe is PassiveEffect & { effect: Extract<ModifierEffect, { type: T }> } => pe.effect.type === effectType,
         );
     }
 
@@ -198,7 +197,7 @@ export class EffectController extends GlobalController<EffectState, EffectContro
      * @returns Array of all passive effects
      */
     public getAllPassiveEffects(): PassiveEffect[] {
-        return [...this.state.activePassiveEffects];
+        return [ ...this.state.activePassiveEffects ];
     }
 
     /**
@@ -216,7 +215,7 @@ export class EffectController extends GlobalController<EffectState, EffectContro
      */
     public clearEndOfTurnEffects(): void {
         this.state.activePassiveEffects = this.state.activePassiveEffects.filter(
-            pe => pe.duration.type !== 'until-end-of-turn'
+            pe => pe.duration.type !== 'until-end-of-turn',
         );
     }
 
@@ -234,7 +233,7 @@ export class EffectController extends GlobalController<EffectState, EffectContro
                     return currentTurn <= pe.createdTurn + 1;
                 }
                 return true;
-            }
+            },
         );
     }
 
@@ -256,7 +255,7 @@ export class EffectController extends GlobalController<EffectState, EffectContro
                     return pe.duration.cardInstanceId !== instanceId && pe.duration.toolInstanceId !== instanceId;
                 }
                 return true;
-            }
+            },
         );
     }
 
@@ -274,7 +273,7 @@ export class EffectController extends GlobalController<EffectState, EffectContro
                     return pe.duration.toolInstanceId !== toolInstanceId || pe.duration.cardInstanceId !== cardInstanceId;
                 }
                 return true;
-            }
+            },
         );
     }
 

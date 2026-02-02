@@ -145,8 +145,9 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
                     for (const templateId of deck as string[]) {
                         try {
                             this.controllers.cardRepository.getCard(templateId);
-                        } catch (error: any) {
-                            throw new Error(`Invalid card in player ${i} deck: ${error.message}`);
+                        } catch (error) {
+                            const errorMessage = error instanceof Error ? error.message : String(error);
+                            throw new Error(`Invalid card in player ${i} deck: ${errorMessage}`);
                         }
                     }
                 }

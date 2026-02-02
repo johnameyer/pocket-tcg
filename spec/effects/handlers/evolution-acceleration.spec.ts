@@ -256,7 +256,8 @@ describe('Evolution Acceleration Effect', () => {
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('stage2-creature', 'Should have evolved to stage 2');
         
-        const energyState = state.energy as any;
+         
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(2, 'Should preserve energy after evolution');
     });
 

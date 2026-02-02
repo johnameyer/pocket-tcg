@@ -2,6 +2,7 @@ import { ControllerState } from '@cards-ts/core';
 import { Controllers } from '../../src/controllers/controllers.js';
 import { EnergyDictionary, AttachableEnergyType } from '../../src/controllers/energy-controller.js';
 import { GameCard } from '../../src/controllers/card-types.js';
+import { StatusEffectType } from '../../src/controllers/status-effect-controller.js';
 
 // Partial energy dictionary for test convenience
 type PartialEnergyDict = Partial<Record<AttachableEnergyType, number>>;
@@ -46,6 +47,7 @@ export class StateBuilder {
         const state = {
             turn: 0,
             completed: false,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test fixture initialization
             state: 'ACTIONLOOP_ACTION_ACTION' as any,
             waiting: { waiting: [], responded: [] },
             points: [ 0, 0 ],
@@ -131,6 +133,7 @@ export class StateBuilder {
      */
     static withGameState(stateName: string) {
         return (state: ControllerState<Controllers>) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object construction
             state.state = stateName as any;
             
             // Adjust setup based on state
@@ -238,15 +241,18 @@ export class StateBuilder {
     static withStatusEffect(player: number, effect: string) {
         return (state: ControllerState<Controllers>) => {
             // Convert string to StatusEffectType enum
-            const statusEffectMap: Record<string, string> = {
-                sleep: 'sleep',
-                burn: 'burn', 
-                confusion: 'confusion',
-                paralysis: 'paralysis',
-                poison: 'poison',
+            const statusEffectMap: Record<string, StatusEffectType> = {
+                sleep: StatusEffectType.ASLEEP,
+                burn: StatusEffectType.BURNED,
+                confusion: StatusEffectType.CONFUSED,
+                paralysis: StatusEffectType.PARALYZED,
+                poison: StatusEffectType.POISONED,
             };
             
-            const effectType = statusEffectMap[effect] || effect;
+            const effectType = statusEffectMap[effect];
+            if (!effectType) {
+                throw new Error(`Unknown status effect: ${effect}`);
+            }
             // Include appliedTurn property with a default value of 1
             state.statusEffects.activeStatusEffects[player] = [{ type: effectType, appliedTurn: 1 }];
         };

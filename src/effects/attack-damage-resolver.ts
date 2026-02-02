@@ -127,8 +127,10 @@ export class AttackDamageResolver {
             }
         }
         
-        // Apply damage reductions from passive effects
-        // Only apply reductions belonging to the DEFENDING player (opponent of currentPlayer)
+        /*
+         * Apply damage reductions from passive effects
+         * Only apply reductions belonging to the DEFENDING player (opponent of currentPlayer)
+         */
         const defendingPlayer = 1 - currentPlayer;
         const damageReductionEffects = controllers.effects.getPassiveEffectsByType('damage-reduction');
         for (const passiveEffect of damageReductionEffects) {
@@ -138,8 +140,10 @@ export class AttackDamageResolver {
             }
             
             const reduction = passiveEffect.effect;
-            // Create minimal context for effect value resolution
-            // We use the passive effect's stored context information
+            /*
+             * Create minimal context for effect value resolution
+             * We use the passive effect's stored context information
+             */
             const reductionContext = EffectContextFactory.createAbilityContext(
                 passiveEffect.sourcePlayer,
                 passiveEffect.effectName,
@@ -154,7 +158,7 @@ export class AttackDamageResolver {
         if (playercreature) {
             const applicablePreventions = PassiveEffectMatcher.getApplicableDamagePreventions(
                 controllers,
-                playercreature.templateId
+                playercreature.templateId,
             );
             if (applicablePreventions.length > 0) {
                 totalDamage = 0;

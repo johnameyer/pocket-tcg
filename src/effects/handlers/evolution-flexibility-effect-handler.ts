@@ -52,7 +52,7 @@ export class EvolutionFlexibilityEffectHandler extends AbstractEffectHandler<Evo
                 duration: effect.duration,
             },
             effect.duration,
-            controllers.turnCounter.getTurnNumber()
+            controllers.turnCounter.getTurnNumber(),
         );
         
         // Show a message about the evolution flexibility

@@ -1,4 +1,4 @@
-import { GenericControllerProvider, GenericHandlerController, GlobalController, Serializable, SystemHandlerParams } from '@cards-ts/core';
+import { GenericControllerProvider, GenericHandlerController, GlobalController, SystemHandlerParams } from '@cards-ts/core';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
 import { StatusCondition } from '../repository/effect-types.js';
@@ -14,17 +14,16 @@ export enum StatusEffectType {
     POISONED = 'poison',
 }
 
-export interface StatusEffect {
+export type StatusEffect = {
     type: StatusEffectType;
     appliedTurn: number;
-}
+};
 
 export type StatusEffectState = {
     /*
-     * Status effects for active FieldCard [playerId] - stored as arrays
-     * TODO properly strongly type this
+     * Status effects for active FieldCard [playerId] - array of StatusEffect arrays
      */
-    activeStatusEffects: Serializable[];
+    activeStatusEffects: StatusEffect[][];
 };
 
 type StatusEffectDependencies = { 
@@ -41,7 +40,7 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
     initialState(controllers: StatusEffectDependencies): StatusEffectState {
         return {
             activeStatusEffects: new Array(controllers.players.count).fill(null)
-                .map(() => [] as Serializable),
+                .map(() => [] as StatusEffect[]),
         };
     }
     
@@ -49,15 +48,15 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
         // TODO the player is allowed to know all the effects applied and can derive the rest themselves
         return {
             activeStatusEffectsDisplay: (state: StatusEffectState) => {
-                const effects = (state.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
+                const effects = state.activeStatusEffects[playerId] || [];
                 return effects.length > 0 ? ` [${effects.map(e => e.type.toUpperCase()).join(', ')}]` : '';
             },
             canAttack: (state: StatusEffectState) => {
-                const effects = (state.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
+                const effects = state.activeStatusEffects[playerId] || [];
                 return !effects.some(e => e.type === StatusEffectType.ASLEEP || e.type === StatusEffectType.PARALYZED);
             },
             canRetreat: (state: StatusEffectState) => {
-                const effects = (state.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
+                const effects = state.activeStatusEffects[playerId] || [];
                 return !effects.some(e => e.type === StatusEffectType.ASLEEP || e.type === StatusEffectType.PARALYZED);
             },
         };
@@ -101,17 +100,12 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
         return this.applyStatusEffect(playerId, this.statusConditionToType(condition));
     }
     
-    /*
-     * Helper methods to work with serializable arrays
-     * TODO can we fix how these are considered serializable to remove the casts
-     */
     private getActiveEffects(playerId: number): StatusEffect[] {
-        const effects = (this.state.activeStatusEffects[playerId] as unknown as StatusEffect[]) || [];
-        return effects;
+        return this.state.activeStatusEffects[playerId] || [];
     }
     
     private setActiveEffects(playerId: number, effects: StatusEffect[]): void {
-        this.state.activeStatusEffects[playerId] = effects as unknown as Serializable;
+        this.state.activeStatusEffects[playerId] = effects;
     }
 
     // Apply status effect to active FieldCard

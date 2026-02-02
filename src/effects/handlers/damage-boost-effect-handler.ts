@@ -46,7 +46,7 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
             },
             effect.duration,
             controllers.turnCounter.getTurnNumber(),
-            effect.condition
+            effect.condition,
         );
         
         const targetText = effect.target ? ' conditionally' : '';

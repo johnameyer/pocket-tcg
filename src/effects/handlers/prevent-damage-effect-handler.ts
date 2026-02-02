@@ -114,7 +114,7 @@ export class PreventDamageEffectHandler extends AbstractEffectHandler<PreventDam
                     duration: effect.duration,
                 },
                 effect.duration,
-                controllers.turnCounter.getTurnNumber()
+                controllers.turnCounter.getTurnNumber(),
             );
             
             // Show a message about the damage prevention

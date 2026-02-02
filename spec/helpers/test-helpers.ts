@@ -5,11 +5,14 @@ import { gameFactory } from '../../src/game-factory.js';
 import { GameSetup } from '../../src/game-setup.js';
 import { Controllers } from '../../src/controllers/controllers.js';
 import { mockRepository, MockCardRepository } from '../mock-repository.js';
-import { StateBuilder } from './state-builder.js';
 import { CardRepository } from '../../src/repository/card-repository.js';
 import { ModifierEffect } from '../../src/repository/effect-types.js';
+import { StateBuilder } from './state-builder.js';
 
-export function createTestPlayers(actionHandler: (handlerData: any, responses: any) => void, messageHandler?: (handlerData: any, message: any) => void) {
+type ActionHandler = (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => void;
+type MessageHandler = (handlerData: HandlerData, message: ResponseMessage) => void;
+
+export function createTestPlayers(actionHandler: ActionHandler, messageHandler?: MessageHandler) {
     const gameHandler: () => GameHandler = () => ({
         handleAction: actionHandler,
         handleSelectActivecreature: actionHandler,
@@ -27,11 +30,11 @@ export function createTestPlayers(actionHandler: (handlerData: any, responses: a
 }
 
 export function createTestPlayersWithDifferentHandlers(
-    player0Handler: (handlerData: any, responses: any) => void,
-    player1Handler: (handlerData: any, responses: any) => void,
-    messageHandler?: (handlerData: any, message: any) => void,
+    player0Handler: ActionHandler,
+    player1Handler: ActionHandler,
+    messageHandler?: MessageHandler,
 ) {
-    const createGameHandler = (handler: (handlerData: any, responses: any) => void): () => GameHandler => () => ({
+    const createGameHandler = (handler: ActionHandler): () => GameHandler => () => ({
         handleAction: handler,
         handleSelectActivecreature: handler,
         handleSelectActiveCard: handler,
@@ -73,7 +76,7 @@ export function createActionTracker(actions: ResponseMessage[]) {
  */
 export function initializePassiveEffectsForTestState(
     state: ControllerState<Controllers>,
-    repository: CardRepository | MockCardRepository
+    repository: CardRepository | MockCardRepository,
 ) {
     // Initialize passive effects for creatures with abilities
     for (let playerId = 0; playerId < state.field.creatures.length; playerId++) {
@@ -81,11 +84,15 @@ export function initializePassiveEffectsForTestState(
         
         for (let fieldIndex = 0; fieldIndex < playerCreatures.length; fieldIndex++) {
             const creature = playerCreatures[fieldIndex];
-            if (!creature) continue;
+            if (!creature) {
+                continue; 
+            }
             
             // Get the current form of the creature (top of evolution stack)
             const currentForm = creature.evolutionStack[creature.evolutionStack.length - 1];
-            if (!currentForm) continue;
+            if (!currentForm) {
+                continue; 
+            }
             
             try {
                 const creatureData = repository.getCreature(currentForm.templateId);
@@ -126,10 +133,14 @@ export function initializePassiveEffectsForTestState(
         }
     }
     
-    // Initialize passive effects for tools
-    // Tools are tracked in state.tools.attachedTools as { [creatureInstanceId]: { templateId, instanceId } }
+    /*
+     * Initialize passive effects for tools
+     * Tools are tracked in state.tools.attachedTools as { [creatureInstanceId]: { templateId, instanceId } }
+     */
     for (const [ creatureInstanceId, tool ] of Object.entries(state.tools.attachedTools)) {
-        if (!tool) continue;
+        if (!tool) {
+            continue; 
+        }
         
         try {
             const toolData = repository.getTool(tool.templateId);
@@ -223,11 +234,13 @@ export function runTestGame(config: TestGameConfig) {
     // Initialize passive effects for any abilities and tools in the pre-configured state
     initializePassiveEffectsForTestState(preConfiguredState, repository);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Framework driver requires state to be untyped for private API
     const driver = gameFactory(repository).getGameDriver(players, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState as any);
     
     driver.resume();
     const maxSteps = config.maxSteps !== undefined ? config.maxSteps : 5;
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing private handlerProxy API
         for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
             if (message) {
                 let payload, data;
@@ -263,7 +276,8 @@ export function runTestGame(config: TestGameConfig) {
 export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['getGameDriver']>, maxSteps: number) {
     driver.resume();
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+        // @ts-expect-error Accessing private handlerProxy API for test framework
+        for (const [ position, message ] of driver.handlerProxy.receiveSyncResponses()) {
             if (message) {
                 let payload, data;
                 if (Array.isArray(message)) {

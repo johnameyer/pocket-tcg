@@ -4,7 +4,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { EnergyDictionary } from '../../../src/controllers/energy-controller.js';
+import { EnergyDictionary, EnergyState } from '../../../src/controllers/energy-controller.js';
 import { EnergyEffectHandler } from '../../../src/effects/handlers/energy-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { EnergyEffect } from '../../../src/repository/effect-types.js';
@@ -127,7 +127,7 @@ describe('Energy Effect', () => {
             maxSteps: 10,
         });
 
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Should attach 1 fire energy');
     });
 
@@ -160,7 +160,7 @@ describe('Energy Effect', () => {
             maxSteps: 10,
         });
 
-        const energyState = state.energy as any;
+        const energyState: EnergyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-1'].fire).to.equal(1, 'Should discard 1 fire energy');
         expect(energyState.attachedEnergyByInstance['basic-creature-1'].water).to.equal(1, 'Should not affect water energy');
     });
@@ -192,7 +192,7 @@ describe('Energy Effect', () => {
             maxSteps: 10,
         });
 
-        const energyState = state.energy as any;
+        const energyState: EnergyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(1, 'Should attach 1 water energy');
     });
 
@@ -223,7 +223,7 @@ describe('Energy Effect', () => {
             maxSteps: 10,
         });
 
-        const energyState = state.energy as any;
+        const energyState: EnergyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(2, 'Should attach 2 fire energy');
     });
 
@@ -259,7 +259,7 @@ describe('Energy Effect', () => {
             maxSteps: 15,
         });
 
-        const energyState = state.energy as any;
+        const energyState: EnergyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].grass).to.equal(1, 'Should attach to active Pokemon');
     });
 
@@ -292,7 +292,7 @@ describe('Energy Effect', () => {
             maxSteps: 10,
         });
 
-        const energyState = state.energy as any;
+        const energyState: EnergyState = state.energy;
         const opponentActiveEnergy = energyState.attachedEnergyByInstance['basic-creature-1'] || {};
         expect(opponentActiveEnergy.fire || 0).to.equal(0, 'Should discard all available fire energy');
     });

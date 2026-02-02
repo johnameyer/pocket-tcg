@@ -6,9 +6,9 @@ import { EffectContext } from './effect-context.js';
  * Represents the different types of selections that can be pending.
  */
 export type SelectionType = 
-    | 'field'   // Select one or more cards on the field
-    | 'energy'  // Select energy to discard/move
-    | 'card'    // Select cards from a location (hand, deck, discard)
+    | 'field' // Select one or more cards on the field
+    | 'energy' // Select energy to discard/move
+    | 'card' // Select cards from a location (hand, deck, discard)
     | 'choice'; // Select from a list of named choices
 
 /**

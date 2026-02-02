@@ -95,7 +95,7 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
                     duration: effect.duration,
                 },
                 effect.duration,
-                controllers.turnCounter.getTurnNumber()
+                controllers.turnCounter.getTurnNumber(),
             );
             
             // Send a message about the retreat prevention

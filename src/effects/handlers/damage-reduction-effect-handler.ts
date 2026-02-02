@@ -98,7 +98,7 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
                     duration: effect.duration,
                 },
                 effect.duration,
-                controllers.turnCounter.getTurnNumber()
+                controllers.turnCounter.getTurnNumber(),
             );
             
             // Send a message about the damage reduction

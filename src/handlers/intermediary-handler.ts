@@ -9,7 +9,7 @@ import { TargetResolver } from '../effects/target-resolver.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
-import { isPendingFieldSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection } from '../effects/pending-selection-types.js';
+import { isPendingFieldSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, PendingFieldSelection, PendingEnergySelection, PendingCardSelection, PendingChoiceSelection } from '../effects/pending-selection-types.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import * as helpers from './intermediary-handler-helpers.js';
 
@@ -187,7 +187,7 @@ export class IntermediaryHandler extends GameHandler {
         await this.handleChoiceSelection(handlerData, responsesQueue, pendingSelection);
     }
     
-    private async handleTargetSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage | ResponseMessage>, pendingSelection: any): Promise<void> {
+    private async handleTargetSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage | ResponseMessage>, pendingSelection: PendingFieldSelection): Promise<void> {
         const { count = 1, minTargets, maxTargets } = pendingSelection;
         const currentPlayer = handlerData.turn;
         const context = pendingSelection.originalContext;
@@ -246,7 +246,7 @@ export class IntermediaryHandler extends GameHandler {
                 type: 'checkbox',
                 message: [ effectMessage ],
                 choices: targetOptions,
-                validate: (selected: any[]) => {
+                validate: (selected: number[]) => {
                     if (selected.length < minCount) {
                         return `Must select at least ${minCount} targets`;
                     }
@@ -270,7 +270,7 @@ export class IntermediaryHandler extends GameHandler {
         }
     }
     
-    private async handleEnergySelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+    private async handleEnergySelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: PendingEnergySelection): Promise<void> {
         const { playerId, fieldPosition, count, allowedTypes } = pendingSelection;
         
         // Get the card with energy
@@ -327,7 +327,7 @@ export class IntermediaryHandler extends GameHandler {
                 type: 'checkbox',
                 message: [ prompt ],
                 choices: energyOptions,
-                validate: (selected: any[]) => {
+                validate: (selected: AttachableEnergyType[]) => {
                     if (selected.length !== count) {
                         return `Must select exactly ${count} energy`;
                     }
@@ -340,7 +340,7 @@ export class IntermediaryHandler extends GameHandler {
         }
     }
     
-    private async handleCardInHandSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
+    private async handleCardInHandSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: PendingCardSelection): Promise<void> {
         const { playerId, count, cardType } = pendingSelection;
         const hand = handlerData.hand;
         
@@ -391,14 +391,14 @@ export class IntermediaryHandler extends GameHandler {
             });
             
             const selected = (await received)[0] as string;
-            responsesQueue.push(new SelectCardResponseMessage([selected]));
+            responsesQueue.push(new SelectCardResponseMessage([ selected ]));
         } else {
             // Multiple selection
             const [ sent, received ] = this.intermediary.form({
                 type: 'checkbox',
                 message: [ prompt ],
                 choices: cardOptions,
-                validate: (selected: any[]) => {
+                validate: (selected: number[]) => {
                     if (selected.length !== count) {
                         return `Must select exactly ${count} cards`;
                     }
@@ -411,14 +411,15 @@ export class IntermediaryHandler extends GameHandler {
         }
     }
     
-    private async handleChoiceSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: any): Promise<void> {
-        const { choices, allowMultiple } = pendingSelection;
+    private async handleChoiceSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: PendingChoiceSelection): Promise<void> {
+        const { choices, count, maxCount } = pendingSelection;
         
         if (!choices || choices.length === 0) {
             return;
         }
         
         const prompt = pendingSelection.prompt || 'Make a selection:';
+        const allowMultiple = count > 1 || (maxCount && maxCount > 1);
         
         if (!allowMultiple) {
             // Single selection

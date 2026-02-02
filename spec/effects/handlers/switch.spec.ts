@@ -59,6 +59,8 @@ describe('Switch Effect', () => {
             const effect: SwitchEffect = {
                 type: 'switch',
                 target: { type: 'fixed', player: 'self', position: 'active' },
+                 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic switch target for test
                 switchWith: undefined as any,
             };
 
