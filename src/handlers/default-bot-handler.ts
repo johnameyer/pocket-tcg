@@ -1,9 +1,12 @@
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { GameHandler, HandlerData } from '../game-handler.js';
-import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage } from '../messages/response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from '../messages/response/index.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
+import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
+import { TargetResolver } from '../effects/target-resolver.js';
+import { Controllers } from '../controllers/controllers.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -151,5 +154,79 @@ export class DefaultBotHandler extends GameHandler {
                 [],
             ));
         }
+    }
+    
+    handleSelectTarget(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage>): void {
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        if (!pendingSelection || !isPendingFieldSelection(pendingSelection)) {
+            return;
+        }
+        
+        // Use TargetResolver to get valid targets compositionally
+        const { effect, originalContext } = pendingSelection;
+        const target = 'target' in effect ? effect.target : undefined;
+        
+        if (!target || typeof target === 'string') {
+            // No target selection needed or resolved already
+            return;
+        }
+        
+        /*
+         * Convert handlerData to Controllers for TargetResolver
+         * HandlerData is structurally compatible with Controllers (it's a view of Controllers)
+         * This pattern is used throughout the codebase for handler methods
+         */
+        const controllers = handlerData as unknown as Controllers;
+        const resolution = TargetResolver.resolveTarget(target, controllers, originalContext);
+        
+        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+            return;
+        }
+        
+        // For bot: select first N available targets up to count
+        const targetCount = Math.min(pendingSelection.count || 1, resolution.availableTargets.length);
+        const selectedTargets = resolution.availableTargets.slice(0, targetCount).map(t => ({
+            playerId: t.playerId,
+            fieldIndex: t.fieldIndex,
+        }));
+        
+        responsesQueue.push(new SelectTargetResponseMessage(selectedTargets));
+    }
+    
+    handleSelectEnergy(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectEnergyResponseMessage>): void {
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        if (!pendingSelection || !isPendingEnergySelection(pendingSelection)) {
+            return;
+        }
+        
+        const count = pendingSelection.count || 1;
+        // Just select first energy type available (simplified bot logic)
+        responsesQueue.push(new SelectEnergyResponseMessage(
+            Array(count).fill('fire'), // Default to fire energy
+        ));
+    }
+    
+    handleSelectCard(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectCardResponseMessage>): void {
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        if (!pendingSelection || !isPendingCardSelection(pendingSelection)) {
+            return;
+        }
+        
+        const cardCount = pendingSelection.count || 1;
+        // Get the actual cards from the specified location and extract their instance IDs
+        const hand = handlerData.hand;
+        const selectedInstanceIds = hand.slice(0, cardCount).map((card) => card.instanceId);
+        responsesQueue.push(new SelectCardResponseMessage(selectedInstanceIds));
+    }
+    
+    handleSelectChoice(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectChoiceResponseMessage>): void {
+        const pendingSelection = handlerData.turnState.pendingSelection;
+        if (!pendingSelection || !isPendingChoiceSelection(pendingSelection)) {
+            return;
+        }
+        
+        const choiceCount = pendingSelection.count || 1;
+        const selectedChoices = pendingSelection.choices?.slice(0, choiceCount).map((choice) => choice.value) || [];
+        responsesQueue.push(new SelectChoiceResponseMessage(selectedChoices));
     }
 }

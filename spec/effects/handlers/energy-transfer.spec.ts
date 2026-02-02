@@ -240,8 +240,8 @@ describe('Energy Transfer Effect', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('choice-transfer-supporter', 'supporter'),
-                new SelectTargetResponseMessage(0, 0), // Source: self active
-                new SelectTargetResponseMessage(0, 1), // Target: self bench
+                new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]), // Source: self active
+                new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]), // Target: self bench
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(

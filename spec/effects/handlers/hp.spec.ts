@@ -110,7 +110,7 @@ describe('HP Effect', () => {
         const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('heal-item', 'item'),
-                new SelectTargetResponseMessage(0, 0),
+                new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
