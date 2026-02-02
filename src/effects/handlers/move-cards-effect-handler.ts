@@ -31,7 +31,8 @@ export class MoveCardsEffectHandler extends AbstractEffectHandler<MoveCardsEffec
     
     /**
      * Apply a move cards effect.
-     * This moves cards (possibly with tools and evolution stack) to deck or hand.
+     * This moves cards (possibly with tools and evolution stack) to deck or hand,
+     * or pulls evolution from deck and immediately evolves.
      * 
      * Note: This is a simplified implementation. Full implementation would require
      * more controller methods for moving cards with tools and evolution stacks.
@@ -41,6 +42,16 @@ export class MoveCardsEffectHandler extends AbstractEffectHandler<MoveCardsEffec
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: MoveCardsEffect, context: EffectContext): void {
+        // Check if this is a pull evolution operation
+        if (effect.pullEvolution) {
+            // Delegate to pull evolution logic (would be in pull-evolution-effect-handler)
+            controllers.players.messageAll({
+                type: 'status',
+                components: [ `${context.effectName} pull evolution not yet fully implemented!` ],
+            });
+            return;
+        }
+        
         // Resolve the target - use resolveTarget instead of resolveSingleTarget
         const resolution = TargetResolver.resolveTarget(effect.target, controllers, context);
         
@@ -83,6 +94,22 @@ export class MoveCardsEffectHandler extends AbstractEffectHandler<MoveCardsEffec
             return;
         }
         
+        // Build include message
+        let includeMsg = '';
+        if (effect.include) {
+            switch (effect.include) {
+                case 'all':
+                    includeMsg = ' with tools and evolution stack';
+                    break;
+                case 'tool':
+                    includeMsg = ' with tools';
+                    break;
+                case 'evolution':
+                    includeMsg = ' with evolution stack';
+                    break;
+            }
+        }
+        
         // For now, just send a message indicating this effect is not fully implemented
         // Full implementation would require:
         // 1. New controller methods to properly handle card removal with tools/evolution
@@ -91,9 +118,7 @@ export class MoveCardsEffectHandler extends AbstractEffectHandler<MoveCardsEffec
         controllers.players.messageAll({
             type: 'status',
             components: [ 
-                `${context.effectName} would move ${targetCard.data.name} to ${effect.destination}` +
-                `${effect.includeTools ? ' with tools' : ''}` +
-                `${effect.includeEvolutionStack ? ' with evolution stack' : ''} (not yet fully implemented)`,
+                `${context.effectName} would move ${targetCard.data.name} to ${effect.destination}${includeMsg} (not yet fully implemented)`,
             ],
         });
     }

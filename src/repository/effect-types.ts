@@ -1,4 +1,4 @@
-import { Target, CardTarget, EnergyTarget, PlayerTarget, CardCriteria } from './target-types.js';
+import { FieldTarget, CardTarget, EnergyTarget, PlayerTarget, CardCriteria } from './target-types.js';
 import { EffectValue } from './effect-value-types.js';
 import { AttachableEnergyType } from './energy-types.js';
 import { Condition } from './condition-types.js';
@@ -25,7 +25,7 @@ export type StatusCondition = 'sleep' | 'burn' | 'confusion' | 'paralysis' | 'po
 export type HpEffect = {
     type: 'hp';
     amount: EffectValue;
-    target: Target;
+    target: FieldTarget;
     operation: 'heal' | 'damage';
 };
 
@@ -38,7 +38,7 @@ export type HpEffect = {
 export type StatusEffect = {
     type: 'status';
     condition: StatusCondition;
-    target: Target;
+    target: FieldTarget;
 };
 
 export type DrawEffect = {
@@ -50,7 +50,7 @@ export type EnergyEffect = {
     type: 'energy';
     energyType: AttachableEnergyType;
     amount: EffectValue;
-    target: Target;
+    target: FieldTarget;
     operation: 'attach' | 'discard';
 };
 
@@ -92,8 +92,8 @@ export type HandDiscardEffect = {
 
 export type SwitchEffect = {
     type: 'switch';
-    target: Target;
-    switchWith: Target;
+    target: FieldTarget;
+    switchWith: FieldTarget;
 };
 
 /**
@@ -102,8 +102,8 @@ export type SwitchEffect = {
  */
 export type EnergyTransferEffect = {
     type: 'energy-transfer';
-    source: Target | EnergyTarget;
-    target: Target | EnergyTarget;
+    source: FieldTarget | EnergyTarget;
+    target: FieldTarget | EnergyTarget;
     amount: EffectValue;
     energyTypes: AttachableEnergyType[];
 };
@@ -113,20 +113,7 @@ export type EnergyTransferEffect = {
  */
 export type ToolDiscardEffect = {
     type: 'tool-discard';
-    target: Target;
-};
-
-/**
- * Represents an effect that pulls an evolution from deck and immediately evolves.
- */
-export type PullEvolutionEffect = {
-    type: 'pull-evolution';
-    /** The card to evolve */
-    target: Target;
-    /** Search criteria for finding the evolution card */
-    evolutionCriteria?: CardCriteria;
-    /** Whether this can be used on first turn or multiple times per turn */
-    skipRestrictions?: boolean;
+    target: FieldTarget;
 };
 
 /**
@@ -140,6 +127,8 @@ export type SwapCardsEffect = {
     drawTarget: CardTarget;
     /** Whether the number drawn must equal number discarded */
     balanced?: boolean;
+    /** Maximum number of cards to draw (optional cap) */
+    maxDrawn?: number;
 };
 
 /**
@@ -147,7 +136,7 @@ export type SwapCardsEffect = {
  */
 export type StatusPreventionEffect = {
     type: 'status-prevention';
-    target: Target;
+    target: FieldTarget;
     /** Which conditions to prevent (all if not specified) */
     conditions?: StatusCondition[];
     /** How long the prevention lasts */
@@ -159,51 +148,55 @@ export type StatusPreventionEffect = {
  */
 export type StatusRecoveryEffect = {
     type: 'status-recovery';
-    target: Target;
+    target: FieldTarget;
     /** Which conditions to recover from (all if not specified) */
     conditions?: StatusCondition[];
 };
 
 /**
- * Represents an effect that moves cards (with tools/evolution) to deck/hand.
- * Requires switching in a replacement from bench.
+ * Represents an effect that moves or evolves cards.
+ * Can move cards from field to deck/hand/discard, or pull evolution from deck and evolve.
  */
 export type MoveCardsEffect = {
     type: 'move-cards';
-    /** The card to move */
-    target: Target;
-    /** Where to move the card */
-    destination: 'deck' | 'hand';
-    /** Whether to include attached tools */
-    includeTools?: boolean;
-    /** Whether to include evolution stack */
-    includeEvolutionStack?: boolean;
-    /** The card to switch in (required if moving active card) */
-    switchWith?: Target;
+    /** The card to move or evolve */
+    target: FieldTarget;
+    /** Where to move the card (for field moves) or where to search for evolution (for pulls) */
+    destination: 'deck' | 'hand' | 'discard';
+    /** What to include with the card when moving: 'all', 'tool', or 'evolution' */
+    include?: 'all' | 'tool' | 'evolution';
+    /** The card to switch in (required if moving active card from field) */
+    switchWith?: FieldTarget;
+    /** If true, this pulls an evolution from deck and immediately evolves instead of moving */
+    pullEvolution?: boolean;
+    /** Search criteria for finding the evolution card (only used when pullEvolution is true) */
+    evolutionCriteria?: CardCriteria;
+    /** Whether evolution can skip turn restrictions (only used when pullEvolution is true) */
+    skipRestrictions?: boolean;
 };
 
 export type PreventDamageEffect = {
     type: 'prevent-damage';
-    target?: Target;
+    target?: FieldTarget;
     source?: string;
 };
 
 export type DamageReductionEffect = {
     type: 'damage-reduction';
     amount: EffectValue;
-    target: Target;
+    target: FieldTarget;
     duration?: string;
 };
 
 export type RetreatPreventionEffect = {
     type: 'retreat-prevention';
-    target: Target;
+    target: FieldTarget;
     duration: string;
 };
 
 export type EvolutionAccelerationEffect = {
     type: 'evolution-acceleration';
-    target: Target;
+    target: FieldTarget;
     skipStages: number;
     restrictions?: string[];
 };
@@ -226,7 +219,7 @@ export type CoinFlipManipulationEffect = {
 export type DamageBoostEffect = {
     type: 'damage-boost';
     amount: EffectValue;
-    target?: Target;
+    target?: FieldTarget;
     condition?: Condition;
     duration?: string;
 };
@@ -266,7 +259,6 @@ export type Effect =
     | HpBonusEffect 
     | RetreatCostReductionEffect
     | ToolDiscardEffect
-    | PullEvolutionEffect
     | SwapCardsEffect
     | StatusPreventionEffect
     | StatusRecoveryEffect
