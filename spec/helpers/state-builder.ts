@@ -69,12 +69,6 @@ export class StateBuilder {
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
                 pendingSelection: undefined,
-                damageBoosts: [],
-                damageReductions: [],
-                retreatCostReductions: [],
-                retreatPreventions: [],
-                damagePrevention: [],
-                evolutionFlexibility: [],
             },
             statusEffects: {
                 activeStatusEffects: [[], []], // No status effects for either player
@@ -103,6 +97,8 @@ export class StateBuilder {
             },
             effects: {
                 immediatelyPendingEffects: [],
+                activePassiveEffects: [],
+                nextEffectId: 0,
             },
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player

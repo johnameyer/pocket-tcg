@@ -30,6 +30,7 @@ describe('Damage Boost Effect', () => {
                 effects: [{
                     type: 'damage-boost',
                     amount: { type: 'constant', value: 20 },
+                    duration: { type: 'until-end-of-turn' },
                     // No targetCondition means applies to all targets
                 }],
             }],

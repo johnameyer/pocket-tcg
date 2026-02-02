@@ -24,6 +24,7 @@ describe('Evolution Flexibility Effect', () => {
                 type: 'evolution-flexibility',
                 target: 'flexible-evolution-water',
                 baseForm: 'flexible-basic',
+                duration: { type: 'until-end-of-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
@@ -39,6 +40,7 @@ describe('Evolution Flexibility Effect', () => {
                 type: 'evolution-flexibility',
                 target: 'flexible-evolution-water',
                 baseForm: 'flexible-basic',
+                duration: { type: 'until-end-of-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
@@ -113,6 +115,7 @@ describe('Evolution Flexibility Effect', () => {
                     type: 'evolution-flexibility',
                     target: 'flexible-evolution-water',
                     baseForm: 'flexible-basic',
+                    duration: { type: 'until-end-of-turn' },
                 }],
             }],
         ]),

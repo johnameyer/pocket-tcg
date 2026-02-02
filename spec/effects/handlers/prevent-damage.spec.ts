@@ -24,6 +24,7 @@ describe('Prevent Damage Effect', () => {
             const effect: PreventDamageEffect = {
                 type: 'prevent-damage',
                 target: { type: 'fixed', player: 'self', position: 'active' },
+                duration: { type: 'until-end-of-next-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
@@ -38,6 +39,7 @@ describe('Prevent Damage Effect', () => {
             const effect: PreventDamageEffect = {
                 type: 'prevent-damage',
                 target: { type: 'fixed', player: 'self', position: 'active' },
+                duration: { type: 'until-end-of-next-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
@@ -53,6 +55,7 @@ describe('Prevent Damage Effect', () => {
 
             const effect: PreventDamageEffect = {
                 type: 'prevent-damage',
+                duration: { type: 'until-end-of-next-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
@@ -106,6 +109,7 @@ describe('Prevent Damage Effect', () => {
                 effects: [{ 
                     type: 'prevent-damage',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
+                    duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
             [ 'prevent-ex-item', {
@@ -115,6 +119,7 @@ describe('Prevent Damage Effect', () => {
                     type: 'prevent-damage',
                     source: 'ex-creature',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
+                    duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
         ]),
