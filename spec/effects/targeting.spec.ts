@@ -151,7 +151,7 @@ describe('Effect Targeting', () => {
                         amount: { type: 'constant', value: 20 },
                         target: {
                             type: 'all-matching',
-                            criteria: { player: 'self', location: 'field', condition: { hasDamage: true }},
+                            criteria: { player: 'self', location: 'field', fieldCriteria: { hasDamage: true }},
                         },
                         operation: 'heal',
                     }],

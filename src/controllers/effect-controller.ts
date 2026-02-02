@@ -2,7 +2,6 @@ import { GlobalController, GenericControllerProvider } from '@cards-ts/core';
 import { Effect, ModifierEffect } from '../repository/effect-types.js';
 import { EffectContext } from '../effects/effect-context.js';
 import { Duration } from '../repository/duration-types.js';
-import { Condition } from '../repository/condition-types.js';
 
 /**
  * Represents a pending effect that needs to be applied.
@@ -44,12 +43,6 @@ export type PassiveEffect = {
      * How long the effect remains active.
      */
     duration: Duration;
-    
-    /**
-     * Optional condition that must be met for effect to apply.
-     * If present, the effect is only active when the condition is true.
-     */
-    condition?: Condition;
     
     /**
      * The turn number when this effect was created.
@@ -158,7 +151,6 @@ export class EffectController extends GlobalController<EffectState, EffectContro
         effect: ModifierEffect,
         duration: Duration,
         createdTurn: number,
-        condition?: Condition,
     ): string {
         const id = `passive-effect-${this.state.nextEffectId++}`;
         
@@ -169,7 +161,6 @@ export class EffectController extends GlobalController<EffectState, EffectContro
             effect,
             duration,
             createdTurn,
-            condition,
         };
         
         this.state.activePassiveEffects.push(passiveEffect);

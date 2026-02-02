@@ -1,6 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { ShuffleEffect } from '../../repository/effect-types.js';
-import { PlayerTarget } from '../../repository/target-types.js';
+import { PlayerTarget } from '../../repository/targets/player-target.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue } from '../effect-utils.js';

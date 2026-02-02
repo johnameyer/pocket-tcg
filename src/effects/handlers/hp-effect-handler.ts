@@ -1,6 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { HpEffect } from '../../repository/effect-types.js';
-import { Target } from '../../repository/target-types.js';
+import { FieldTarget } from '../../repository/targets/field-target.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue, getCreatureFromTarget } from '../effect-utils.js';
@@ -8,7 +8,7 @@ import { CardRepository } from '../../repository/card-repository.js';
 import { HealResultMessage } from '../../messages/status/heal-result-message.js';
 import { FieldCard } from '../../controllers/field-controller.js';
 import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
+import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 import { toFieldCard } from '../../utils/field-card-utils.js';
 import { TriggerProcessor } from '../trigger-processor.js';
 
@@ -50,11 +50,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         const targets = effect.target.targets;
         
         if (targets.length === 0) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} found no valid targets!` ],
-            });
-            return;
+            throw new Error(`${context.effectName} resolved to no valid targets`);
         }
         
         for (const target of targets) {
@@ -109,11 +105,11 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             };
             
             // Use TargetResolver with validation function
-            return TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, canBeHealed);
+            return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, canBeHealed);
         }
         
         // For damage effects, targets are always available if they exist
-        return TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
     }
     
     /**
@@ -143,7 +139,7 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
      * @param target The target to check
      * @returns True if the target is a choice target
      */
-    private isChoiceTarget(target: Target): boolean {
+    private isChoiceTarget(target: FieldTarget): boolean {
         return target && typeof target === 'object' 
                && 'type' in target 
                && (target.type === 'single-choice' || target.type === 'multi-choice');

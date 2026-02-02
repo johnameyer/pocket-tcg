@@ -5,8 +5,10 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
-import { TargetResolver } from '../effects/target-resolver.js';
+import { FieldTargetResolver } from '../effects/target-resolvers/field-target-resolver.js';
 import { Controllers } from '../controllers/controllers.js';
+import { FieldEnergyTarget } from '../repository/targets/energy-target.js';
+import { FieldTarget } from '../repository/targets/field-target.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -164,11 +166,16 @@ export class DefaultBotHandler extends GameHandler {
         
         // Use TargetResolver to get valid targets compositionally
         const { effect, originalContext } = pendingSelection;
-        const target = 'target' in effect ? effect.target : undefined;
+        let target = 'target' in effect ? effect.target : undefined;
         
         if (!target || typeof target === 'string') {
             // No target selection needed or resolved already
             return;
+        }
+        
+        // Extract field target from energy target if necessary
+        if ('fieldTarget' in target) {
+            target = (target as FieldEnergyTarget).fieldTarget;
         }
         
         /*
@@ -177,7 +184,7 @@ export class DefaultBotHandler extends GameHandler {
          * This pattern is used throughout the codebase for handler methods
          */
         const controllers = handlerData as unknown as Controllers;
-        const resolution = TargetResolver.resolveTarget(target, controllers, originalContext);
+        const resolution = FieldTargetResolver.resolveTarget(target as FieldTarget, controllers, originalContext);
         
         if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
             return;

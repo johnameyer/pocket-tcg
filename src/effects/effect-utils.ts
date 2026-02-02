@@ -1,7 +1,7 @@
 import { EffectValue } from '../repository/effect-value-types.js';
-import { Condition } from '../repository/condition-types.js';
 import { Controllers } from '../controllers/controllers.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
+import { FieldCriteria } from '../repository/criteria/field-target-criteria.js';
 import { EffectContext } from './effect-context.js';
 
 // TODO remove
@@ -206,8 +206,9 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
 }
 
 // TODO: Consider unifying this with ConditionEvaluator class to eliminate duplication
-export function evaluateConditionWithContext(condition: Condition, controllers: Controllers, context: EffectContext): boolean {
-    if (condition.hasEnergy) {
+export function evaluateConditionWithContext(condition: FieldCriteria, controllers: Controllers, context: EffectContext): boolean {
+    const fieldCondition = condition as FieldCriteria;
+    if (fieldCondition.hasEnergy) {
         let creatureInstanceId = '';
         
         if (context.type === 'ability') {
@@ -221,8 +222,8 @@ export function evaluateConditionWithContext(condition: Condition, controllers: 
         }
         
         // Get the energy type and required count
-        const energyType = Object.keys(condition.hasEnergy)[0] as AttachableEnergyType;
-        const requiredCount = condition.hasEnergy[energyType] || 1; // Default to 1 if undefined
+        const energyType = Object.keys(fieldCondition.hasEnergy)[0] as AttachableEnergyType;
+        const requiredCount = fieldCondition.hasEnergy[energyType] || 1; // Default to 1 if undefined
         // TODO rather than a single energy type support comparing each
         
         // Check if the creature has enough energy of the specified type
@@ -232,7 +233,7 @@ export function evaluateConditionWithContext(condition: Condition, controllers: 
         );
         
         return energyCount >= requiredCount;
-    } else if (condition.hasDamage) {
+    } else if (fieldCondition.hasDamage) {
         // For attack context, check if the attacker has damage
         if (context.type === 'attack') {
             // Get the active creature for the source player (attacker)

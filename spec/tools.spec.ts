@@ -176,6 +176,7 @@ describe('Creature Tools', () => {
                 effects: [{
                     type: 'hp-bonus',
                     amount: { type: 'constant', value: 30 },
+                    target: { player: 'self', position: 'active' },
                     duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
                 }],
             }],
@@ -262,6 +263,7 @@ describe('Creature Tools', () => {
                 effects: [{
                     type: 'retreat-cost-reduction',
                     amount: { type: 'constant', value: 1 },
+                    target: { player: 'self', position: 'active' },
                     duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
                 }],
             }],

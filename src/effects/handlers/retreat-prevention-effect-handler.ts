@@ -5,7 +5,7 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
+import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 
 /**
  * Handler for retreat prevention effects that prevent creature from retreating.
@@ -22,7 +22,7 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
      */
     canApply(handlerData: HandlerData, effect: RetreatPreventionEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // Use TargetResolver to check if the target is available
-        const result = TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        const result = FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
         return result;
     }
 
@@ -48,11 +48,6 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: RetreatPreventionEffect, context: EffectContext): void {
-        // Ensure we have a valid target
-        if (!effect.target) {
-            throw new Error('No target specified for retreat prevention effect');
-        }
-        
         if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
@@ -61,11 +56,7 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
         const targets = effect.target.targets;
         
         if (targets.length === 0) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} found no valid targets!` ],
-            });
-            return;
+            throw new Error(`${context.effectName} resolved to no valid targets`);
         }
         
         for (const target of targets) {

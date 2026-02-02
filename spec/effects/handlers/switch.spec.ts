@@ -108,7 +108,7 @@ describe('Switch Effect', () => {
                 effects: [{
                     type: 'switch',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench', condition: { hasDamage: true }}},
+                    switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench', fieldCriteria: { hasDamage: true }}},
                 }],
             }],
         ]),

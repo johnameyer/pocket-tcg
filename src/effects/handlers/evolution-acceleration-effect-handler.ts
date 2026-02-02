@@ -5,7 +5,7 @@ import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getCreatureFromTarget } from '../effect-utils.js';
 import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
+import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 import { GameCard } from '../../controllers/card-types.js';
 import { getCurrentTemplateId } from '../../utils/field-card-utils.js';
 
@@ -25,7 +25,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
      */
     canApply(handlerData: HandlerData, effect: EvolutionAccelerationEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // Use TargetResolver to check if the target is available
-        if (!TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)) {
+        if (!FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)) {
             return false;
         }
         
@@ -115,11 +115,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
         const targets = effect.target.targets;
         
         if (targets.length === 0) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} found no valid targets!` ],
-            });
-            return;
+            throw new Error(`${context.effectName} resolved to no valid targets`);
         }
         
         for (const target of targets) {

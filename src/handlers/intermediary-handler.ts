@@ -5,12 +5,13 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { SelectActiveCardResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from '../messages/response/index.js';
 import { SetupCompleteResponseMessage } from '../messages/response/index.js';
 import { Controllers } from '../controllers/controllers.js';
-import { TargetResolver } from '../effects/target-resolver.js';
+import { FieldTargetResolver } from '../effects/target-resolvers/field-target-resolver.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
 import { isPendingFieldSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, PendingFieldSelection, PendingEnergySelection, PendingCardSelection, PendingChoiceSelection } from '../effects/pending-selection-types.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
+import { FieldTarget, SingleChoiceFieldTarget } from '../repository/targets/field-target.js';
 import * as helpers from './intermediary-handler-helpers.js';
 
 export class IntermediaryHandler extends GameHandler {
@@ -199,9 +200,14 @@ export class IntermediaryHandler extends GameHandler {
             return;
         }
         
+        // Skip if target is FieldTargetCriteria (not resolvable during gameplay)
+        if (!('type' in target)) {
+            return;
+        }
+        
         // Use TargetResolver with Controllers (converted from HandlerData)
         const controllers = handlerData as unknown as Controllers;
-        const resolution = TargetResolver.resolveTarget(target, controllers, context);
+        const resolution = FieldTargetResolver.resolveTarget(target as FieldTarget, controllers, context);
         
         if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
             return;
@@ -216,7 +222,7 @@ export class IntermediaryHandler extends GameHandler {
         // Determine the appropriate message based on the effect type
         let effectMessage = count > 1 ? `Select ${count} target(s):` : 'Choose target for the effect:';
         if (pendingSelection.effect.type === 'switch') {
-            if (target.type === 'single-choice' && target.chooser === 'opponent') {
+            if ((target as SingleChoiceFieldTarget).type === 'single-choice' && (target as SingleChoiceFieldTarget).chooser === 'opponent') {
                 effectMessage = 'Choose which of your FieldCard to switch in:';
             } else {
                 effectMessage = 'Choose which FieldCard to force into battle:';

@@ -1,7 +1,7 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { HandlerData } from '../../game-handler.js';
 import { Effect } from '../../repository/effect-types.js';
-import { Target } from '../../repository/target-types.js';
+import { FieldTarget } from '../../repository/targets/field-target.js';
 import { EffectContext } from '../effect-context.js';
 import { CardRepository } from '../../repository/card-repository.js';
 
@@ -22,7 +22,7 @@ export interface ResolutionRequirement {
     targetProperty: string;
     
     /** The target to resolve */
-    target: Target;
+    target: FieldTarget;
     
     /** Whether this target is required for the effect to proceed */
     required: boolean;

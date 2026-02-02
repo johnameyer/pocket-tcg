@@ -1,9 +1,10 @@
 import { Controllers } from '../controllers/controllers.js';
 import { CreatureAttack } from '../repository/card-types.js';
-import { Condition } from '../repository/condition-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
+import { DamageBoostEffect } from '../repository/effect-types.js';
 import { EffectContext, EffectContextFactory } from './effect-context.js';
-import { getEffectValue, evaluateConditionWithContext } from './effect-utils.js';
+import { getEffectValue } from './effect-utils.js';
+import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 import { PassiveEffectMatcher } from './passive-effect-matcher.js';
 
 /**
@@ -87,14 +88,10 @@ export class AttackDamageResolver {
         const damageBoostEffects = controllers.effects.getPassiveEffectsByType('damage-boost');
         for (const passiveEffect of damageBoostEffects) {
             const boost = passiveEffect.effect;
-            console.log(`DEBUG: Checking damage boost: ${passiveEffect.effectName}, amount: ${boost.amount}`);
-            // Check if this boost should apply to the current target
-            if (this.shouldApplyDamageBoost({ sourcePlayer: passiveEffect.sourcePlayer, amount: typeof boost.amount === 'object' && 'value' in boost.amount ? boost.amount.value : 0, effectName: passiveEffect.effectName }, targetcreature, controllers, context)) {
+            // Check if this boost should apply to the current target using its damageSource criteria
+            if (this.shouldApplyDamageBoost(boost, targetcreature, controllers)) {
                 const amount = typeof boost.amount === 'object' && 'value' in boost.amount ? boost.amount.value : 0;
-                console.log(`DEBUG: Applying damage boost: ${amount}`);
                 totalDamage += amount;
-            } else {
-                console.log(`DEBUG: Skipping damage boost: ${passiveEffect.effectName}`);
             }
         }
         
@@ -102,27 +99,8 @@ export class AttackDamageResolver {
         if (attack.effects) {
             for (const effect of attack.effects) {
                 if (effect.type === 'damage-boost') {
-                    // Check if the condition is met
-                    let conditionMet = true;
-                    if (effect.condition) {
-                        // Get the attacking creature for condition evaluation
-                        const attackingCreature = controllers.field.getRawCardByPosition(currentPlayer, 0);
-                        if (attackingCreature?.instanceId === playercreatureInstanceId) {
-                            // Use the attacking creature for condition evaluation
-                            conditionMet = this.evaluateAttackCondition(effect.condition, attackingCreature, controllers, context);
-                        } else {
-                            // Find the attacking creature on bench
-                            const benchedCreature = controllers.field.getCards(currentPlayer).find(c => c?.instanceId === playercreatureInstanceId);
-                            if (benchedCreature) {
-                                conditionMet = this.evaluateAttackCondition(effect.condition, benchedCreature, controllers, context);
-                            }
-                        }
-                    }
-                    
-                    if (conditionMet) {
-                        const boostAmount = getEffectValue(effect.amount, controllers, context);
-                        totalDamage += boostAmount;
-                    }
+                    const boostAmount = getEffectValue(effect.amount, controllers, context);
+                    totalDamage += boostAmount;
                 }
             }
         }
@@ -156,9 +134,12 @@ export class AttackDamageResolver {
         
         // Check for damage prevention from passive effects
         if (playercreature) {
+            // The attacker is always the active creature (position 0)
             const applicablePreventions = PassiveEffectMatcher.getApplicableDamagePreventions(
                 controllers,
                 playercreature.templateId,
+                currentPlayer,
+                0, // Active creature is always at position 0
             );
             if (applicablePreventions.length > 0) {
                 totalDamage = 0;
@@ -199,8 +180,27 @@ export class AttackDamageResolver {
             // Handle addition damage (like Poipole's 2-Step)
             return attack.damage.values.reduce((sum: number, value) => sum + getEffectValue(value, controllers, context), 0);
         } else if (attack.damage.type === 'conditional') {
-            // Handle conditional damage
-            const conditionMet = evaluateConditionWithContext(attack.damage.condition, controllers, context);
+            /*
+             * Handle conditional damage
+             * Get the attacking creature (from source player, active position)
+             */
+            const attackingCreature = controllers.field.getRawCardByPosition(
+                context.sourcePlayer,
+                0,
+            );
+            if (!attackingCreature) {
+                return 0;
+            }
+            
+            const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(attackingCreature.instanceId);
+            const attachedEnergyMap = { [attackingCreature.instanceId]: attachedEnergy };
+            
+            const conditionMet = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                attack.damage.condition,
+                attackingCreature,
+                controllers.cardRepository.cardRepository,
+                attachedEnergyMap,
+            );
             return conditionMet 
                 ? getEffectValue(attack.damage.trueValue, controllers, context) : 0;
         } else if (attack.damage.type === 'constant') {
@@ -215,40 +215,29 @@ export class AttackDamageResolver {
      * Check if a damage boost should apply to the current target.
      */
     private static shouldApplyDamageBoost(
-        boost: { sourcePlayer: number; amount: number; effectName: string },
+        boost: DamageBoostEffect,
         targetcreature: FieldCard | undefined,
         controllers: Controllers,
-        context: EffectContext,
     ): boolean {
         if (!targetcreature) {
             return false; 
         }
         
         /*
-         * Find the original effect that created this boost to check its conditions
-         * For now, we'll use a simple heuristic based on the effect name
+         * Use proper criteria-based evaluation instead of string matching
+         * damageSource has both targeting info and fieldCriteria
          */
-        const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
-        
-        // Check if this is an evolution-based boost
-        if (boost.effectName.includes('Evolution Boost')) {
-            // Only apply to creatures that evolve from something (have evolvesFrom property)
-            return !!targetData.previousStageName;
+        const fieldCriteria = boost.damageSource.fieldCriteria;
+        if (!fieldCriteria) {
+            // No criteria means it applies to all targets
+            return true;
         }
         
-        // Check Red Supporter - only applies to ex Pokemon
-        if (boost.effectName === 'Red') {
-            return targetData.attributes?.ex === true;
-        }
-        
-        // Check if this is an ex-based boost
-        if (boost.effectName.includes('EX Boost')) {
-            // Only apply to ex creatures
-            return targetData.attributes?.ex === true;
-        }
-        
-        // Default: apply the boost (no conditions)
-        return true;
+        return FieldTargetCriteriaFilter.matchesFieldCriteria(
+            fieldCriteria,
+            targetcreature,
+            controllers.cardRepository.cardRepository,
+        );
     }
     
     /**
@@ -280,22 +269,4 @@ export class AttackDamageResolver {
         return true;
     }
     
-    /**
-     * Evaluate attack-specific conditions (like hasDamage) on the attacking creature.
-     */
-    private static evaluateAttackCondition(
-        condition: Condition,
-        attackingCreature: FieldCard,
-        controllers: Controllers,
-        context: EffectContext,
-    ): boolean {
-        // Check hasDamage condition
-        if (condition.hasDamage === true) {
-            return attackingCreature.damageTaken > 0;
-        }
-        
-        // Check other conditions using the standard evaluator
-        const creatureData = controllers.cardRepository.getCreature(attackingCreature.templateId);
-        return evaluateConditionWithContext(condition, controllers, context);
-    }
 }

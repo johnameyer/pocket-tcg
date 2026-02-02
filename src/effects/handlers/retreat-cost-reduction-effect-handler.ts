@@ -9,10 +9,11 @@ import { getEffectValue } from '../effect-utils.js';
  */
 export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<RetreatCostReductionEffect> {
     /**
-     * Retreat cost reduction effects don't have targets to resolve.
+     * Get the resolution requirements for a retreat cost reduction effect.
+     * Retreat cost reduction effects don't resolve targets—they match criteria passively.
      * 
      * @param effect The retreat cost reduction effect
-     * @returns Empty array as retreat cost reduction effects don't have targets
+     * @returns Empty array (no resolution needed)
      */
     getResolutionRequirements(effect: RetreatCostReductionEffect): ResolutionRequirement[] {
         return [];
@@ -30,21 +31,11 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
         // Get the amount of retreat cost reduction
         const reductionAmount = getEffectValue(effect.amount, controllers, context);
         
-        // Get the active creature
-        const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-        if (!activecreature) {
-            return;
-        }
-        
-        // Register as a passive effect
+        // Register as a passive effect with criteria matching
         controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
-            {
-                type: 'retreat-cost-reduction',
-                amount: effect.amount,
-                duration: effect.duration,
-            },
+            effect,
             effect.duration,
             controllers.turnCounter.getTurnNumber(),
         );

@@ -12,10 +12,10 @@ import { AttachableEnergyType } from './controllers/energy-controller.js';
 import { AttackDamageResolver } from './effects/attack-damage-resolver.js';
 import { ActionValidator } from './effects/action-validator.js';
 import { ControllerUtils } from './utils/controller-utils.js';
-import { TargetResolver } from './effects/target-resolver.js';
+import { FieldTargetResolver } from './effects/target-resolvers/field-target-resolver.js';
 import { effectHandlers } from './effects/handlers/effect-handlers-map.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
-import { Target } from './repository/target-types.js';
+import { FieldTarget } from './repository/targets/field-target.js';
 import { getCurrentTemplateId } from './utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from './effects/pending-selection-types.js';
 import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
@@ -865,7 +865,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const { effect, originalContext } = pendingSelection;
                     
                     // Find the target that requires validation based on resolution order
-                    let targetToValidate: Target | undefined = undefined;
+                    let targetToValidate: FieldTarget | undefined = undefined;
                     
                     // Get resolution requirements to determine which target needs validation
                     const handler = effectHandlers[effect.type];
@@ -898,7 +898,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     if (targetToValidate) {
-                        const isValidTarget = TargetResolver.validateTargetSelection(
+                        const isValidTarget = FieldTargetResolver.validateTargetSelection(
                             targetToValidate,
                             message.targetPlayerId,
                             message.targetCreatureIndex,

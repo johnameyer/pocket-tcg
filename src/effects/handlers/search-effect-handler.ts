@@ -5,6 +5,8 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 import { getEffectValue } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
+import { CardTargetResolver } from '../target-resolvers/card-target-resolver.js';
+import { CardCriteriaFilter } from '../filters/card-criteria-filter.js';
 import { GameCard } from '../../controllers/card-types.js';
 
 /**
@@ -12,12 +14,17 @@ import { GameCard } from '../../controllers/card-types.js';
  */
 export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
     /**
-     * Search effects don't have targets to resolve.
+     * Search effects may require player choice if multiple cards match.
+     * For now, we don't use the target resolution system for search effects.
      * 
      * @param effect The search effect
-     * @returns Empty array as search effects don't have targets
+     * @returns Empty array - search resolves targets internally
      */
     getResolutionRequirements(effect: SearchEffect): ResolutionRequirement[] {
+        /*
+         * Search effects handle card target resolution in apply()
+         * rather than through the generic FieldTarget resolution system
+         */
         return [];
     }
     
@@ -31,19 +38,13 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: SearchEffect, context: EffectContext, cardRepository?: CardRepository): boolean {
-        // Default target is deck
-        const target = effect.target || 'deck';
+        // Extract location from source target
+        const location = 'location' in effect.source ? effect.source.location : 'deck';
         
         // For deck searches, check if deck has cards
-        if (target === 'deck') {
+        if (location === 'deck') {
             const deckSize = handlerData.deck;
-            
-            // Only block items when deck is empty, supporters can still be played
-            if (deckSize === 0 && context.type === 'trainer' && context.cardType === 'item') {
-                return false;
-            }
-            
-            return true;
+            return deckSize > 0;
         }
         
         return true;
@@ -61,67 +62,27 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Get the amount of cards to search for
         const searchAmount = getEffectValue(effect.amount, controllers, context);
         
-        // Default target is deck
-        const target = effect.target || 'deck';
+        // Resolve card target to get available cards
+        const resolution = CardTargetResolver.resolve(effect.source, controllers, context);
         
-        // Default destination is hand
-        const destination = effect.destination || 'hand';
-        
-        // Use a switch statement for better readability and extensibility
-        switch (target) {
-            case 'deck':
-                this.handleDeckSearch(controllers, effect, context, searchAmount, destination);
-                break;
-                
-            default:
-                // For unsupported targets, log a warning
-                console.warn(`[SearchEffectHandler] Unsupported search target: ${target}`);
-                controllers.players.messageAll({
-                    type: 'status',
-                    components: [ `${context.effectName} cannot search ${target}!` ],
-                });
-                break;
-        }
-    }
-    
-    /**
-     * Handle searching the deck for cards.
-     * 
-     * @param controllers Game controllers
-     * @param effect The search effect
-     * @param context Effect context
-     * @param searchAmount The amount of cards to search for
-     * @param destination The destination for found cards
-     */
-    private handleDeckSearch(
-        controllers: Controllers,
-        effect: SearchEffect,
-        context: EffectContext,
-        searchAmount: number,
-        destination: string,
-    ): void {
-        // Get the player's deck
-        const deck = controllers.deck.getDeck(context.sourcePlayer);
-        
-        // If the deck is empty, there's nothing to search
-        if (deck.length === 0) {
+        if (resolution.type === 'no-valid-targets') {
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} has no cards to search for!` ],
+                components: [ `${context.effectName} found no cards to search!` ],
             });
             return;
         }
         
-        // Filter the deck based on the search criteria
-        let filteredDeck = [ ...deck ];
+        // Get available cards (may need filtering or selection)
+        let availableCards = resolution.type === 'resolved' ? resolution.cards : resolution.availableCards;
         
-        // Use a generic approach to handle search criteria
-        if (effect.criteria || effect.cardType) {
-            filteredDeck = this.filterDeckBySearchCriteria(controllers, filteredDeck, effect);
+        // Filter by criteria if needed
+        if (effect.source.type !== 'fixed') {
+            const cardRepository = controllers.cardRepository.cardRepository;
+            availableCards = CardCriteriaFilter.filter(availableCards, effect.source.criteria, cardRepository);
         }
-            
-        // If there are no matching cards, inform the player
-        if (filteredDeck.length === 0) {
+        
+        if (availableCards.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} found no matching cards!` ],
@@ -130,16 +91,16 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         }
         
         // Limit the number of cards to search for
-        const actualSearchAmount = Math.min(searchAmount, filteredDeck.length);
+        const actualSearchAmount = Math.min(searchAmount, availableCards.length);
         
         /*
          * For now, just take the first matching cards
          * In a real implementation, this would involve player choice
          */
-        const cardsToMove = filteredDeck.slice(0, actualSearchAmount);
+        const cardsToAdd = availableCards.slice(0, actualSearchAmount);
         
-        // Move the cards to the destination
-        this.moveCardsToDestination(controllers, deck, cardsToMove, destination, context);
+        // Move cards to hand
+        this.moveCardsToHand(controllers, cardsToAdd, effect, context);
         
         // Send a message about the search
         controllers.players.messageAll({
@@ -147,142 +108,59 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
             components: [ `${context.effectName} found ${actualSearchAmount} card${actualSearchAmount !== 1 ? 's' : ''}!` ],
         });
         
-        // Shuffle the deck after searching
-        controllers.deck.shuffle(context.sourcePlayer);
-        
-        // Send a message about the shuffle
-        controllers.players.messageAll({
-            type: 'status',
-            components: [ `${context.effectName} shuffles the deck!` ],
-        });
-    }
-    
-    /**
-     * Filter the deck based on search criteria.
-     * 
-     * @param controllers Game controllers
-     * @param deck The deck to filter
-     * @param effect The search effect with criteria
-     * @returns Filtered deck
-     */
-    private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], effect: SearchEffect): GameCard[] {
-        let filteredDeck = [ ...deck ];
-        
-        // Handle criteria field
-        if (effect.criteria) {
-            switch (effect.criteria) {
-                case 'basic-creature':
-                    filteredDeck = filteredDeck.filter(card => {
-                        if (card.type === 'creature') {
-                            try {
-                                const creatureData = controllers.cardRepository.getCreature(card.templateId);
-                                return !creatureData.previousStageName;
-                            } catch (error) {
-                                return false;
-                            }
-                        }
-                        return false;
-                    });
-                    break;
-                    
-                default:
-                    console.warn(`[SearchEffectHandler] Unknown search criteria: ${effect.criteria}`);
-                    break;
-            }
-        } else if (effect.cardType) {
-            // Handle cardType field
-            switch (effect.cardType) {
-                case 'basic-creature':
-                    filteredDeck = filteredDeck.filter(card => {
-                        if (card.type === 'creature') {
-                            try {
-                                const creatureData = controllers.cardRepository.getCreature(card.templateId);
-                                return !creatureData.previousStageName;
-                            } catch (error) {
-                                return false;
-                            }
-                        }
-                        return false;
-                    });
-                    break;
-                    
-                case 'trainer':
-                    // Trainer cards include both items and supporters
-                    filteredDeck = filteredDeck.filter(card => card.type === 'item' || card.type === 'supporter');
-                    break;
-                    
-                case 'fieldCard':
-                    // Field cards are creature/creatures that can be played on the field
-                    filteredDeck = filteredDeck.filter(card => card.type === 'creature');
-                    break;
-                    
-                default: {
-                    // Map search cardType to GameCard type
-                    let gameCardType: 'creature' | 'supporter' | 'item' | 'tool' | undefined;
-                    switch (effect.cardType) {
-                        case 'basic-creature':
-                        case 'fieldCard':
-                            gameCardType = 'creature';
-                            break;
-                        case 'trainer':
-                            // Trainer could be supporter or item, so we need to handle both
-                            filteredDeck = filteredDeck.filter(card => card.type === 'supporter' || card.type === 'item',
-                            );
-                            return filteredDeck;
-                        default:
-                            return filteredDeck; // No filtering if cardType is unknown
-                    }
-                    
-                    if (gameCardType) {
-                        filteredDeck = filteredDeck.filter(card => card.type === gameCardType);
-                    }
-                    break;
-                }
-            }
+        // Shuffle the source location if it was the deck
+        const location = 'location' in effect.source ? effect.source.location : 'deck';
+        if (location === 'deck') {
+            const player = 'player' in effect.source ? (effect.source.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer) : context.sourcePlayer;
+            controllers.deck.shuffle(player);
+            
+            controllers.players.messageAll({
+                type: 'status',
+                components: [ `${context.effectName} shuffles the deck!` ],
+            });
         }
-        
-        return filteredDeck;
     }
     
     /**
-     * Move cards from the deck to the destination.
+     * Move cards to hand after search.
      * 
      * @param controllers Game controllers
-     * @param deck The player's deck
-     * @param cardsToMove The cards to move
-     * @param destination The destination for the cards
+     * @param cardsToAdd The cards to add to hand
+     * @param effect The search effect
      * @param context Effect context
      */
-    private moveCardsToDestination(
-        controllers: Controllers,
-        deck: GameCard[],
-        cardsToMove: GameCard[],
-        destination: string,
-        context: EffectContext,
-    ): void {
-        // Remove the cards from the deck
-        for (const card of cardsToMove) {
-            const cardIndex = deck.findIndex(c => c.instanceId === card.instanceId);
-            if (cardIndex !== -1) {
-                deck.splice(cardIndex, 1);
-            }
-        }
+    private moveCardsToHand(controllers: Controllers, cardsToAdd: GameCard[], effect: SearchEffect, context: EffectContext): void {
+        // Determine the source player
+        const sourcePlayer = 'player' in effect.source 
+            ? (effect.source.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer)
+            : context.sourcePlayer;
         
-        // Add the cards to the destination
-        switch (destination) {
-            case 'hand':
-                for (const card of cardsToMove) {
-                    controllers.hand.getHand(context.sourcePlayer).push(card);
-                }
-                break;
-                
-            default:
-                console.warn(`[SearchEffectHandler] Unsupported destination: ${destination}`);
-                // If destination is not supported, put the cards back in the deck
-                for (const card of cardsToMove) {
-                    deck.push(card);
-                }
-                break;
+        for (const card of cardsToAdd) {
+            // Get the source collection based on effect.source.location
+            const location = 'location' in effect.source ? effect.source.location : 'deck';
+            let sourceCollection: GameCard[] = [];
+            
+            switch (location) {
+                case 'hand':
+                    sourceCollection = controllers.hand.getHand(sourcePlayer);
+                    break;
+                case 'deck':
+                    sourceCollection = controllers.deck.getDeck(sourcePlayer);
+                    break;
+                case 'discard':
+                    sourceCollection = controllers.discard.getDiscardPile(sourcePlayer);
+                    break;
+                default:
+                    continue;
+            }
+            
+            // Find and remove the card by instanceId
+            const cardIndex = sourceCollection.findIndex(c => c.instanceId === card.instanceId);
+            if (cardIndex >= 0) {
+                const removedCard = sourceCollection.splice(cardIndex, 1)[0];
+                // Add to player's hand (always goes to the effect source player's hand)
+                controllers.hand.getHand(context.sourcePlayer).push(removedCard);
+            }
         }
     }
 }

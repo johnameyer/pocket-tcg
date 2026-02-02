@@ -30,6 +30,7 @@ describe('Creature Abilities', () => {
                 effects: [{
                     type: 'damage-reduction',
                     amount: { type: 'constant', value: 10 },
+                    damageSource: { player: 'opponent' },
                     target: { type: 'fixed', player: 'self', position: 'active' },
                     duration: { type: 'while-in-play', instanceId: '' },
                 }],
@@ -49,6 +50,7 @@ describe('Creature Abilities', () => {
                 effects: [{
                     type: 'hp-bonus',
                     amount: { type: 'constant', value: 20 },
+                    target: { player: 'self', position: 'active' },
                     duration: { type: 'while-in-play', instanceId: '' },
                 }],
             },

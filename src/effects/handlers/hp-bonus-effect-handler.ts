@@ -10,18 +10,18 @@ import { getEffectValue } from '../effect-utils.js';
 export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
     /**
      * Get the resolution requirements for an HP bonus effect.
-     * HP bonus effects don't require any targets as they apply to the creature the tool/ability is attached to.
+     * HP bonus effects don't resolve targets—they match criteria passively.
      * 
      * @param effect The HP bonus effect to get resolution requirements for
-     * @returns Empty array as HP bonus effects don't have targets
+     * @returns Empty array (no resolution needed)
      */
     getResolutionRequirements(effect: HpBonusEffect): ResolutionRequirement[] {
-        return []; // HP bonus effects don't have targets, they apply to the creature the tool/ability is attached to
+        return [];
     }
     
     /**
-     * Apply a fully resolved HP bonus effect.
-     * This registers a passive effect that increases the maximum HP of the creature.
+     * Apply an HP bonus effect.
+     * This registers a passive effect that increases the maximum HP of creatures matching the target criteria.
      * 
      * @param controllers Game controllers
      * @param effect The HP bonus effect to apply
@@ -31,33 +31,20 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
         // Get the amount of HP to add
         const amount = getEffectValue(effect.amount, controllers, context);
         
-        // Register as a passive effect
+        // Register as a passive effect with criteria matching
         controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
-            {
-                type: 'hp-bonus',
-                amount: effect.amount,
-                duration: effect.duration,
-            },
+            effect,
             effect.duration,
             controllers.turnCounter.getTurnNumber(),
         );
         
         // Show a message about the HP bonus being applied
-        if (context.type === 'trainer') {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} increases creature's HP by ${amount}!` ],
-            });
-        } else if ((context.type === 'ability' || context.type === 'trigger') && context.creatureInstanceId) {
-            const creatureName = controllers.cardRepository.getCreature(context.creatureInstanceId.split('-')[0]).name;
-            
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} increases ${creatureName}'s HP by ${amount}!` ],
-            });
-        }
+        controllers.players.messageAll({
+            type: 'status',
+            components: [ `${context.effectName} increases creature's HP by ${amount}!` ],
+        });
     }
 }
 

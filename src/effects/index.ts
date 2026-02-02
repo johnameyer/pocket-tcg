@@ -26,4 +26,4 @@ export {
 
 // Resolver exports
 export { AttackDamageResolver } from './attack-damage-resolver.js';
-export { TargetResolver } from './target-resolver.js';
+export { FieldTargetResolver as TargetResolver } from './target-resolvers/field-target-resolver.js';

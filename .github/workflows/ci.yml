@@ -23,7 +23,7 @@ jobs:
           cache: pnpm
         
       - name: Lint
-        run: pnpm lint
+        run: pnpm lint --no-fix
 
       - name: Build
         run: pnpm prepack

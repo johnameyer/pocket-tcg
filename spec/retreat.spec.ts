@@ -304,6 +304,7 @@ describe('Creature Retreat System', () => {
                         effects: [{
                             type: 'retreat-cost-reduction',
                             amount: { type: 'constant', value: 1 },
+                            target: { type: 'fixed', player: 'self', position: 'active' },
                             duration: { type: 'while-in-play', instanceId: 'basic-creature-0' },
                         }],
                     }],
