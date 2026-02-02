@@ -1,5 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { SearchEffect } from '../../repository/effect-types.js';
+import { CardCriteria } from '../../repository/target-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue } from '../effect-utils.js';
@@ -142,7 +143,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * @param criteria The card criteria to filter by
      * @returns Filtered deck
      */
-    private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], criteria: import('../../repository/target-types.js').CardCriteria): GameCard[] {
+    private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], criteria: CardCriteria): GameCard[] {
         let filteredDeck = [ ...deck ];
         
         // Filter by card type using discriminated union
