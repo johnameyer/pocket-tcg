@@ -171,6 +171,20 @@ export class DefaultBotHandler extends GameHandler {
             return;
         }
         
+        // Type guard: Only handle field Target types (not EnergyTarget)
+        const isFieldTarget = (t: any): t is import('../repository/target-types.js').Target => {
+            if (!t || typeof t !== 'object') {
+                return false;
+            }
+            const type = t.type;
+            return type === 'fixed' || type === 'single-choice' || type === 'multi-choice' || type === 'all-matching' || type === 'resolved';
+        };
+        
+        if (!isFieldTarget(target)) {
+            // Not a field target, skip
+            return;
+        }
+        
         /*
          * Convert handlerData to Controllers for TargetResolver
          * HandlerData is structurally compatible with Controllers (it's a view of Controllers)

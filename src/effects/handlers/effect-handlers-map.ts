@@ -18,6 +18,12 @@ import { coinFlipManipulationEffectHandler } from './coin-flip-manipulation-effe
 import { damageBoostEffectHandler } from './damage-boost-effect-handler.js';
 import { hpBonusEffectHandler } from './hp-bonus-effect-handler.js';
 import { retreatCostReductionEffectHandler } from './retreat-cost-reduction-effect-handler.js';
+import { toolDiscardEffectHandler } from './tool-discard-effect-handler.js';
+import { pullEvolutionEffectHandler } from './pull-evolution-effect-handler.js';
+import { swapCardsEffectHandler } from './swap-cards-effect-handler.js';
+import { statusPreventionEffectHandler } from './status-prevention-effect-handler.js';
+import { statusRecoveryEffectHandler } from './status-recovery-effect-handler.js';
+import { moveCardsEffectHandler } from './move-cards-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -39,4 +45,10 @@ export const effectHandlers: EffectHandlerMap = {
     'damage-boost': damageBoostEffectHandler,
     'hp-bonus': hpBonusEffectHandler,
     'retreat-cost-reduction': retreatCostReductionEffectHandler,
+    'tool-discard': toolDiscardEffectHandler,
+    'pull-evolution': pullEvolutionEffectHandler,
+    'swap-cards': swapCardsEffectHandler,
+    'status-prevention': statusPreventionEffectHandler,
+    'status-recovery': statusRecoveryEffectHandler,
+    'move-cards': moveCardsEffectHandler,
 };

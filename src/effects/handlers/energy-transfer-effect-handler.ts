@@ -25,10 +25,30 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
      * @returns Array of resolution requirements
      */
     getResolutionRequirements(effect: EnergyTransferEffect): ResolutionRequirement[] {
-        return [
-            { targetProperty: 'source', target: effect.source, required: true },
-            { targetProperty: 'target', target: effect.target, required: true },
-        ];
+        const requirements: ResolutionRequirement[] = [];
+        
+        // Only add resolution requirements for Target types (not EnergyTarget)
+        if (this.isFieldTarget(effect.source)) {
+            requirements.push({ targetProperty: 'source', target: effect.source, required: true });
+        }
+        if (this.isFieldTarget(effect.target)) {
+            requirements.push({ targetProperty: 'target', target: effect.target, required: true });
+        }
+        
+        return requirements;
+    }
+    
+    /**
+     * Type guard to check if a target is a field Target (not EnergyTarget).
+     */
+    private isFieldTarget(target: any): target is import('../../repository/target-types.js').Target {
+        // EnergyTarget types have a 'type' property with values 'field' or 'discard'
+        // Field Target types have 'type' property with values like 'fixed', 'single-choice', etc.
+        if (!target || typeof target !== 'object') {
+            return false;
+        }
+        const type = target.type;
+        return type === 'fixed' || type === 'single-choice' || type === 'multi-choice' || type === 'all-matching' || type === 'resolved';
     }
     
     /**
@@ -65,9 +85,13 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
             return false;
         };
         
-        // Use TargetResolver with validation function
-        const sourceAvailable = TargetResolver.isTargetAvailable(effect.source, handlerData, context, cardRepository, hasRequiredEnergy);
-        const targetAvailable = TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        // Only validate Target types with TargetResolver
+        const sourceAvailable = this.isFieldTarget(effect.source) 
+            ? TargetResolver.isTargetAvailable(effect.source, handlerData, context, cardRepository, hasRequiredEnergy)
+            : true; // EnergyTarget validation would go here
+        const targetAvailable = this.isFieldTarget(effect.target)
+            ? TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)
+            : true; // EnergyTarget validation would go here
         
         return sourceAvailable && targetAvailable;
     }

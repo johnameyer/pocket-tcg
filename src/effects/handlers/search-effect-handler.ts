@@ -31,8 +31,8 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: SearchEffect, context: EffectContext, cardRepository?: CardRepository): boolean {
-        // Default target is deck
-        const target = effect.target || 'deck';
+        // Default target is deck (support legacy 'target' field via legacyTarget)
+        const target = effect.legacyTarget || 'deck';
         
         // For deck searches, check if deck has cards
         if (target === 'deck') {
@@ -61,8 +61,8 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         // Get the amount of cards to search for
         const searchAmount = getEffectValue(effect.amount, controllers, context);
         
-        // Default target is deck
-        const target = effect.target || 'deck';
+        // Default target is deck (support legacy 'target' field)
+        const target = effect.legacyTarget || 'deck';
         
         // Default destination is hand
         const destination = effect.destination || 'hand';
@@ -116,7 +116,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         let filteredDeck = [ ...deck ];
         
         // Use a generic approach to handle search criteria
-        if (effect.criteria || effect.cardType) {
+        if (effect.legacyCriteria || effect.legacyCardType) {
             filteredDeck = this.filterDeckBySearchCriteria(controllers, filteredDeck, effect);
         }
             
@@ -168,9 +168,9 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
     private filterDeckBySearchCriteria(controllers: Controllers, deck: GameCard[], effect: SearchEffect): GameCard[] {
         let filteredDeck = [ ...deck ];
         
-        // Handle criteria field
-        if (effect.criteria) {
-            switch (effect.criteria) {
+        // Handle legacy criteria field
+        if (effect.legacyCriteria) {
+            switch (effect.legacyCriteria) {
                 case 'basic-creature':
                     filteredDeck = filteredDeck.filter(card => {
                         if (card.type === 'creature') {
@@ -186,12 +186,12 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                     break;
                     
                 default:
-                    console.warn(`[SearchEffectHandler] Unknown search criteria: ${effect.criteria}`);
+                    console.warn(`[SearchEffectHandler] Unknown search criteria: ${effect.legacyCriteria}`);
                     break;
             }
-        } else if (effect.cardType) {
-            // Handle cardType field
-            switch (effect.cardType) {
+        } else if (effect.legacyCardType) {
+            // Handle legacy cardType field
+            switch (effect.legacyCardType) {
                 case 'basic-creature':
                     filteredDeck = filteredDeck.filter(card => {
                         if (card.type === 'creature') {
@@ -219,7 +219,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
                 default: {
                     // Map search cardType to GameCard type
                     let gameCardType: 'creature' | 'supporter' | 'item' | 'tool' | undefined;
-                    switch (effect.cardType) {
+                    switch (effect.legacyCardType) {
                         case 'basic-creature':
                         case 'fieldCard':
                             gameCardType = 'creature';
