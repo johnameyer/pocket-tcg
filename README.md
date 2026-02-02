@@ -63,6 +63,18 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Coin flip mechanics for attacks/effects
 - ✅ Special condition checkup phase
 
+### Effect System
+- ✅ Componentized target types (field, card, energy targets)
+- ✅ Type-safe effect definitions with union types
+- ✅ Tool discard effects (remove tools from targeted cards)
+- ✅ Pull evolution effects (search deck and immediately evolve)
+- ✅ Swap cards effects (discard and draw with balanced option)
+- ✅ Status recovery effects (remove special conditions)
+- ✅ Status prevention effects (protect from special conditions)
+- ✅ Card movement effects (move cards to deck/hand)
+- ✅ Energy transfer effects (including from discard pile)
+- ✅ Search effects with flexible criteria (card type, stage, HP, etc.)
+
 ## Running
 
 After building, start the game:
@@ -135,13 +147,88 @@ const cardRepository = new CardRepository(
 // (see game-factory.ts for more details)
 ```
 
+### Advanced Effect Examples
+
+The system supports complex, componentized effects with type-safe target specifications:
+
+```typescript
+// Tool discard effect - removes tools from opponent's active card
+const toolDiscardEffect: ToolDiscardEffect = {
+  type: 'tool-discard',
+  target: {
+    type: 'fixed',
+    player: 'opponent',
+    position: 'active'
+  }
+};
+
+// Pull evolution effect - searches deck for evolution and immediately evolves
+const pullEvolutionEffect: PullEvolutionEffect = {
+  type: 'pull-evolution',
+  target: {
+    type: 'fixed',
+    player: 'self',
+    position: 'active'
+  },
+  evolutionCriteria: {
+    stage: 2, // Only Stage 2 evolutions
+    hpGreaterThan: 100 // HP > 100
+  }
+};
+
+// Swap cards effect - discard 2, draw 2
+const swapCardsEffect: SwapCardsEffect = {
+  type: 'swap-cards',
+  discardTarget: {
+    type: 'multi-choice',
+    chooser: 'self',
+    location: 'hand',
+    count: 2
+  },
+  drawTarget: {
+    type: 'fixed',
+    player: 'self',
+    location: 'deck'
+  },
+  balanced: true // Draw same number as discarded
+};
+
+// Status recovery effect - removes all special conditions from your active card
+const statusRecoveryEffect: StatusRecoveryEffect = {
+  type: 'status-recovery',
+  target: {
+    type: 'fixed',
+    player: 'self',
+    position: 'active'
+  }
+  // conditions omitted = removes all conditions
+};
+
+// Search effect with componentized criteria
+const searchEffect: SearchEffect = {
+  type: 'search',
+  amount: { type: 'constant', value: 2 },
+  criteria: {
+    cardType: 'basic-creature',
+    energyType: 'fire',
+    hpLessThan: 80
+  },
+  destination: 'hand'
+};
+```
+
 ### Exported Types
 
 The package exports all necessary types for card definitions:
 
 - **Card Types**: `CreatureData`, `SupporterData`, `ItemData`, `ToolData`
-- **Effect Types**: `Effect`, `HpEffect`, `StatusEffect`, `DrawEffect`, `EnergyEffect`, and more
-- **Target Types**: `Target`, `FixedTarget`, `SingleChoiceTarget`, `MultiChoiceTarget`, `AllMatchingTarget`
+- **Effect Types**: `Effect`, `HpEffect`, `StatusEffect`, `DrawEffect`, `EnergyEffect`, `ToolDiscardEffect`, `PullEvolutionEffect`, `SwapCardsEffect`, `StatusPreventionEffect`, `StatusRecoveryEffect`, `MoveCardsEffect`, and more
+- **Target Types**: 
+  - Field targets: `Target`, `FixedTarget`, `SingleChoiceTarget`, `MultiChoiceTarget`, `AllMatchingTarget`
+  - Card targets: `CardTarget`, `FixedCardTarget`, `SingleChoiceCardTarget`, `MultiChoiceCardTarget`
+  - Energy targets: `EnergyTarget`, `FieldEnergyTarget`, `DiscardEnergyTarget`
+  - Player targets: `PlayerTarget` (union type: 'self' | 'opponent' | 'both')
+- **Criteria Types**: `TargetCriteria`, `CardCriteria`, `EnergyCriteria` for filtering targets
 - **Condition Types**: `Condition` for conditional effects
 - **Energy Types**: `AttachableEnergyType`, `EnergyRequirementType`
 - **Effect Values**: `EffectValue`, `ConstantValue`, `ResolvedValue`, `ConditionalValue`, and more
