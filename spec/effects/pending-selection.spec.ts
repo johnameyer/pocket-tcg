@@ -28,8 +28,8 @@ describe('Pending Target Selection', () => {
             const { state, getExecutedCount } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('dual-target-supporter', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0), // First: source (active)
-                    new SelectTargetResponseMessage(0, 1), // Second: target (bench)
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]), // First: source (active)
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]), // Second: target (bench)
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -83,7 +83,7 @@ describe('Pending Target Selection', () => {
             });
 
             // Should have pending target effect
-            expect(pendingState.turnState.pendingTargetSelection).to.not.be.null;
+            expect(pendingState.turnState.pendingSelection).to.not.be.null;
             expect(pendingState.field.creatures[0][0].damageTaken).to.equal(40, 'Should not heal yet');
             expect(pendingState.field.creatures[0][1].damageTaken).to.equal(20, 'Should not heal yet');
         });
@@ -111,7 +111,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('resolve-heal', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -131,7 +131,7 @@ describe('Pending Target Selection', () => {
             });
 
             // Should resolve and heal selected target
-            expect(state.turnState.pendingTargetSelection).to.be.undefined;
+            expect(state.turnState.pendingSelection).to.be.undefined;
             expect(state.field.creatures[0][0].damageTaken).to.equal(40, 'Should not heal active');
             expect(state.field.creatures[0][1].damageTaken).to.equal(5, 'Should heal selected bench');
         });
@@ -161,7 +161,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('opponent-select', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -218,7 +218,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('multi-select', 'supporter'),
-                    new SelectTargetResponseMessage(0, 0),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -259,7 +259,7 @@ describe('Pending Target Selection', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('invalid-target', 'supporter'),
-                    new SelectTargetResponseMessage(0, 5), // Invalid index
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 5 }]), // Invalid index
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
@@ -351,10 +351,105 @@ describe('Pending Target Selection', () => {
             });
 
             // Should have effect name in pending selection
-            expect(state.turnState.pendingTargetSelection).to.not.be.null;
-            if (state.turnState.pendingTargetSelection) {
-                expect((state.turnState.pendingTargetSelection as any).originalContext.effectName).to.equal('Named Effect');
+            expect(state.turnState.pendingSelection).to.not.be.null;
+            if (state.turnState.pendingSelection) {
+                expect((state.turnState.pendingSelection as any).originalContext.effectName).to.equal('Named Effect');
             }
+        });
+    });
+
+    describe('Multi-Target Field Selection', () => {
+        it('should handle selecting multiple targets with array format', () => {
+            const testRepository = new MockCardRepository({
+                supporters: new Map<string, SupporterData>([
+                    [ 'multi-heal-supporter', {
+                        templateId: 'multi-heal-supporter',
+                        name: 'Multi Heal Supporter',
+                        effects: [{
+                            type: 'hp',
+                            amount: { type: 'constant', value: 30 },
+                            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
+            });
+
+            const { state, getExecutedCount } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('multi-heal-supporter', 'supporter'),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 0 }]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'multi-heal-supporter', type: 'supporter' }]),
+                    StateBuilder.withDamage('basic-creature-0', 50),
+                    StateBuilder.withDamage('high-hp-creature-0-0', 40),
+                ),
+                maxSteps: 10,
+            });
+
+            expect(getExecutedCount()).to.equal(2, 'Should execute supporter + target selection');
+            
+            const activeCreature = state.field.creatures[0][0];
+            expect(activeCreature.damageTaken).to.equal(20, 'Active creature should be healed');
+        });
+
+        it('should support backward-compatible single target selection', () => {
+            const testRepository = new MockCardRepository({
+                supporters: new Map<string, SupporterData>([
+                    [ 'heal-supporter', {
+                        templateId: 'heal-supporter',
+                        name: 'Heal Supporter',
+                        effects: [{
+                            type: 'hp',
+                            amount: { type: 'constant', value: 50 },
+                            target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                            operation: 'heal',
+                        }],
+                    }],
+                ]),
+            });
+
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('heal-supporter', 'supporter'),
+                    // Use array format for backward compatibility test
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'heal-supporter', type: 'supporter' }]),
+                    StateBuilder.withDamage('high-hp-creature-0-0', 60),
+                ),
+                maxSteps: 10,
+            });
+
+            const benchCreature = state.field.creatures[0][1];
+            expect(benchCreature.damageTaken).to.equal(10, 'Bench creature should be healed by 50');
+        });
+    });
+
+    describe('Selection Message Validation', () => {
+        it('should validate SelectTargetResponseMessage with multiple targets', () => {
+            const message = new SelectTargetResponseMessage([
+                { playerId: 0, fieldIndex: 0 },
+                { playerId: 0, fieldIndex: 1 },
+            ]);
+            
+            expect(message.targets).to.have.lengthOf(2);
+            expect(message.targetPlayerId).to.equal(0, 'Should have backward-compatible getter');
+            expect(message.targetCreatureIndex).to.equal(0, 'Should have backward-compatible getter');
+        });
+
+        it('should handle empty targets array in SelectTargetResponseMessage', () => {
+            const message = new SelectTargetResponseMessage([]);
+            
+            expect(message.targets).to.have.lengthOf(0);
+            expect(message.targetPlayerId).to.equal(-1);
+            expect(message.targetCreatureIndex).to.equal(-1);
         });
     });
 });

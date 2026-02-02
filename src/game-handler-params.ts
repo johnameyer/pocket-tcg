@@ -1,5 +1,9 @@
 export type GameHandlerParams = {
-    action: [],
-    selectActiveCard: [],
-    setup: []
+    action: [];
+    selectActiveCard: [];
+    setup: [];
+    selectTarget: [];
+    selectEnergy: [];
+    selectCard: [];
+    selectChoice: [];
 };

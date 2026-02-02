@@ -124,7 +124,7 @@ describe('Effect Targeting', () => {
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('choice-heal-supporter', 'supporter'),
-                    new SelectTargetResponseMessage(0, 1), // Select bench position 1
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]), // Select bench position 1
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(

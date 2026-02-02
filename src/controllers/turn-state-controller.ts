@@ -1,5 +1,5 @@
 import { GlobalController, GenericControllerProvider } from '@cards-ts/core';
-import { PendingTargetSelection } from '../effects/pending-target-selection.js';
+import { PendingSelection } from '../effects/pending-selection-types.js';
 
 export type TurnStateData = {
     shouldEndTurn: boolean;
@@ -7,7 +7,7 @@ export type TurnStateData = {
     retreatedThisTurn: boolean;
     evolvedInstancesThisTurn: string[]; // Track evolved creatures by instance ID
     usedAbilitiesThisTurn: string[]; // Track ability usage by "instanceId-abilityName"
-    pendingTargetSelection?: PendingTargetSelection;
+    pendingSelection?: PendingSelection;
 };
 
 type TurnStateDependencies = {};
@@ -24,7 +24,7 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
             retreatedThisTurn: false,
             evolvedInstancesThisTurn: [],
             usedAbilitiesThisTurn: [],
-            pendingTargetSelection: undefined,
+            pendingSelection: undefined,
         };
     }
     
@@ -95,15 +95,15 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         return this.state.retreatedThisTurn;
     }
 
-    public setPendingTargetSelection(selection: PendingTargetSelection | undefined): void {
-        this.state.pendingTargetSelection = selection;
+    public setPendingSelection(selection: PendingSelection | undefined): void {
+        this.state.pendingSelection = selection;
     }
     
-    public getPendingTargetSelection(): PendingTargetSelection | undefined {
-        return this.state.pendingTargetSelection;
+    public getPendingSelection(): PendingSelection | undefined {
+        return this.state.pendingSelection;
     }
     
-    public clearPendingTargetSelection(): void {
-        this.state.pendingTargetSelection = undefined;
+    public clearPendingSelection(): void {
+        this.state.pendingSelection = undefined;
     }
 }

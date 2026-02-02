@@ -3,6 +3,7 @@ import { Controllers } from './controllers/controllers.js';
 import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messages/status/index.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { CreatureData } from './repository/card-types.js';
+import { isPendingEnergySelection, isPendingCardSelection } from './effects/pending-selection-types.js';
 
 // Helper function to calculate points awarded for knocking out a creature
 const calculateKnockoutPoints = (creatureData: CreatureData): number => {
@@ -258,6 +259,115 @@ const drawCardAndShowSummary = {
     },
 };
 
+// Check if there's a pending selection that needs to be resolved
+const hasPendingSelection = (controllers: Controllers) => {
+    return controllers.turnState.getPendingSelection() !== undefined;
+};
+
+// Get the player who needs to make a selection (depends on effect context)
+const getPlayerNeedingPendingSelection = (controllers: Controllers) => {
+    const pendingSelection = controllers.turnState.getPendingSelection();
+    if (!pendingSelection) {
+        return -1;
+    }
+    
+    // Determine which player should make the selection based on the effect context
+    const context = pendingSelection.originalContext;
+    
+    if (pendingSelection.selectionType === 'field') {
+        // For field selections, check if opponent should choose
+        const effect = pendingSelection.effect;
+        if ('target' in effect && effect.target && typeof effect.target === 'object' && 'chooser' in effect.target) {
+            const chooser = effect.target.chooser;
+            if (chooser === 'opponent') {
+                // Opponent of source player chooses
+                return (context.sourcePlayer + 1) % controllers.players.count;
+            }
+        }
+    } else if (pendingSelection.selectionType === 'energy') {
+        // For energy selection, use the specified player
+        if (isPendingEnergySelection(pendingSelection)) {
+            return pendingSelection.playerId;
+        }
+    } else if (pendingSelection.selectionType === 'card') {
+        // For card selection, use the specified player
+        if (isPendingCardSelection(pendingSelection)) {
+            return pendingSelection.playerId;
+        }
+    } else if (pendingSelection.selectionType === 'choice') {
+        // For choice selection, default to source player
+        return context.sourcePlayer;
+    }
+    
+    // Default to source player
+    return context.sourcePlayer;
+};
+
+// Handle pending selections in a loop
+const handlePendingSelections = loop<Controllers>({
+    id: 'pendingSelectionLoop',
+    breakingIf: (controllers: Controllers) => !hasPendingSelection(controllers),
+    run: sequence<Controllers>([
+        conditionalState({
+            id: 'handleFieldSelection',
+            condition: (controllers: Controllers) => {
+                const pending = controllers.turnState.getPendingSelection();
+                return pending?.selectionType === 'field';
+            },
+            truthy: handleSingle({
+                handler: 'selectTarget',
+                position: getPlayerNeedingPendingSelection,
+            }),
+        }),
+        conditionalState({
+            id: 'handleFieldSelection',
+            condition: (controllers: Controllers) => {
+                const pending = controllers.turnState.getPendingSelection();
+                return pending?.selectionType === 'field';
+            },
+            truthy: handleSingle({
+                handler: 'selectTarget',
+                position: getPlayerNeedingPendingSelection,
+            }),
+        }),
+        conditionalState({
+            id: 'handleEnergySelection',
+            condition: (controllers: Controllers) => {
+                const pending = controllers.turnState.getPendingSelection();
+                return pending?.selectionType === 'energy';
+            },
+            truthy: handleSingle({
+                handler: 'selectEnergy',
+                position: getPlayerNeedingPendingSelection,
+            }),
+        }),
+        conditionalState({
+            id: 'handleCardSelection',
+            condition: (controllers: Controllers) => {
+                const pending = controllers.turnState.getPendingSelection();
+                return pending?.selectionType === 'card';
+            },
+            truthy: handleSingle({
+                handler: 'selectCard',
+                position: getPlayerNeedingPendingSelection,
+            }),
+        }),
+        conditionalState({
+            id: 'handleChoiceSelection',
+            condition: (controllers: Controllers) => {
+                const pending = controllers.turnState.getPendingSelection();
+                return pending?.selectionType === 'choice';
+            },
+            truthy: handleSingle({
+                handler: 'selectChoice',
+                position: getPlayerNeedingPendingSelection,
+            }),
+        }),
+    ]),
+    // TODO Condition is not re-evaluated for some reason without afterEach...
+    afterEach: () => {},
+});
+
 // Handle player actions
 const handlePlayerActions = loop<Controllers>({
     id: 'actionLoop',
@@ -268,11 +378,12 @@ const handlePlayerActions = loop<Controllers>({
             handler: 'action',
             position: (controllers: Controllers) => controllers.turn.get(),
         }),
-        {
-            // TODO why is this needed?
-            name: 'noop',
-            run: () => {},
-        }, 
+        // Handle any pending selections after the action
+        conditionalState({
+            id: 'checkPendingSelections',
+            condition: hasPendingSelection,
+            truthy: handlePendingSelections,
+        }),
         // Check for knockouts after each action
         conditionalState({
             id: 'checkKnockouts',

@@ -13,7 +13,9 @@ export function createTestPlayers(actionHandler: (handlerData: any, responses: a
         handleSelectActivecreature: actionHandler,
         handleSelectActiveCard: actionHandler,
         handleSelectTarget: actionHandler,
-        handleSelectMultiTarget: actionHandler,
+        handleSelectEnergy: actionHandler,
+        handleSelectCard: actionHandler,
+        handleSelectChoice: actionHandler,
         handleSetup: actionHandler,
         handleMessage: messageHandler || (() => {}),
     });
@@ -32,7 +34,9 @@ export function createTestPlayersWithDifferentHandlers(
         handleSelectActivecreature: handler,
         handleSelectActiveCard: handler,
         handleSelectTarget: handler,
-        handleSelectMultiTarget: handler,
+        handleSelectEnergy: handler,
+        handleSelectCard: handler,
+        handleSelectChoice: handler,
         handleSetup: handler,
         handleMessage: messageHandler || (() => {}),
     });
