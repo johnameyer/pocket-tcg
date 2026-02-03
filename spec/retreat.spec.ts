@@ -292,4 +292,44 @@ describe('Creature Retreat System', () => {
             expect(discardedEnergy.fire).to.equal(3, 'Should accumulate discarded fire energy from both events');
         });
     });
+
+    describe('Passive effects cleared on retreat', () => {
+        it('should clear retreat cost reduction effects when creature retreats', () => {
+            // Create a supporter that reduces retreat cost
+            const testRepository = new MockCardRepository({
+                supporters: new Map([
+                    [ 'retreat-boost', {
+                        templateId: 'retreat-boost',
+                        name: 'Retreat Boost',
+                        effects: [{
+                            type: 'retreat-cost-reduction',
+                            amount: { type: 'constant', value: 1 },
+                            duration: { type: 'while-in-play', instanceId: 'basic-creature-0' },
+                        }],
+                    }],
+                ]),
+            });
+
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('retreat-boost', 'supporter'),
+                    new RetreatResponseMessage(0),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'retreat-boost', type: 'supporter' as const }]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
+                ),
+                maxSteps: 15,
+            });
+
+            // After retreat, the retreat cost reduction effect should be cleared
+            const retreatReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'retreat-cost-reduction');
+            expect(retreatReductionEffects).to.have.lengthOf(0, 'Retreat cost reduction effect should be cleared after retreat');
+            
+            // The creature should have successfully retreated
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
+        });
+    });
 });

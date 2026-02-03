@@ -92,7 +92,14 @@ const processKnockouts = {
                         // Clean up energy attached to the knocked out card
                         controllers.energy.removeAllEnergyFromInstance(i, fieldInstanceId);
                         
-                        // Clean up tools attached to the knocked out card
+                        // Clean up passive effects from the knocked out card's ability
+                        controllers.effects.clearEffectsForInstance(fieldInstanceId);
+                        
+                        // Clean up tools and their effects attached to the knocked out card
+                        const attachedTool = controllers.tools.getAttachedTool(fieldInstanceId);
+                        if (attachedTool) {
+                            controllers.effects.clearEffectsForTool(attachedTool.instanceId, fieldInstanceId);
+                        }
                         controllers.tools.detachTool(fieldInstanceId);
                     }
                     
@@ -122,7 +129,14 @@ const processKnockouts = {
                         // Clean up energy attached to the knocked out card
                         controllers.energy.removeAllEnergyFromInstance(i, fieldInstanceId);
                         
-                        // Clean up tools attached to the knocked out card
+                        // Clean up passive effects from the knocked out card's ability
+                        controllers.effects.clearEffectsForInstance(fieldInstanceId);
+                        
+                        // Clean up tools and their effects attached to the knocked out card
+                        const attachedTool = controllers.tools.getAttachedTool(fieldInstanceId);
+                        if (attachedTool) {
+                            controllers.effects.clearEffectsForTool(attachedTool.instanceId, fieldInstanceId);
+                        }
                         controllers.tools.detachTool(fieldInstanceId);
                     }
                     

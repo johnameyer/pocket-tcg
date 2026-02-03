@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
+import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { CardRepository } from '../src/repository/card-repository.js';
 import { CreatureData, ToolData, SupporterData, ItemData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
@@ -249,6 +250,42 @@ describe('Creature Tools', () => {
             expect(playedHpEffects).to.have.lengthOf(1, 'Played tool should create 1 HP effect');
             expect(preSetupHpEffects).to.have.lengthOf(1, 'Pre-setup tool should create 1 HP effect');
             expect(playedHpEffects.length).to.equal(preSetupHpEffects.length, 'Effect count should be identical');
+        });
+    });
+
+    describe('Tool passive effects cleared on knockout', () => {
+        const retreatToolData = new Map<string, ToolData>([
+            ...Array.from(mockToolData.entries()),
+            [ 'retreat-boost-tool', {
+                templateId: 'retreat-boost-tool',
+                name: 'Retreat Boost Tool',
+                effects: [{
+                    type: 'retreat-cost-reduction',
+                    amount: { type: 'constant', value: 1 },
+                    duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
+                }],
+            }],
+        ]);
+
+        const retreatToolRepository = new CardRepository(mockCreatureData, mockSupporterData, mockItemData, retreatToolData);
+
+        it('should clear tool passive effects when creature is knocked out', () => {
+            // Use high-hp-creature as attacker (60 damage) to knock out basic-creature (60 HP) in one hit
+            const { state } = runTestGame({
+                actions: [ new AttackResponseMessage(0) ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'high-hp-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature', [ 'basic-creature' ]), // Add bench creature to avoid game over
+                    StateBuilder.withTool('basic-creature-1', 'retreat-boost-tool'),
+                    StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }), // Strong Attack costs 2 fighting
+                ),
+                maxSteps: 15,
+                customRepository: retreatToolRepository,
+            });
+            
+            // Check that passive effect was cleared (creature was knocked out)
+            const retreatReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'retreat-cost-reduction');
+            expect(retreatReductionEffects).to.have.lengthOf(0, 'Retreat cost reduction effect should be cleared after knockout');
         });
     });
 });

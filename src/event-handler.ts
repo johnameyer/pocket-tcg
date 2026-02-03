@@ -563,6 +563,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
                     controllers.turnState.markEvolvedThisTurn(originalInstanceId);
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
+                    
+                    // Clear passive effects targeting the evolving creature (e.g., from attack effects)
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(sourceHandler, 0);
+                    if (fieldInstanceId) {
+                        controllers.effects.clearEffectsForInstance(fieldInstanceId);
+                    }
                 }
                 controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId, turnNumber);
             } else {
@@ -573,6 +579,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const rawCard = controllers.field.state.creatures[sourceHandler]?.[message.position];
                     const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
                     controllers.turnState.markEvolvedThisTurn(originalInstanceId);
+                    
+                    // Clear passive effects targeting the evolving creature (e.g., from attack effects)
+                    const fieldInstanceId = controllers.field.getFieldInstanceId(sourceHandler, message.position);
+                    if (fieldInstanceId) {
+                        controllers.effects.clearEffectsForInstance(fieldInstanceId);
+                    }
                 }
                 controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId, turnNumber);
             }
@@ -818,6 +830,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             // Clear status effects on retreat
             controllers.statusEffects.clearAllStatusEffects(sourceHandler, 0);
+            
+            // Clear passive effects targeting the retreating creature (e.g., from attack effects)
+            controllers.effects.clearEffectsForInstance(fieldInstanceId);
             
             // Switch active creature with bench creature
             controllers.field.retreat(sourceHandler, message.benchIndex);
