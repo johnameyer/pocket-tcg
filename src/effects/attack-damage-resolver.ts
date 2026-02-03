@@ -128,8 +128,15 @@ export class AttackDamageResolver {
         }
         
         // Apply damage reductions from passive effects
+        // Only apply reductions belonging to the DEFENDING player (opponent of currentPlayer)
+        const defendingPlayer = 1 - currentPlayer;
         const damageReductionEffects = controllers.effects.getPassiveEffectsByType('damage-reduction');
         for (const passiveEffect of damageReductionEffects) {
+            // Only apply reductions from the defending player
+            if (passiveEffect.sourcePlayer !== defendingPlayer) {
+                continue;
+            }
+            
             const reduction = passiveEffect.effect;
             // Create minimal context for effect value resolution
             // We use the passive effect's stored context information
