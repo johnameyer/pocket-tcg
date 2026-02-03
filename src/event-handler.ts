@@ -18,6 +18,7 @@ import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { Target } from './repository/target-types.js';
 import { getCurrentTemplateId } from './utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from './effects/pending-selection-types.js';
+import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -129,19 +130,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const targetId = (sourceHandler + 1) % controllers.players.count;
             const targetCard = controllers.field.getCardByPosition(targetId, 0);
             
-            // Process passive abilities for damage reduction BEFORE the attack
-            if (targetCard) {
-                const targetCreatureData = controllers.cardRepository.getCreature(targetCard.templateId);
-                if (targetCreatureData.ability) {
-                    const ability = targetCreatureData.ability;
-                    if (ability.trigger.type === 'passive' && ability.effects) {
-                        const effectName = `${targetCreatureData.name}'s ${ability.name}`;
-                        const context = EffectContextFactory.createAttackContext(targetId, effectName, targetCard.instanceId);
-                        
-                        EffectApplier.applyEffects(ability.effects, controllers, context);
-                    }
-                }
-            }
+            // NOTE: Passive abilities are now registered when creatures enter play,
+            // not re-applied on every attack. See event handler PlayCardResponseMessage
+            // and initializePassiveEffectsForTestState helper.
             
             // Use AttackDamageResolver to calculate damage including coin flips
             const resolvedDamage = AttackDamageResolver.resolveDamage(
@@ -294,6 +285,31 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     type: 'card-played',
                     components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
                 });
+                
+                // Register passive effects from creature abilities
+                const creatureData = controllers.cardRepository.getCreature(message.templateId);
+                if (creatureData.ability && creatureData.ability.trigger?.type === 'passive' && creatureData.ability.effects) {
+                    for (const effect of creatureData.ability.effects) {
+                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' || 
+                            effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction' ||
+                            effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility' ||
+                            effect.type === 'retreat-prevention') {
+                            // Get the field card instance ID for while-in-play duration
+                            const benchCards = controllers.field.getCards(sourceHandler);
+                            const justPlayedCard = benchCards.find(c => c?.templateId === message.templateId);
+                            if (justPlayedCard) {
+                                controllers.effects.registerPassiveEffect(
+                                    sourceHandler,
+                                    `${creatureData.name}'s ${creatureData.ability.name}`,
+                                    effect,
+                                    effect.duration,
+                                    controllers.turnCounter.getTurnNumber(),
+                                    effect.condition
+                                );
+                            }
+                        }
+                    }
+                }
             } else if (message.cardType === 'supporter') {
                 controllers.turnState.setSupporterPlayedThisTurn(true);
                 
@@ -350,6 +366,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         type: 'card-played',
                         components: [ `Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!` ],
                     });
+                    
+                    // Register passive effects from tool
+                    if (toolData.effects) {
+                        for (const effect of toolData.effects) {
+                            if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' || 
+                                effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction' ||
+                                effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility' ||
+                                effect.type === 'retreat-prevention') {
+                                controllers.effects.registerPassiveEffect(
+                                    targetPlayerId,
+                                    toolData.name,
+                                    effect,
+                                    effect.duration,
+                                    controllers.turnCounter.getTurnNumber(),
+                                    effect.condition
+                                );
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -377,10 +412,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.coinFlip.clearGuaranteedHeads();
             
             /*
-             * Clear retreat preventions that expire at end of turn
-             * TODO: Implement proper duration tracking instead of clearing all
+             * Clear end-of-turn passive effects
              */
-            controllers.turnState.clearRetreatPreventions();
+            controllers.effects.clearEndOfTurnEffects();
 
             controllers.players.messageAll({
                 type: 'turn-ended',
@@ -736,10 +770,14 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot retreat - retreat prevented', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     const activeCard = controllers.field.getCardByPosition(source, 0);
                     if (!activeCard) {
-                        return false; 
+                        return false; // No active card means validation passes (no prevention)
                     }
                     
-                    return controllers.turnState.isRetreatPrevented(activeCard.instanceId);
+                    // Check if there are any retreat-prevention passive effects targeting this creature
+                    const applicableEffects = PassiveEffectMatcher.getApplicableRetreatPreventions(controllers, source, 0);
+                    
+                    // If any applicable effects found, retreat is prevented
+                    return applicableEffects.length > 0;
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: RetreatResponseMessage) => {

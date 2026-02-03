@@ -24,6 +24,7 @@ describe('Damage Reduction Effect', () => {
                 type: 'damage-reduction',
                 amount: { type: 'constant', value: 20 },
                 target: { type: 'fixed', player: 'self', position: 'active' },
+                duration: { type: 'until-end-of-next-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
@@ -39,6 +40,7 @@ describe('Damage Reduction Effect', () => {
                 type: 'damage-reduction',
                 amount: { type: 'constant', value: 20 },
                 target: { type: 'fixed', player: 'self', position: 'active' },
+                duration: { type: 'until-end-of-next-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
@@ -56,6 +58,7 @@ describe('Damage Reduction Effect', () => {
                 type: 'damage-reduction',
                 amount: { type: 'constant', value: 20 },
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                duration: { type: 'until-end-of-next-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Reduction', 'item');
@@ -82,6 +85,7 @@ describe('Damage Reduction Effect', () => {
                         type: 'damage-reduction',
                         amount: { type: 'constant', value: 20 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
+                        duration: { type: 'while-in-play', instanceId: '' },
                     }],
                 },
             }],
@@ -100,6 +104,7 @@ describe('Damage Reduction Effect', () => {
                         type: 'damage-reduction',
                         amount: { type: 'constant', value: 20 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
+                        duration: { type: 'while-in-play', instanceId: '' },
                     }],
                 },
             }],
@@ -118,6 +123,7 @@ describe('Damage Reduction Effect', () => {
                         type: 'damage-reduction',
                         amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
                         target: { type: 'fixed', player: 'self', position: 'active' },
+                        duration: { type: 'while-in-play', instanceId: '' },
                     }],
                 },
             }],

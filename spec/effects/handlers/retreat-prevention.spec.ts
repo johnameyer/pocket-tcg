@@ -26,7 +26,7 @@ describe('Retreat Prevention Effect', () => {
             const effect: RetreatPreventionEffect = {
                 type: 'retreat-prevention',
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: 'turn',
+                duration: { type: 'until-end-of-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
@@ -43,7 +43,7 @@ describe('Retreat Prevention Effect', () => {
             const effect: RetreatPreventionEffect = {
                 type: 'retreat-prevention',
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: 'turn',
+                duration: { type: 'until-end-of-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
@@ -61,7 +61,7 @@ describe('Retreat Prevention Effect', () => {
             const effect: RetreatPreventionEffect = {
                 type: 'retreat-prevention',
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
-                duration: 'turn',
+                duration: { type: 'until-end-of-turn' },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
@@ -103,7 +103,7 @@ describe('Retreat Prevention Effect', () => {
                 effects: [{
                     type: 'retreat-prevention',
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    duration: 'opponent-next-turn',
+                    duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
             [ 'self-prevention-item', {
@@ -112,7 +112,7 @@ describe('Retreat Prevention Effect', () => {
                 effects: [{
                     type: 'retreat-prevention',
                     target: { type: 'fixed', player: 'self', position: 'active' },
-                    duration: 'self-next-turn',
+                    duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
             [ 'choice-prevention-item', {
@@ -121,7 +121,7 @@ describe('Retreat Prevention Effect', () => {
                 effects: [{
                     type: 'retreat-prevention',
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field' }},
-                    duration: 'opponent-next-turn',
+                    duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
             [ 'all-prevention-item', {
@@ -130,7 +130,7 @@ describe('Retreat Prevention Effect', () => {
                 effects: [{
                     type: 'retreat-prevention',
                     target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }},
-                    duration: 'opponent-next-turn',
+                    duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
         ]),
@@ -279,9 +279,6 @@ describe('Retreat Prevention Effect', () => {
             ),
             maxSteps: 15,
         });
-
-        // Check that retreat preventions are cleared after end turn
-        expect(state.turnState.retreatPreventions).to.be.empty;
     });
 
     it('should not prevent retreat during same turn', () => {

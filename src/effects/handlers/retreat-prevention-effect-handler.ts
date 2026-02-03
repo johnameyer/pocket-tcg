@@ -41,7 +41,7 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
     
     /**
      * Apply a retreat prevention effect.
-     * This prevents the target creature from retreating during the specified duration.
+     * This registers a passive effect that prevents the target creature from retreating during the specified duration.
      * 
      * @param controllers Game controllers
      * @param effect The retreat prevention effect to apply
@@ -85,13 +85,23 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
             // Get creature data for messaging
             const creatureName = controllers.cardRepository.getCreature(targetCreature.templateId).name;
             
-            // Add retreat prevention to the creature (simplified - no duration tracking)
-            controllers.turnState.addRetreatPrevention(targetCreature.instanceId);
+            // Register as a passive effect with the specified duration
+            controllers.effects.registerPassiveEffect(
+                context.sourcePlayer,
+                context.effectName,
+                {
+                    type: 'retreat-prevention',
+                    target: effect.target,
+                    duration: effect.duration,
+                },
+                effect.duration,
+                controllers.turnCounter.getTurnNumber()
+            );
             
             // Send a message about the retreat prevention
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${creatureName} cannot retreat during the next turn!` ],
+                components: [ `${creatureName} cannot retreat!` ],
             });
         }
     }

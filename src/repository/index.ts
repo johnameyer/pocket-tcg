@@ -5,4 +5,5 @@ export * from './effect-value-types.js';
 export * from './target-types.js';
 export * from './condition-types.js';
 export * from './energy-types.js';
+export * from './duration-types.js';
 export * from './card-repository.js';

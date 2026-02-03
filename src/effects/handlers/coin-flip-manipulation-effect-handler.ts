@@ -22,16 +22,20 @@ export class CoinFlipManipulationEffectHandler extends AbstractEffectHandler<Coi
     
     /**
      * Apply a coin flip manipulation effect.
-     * This guarantees the next coin flip result.
+     * This sets a flag that guarantees the next coin flip result.
      * 
      * @param controllers Game controllers
      * @param effect The coin flip manipulation effect to apply
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: CoinFlipManipulationEffect, context: EffectContext): void {
-        // Set the next coin flip result
+        // Set the coin flip guarantee directly on the coin flip controller
+        // This is consumed automatically during the next coin flip
         if (effect.guaranteeNextHeads) {
             controllers.coinFlip.setNextFlipGuaranteedHeads();
+        } else {
+            // For tails guarantee, we can use mocked results
+            controllers.coinFlip.setMockedResults([false]);
         }
         
         // Send a message about the coin flip manipulation

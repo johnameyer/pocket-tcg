@@ -34,15 +34,26 @@ export class EvolutionFlexibilityEffectHandler extends AbstractEffectHandler<Evo
     
     /**
      * Apply a fully resolved evolution flexibility effect.
-     * This allows more flexible evolution options for certain creature.
+     * This registers a passive effect that allows more flexible evolution options for certain creature.
      * 
      * @param controllers Game controllers
      * @param effect The evolution flexibility effect to apply
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: EvolutionFlexibilityEffect, context: EffectContext): void {
-        // Register the evolution flexibility effect with the turn state controller
-        controllers.turnState.registerEvolutionFlexibility(context.sourcePlayer, effect.baseForm);
+        // Register as a passive effect
+        controllers.effects.registerPassiveEffect(
+            context.sourcePlayer,
+            context.effectName,
+            {
+                type: 'evolution-flexibility',
+                target: effect.target,
+                baseForm: effect.baseForm,
+                duration: effect.duration,
+            },
+            effect.duration,
+            controllers.turnCounter.getTurnNumber()
+        );
         
         // Show a message about the evolution flexibility
         controllers.players.messageAll({

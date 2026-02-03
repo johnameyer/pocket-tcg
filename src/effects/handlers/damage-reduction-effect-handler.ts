@@ -40,7 +40,7 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
     
     /**
      * Apply a damage reduction effect.
-     * This reduces damage taken by the target creature during the opponent's next turn.
+     * This registers a passive effect that reduces damage taken by the target creature.
      * 
      * @param controllers Game controllers
      * @param effect The damage reduction effect to apply
@@ -87,13 +87,24 @@ export class DamageReductionEffectHandler extends AbstractEffectHandler<DamageRe
             // Get creature data for messaging
             const creatureName = controllers.cardRepository.getCreature(targetCreature.templateId).name;
             
-            // Add damage reduction to turn state
-            controllers.turnState.addDamageReduction(context.sourcePlayer, reductionAmount, context.effectName);
+            // Register as a passive effect
+            controllers.effects.registerPassiveEffect(
+                context.sourcePlayer,
+                context.effectName,
+                {
+                    type: 'damage-reduction',
+                    amount: effect.amount,
+                    target: effect.target,
+                    duration: effect.duration,
+                },
+                effect.duration,
+                controllers.turnCounter.getTurnNumber()
+            );
             
             // Send a message about the damage reduction
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${creatureName} will take ${reductionAmount} less damage from attacks during opponent's next turn!` ],
+                components: [ `${creatureName} will take ${reductionAmount} less damage from attacks!` ],
             });
         }
     }

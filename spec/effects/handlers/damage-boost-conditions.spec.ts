@@ -47,7 +47,7 @@ describe('Damage Boost Conditions', () => {
                     type: 'damage-boost',
                     amount: { type: 'constant', value: 30 },
                     condition: { previousStageName: 'Basic Creature' },
-                    duration: 'this-turn',
+                    duration: { type: 'until-end-of-turn' },
                 }],
             }],
             [ 'ex-boost-supporter', {
@@ -57,7 +57,7 @@ describe('Damage Boost Conditions', () => {
                     type: 'damage-boost',
                     amount: { type: 'constant', value: 20 },
                     condition: { attributes: { ex: true }},
-                    duration: 'this-turn',
+                    duration: { type: 'until-end-of-turn' },
                 }],
             }],
         ]),

@@ -38,6 +38,7 @@ describe('HP Bonus Effect', () => {
                 effects: [{
                     type: 'hp-bonus',
                     amount: { type: 'constant', value: 30 },
+                    duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
                 }],
             }],
         ]),

@@ -6,6 +6,8 @@ import { GameSetup } from '../../src/game-setup.js';
 import { Controllers } from '../../src/controllers/controllers.js';
 import { mockRepository, MockCardRepository } from '../mock-repository.js';
 import { StateBuilder } from './state-builder.js';
+import { CardRepository } from '../../src/repository/card-repository.js';
+import { ModifierEffect } from '../../src/repository/effect-types.js';
 
 export function createTestPlayers(actionHandler: (handlerData: any, responses: any) => void, messageHandler?: (handlerData: any, message: any) => void) {
     const gameHandler: () => GameHandler = () => ({
@@ -61,6 +63,124 @@ export function createActionTracker(actions: ResponseMessage[]) {
     };
 }
 
+/**
+ * Initializes passive effects for abilities and tools that are already present in the game state.
+ * This ensures test setup matches actual game behavior where passive effects are registered
+ * when cards are played or when creatures with abilities enter the field.
+ * 
+ * @param state The game state to initialize
+ * @param repository The card repository to look up card data
+ */
+export function initializePassiveEffectsForTestState(
+    state: ControllerState<Controllers>,
+    repository: CardRepository | MockCardRepository
+) {
+    // Initialize passive effects for creatures with abilities
+    for (let playerId = 0; playerId < state.field.creatures.length; playerId++) {
+        const playerCreatures = state.field.creatures[playerId];
+        
+        for (let fieldIndex = 0; fieldIndex < playerCreatures.length; fieldIndex++) {
+            const creature = playerCreatures[fieldIndex];
+            if (!creature) continue;
+            
+            // Get the current form of the creature (top of evolution stack)
+            const currentForm = creature.evolutionStack[creature.evolutionStack.length - 1];
+            if (!currentForm) continue;
+            
+            try {
+                const creatureData = repository.getCreature(currentForm.templateId);
+                
+                // Check if creature has a passive ability
+                if (creatureData.ability && creatureData.ability.trigger.type === 'passive') {
+                    // Register passive effects from the ability
+                    for (const effect of creatureData.ability.effects) {
+                        // Check if this is a modifier effect that should be registered as passive
+                        if ('duration' in effect && effect.duration) {
+                            const modifierEffect = effect as ModifierEffect;
+                            
+                            // Create the passive effect entry
+                            const passiveEffect = {
+                                id: `${state.effects.nextEffectId++}`,
+                                sourcePlayer: playerId,
+                                effectName: `${creatureData.name}'s ${creatureData.ability.name}`,
+                                effect: {
+                                    ...modifierEffect,
+                                    // For while-in-play effects, populate the instanceId
+                                    duration: modifierEffect.duration.type === 'while-in-play'
+                                        ? { type: 'while-in-play' as const, instanceId: currentForm.instanceId }
+                                        : modifierEffect.duration,
+                                },
+                                duration: modifierEffect.duration.type === 'while-in-play'
+                                    ? { type: 'while-in-play' as const, instanceId: currentForm.instanceId }
+                                    : modifierEffect.duration,
+                                createdTurn: state.turnCounter.turnNumber,
+                            };
+                            
+                            state.effects.activePassiveEffects.push(passiveEffect);
+                        }
+                    }
+                }
+            } catch (e) {
+                // Creature not found in repository, skip
+            }
+        }
+    }
+    
+    // Initialize passive effects for tools
+    // Tools are tracked in state.tools.attachedTools as { [creatureInstanceId]: { templateId, instanceId } }
+    for (const [ creatureInstanceId, tool ] of Object.entries(state.tools.attachedTools)) {
+        if (!tool) continue;
+        
+        try {
+            const toolData = repository.getTool(tool.templateId);
+            
+            if (toolData.effects) {
+                for (const effect of toolData.effects) {
+                    // Check if this is a modifier effect that should be registered as passive
+                    if ('duration' in effect && effect.duration) {
+                        const modifierEffect = effect as ModifierEffect;
+                        
+                        // Create the passive effect entry
+                        const passiveEffect = {
+                            id: `${state.effects.nextEffectId++}`,
+                            sourcePlayer: 0, // We need to determine which player owns this creature
+                            effectName: `${toolData.name}`,
+                            effect: {
+                                ...modifierEffect,
+                                // For while-attached effects, populate the IDs
+                                duration: modifierEffect.duration.type === 'while-attached'
+                                    ? { type: 'while-attached' as const, toolInstanceId: tool.instanceId, cardInstanceId: creatureInstanceId }
+                                    : modifierEffect.duration,
+                            },
+                            duration: modifierEffect.duration.type === 'while-attached'
+                                ? { type: 'while-attached' as const, toolInstanceId: tool.instanceId, cardInstanceId: creatureInstanceId }
+                                : modifierEffect.duration,
+                            createdTurn: state.turnCounter.turnNumber,
+                        };
+                        
+                        // Determine which player owns this creature
+                        let ownerPlayer = 0;
+                        for (let playerId = 0; playerId < state.field.creatures.length; playerId++) {
+                            const playerCreatures = state.field.creatures[playerId];
+                            for (const creature of playerCreatures) {
+                                if (creature && creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
+                                    ownerPlayer = playerId;
+                                    break;
+                                }
+                            }
+                        }
+                        passiveEffect.sourcePlayer = ownerPlayer;
+                        
+                        state.effects.activePassiveEffects.push(passiveEffect);
+                    }
+                }
+            }
+        } catch (e) {
+            // Tool not found in repository, skip
+        }
+    }
+}
+
 export interface TestGameConfig {
     actions: ResponseMessage[];
     stateCustomizer?: (state: ControllerState<Controllers>) => void;
@@ -93,6 +213,9 @@ export function runTestGame(config: TestGameConfig) {
     }
     
     const repository = config.customRepository || mockRepository;
+    
+    // Initialize passive effects for any abilities and tools in the pre-configured state
+    initializePassiveEffectsForTestState(preConfiguredState, repository);
     
     const driver = gameFactory(repository).getGameDriver(players, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState as any);
     

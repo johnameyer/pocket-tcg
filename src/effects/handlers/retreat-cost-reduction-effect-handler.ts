@@ -20,7 +20,7 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
     
     /**
      * Apply a retreat cost reduction effect.
-     * This reduces the energy cost required to retreat the active creature.
+     * This registers a passive effect that reduces the energy cost required to retreat.
      * 
      * @param controllers Game controllers
      * @param effect The retreat cost reduction effect to apply
@@ -36,8 +36,18 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
             return;
         }
         
-        // Add retreat cost reduction to the active creature
-        controllers.turnState.addRetreatCostReduction(context.sourcePlayer, reductionAmount, context.effectName);
+        // Register as a passive effect
+        controllers.effects.registerPassiveEffect(
+            context.sourcePlayer,
+            context.effectName,
+            {
+                type: 'retreat-cost-reduction',
+                amount: effect.amount,
+                duration: effect.duration,
+            },
+            effect.duration,
+            controllers.turnCounter.getTurnNumber()
+        );
         
         // Send a message about the retreat cost reduction
         controllers.players.messageAll({

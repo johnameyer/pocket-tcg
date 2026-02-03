@@ -4,6 +4,7 @@ import { Condition } from '../repository/condition-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { EffectContext, EffectContextFactory } from './effect-context.js';
 import { getEffectValue, evaluateConditionWithContext } from './effect-utils.js';
+import { PassiveEffectMatcher } from './passive-effect-matcher.js';
 
 /**
  * Utility class for resolving attack damage based on various damage calculation types.
@@ -82,16 +83,18 @@ export class AttackDamageResolver {
             }
         }
         
-        // Apply damage boosts from turn state (with condition checking)
-        const damageBoosts = controllers.turnState.getDamageBoosts();
-        for (const boost of damageBoosts) {
-            console.log(`DEBUG: Checking damage boost: ${boost.effectName}, amount: ${boost.amount}`);
+        // Apply damage boosts from passive effects (with condition checking)
+        const damageBoostEffects = controllers.effects.getPassiveEffectsByType('damage-boost');
+        for (const passiveEffect of damageBoostEffects) {
+            const boost = passiveEffect.effect;
+            console.log(`DEBUG: Checking damage boost: ${passiveEffect.effectName}, amount: ${boost.amount}`);
             // Check if this boost should apply to the current target
-            if (this.shouldApplyDamageBoost(boost, targetcreature, controllers, context)) {
-                console.log(`DEBUG: Applying damage boost: ${boost.amount}`);
-                totalDamage += boost.amount;
+            if (this.shouldApplyDamageBoost({ sourcePlayer: passiveEffect.sourcePlayer, amount: typeof boost.amount === 'object' && 'value' in boost.amount ? boost.amount.value : 0, effectName: passiveEffect.effectName }, targetcreature, controllers, context)) {
+                const amount = typeof boost.amount === 'object' && 'value' in boost.amount ? boost.amount.value : 0;
+                console.log(`DEBUG: Applying damage boost: ${amount}`);
+                totalDamage += amount;
             } else {
-                console.log(`DEBUG: Skipping damage boost: ${boost.effectName}`);
+                console.log(`DEBUG: Skipping damage boost: ${passiveEffect.effectName}`);
             }
         }
         
@@ -124,18 +127,37 @@ export class AttackDamageResolver {
             }
         }
         
-        // Apply damage reductions from turn state
-        const damageReductions = controllers.turnState.getDamageReductions();
-        for (const reduction of damageReductions) {
-            totalDamage -= reduction.amount;
+        // Apply damage reductions from passive effects
+        // Only apply reductions belonging to the DEFENDING player (opponent of currentPlayer)
+        const defendingPlayer = 1 - currentPlayer;
+        const damageReductionEffects = controllers.effects.getPassiveEffectsByType('damage-reduction');
+        for (const passiveEffect of damageReductionEffects) {
+            // Only apply reductions from the defending player
+            if (passiveEffect.sourcePlayer !== defendingPlayer) {
+                continue;
+            }
+            
+            const reduction = passiveEffect.effect;
+            // Create minimal context for effect value resolution
+            // We use the passive effect's stored context information
+            const reductionContext = EffectContextFactory.createAbilityContext(
+                passiveEffect.sourcePlayer,
+                passiveEffect.effectName,
+                '', // creatureInstanceId - not needed for point-based values
+                0, // fieldPosition - not needed for point-based values
+            );
+            const amount = getEffectValue(reduction.amount, controllers, reductionContext);
+            totalDamage = Math.max(0, totalDamage - amount);
         }
         
-        // Apply damage prevention from turn state (with source checking)
-        const damagePreventions = controllers.turnState.getDamagePrevention();
-        for (const prevention of damagePreventions) {
-            if (this.shouldPreventDamage(prevention, playercreature, controllers, context)) {
+        // Check for damage prevention from passive effects
+        if (playercreature) {
+            const applicablePreventions = PassiveEffectMatcher.getApplicableDamagePreventions(
+                controllers,
+                playercreature.templateId
+            );
+            if (applicablePreventions.length > 0) {
                 totalDamage = 0;
-                break; // One prevention is enough to block all damage
             }
         }
         

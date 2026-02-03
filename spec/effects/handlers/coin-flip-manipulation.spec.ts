@@ -15,6 +15,7 @@ describe('Coin Flip Manipulation Effect', () => {
                 effects: [{
                     type: 'coin-flip-manipulation',
                     guaranteeNextHeads: true,
+                    duration: { type: 'until-end-of-turn' },
                 }],
             }],
         ]),

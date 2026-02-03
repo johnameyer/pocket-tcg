@@ -8,12 +8,6 @@ export type TurnStateData = {
     evolvedInstancesThisTurn: string[]; // Track evolved creatures by instance ID
     usedAbilitiesThisTurn: string[]; // Track ability usage by "instanceId-abilityName"
     pendingSelection?: PendingSelection;
-    damageBoosts: Array<{ sourcePlayer: number; amount: number; effectName: string }>;
-    damageReductions: Array<{ sourcePlayer: number; amount: number; effectName: string }>;
-    retreatCostReductions: Array<{ sourcePlayer: number; amount: number; effectName: string }>;
-    retreatPreventions: string[]; // Instance IDs of creatures that cannot retreat
-    damagePrevention: Array<{ sourcePlayer: number; effectName: string }>;
-    evolutionFlexibility: Array<{ sourcePlayer: number; effectName: string }>;
 };
 
 type TurnStateDependencies = {};
@@ -31,12 +25,6 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
             evolvedInstancesThisTurn: [],
             usedAbilitiesThisTurn: [],
             pendingSelection: undefined,
-            damageBoosts: [],
-            damageReductions: [],
-            retreatCostReductions: [],
-            retreatPreventions: [],
-            damagePrevention: [],
-            evolutionFlexibility: [],
         };
     }
     
@@ -72,12 +60,6 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         this.state.retreatedThisTurn = false;
         this.state.evolvedInstancesThisTurn = [];
         this.state.usedAbilitiesThisTurn = [];
-        this.state.damageBoosts = [];
-        this.state.damageReductions = [];
-        this.state.retreatCostReductions = [];
-        // Note: retreatPreventions are cleared based on duration, not every turn
-        this.state.damagePrevention = [];
-        this.state.evolutionFlexibility = [];
     }
     
     public markEvolvedThisTurn(instanceId: string): void {
@@ -123,51 +105,5 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     
     public clearPendingSelection(): void {
         this.state.pendingSelection = undefined;
-    }
-
-    public addDamageBoost(sourcePlayer: number, amount: number, effectName: string): void {
-        this.state.damageBoosts.push({ sourcePlayer, amount, effectName });
-    }
-
-    public getDamageBoosts(): Array<{ sourcePlayer: number; amount: number; effectName: string }> {
-        return this.state.damageBoosts;
-    }
-
-    public addDamageReduction(sourcePlayer: number, amount: number, effectName: string): void {
-        this.state.damageReductions.push({ sourcePlayer, amount, effectName });
-    }
-
-    public getDamageReductions(): Array<{ sourcePlayer: number; amount: number; effectName: string }> {
-        return this.state.damageReductions;
-    }
-
-    public addRetreatCostReduction(sourcePlayer: number, amount: number, effectName: string): void {
-        this.state.retreatCostReductions.push({ sourcePlayer, amount, effectName });
-    }
-
-    public addRetreatPrevention(instanceId: string): void {
-        if (!this.state.retreatPreventions.includes(instanceId)) {
-            this.state.retreatPreventions.push(instanceId);
-        }
-    }
-
-    public isRetreatPrevented(instanceId: string): boolean {
-        return this.state.retreatPreventions.includes(instanceId);
-    }
-
-    public clearRetreatPreventions(): void {
-        this.state.retreatPreventions = [];
-    }
-
-    public registerDamagePrevention(sourcePlayer: number, effectName: string): void {
-        this.state.damagePrevention.push({ sourcePlayer, effectName });
-    }
-
-    public getDamagePrevention(): Array<{ sourcePlayer: number; effectName: string }> {
-        return this.state.damagePrevention;
-    }
-
-    public registerEvolutionFlexibility(sourcePlayer: number, effectName: string): void {
-        this.state.evolutionFlexibility.push({ sourcePlayer, effectName });
     }
 }

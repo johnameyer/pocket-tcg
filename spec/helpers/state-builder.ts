@@ -69,12 +69,6 @@ export class StateBuilder {
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
                 pendingSelection: undefined,
-                damageBoosts: [],
-                damageReductions: [],
-                retreatCostReductions: [],
-                retreatPreventions: [],
-                damagePrevention: [],
-                evolutionFlexibility: [],
             },
             statusEffects: {
                 activeStatusEffects: [[], []], // No status effects for either player
@@ -103,6 +97,8 @@ export class StateBuilder {
             },
             effects: {
                 immediatelyPendingEffects: [],
+                activePassiveEffects: [],
+                nextEffectId: 0,
             },
             cardRepository: {},
             deck: [[], []], // Array of card arrays for each player
@@ -293,10 +289,12 @@ export class StateBuilder {
     static withTool(creatureInstanceId: string, toolCardId: string) {
         return (state: ControllerState<Controllers>) => {
             StateBuilder.validateInstanceIdWithError(state, creatureInstanceId);
+            const toolInstanceId = `${toolCardId}-1`;
             state.tools.attachedTools[creatureInstanceId] = { 
                 templateId: toolCardId, 
-                instanceId: `${toolCardId}-1`, 
+                instanceId: toolInstanceId, 
             };
+            // Note: Passive effects are initialized by initializePassiveEffectsForTestState in runTestGame
         };
     }
 
