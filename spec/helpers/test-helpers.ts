@@ -163,6 +163,12 @@ export function initializePassiveEffectsForTestState(
                         for (let playerId = 0; playerId < state.field.creatures.length; playerId++) {
                             const playerCreatures = state.field.creatures[playerId];
                             for (const creature of playerCreatures) {
+                                // Check if this creature has the fieldInstanceId that matches the tool attachment
+                                if (creature && creature.fieldInstanceId === creatureInstanceId) {
+                                    ownerPlayer = playerId;
+                                    break;
+                                }
+                                // Also check evolution stack for backward compatibility
                                 if (creature && creature.evolutionStack.some(card => card.instanceId === creatureInstanceId)) {
                                     ownerPlayer = playerId;
                                     break;

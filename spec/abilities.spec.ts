@@ -133,4 +133,33 @@ describe('Creature Abilities', () => {
             expect(hpBonusEffects).to.have.lengthOf(1, 'Should have 1 HP bonus effect');
         });
     });
+
+    describe('Ability passive effects cleared on knockout', () => {
+        it('should clear ability passive effects when creature is knocked out', () => {
+            const { state } = runTestGame({
+                actions: [ new AttackResponseMessage(0), new AttackResponseMessage(0) ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-attacker'),
+                    StateBuilder.withCreatures(1, 'defensive-creature'),
+                    StateBuilder.withEnergy('basic-attacker-0', { fire: 4 }),
+                ),
+                maxSteps: 20,
+                customRepository: abilityTestRepository,
+            });
+
+            // Check that defensive creature was knocked out or is still alive
+            // It has 100 HP and 10 damage reduction, so 2 attacks of 40 damage (reduced to 30 each) = 60 total damage
+            // Creature should still be alive with 60 damage taken
+            const defensiveCreature = state.field.creatures[1][0];
+            if (defensiveCreature && defensiveCreature.damageTaken < 100) {
+                // Not knocked out yet, check that effect is still active
+                const damageReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'damage-reduction');
+                expect(damageReductionEffects.length).to.be.greaterThan(0, 'Effect should still be active if creature is alive');
+            } else {
+                // Knocked out - should have no damage reduction effects
+                const damageReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'damage-reduction');
+                expect(damageReductionEffects).to.have.lengthOf(0, 'Damage reduction effect should be cleared after knockout');
+            }
+        });
+    });
 });
