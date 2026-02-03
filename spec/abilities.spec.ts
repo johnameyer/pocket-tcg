@@ -147,9 +147,9 @@ describe('Creature Abilities', () => {
                 customRepository: abilityTestRepository,
             });
 
-            // Check that defensive creature was knocked out
+            // Check that defensive creature was knocked out or is still alive
             // It has 100 HP and 10 damage reduction, so 2 attacks of 40 damage (reduced to 30 each) = 60 total damage
-            // Third attack would knock it out
+            // Creature should still be alive with 60 damage taken
             const defensiveCreature = state.field.creatures[1][0];
             if (defensiveCreature && defensiveCreature.damageTaken < 100) {
                 // Not knocked out yet, check that effect is still active
