@@ -106,7 +106,7 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 // Count Creatures on field for the resolved target player
                 let count = 0;
                 let fieldIndex = 0;
-                // eslint-disable-next-line no-constant-condition
+                 
                 while (true) {
                     const creature = controllers.field.getCardByPosition(resolvedTargetPlayer, fieldIndex);
                     if (!creature) {
@@ -121,7 +121,7 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 // Count only benched Creatures (excluding active) for the resolved target player
                 let count = 0;
                 let fieldIndex = 1; // Start from index 1 to skip active creature
-                // eslint-disable-next-line no-constant-condition
+                 
                 while (true) {
                     const creature = controllers.field.getCardByPosition(resolvedTargetPlayer, fieldIndex);
                     if (!creature) {
@@ -136,7 +136,7 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
                 // Count total energy attached to all creatures for the resolved target player
                 let totalEnergy = 0;
                 let fieldIndex = 0;
-                // eslint-disable-next-line no-constant-condition
+                 
                 while (true) {
                     // Get fieldInstanceId for energy lookup
                     const fieldInstanceId = controllers.field.getFieldInstanceId(resolvedTargetPlayer, fieldIndex);

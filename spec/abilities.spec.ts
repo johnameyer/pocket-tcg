@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { CardRepository } from '../src/repository/card-repository.js';
 import { CreatureData, SupporterData, ItemData, ToolData } from '../src/repository/card-types.js';
@@ -60,7 +59,7 @@ describe('Creature Abilities', () => {
         mockCreatureData,
         new Map<string, SupporterData>(),
         new Map<string, ItemData>(),
-        new Map<string, ToolData>()
+        new Map<string, ToolData>(),
     );
 
     describe('Passive ability effects - manually setup', () => {
@@ -77,8 +76,10 @@ describe('Creature Abilities', () => {
             });
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
-            // Defensive creature should take reduced damage
-            // 40 base damage - 10 damage reduction = 30 damage
+            /*
+             * Defensive creature should take reduced damage
+             * 40 base damage - 10 damage reduction = 30 damage
+             */
             const defensiveCreature = state.field.creatures[1][0];
             expect(defensiveCreature).to.exist;
             expect(defensiveCreature.damageTaken).to.equal(30, 'Should take reduced damage (40 - 10) with pre-setup ability');
@@ -147,9 +148,11 @@ describe('Creature Abilities', () => {
                 customRepository: abilityTestRepository,
             });
 
-            // Check that defensive creature was knocked out or is still alive
-            // It has 100 HP and 10 damage reduction, so 2 attacks of 40 damage (reduced to 30 each) = 60 total damage
-            // Creature should still be alive with 60 damage taken
+            /*
+             * Check that defensive creature was knocked out or is still alive
+             * It has 100 HP and 10 damage reduction, so 2 attacks of 40 damage (reduced to 30 each) = 60 total damage
+             * Creature should still be alive with 60 damage taken
+             */
             const defensiveCreature = state.field.creatures[1][0];
             if (defensiveCreature && defensiveCreature.damageTaken < 100) {
                 // Not knocked out yet, check that effect is still active

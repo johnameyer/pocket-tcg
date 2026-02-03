@@ -41,7 +41,7 @@ export class HpBonusEffectHandler extends AbstractEffectHandler<HpBonusEffect> {
                 duration: effect.duration,
             },
             effect.duration,
-            controllers.turnCounter.getTurnNumber()
+            controllers.turnCounter.getTurnNumber(),
         );
         
         // Show a message about the HP bonus being applied

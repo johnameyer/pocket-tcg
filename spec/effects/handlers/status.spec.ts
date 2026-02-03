@@ -103,7 +103,7 @@ describe('Status Effect', () => {
             maxSteps: 10,
         });
 
-        const effects = state.statusEffects.activeStatusEffects[1] as any[];
+        const effects = state.statusEffects.activeStatusEffects[1];
         expect(effects).to.have.length(1);
         expect(effects[0].type).to.equal('poison');
     });
@@ -143,7 +143,7 @@ describe('Status Effect', () => {
             maxSteps: 10,
         });
 
-        const effects = state.statusEffects.activeStatusEffects[1] as any[];
+        const effects = state.statusEffects.activeStatusEffects[1];
         expect(effects).to.have.length(1);
         expect(effects[0].type).to.equal('burn');
     });
@@ -183,7 +183,7 @@ describe('Status Effect', () => {
             maxSteps: 10,
         });
 
-        const effects = state.statusEffects.activeStatusEffects[0] as any[];
+        const effects = state.statusEffects.activeStatusEffects[0];
         expect(effects).to.have.length(1);
         expect(effects[0].type).to.equal('confusion');
     });
@@ -231,7 +231,7 @@ describe('Status Effect', () => {
             maxSteps: 10,
         });
 
-        const effects = state.statusEffects.activeStatusEffects[1] as any[];
+        const effects = state.statusEffects.activeStatusEffects[1];
         expect(effects).to.have.length(1);
         expect(effects[0].type).to.equal('confusion', 'Should keep last applied status');
     });
@@ -278,9 +278,10 @@ describe('Status Effect', () => {
             maxSteps: 10,
         });
 
-        const effects = state.statusEffects.activeStatusEffects[1] as any[];
+        const effects = state.statusEffects.activeStatusEffects[1];
         expect(effects).to.have.length(2);
-        const statusTypes = effects.map((e: any) => e.type);
+        
+        const statusTypes = effects.map(e => e.type);
         expect(statusTypes).to.include('poison');
         expect(statusTypes).to.include('burn');
     });

@@ -46,7 +46,7 @@ export class RetreatCostReductionEffectHandler extends AbstractEffectHandler<Ret
                 duration: effect.duration,
             },
             effect.duration,
-            controllers.turnCounter.getTurnNumber()
+            controllers.turnCounter.getTurnNumber(),
         );
         
         // Send a message about the retreat cost reduction

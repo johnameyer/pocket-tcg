@@ -234,7 +234,8 @@ describe('Evolution Flexibility Effect', () => {
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
         expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('flexible-evolution-lightning', 'Should have evolved');
         
-        const energyState = state.energy as any;
+         
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['flexible-basic-0'].lightning).to.equal(2, 'Should preserve energy after evolution');
     });
 

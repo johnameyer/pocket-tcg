@@ -91,8 +91,7 @@ export class PassiveEffectMatcher {
         fieldIndex: number,
     ): PassiveEffect[] {
         const allEffects = controllers.effects.getPassiveEffectsByType('retreat-prevention');
-        return allEffects.filter(effect => 
-            this.isRetreatPreventedFor(effect, playerId, fieldIndex)
+        return allEffects.filter(effect => this.isRetreatPreventedFor(effect, playerId, fieldIndex),
         );
     }
 
@@ -108,8 +107,7 @@ export class PassiveEffectMatcher {
         attackerTemplateId: string,
     ): PassiveEffect[] {
         const allEffects = controllers.effects.getPassiveEffectsByType('prevent-damage');
-        return allEffects.filter(effect => 
-            this.isDamagePreventedFrom(controllers, effect, attackerTemplateId)
+        return allEffects.filter(effect => this.isDamagePreventedFrom(controllers, effect, attackerTemplateId),
         );
     }
 }

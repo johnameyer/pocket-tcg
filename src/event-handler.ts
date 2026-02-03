@@ -62,6 +62,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // No valid cards available - forfeit
                 controllers.waiting.removePosition(source);
                 controllers.turnState.setShouldEndTurn(true);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -101,6 +102,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Forfeit on invalid attack
                 controllers.waiting.removePosition(source);
                 controllers.turnState.setShouldEndTurn(true);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -130,9 +132,11 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const targetId = (sourceHandler + 1) % controllers.players.count;
             const targetCard = controllers.field.getCardByPosition(targetId, 0);
             
-            // NOTE: Passive abilities are now registered when creatures enter play,
-            // not re-applied on every attack. See event handler PlayCardResponseMessage
-            // and initializePassiveEffectsForTestState helper.
+            /*
+             * NOTE: Passive abilities are now registered when creatures enter play,
+             * not re-applied on every attack. See event handler PlayCardResponseMessage
+             * and initializePassiveEffectsForTestState helper.
+             */
             
             // Use AttackDamageResolver to calculate damage including coin flips
             const resolvedDamage = AttackDamageResolver.resolveDamage(
@@ -256,6 +260,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Forfeit on invalid card play
                 controllers.waiting.removePosition(source);
                 controllers.turnState.setShouldEndTurn(true);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -290,10 +295,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const creatureData = controllers.cardRepository.getCreature(message.templateId);
                 if (creatureData.ability && creatureData.ability.trigger?.type === 'passive' && creatureData.ability.effects) {
                     for (const effect of creatureData.ability.effects) {
-                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' || 
-                            effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction' ||
-                            effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility' ||
-                            effect.type === 'retreat-prevention') {
+                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
+                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
+                            || effect.type === 'retreat-prevention') {
                             // Get the field card instance ID for while-in-play duration
                             const benchCards = controllers.field.getCards(sourceHandler);
                             const justPlayedCard = benchCards.find(c => c?.templateId === message.templateId);
@@ -304,7 +309,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                     effect,
                                     effect.duration,
                                     controllers.turnCounter.getTurnNumber(),
-                                    effect.condition
+                                    effect.condition,
                                 );
                             }
                         }
@@ -370,17 +375,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Register passive effects from tool
                     if (toolData.effects) {
                         for (const effect of toolData.effects) {
-                            if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' || 
-                                effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction' ||
-                                effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility' ||
-                                effect.type === 'retreat-prevention') {
+                            if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
+                                || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
+                                || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
+                                || effect.type === 'retreat-prevention') {
                                 controllers.effects.registerPassiveEffect(
                                     targetPlayerId,
                                     toolData.name,
                                     effect,
                                     effect.duration,
                                     controllers.turnCounter.getTurnNumber(),
-                                    effect.condition
+                                    effect.condition,
                                 );
                             }
                         }
@@ -451,6 +456,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // No creatures available - forfeit
                 controllers.waiting.removePosition(source);
                 controllers.turnState.setShouldEndTurn(true);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -536,6 +542,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             ],
             fallback: (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                 // Return undefined to ignore invalid evolution attempts
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -709,6 +716,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             ],
             fallback: (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                 controllers.waiting.removePosition(source);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -793,6 +801,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -905,6 +914,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             fallback: (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
                 controllers.waiting.removePosition(source);
                 controllers.turnState.clearPendingSelection(); // Clear pending selection on validation failure
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -962,6 +972,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             fallback: (controllers: Controllers, source: number, message: SelectEnergyResponseMessage) => {
                 controllers.waiting.removePosition(source);
                 controllers.turnState.clearPendingSelection();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -1032,6 +1043,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             fallback: (controllers: Controllers, source: number, message: SelectCardResponseMessage) => {
                 controllers.waiting.removePosition(source);
                 controllers.turnState.clearPendingSelection();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },
@@ -1090,6 +1102,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             fallback: (controllers: Controllers, source: number, message: SelectChoiceResponseMessage) => {
                 controllers.waiting.removePosition(source);
                 controllers.turnState.clearPendingSelection();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
         },

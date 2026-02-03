@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { EvolveResponseMessage } from '../src/messages/response/evolve-response-message.js';
 import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
+import { StatusEffectType } from '../src/controllers/status-effect-controller.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 
@@ -125,7 +126,7 @@ describe('Evolution Mechanics', () => {
                     StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
-                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                        state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
                         const creatureData = state.field.creatures[0][0];
                         if (creatureData) {
                             creatureData.turnLastPlayed = 0;
@@ -150,7 +151,7 @@ describe('Evolution Mechanics', () => {
                     StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withCanEvolve(0, 0),
                     (state) => {
-                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                        state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
                         const creatureData = state.field.creatures[0][0];
                         if (creatureData) {
                             creatureData.turnLastPlayed = 0;
@@ -162,7 +163,8 @@ describe('Evolution Mechanics', () => {
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(60, 'Damage should be preserved during evolution');
-            expect((state.statusEffects.activeStatusEffects[0] as any[]).length).to.equal(0, 'Status effects should be cleared');
+             
+            expect((state.statusEffects.activeStatusEffects[0]).length).to.equal(0, 'Status effects should be cleared');
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('evolution-creature', 'Creature should be evolved');
         });
 
@@ -174,13 +176,13 @@ describe('Evolution Mechanics', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                     (state) => {
-                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                        state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
                     },
                 ),
                 maxSteps: 10,
             });
 
-            const statusEffects = state.statusEffects.activeStatusEffects[0] as any[];
+            const statusEffects = state.statusEffects.activeStatusEffects[0];
             expect(statusEffects).to.have.length(0, 'Retreat should clear status effects');
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'Should have retreated successfully');
         });
@@ -189,12 +191,12 @@ describe('Evolution Mechanics', () => {
             const { state } = runTestGame({
                 actions: [],
                 stateCustomizer: (state) => {
-                    state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }, { type: 'burn' }];
+                    state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }, { type: StatusEffectType.BURNED, appliedTurn: 0 }];
                 },
                 maxSteps: 3,
             });
 
-            const effects = state.statusEffects.activeStatusEffects[0] as any[];
+            const effects = state.statusEffects.activeStatusEffects[0];
             expect(effects.length).to.be.at.least(1, 'Status effects should persist through normal actions');
         });
 
@@ -205,7 +207,7 @@ describe('Evolution Mechanics', () => {
                     StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]),
                     StateBuilder.withDamage('high-hp-creature-0', 90),
                     (state) => {
-                        state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }];
+                        state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
                     },
                 ),
                 maxSteps: 5,

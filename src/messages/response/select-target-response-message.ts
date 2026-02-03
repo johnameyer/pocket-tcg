@@ -12,7 +12,7 @@ export class SelectTargetResponseMessage extends Message {
     ) {
         super([ targets.length === 1 
             ? `Selected target: Player ${targets[0].playerId + 1}, position ${targets[0].fieldIndex === 0 ? 'Active' : `Bench ${targets[0].fieldIndex}`}`
-            : `Selected ${targets.length} target(s)`
+            : `Selected ${targets.length} target(s)`,
         ]);
     }
     

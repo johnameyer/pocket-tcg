@@ -5,6 +5,7 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 import { SupporterData } from '../../src/repository/card-types.js';
+import { EnergyState } from '../../src/controllers/energy-controller.js';
 
 describe('Pending Target Selection', () => {
     describe('Dual Target Selection', () => {
@@ -42,7 +43,8 @@ describe('Pending Target Selection', () => {
 
             expect(getExecutedCount()).to.equal(3, 'Should execute supporter + 2 target selections');
             
-            const energyState = state.energy as any;
+             
+            const energyState: EnergyState = state.energy;
             expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Source should lose 1 fire energy');
             expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(1, 'Target should gain 1 fire energy');
         });
@@ -353,7 +355,7 @@ describe('Pending Target Selection', () => {
             // Should have effect name in pending selection
             expect(state.turnState.pendingSelection).to.not.be.null;
             if (state.turnState.pendingSelection) {
-                expect((state.turnState.pendingSelection as any).originalContext.effectName).to.equal('Named Effect');
+                expect((state.turnState.pendingSelection).originalContext.effectName).to.equal('Named Effect');
             }
         });
     });

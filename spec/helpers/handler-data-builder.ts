@@ -2,6 +2,7 @@ import { HandlerData } from '../../src/game-handler.js';
 import { GameCard } from '../../src/controllers/card-types.js';
 import { EnergyDictionary, AttachableEnergyType } from '../../src/controllers/energy-controller.js';
 import { createInstancedFieldCard } from '../../src/utils/field-card-utils.js';
+import { StatusEffect } from '../../src/controllers/status-effect-controller.js';
 
 // Partial energy dictionary for test convenience
 type PartialEnergyDict = Partial<Record<AttachableEnergyType, number>>;
@@ -184,9 +185,9 @@ export class HandlerDataBuilder {
      * @param player Player ID (0 or 1)
      * @param effects Array of status effect types
      */
-    static withStatusEffects(player: number, effects: string[]): HandlerDataCustomizer {
+    static withStatusEffects(player: number, effects: StatusEffect[]): HandlerDataCustomizer {
         return (data: HandlerData) => {
-            data.statusEffects.activeStatusEffects[player] = effects.map(type => ({ type })) as any;
+            data.statusEffects.activeStatusEffects[player] = effects;
         };
     }
 }

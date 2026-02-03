@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { SelectActiveCardResponseMessage } from '../src/messages/response/select-active-card-response-message.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
+import { GameCard } from '../src/controllers/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 
@@ -115,10 +116,10 @@ describe('Knockout System', () => {
         
         // Player 1's active creature should be knocked out and in discard pile
         expect(state.discard[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
-        expect(state.discard[1].some((card: any) => card.templateId === 'evolution-creature')).to.be.true;
+        expect(state.discard[1].some((card: GameCard) => card.templateId === 'evolution-creature')).to.be.true;
         
         // Card conservation: knocked out card is in discard, not lost
-        expect(state.discard[1].some((card: any) => card.templateId === 'evolution-creature')).to.be.true;
+        expect(state.discard[1].some((card: GameCard) => card.templateId === 'evolution-creature')).to.be.true;
     });
 
     it('should discard all cards in evolution stack when evolved creature is knocked out', () => {

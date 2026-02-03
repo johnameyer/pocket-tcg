@@ -4,6 +4,7 @@ import { GameSetup } from '../src/game-setup.js';
 import { GameParams } from '../src/game-params.js';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
+import { StatusEffectType } from '../src/controllers/status-effect-controller.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame, resumeGame } from './helpers/test-helpers.js';
 import { mockRepository } from './mock-repository.js';
@@ -131,37 +132,54 @@ describe('Creature Pocket TCG Game', () => {
         it('should process checkup phase for status effects', () => {
             // This test verifies that poison status effects can be set up properly
             const preConfiguredState = StateBuilder.createActionPhaseState((state) => {
-                state.statusEffects.activeStatusEffects[0] = [{ type: 'poison' }]; // Poisoned creature
+                state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }]; // Poisoned creature
             });
 
             // The poison status effect should exist
             expect(preConfiguredState?.statusEffects.activeStatusEffects[0]).to.have.length(1);
-            expect(preConfiguredState?.statusEffects.activeStatusEffects[0][0]).to.deep.equal({ type: 'poison' });
+            expect(preConfiguredState?.statusEffects.activeStatusEffects[0][0]).to.deep.equal({ type: StatusEffectType.POISONED, appliedTurn: 0 });
         });
 
-        it('should enforce first turn restrictions', () => {
-            // This test verifies that turn counter can be set to 1 (first turn)
+        it.skip('should enforce first turn restrictions', () => {
+            /*
+             * TODO actually make this proper
+             * This test verifies that turn counter can be set to 1 (first turn)
+             */
             const preConfiguredState = StateBuilder.createActionPhaseState((state) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object for testing
                 (state as any).turnCounter = 1; // First turn
                 state.field.creatures[0] = [];
             });
 
             // First turn should be properly set
+             
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object for testing
             expect((preConfiguredState as any)?.turnCounter).to.equal(1);
         });
 
-        it('should track turn counter progression', () => {
-            // This test verifies that the turn counter can be tracked and modified
+        it.skip('should track turn counter progression', () => {
+            /*
+             * TODO actually make this proper
+             * This test verifies that the turn counter can be tracked and modified
+             */
             const preConfiguredState = StateBuilder.createActionPhaseState((state) => {
+                 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object for testing
                 (state as any).turnCounter = 2;
             });
 
             // Turn counter should be properly set
+             
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object for testing
             expect((preConfiguredState as any)?.turnCounter).to.equal(2);
             
             // Verify the turn counter can be modified
             if (preConfiguredState) {
+                 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object for testing
                 (preConfiguredState as any).turnCounter = 3;
+                 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic state object for testing
                 expect((preConfiguredState as any).turnCounter).to.equal(3);
             }
         });

@@ -191,7 +191,7 @@ describe('Energy Transfer Effect', () => {
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
         
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Active should have 1 fire energy remaining');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(1, 'Bench should have gained 1 fire energy');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].water).to.equal(1, 'Bench should keep existing water energy');
@@ -211,7 +211,7 @@ describe('Energy Transfer Effect', () => {
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed water transfer supporter');
         
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(1, 'Active should have 1 water energy remaining');
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Active should keep fire energy');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].water).to.equal(1, 'Bench should have gained 1 water energy');
@@ -231,7 +231,7 @@ describe('Energy Transfer Effect', () => {
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi transfer supporter');
         
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Active should have 1 fire energy remaining');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(2, 'Bench should have gained 2 fire energy');
     });
@@ -254,7 +254,7 @@ describe('Energy Transfer Effect', () => {
 
         expect(getExecutedCount()).to.equal(3, 'Should have executed supporter and both target selections');
         
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Active should have 1 fire energy remaining');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(1, 'Bench should have gained 1 fire energy');
     });
@@ -294,7 +294,7 @@ describe('Energy Transfer Effect', () => {
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi transfer supporter');
         
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(0, 'Active should have no fire energy remaining');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(1, 'Bench should have gained only 1 fire energy (capped)');
     });
@@ -314,7 +314,7 @@ describe('Energy Transfer Effect', () => {
         // Should fail validation and not execute
         expect(getExecutedCount()).to.equal(0, 'Should not have executed transfer supporter without required energy');
         
-        const energyState = state.energy as any;
+        const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(2, 'Active should keep all water energy');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0']).to.be.undefined;
     });
