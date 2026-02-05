@@ -9,10 +9,11 @@ import { getEffectValue } from '../effect-utils.js';
  */
 export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostEffect> {
     /**
-     * Damage boost effects don't have targets to resolve.
+     * Get the resolution requirements for a damage boost effect.
+     * Damage boost effects don't resolve targets—they match criteria passively.
      * 
      * @param effect The damage boost effect
-     * @returns Empty array as damage boost effects don't have targets
+     * @returns Empty array (no resolution needed)
      */
     getResolutionRequirements(effect: DamageBoostEffect): ResolutionRequirement[] {
         return [];
@@ -28,32 +29,20 @@ export class DamageBoostEffectHandler extends AbstractEffectHandler<DamageBoostE
      */
     apply(controllers: Controllers, effect: DamageBoostEffect, context: EffectContext): void {
         const amount = getEffectValue(effect.amount, controllers, context);
-        const activecreature = controllers.field.getCardByPosition(context.sourcePlayer, 0);
-        if (!activecreature) {
-            throw new Error(`No active creature found for player ${context.sourcePlayer}`);
-        }
         
-        // Register as a passive effect
+        // Register as a passive effect with criteria matching
         controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
-            {
-                type: 'damage-boost',
-                amount: effect.amount,
-                target: effect.target,
-                condition: effect.condition,
-                duration: effect.duration,
-            },
+            effect,
             effect.duration,
             controllers.turnCounter.getTurnNumber(),
-            effect.condition,
         );
         
-        const targetText = effect.target ? ' conditionally' : '';
-        const conditionText = effect.condition ? ' when condition is met' : '';
+        // Send a message about the damage boost
         controllers.players.messageAll({
             type: 'status',
-            components: [ `${context.effectName} adds ${amount} damage${targetText}${conditionText}!` ],
+            components: [ `${context.effectName} will increase damage dealt by ${amount}!` ],
         });
     }
 }

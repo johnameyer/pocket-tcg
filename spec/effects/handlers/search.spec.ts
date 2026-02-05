@@ -21,8 +21,9 @@ describe('Search Effect', () => {
 
             const effect: SearchEffect = {
                 type: 'search',
+                source: { type: 'fixed', player: 'self', location: 'deck' },
                 amount: { type: 'constant', value: 1 },
-                criteria: 'basic-creature',
+                destination: 'hand',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
@@ -38,8 +39,9 @@ describe('Search Effect', () => {
 
             const effect: SearchEffect = {
                 type: 'search',
+                source: { type: 'fixed', player: 'self', location: 'deck' },
                 amount: { type: 'constant', value: 1 },
-                criteria: 'basic-creature',
+                destination: 'hand',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
@@ -48,27 +50,23 @@ describe('Search Effect', () => {
             expect(result).to.be.false;
         });
 
-        /*
-         * TODO: This test reflects current implementation but may be incorrect
-         * Per feedback: "If the deck is empty, we cannot search for a card - both are false"
-         * The implementation allows supporters to be played when deck is empty (line 41-44)
-         */
-        it('should return true for supporter when deck is empty (current implementation)', () => {
+        it('should return false for supporter when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(0),
             );
 
             const effect: SearchEffect = {
                 type: 'search',
+                source: { type: 'fixed', player: 'self', location: 'deck' },
                 amount: { type: 'constant', value: 1 },
-                criteria: 'basic-creature',
+                destination: 'hand',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'supporter');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            // Current implementation returns true for supporters even with empty deck
-            expect(result).to.be.true;
+            // Search effect cannot be applied if deck is empty, regardless of card type
+            expect(result).to.be.false;
         });
     });
 
@@ -106,8 +104,7 @@ describe('Search Effect', () => {
                 name: 'Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'basic-creature',
+                    source: { type: 'single-choice', chooser: 'self', location: 'deck', criteria: { cardType: 'creature' }},
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
@@ -117,8 +114,7 @@ describe('Search Effect', () => {
                 name: 'Multi Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'fieldCard',
+                    source: { type: 'multi-choice', chooser: 'self', location: 'deck', criteria: { cardType: 'creature' }, count: 2 },
                     amount: { type: 'constant', value: 2 },
                     destination: 'hand',
                 }],
@@ -128,8 +124,7 @@ describe('Search Effect', () => {
                 name: 'Trainer Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'trainer',
+                    source: { type: 'single-choice', chooser: 'self', location: 'deck', criteria: { cardType: 'trainer' }},
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
@@ -139,8 +134,7 @@ describe('Search Effect', () => {
                 name: 'Variable Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
-                    cardType: 'basic-creature',
+                    source: { type: 'multi-choice', chooser: 'self', location: 'deck', criteria: { cardType: 'creature' }, count: 999 },
                     amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
                     destination: 'hand',
                 }],
@@ -150,7 +144,7 @@ describe('Search Effect', () => {
                 name: 'Any Search Supporter',
                 effects: [{
                     type: 'search',
-                    target: 'deck',
+                    source: { type: 'single-choice', chooser: 'self', location: 'deck' },
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
@@ -285,7 +279,7 @@ describe('Search Effect', () => {
         expect(state.hand[0][0].templateId).to.equal('basic-creature', 'Should have found the only Pokemon');
     });
 
-    it('should handle empty deck gracefully', () => {
+    it('should not allow playing supporter when deck is empty', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [ new PlayCardResponseMessage('search-supporter', 'supporter') ],
             customRepository: testRepository,
@@ -297,8 +291,8 @@ describe('Search Effect', () => {
             maxSteps: 10,
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed search supporter');
-        expect(state.hand[0].length).to.equal(0, 'Player 0 should have no cards in hand (empty deck)');
+        expect(getExecutedCount()).to.equal(0, 'Should not execute search supporter when deck is empty');
+        expect(state.hand[0].length).to.equal(1, 'Player 0 should still have the supporter in hand');
         expect(state.deck[0].length).to.equal(0, 'Player 0 deck should remain empty');
     });
 

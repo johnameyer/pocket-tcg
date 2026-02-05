@@ -288,7 +288,7 @@ describe('Pending Target Selection', () => {
                             target: {
                                 type: 'single-choice',
                                 chooser: 'self',
-                                criteria: { player: 'self', location: 'field', condition: { hasDamage: true }},
+                                criteria: { player: 'self', location: 'field', fieldCriteria: { hasDamage: true }},
                             },
                             operation: 'heal',
                         }],

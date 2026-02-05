@@ -1,6 +1,8 @@
 import { Controllers } from '../controllers/controllers.js';
 import { PassiveEffect } from '../controllers/effect-controller.js';
 import { RetreatPreventionEffect, PreventDamageEffect } from '../repository/effect-types.js';
+import { ControllerUtils } from '../utils/controller-utils.js';
+import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 
 /**
  * Utility class for finding and filtering applicable passive effects.
@@ -40,17 +42,20 @@ export class PassiveEffectMatcher {
 
     /**
      * Check if a damage-prevention effect applies to a specific attacker.
-     * Supports both exact templateId matching and attribute-based matching (e.g., 'ex' attribute).
      * 
-     * @param controllers Game controllers for accessing card repository
+     * @param controllers Game controllers for accessing card repository and field state
      * @param effect The passive effect to check
      * @param attackerTemplateId The template ID of the attacking creature
+     * @param attackerPlayerId The player ID of the attacking creature
+     * @param attackerFieldIndex The field position of the attacking creature
      * @returns True if the effect prevents damage from the specified attacker
      */
     static isDamagePreventedFrom(
         controllers: Controllers,
         effect: PassiveEffect,
         attackerTemplateId: string,
+        attackerPlayerId: number,
+        attackerFieldIndex: number,
     ): boolean {
         // Check if this is a prevent-damage effect
         if (effect.effect.type !== 'prevent-damage') {
@@ -59,22 +64,37 @@ export class PassiveEffectMatcher {
         
         const prevention = effect.effect as PreventDamageEffect;
         
-        // If no source filter, the effect applies to all attackers
-        if (!prevention.source) {
+        // Use FieldTargetCriteriaFilter to check if attacker matches criteria
+        const attackerCard = controllers.field.getRawCardByPosition(attackerPlayerId, attackerFieldIndex);
+        if (!attackerCard) {
+            return false;
+        }
+        
+        // Create a handler data view for the attacker's side
+        const handlerData = ControllerUtils.createPlayerView(controllers, attackerPlayerId);
+        
+        // Check if the attacker matches the damageSource criteria
+        const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+            prevention.damageSource.fieldCriteria || {},
+            attackerCard,
+            controllers.cardRepository.cardRepository,
+            handlerData.energy?.attachedEnergyByInstance,
+        );
+        
+        if (!matchesCriteria) {
+            return false;
+        }
+        
+        // Also check player criteria if specified
+        if (prevention.damageSource.player) {
+            /*
+             * The prevention effect's 'opponent' player refers to the player attacking the defended creature
+             * Since the effect is registered by the defending player, we just need to accept all attackers
+             */
             return true;
         }
-
-        // Get source creature data to check attributes
-        const sourceCreatureData = controllers.cardRepository.getCreature(prevention.source);
-        const attackerCreatureData = controllers.cardRepository.getCreature(attackerTemplateId);
         
-        // If source has 'ex' attribute, check if attacker also has it
-        if (sourceCreatureData.attributes?.ex) {
-            return attackerCreatureData.attributes?.ex === true;
-        }
-        
-        // No ex attribute, so match by exact templateId
-        return attackerTemplateId === prevention.source;
+        return true;
     }
 
     /**
@@ -100,14 +120,24 @@ export class PassiveEffectMatcher {
      * 
      * @param controllers Game controllers
      * @param attackerTemplateId The template ID of the attacking creature
+     * @param attackerPlayerId The player ID of the attacking creature
+     * @param attackerFieldIndex The field position of the attacking creature
      * @returns Array of applicable damage-prevention effects
      */
     static getApplicableDamagePreventions(
         controllers: Controllers,
         attackerTemplateId: string,
+        attackerPlayerId: number,
+        attackerFieldIndex: number,
     ): PassiveEffect[] {
         const allEffects = controllers.effects.getPassiveEffectsByType('prevent-damage');
-        return allEffects.filter(effect => this.isDamagePreventedFrom(controllers, effect, attackerTemplateId),
+        return allEffects.filter(effect => this.isDamagePreventedFrom(
+            controllers,
+            effect,
+            attackerTemplateId,
+            attackerPlayerId,
+            attackerFieldIndex,
+        ),
         );
     }
 }

@@ -1,4 +1,4 @@
-import { Condition } from './condition-types.js';
+import { FieldCriteria } from './criteria/field-target-criteria.js';
 
 /**
  * Represents a constant numeric value.
@@ -58,7 +58,7 @@ export type AdditionValue = {
  */
 export type ConditionalValue = {
     type: 'conditional';
-    condition: Condition;
+    condition: FieldCriteria;
     trueValue: EffectValue;
     falseValue: EffectValue;
 };

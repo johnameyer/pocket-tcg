@@ -6,7 +6,7 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
-import { TargetResolver } from '../target-resolver.js';
+import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 
 /**
  * Handler for status effects that apply conditions like poison, burn, etc. to creature.
@@ -40,7 +40,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
         }
         
         // Use TargetResolver to check if the target is available
-        return TargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
     }
 
     /**
@@ -60,7 +60,7 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
         const targets = effect.target.targets;
         
         if (targets.length === 0) {
-            return;
+            throw new Error(`${context.effectName} resolved to no valid targets`);
         }
         
         // Process each target

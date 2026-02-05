@@ -5,66 +5,8 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
-import { PreventDamageEffectHandler } from '../../../src/effects/handlers/prevent-damage-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { PreventDamageEffect } from '../../../src/repository/effect-types.js';
-import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Prevent Damage Effect', () => {
-    describe('canApply', () => {
-        const handler = new PreventDamageEffectHandler();
-        const mockRepository = new MockCardRepository();
-
-        it('should return true when target exists', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
-            );
-
-            const effect: PreventDamageEffect = {
-                type: 'prevent-damage',
-                target: { type: 'fixed', player: 'self', position: 'active' },
-                duration: { type: 'until-end-of-next-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.true;
-        });
-
-        it('should return false when target does not exist (target resolution failure)', () => {
-            const handlerData = HandlerDataBuilder.default();
-
-            const effect: PreventDamageEffect = {
-                type: 'prevent-damage',
-                target: { type: 'fixed', player: 'self', position: 'active' },
-                duration: { type: 'until-end-of-next-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.false;
-        });
-
-        it('should return true when no target specified (protects self)', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-            );
-
-            const effect: PreventDamageEffect = {
-                type: 'prevent-damage',
-                duration: { type: 'until-end-of-next-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevent', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.true;
-        });
-    });
-
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const exCreature = { templateId: 'ex-creature', type: 'creature' as const };
     const megaExCreature = { templateId: 'mega-ex-creature', type: 'creature' as const };
@@ -108,7 +50,8 @@ describe('Prevent Damage Effect', () => {
                 name: 'Prevent Item',
                 effects: [{ 
                     type: 'prevent-damage',
-                    target: { type: 'fixed', player: 'opponent', position: 'active' },
+                    target: { player: 'opponent', position: 'active' },
+                    damageSource: { player: 'opponent' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -117,8 +60,8 @@ describe('Prevent Damage Effect', () => {
                 name: 'Prevent Ex Item',
                 effects: [{
                     type: 'prevent-damage',
-                    source: 'ex-creature',
-                    target: { type: 'fixed', player: 'opponent', position: 'active' },
+                    damageSource: { player: 'opponent', fieldCriteria: { cardCriteria: { attributes: { ex: true }}}},
+                    target: { player: 'opponent', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],

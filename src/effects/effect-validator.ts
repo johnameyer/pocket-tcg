@@ -4,7 +4,7 @@ import { Effect } from '../repository/effect-types.js';
 import { EffectContextFactory } from './effect-context.js';
 import { EffectContext } from './effect-context.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
-import { TargetResolver } from './target-resolver.js';
+import { FieldTargetResolver } from './target-resolvers/field-target-resolver.js';
 import { EffectHandler } from './interfaces/effect-handler-interface.js';
 
 export class EffectValidator {
@@ -72,7 +72,7 @@ export class EffectValidator {
         // If there are requirements, check if all required targets are available
         if (requirements.length > 0) {
             for (const requirement of requirements) {
-                if (requirement.required && !TargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
+                if (requirement.required && !FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
                     return false;
                 }
             }

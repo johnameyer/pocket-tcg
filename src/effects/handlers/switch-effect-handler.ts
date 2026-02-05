@@ -4,7 +4,7 @@ import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { HandlerData } from '../../game-handler.js';
 import { CardRepository } from '../../repository/card-repository.js';
-import { TargetResolver } from '../target-resolver.js';
+import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 
 /**
  * Handler for switch effects that move a creature from the bench to the active position
@@ -26,7 +26,7 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
         }
         
         // Use TargetResolver to check if the target is available
-        return TargetResolver.isTargetAvailable(effect.switchWith, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.switchWith, handlerData, context, cardRepository);
     }
 
     getResolutionRequirements(effect: SwitchEffect): ResolutionRequirement[] {
@@ -34,11 +34,6 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
     }
 
     apply(controllers: Controllers, effect: SwitchEffect, context: EffectContext): void {
-        // Check if we have a valid target
-        if (!effect.switchWith) {
-            return;
-        }
-
         // Targets are always resolved by EffectApplier
         if (effect.switchWith.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.switchWith?.type || effect.switchWith}`);
@@ -47,11 +42,7 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
         const targets = effect.switchWith.targets;
         
         if (targets.length === 0) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} found no valid targets!` ],
-            });
-            return;
+            throw new Error(`${context.effectName} resolved to no valid targets`);
         }
         
         for (const target of targets) {

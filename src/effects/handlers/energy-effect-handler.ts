@@ -49,11 +49,6 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: EnergyEffect, context: EffectContext): void {
-        // Ensure we have a valid target
-        if (!effect.target) {
-            throw new Error('No target specified for energy effect');
-        }
-
         // Get the amount of energy to attach/discard
         const amount = getEffectValue(effect.amount, controllers, context);
 
@@ -71,11 +66,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
         const targets = effect.target.targets;
         
         if (targets.length === 0) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} found no valid targets!` ],
-            });
-            return;
+            throw new Error(`${context.effectName} resolved to no valid targets`);
         }
         
         for (const target of targets) {

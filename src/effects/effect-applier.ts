@@ -1,14 +1,14 @@
 import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
-import { ResolvedTarget } from '../repository/target-types.js';
+import { ResolvedFieldTarget } from '../repository/targets/field-target.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
 import { PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
-import { TargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolver.js';
+import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
 
 export class EffectApplier {
     /**
@@ -85,24 +85,24 @@ export class EffectApplier {
         
         for (const requirement of requirements) {
             // Check if this target needs selection
-            if (TargetResolver.handleTargetSelection(controllers, effect, context, requirement.target)) {
+            if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, requirement.target)) {
                 return null; // Pending selection
             }
             
             // Determine if this is a single or multi target
             const target = requirement.target;
-            let resolvedTarget: ResolvedTarget | undefined;
+            let resolvedTarget: ResolvedFieldTarget | undefined;
             
             if (!target) {
                 // No target specified
                 resolvedTarget = undefined;
             } else if (target.type === 'all-matching' || target.type === 'multi-choice') {
                 // Multi-target: use resolveTarget and convert to array
-                const resolution = TargetResolver.resolveTarget(target, controllers, context);
+                const resolution = FieldTargetResolver.resolveTarget(target, controllers, context);
                 resolvedTarget = this.convertResolutionToResolvedTargets(resolution, context);
             } else {
                 // Single target (fixed, single-choice, or resolved): use resolveSingleTarget
-                const resolution = TargetResolver.resolveSingleTarget(target, controllers, context);
+                const resolution = FieldTargetResolver.resolveSingleTarget(target, controllers, context);
                 resolvedTarget = this.convertSingleResolutionToResolvedTarget(resolution, context);
             }
             
@@ -130,7 +130,7 @@ export class EffectApplier {
     private static convertSingleResolutionToResolvedTarget(
         resolution: SingleTargetResolutionResult,
         context: EffectContext,
-    ): ResolvedTarget | undefined {
+    ): ResolvedFieldTarget | undefined {
         switch (resolution.type) {
             case 'resolved':
                 return resolution; // Already a ResolvedTarget with targets array
@@ -159,7 +159,7 @@ export class EffectApplier {
     private static convertResolutionToResolvedTargets(
         resolution: TargetResolutionResult,
         context: EffectContext,
-    ): ResolvedTarget {
+    ): ResolvedFieldTarget {
         switch (resolution.type) {
             case 'resolved':
                 return resolution; // Already a ResolvedTarget with targets array
@@ -314,7 +314,7 @@ export class EffectApplier {
         // If there are requirements, check if all required targets are available
         if (requirements.length > 0) {
             for (const requirement of requirements) {
-                if (requirement.required && !TargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
+                if (requirement.required && !FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
                     return false;
                 }
             }
@@ -350,7 +350,7 @@ export class EffectApplier {
         
         // Check if any target requires selection
         for (const requirement of requirements) {
-            if (TargetResolver.requiresTargetSelection(requirement.target, context)) {
+            if (FieldTargetResolver.requiresTargetSelection(requirement.target, context)) {
                 return true;
             }
         }
