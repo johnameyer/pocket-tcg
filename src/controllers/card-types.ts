@@ -1,6 +1,6 @@
 export type Card = {
     instanceId: string; // Unique instance ID for this specific card copy
-    type: 'creature' | 'supporter' | 'item' | 'tool';
+    type: 'creature' | 'supporter' | 'item' | 'tool' | 'stadium';
     templateId: string; // Card template ID for the card
 };
 
@@ -24,4 +24,9 @@ export type ToolCard = Card & {
     templateId: string;
 };
 
-export type GameCard = CreatureCard | SupporterCard | ItemCard | ToolCard;
+export type StadiumCard = Card & {
+    type: 'stadium';
+    templateId: string;
+};
+
+export type GameCard = CreatureCard | SupporterCard | ItemCard | ToolCard | StadiumCard;

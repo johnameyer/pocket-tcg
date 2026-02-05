@@ -1,4 +1,4 @@
-import { CreatureData, SupporterData, ItemData, ToolData } from './card-types.js';
+import { CreatureData, SupporterData, ItemData, ToolData, StadiumData } from './card-types.js';
 
 export class CardRepository {
     private creatureNameMap: Map<string, CreatureData> = new Map();
@@ -8,6 +8,7 @@ export class CardRepository {
         private supporterData: Map<string, SupporterData> = new Map(),
         private itemData: Map<string, ItemData> = new Map(),
         private fieldCardToolData: Map<string, ToolData> = new Map(),
+        private stadiumData: Map<string, StadiumData> = new Map(),
     ) {
         // Build name-to-creature map at instantiation time for efficient lookups
         for (const creature of creatureData.values()) {
@@ -74,6 +75,14 @@ export class CardRepository {
         return tool;
     }
     
+    public getStadium(templateId: string): StadiumData {
+        const stadium = this.stadiumData.get(templateId);
+        if (!stadium) {
+            throw new Error(`Stadium not found: ${templateId}`);
+        }
+        return stadium;
+    }
+    
     public getAllSupporterIds(): string[] {
         return Array.from(this.supporterData.keys());
     }
@@ -86,6 +95,10 @@ export class CardRepository {
         return Array.from(this.fieldCardToolData.keys());
     }
     
+    public getAllStadiumIds(): string[] {
+        return Array.from(this.stadiumData.keys());
+    }
+    
     /**
      * Gets a card by ID, trying all card types.
      * 
@@ -93,7 +106,7 @@ export class CardRepository {
      * @returns The card data and its type
      * @throws Error if the card is not found in any collection
      */
-    public getCard(id: string): { data: CreatureData | SupporterData | ItemData | ToolData; type: string } {
+    public getCard(id: string): { data: CreatureData | SupporterData | ItemData | ToolData | StadiumData; type: string } {
         try {
             return { data: this.getCreature(id), type: 'creature' };
         } catch (e) {
@@ -106,7 +119,11 @@ export class CardRepository {
                     try {
                         return { data: this.getTool(id), type: 'tool' };
                     } catch (e) {
-                        throw new Error(`Card not found: ${id}`);
+                        try {
+                            return { data: this.getStadium(id), type: 'stadium' };
+                        } catch (e) {
+                            throw new Error(`Card not found: ${id}`);
+                        }
                     }
                 }
             }

@@ -255,6 +255,28 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Use ActionValidator to check if the supporter can be played
                     return !ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
                 }),
+                EventHandler.validate('Stadium already played this turn', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                    return message.cardType === 'stadium' && controllers.turnState.hasStadiumBeenPlayedThisTurn();
+                }),
+                EventHandler.validate('Stadium with same name already active', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                    if (message.cardType !== 'stadium') {
+                        return false;
+                    }
+                    const stadiumData = controllers.cardRepository.getStadium(message.templateId);
+                    const activeStadium = controllers.stadium.getActiveStadium();
+                    return activeStadium !== undefined && activeStadium.name === stadiumData.name;
+                }),
+                EventHandler.validate('Stadium effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                    if (message.cardType !== 'stadium') {
+                        return false; 
+                    }
+                    
+                    // Create proper HandlerData structure from controllers
+                    const handlerData = ControllerUtils.createPlayerView(controllers, source);
+                    
+                    // Use ActionValidator to check if the stadium can be played
+                    return !ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
+                }),
             ],
             fallback: (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                 // Forfeit on invalid card play
@@ -391,6 +413,51 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         }
                     }
                 }
+            } else if (message.cardType === 'stadium') {
+                controllers.turnState.setStadiumPlayedThisTurn(true);
+                
+                // Get the stadium data
+                const stadiumData = controllers.cardRepository.getStadium(message.templateId);
+                
+                // Clear effects from previous stadium if any
+                const previousStadium = controllers.stadium.getActiveStadium();
+                if (previousStadium) {
+                    // Clear all effects associated with the previous stadium
+                    controllers.effects.clearEffectsForInstance(previousStadium.instanceId);
+                }
+                
+                // Play the new stadium (this will automatically discard the old one if present)
+                controllers.stadium.playStadium(message.templateId, cardInstanceId!, sourceHandler, stadiumData.name);
+                
+                controllers.players.messageAll({
+                    type: 'card-played',
+                    components: [ `Player ${sourceHandler + 1} played ${stadiumData.name}!` ],
+                });
+                
+                // Register passive effects from stadium
+                if (stadiumData.effects) {
+                    for (const effect of stadiumData.effects) {
+                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
+                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
+                            || effect.type === 'retreat-prevention') {
+                            controllers.effects.registerPassiveEffect(
+                                sourceHandler,
+                                stadiumData.name,
+                                effect,
+                                { type: 'while-in-play', instanceId: cardInstanceId! },
+                                controllers.turnCounter.getTurnNumber(),
+                                effect.condition,
+                            );
+                        }
+                    }
+                }
+                
+                // Process any effects that were triggered by the stadium effects
+                EffectQueueProcessor.processQueue(controllers);
+                
+                // Check for knockouts due to side effects (e.g., HP changes)
+                // This is handled by the passive effect system automatically
             }
         },
     },

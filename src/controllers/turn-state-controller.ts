@@ -4,6 +4,7 @@ import { PendingSelection } from '../effects/pending-selection-types.js';
 export type TurnStateData = {
     shouldEndTurn: boolean;
     supporterPlayedThisTurn: boolean;
+    stadiumPlayedThisTurn: boolean;
     retreatedThisTurn: boolean;
     evolvedInstancesThisTurn: string[]; // Track evolved creatures by instance ID
     usedAbilitiesThisTurn: string[]; // Track ability usage by "instanceId-abilityName"
@@ -21,6 +22,7 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
         return {
             shouldEndTurn: false,
             supporterPlayedThisTurn: false,
+            stadiumPlayedThisTurn: false,
             retreatedThisTurn: false,
             evolvedInstancesThisTurn: [],
             usedAbilitiesThisTurn: [],
@@ -54,9 +56,18 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         return this.state.supporterPlayedThisTurn;
     }
 
+    public setStadiumPlayedThisTurn(value: boolean): void {
+        this.state.stadiumPlayedThisTurn = value;
+    }
+
+    public hasStadiumBeenPlayedThisTurn(): boolean {
+        return this.state.stadiumPlayedThisTurn;
+    }
+
     public startTurn(): void {
         this.state.shouldEndTurn = false;
         this.state.supporterPlayedThisTurn = false;
+        this.state.stadiumPlayedThisTurn = false;
         this.state.retreatedThisTurn = false;
         this.state.evolvedInstancesThisTurn = [];
         this.state.usedAbilitiesThisTurn = [];

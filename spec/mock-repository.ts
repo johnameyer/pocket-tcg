@@ -1,5 +1,5 @@
 import { CardRepository } from '../src/repository/card-repository.js';
-import { CreatureData, ItemData, SupporterData, ToolData } from '../src/repository/card-types.js';
+import { CreatureData, ItemData, SupporterData, ToolData, StadiumData } from '../src/repository/card-types.js';
 
 const mockCreatureData = new Map<string, CreatureData>();
 
@@ -123,11 +123,19 @@ mockToolData.set('leftovers', {
     trigger: { type: 'end-of-turn' },
 });
 
+const mockStadiumData = new Map<string, StadiumData>();
+mockStadiumData.set('basic-stadium', {
+    templateId: 'basic-stadium',
+    name: 'Basic Stadium',
+    effects: [],
+});
+
 export interface MockRepositoryExtensions {
     creatures?: Map<string, CreatureData>;
     supporters?: Map<string, SupporterData>;
     items?: Map<string, ItemData>;
     tools?: Map<string, ToolData>;
+    stadiums?: Map<string, StadiumData>;
 }
 
 export class MockCardRepository extends CardRepository {
@@ -136,8 +144,9 @@ export class MockCardRepository extends CardRepository {
         const allSupporters = new Map([ ...Array.from(mockSupporterData), ...Array.from(extensions.supporters || new Map()) ]);
         const allItems = new Map([ ...Array.from(mockItemData), ...Array.from(extensions.items || new Map()) ]);
         const allTools = new Map([ ...Array.from(mockToolData), ...Array.from(extensions.tools || new Map()) ]);
+        const allStadiums = new Map([ ...Array.from(mockStadiumData), ...Array.from(extensions.stadiums || new Map()) ]);
         
-        super(allCreatures, allSupporters, allItems, allTools);
+        super(allCreatures, allSupporters, allItems, allTools, allStadiums);
     }
 }
 

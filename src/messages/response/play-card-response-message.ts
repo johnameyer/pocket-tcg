@@ -5,7 +5,7 @@ export class PlayCardResponseMessage extends Message {
 
     constructor(
         public readonly templateId: string,
-        public readonly cardType: 'creature' | 'item' | 'supporter' | 'tool',
+        public readonly cardType: 'creature' | 'item' | 'supporter' | 'tool' | 'stadium',
         public readonly targetPlayerId?: number,
         public readonly targetFieldIndex?: number,
     ) {
