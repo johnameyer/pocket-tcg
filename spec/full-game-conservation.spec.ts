@@ -304,13 +304,13 @@ describe('Full Game Conservation', () => {
             customRepository: repositoryExtensions,
             initialDecks: [
                 [
-                    'basic-fire', 'basic-fire', 'basic-fire',
-                    'basic-water', 'basic-water', 'basic-water',
+                    'basic-creature', 'basic-creature', 'basic-creature',
+                    'high-hp-creature', 'high-hp-creature', 'high-hp-creature',
                     'stadium-1', 'stadium-2',
                 ],
                 [
-                    'basic-fire', 'basic-fire', 'basic-fire',
-                    'basic-water', 'basic-water', 'basic-water',
+                    'basic-creature', 'basic-creature', 'basic-creature',
+                    'high-hp-creature', 'high-hp-creature', 'high-hp-creature',
                     'stadium-1', 'stadium-2',
                 ],
             ],
