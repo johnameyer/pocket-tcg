@@ -122,6 +122,11 @@ describe('Full Game Conservation', () => {
             instanceIds.push(card.instanceId);
         }
         
+        // Stadium (if owned by this player)
+        if (state.stadium?.activeStadium && state.stadium.activeStadium.owner === playerId) {
+            instanceIds.push(state.stadium.activeStadium.instanceId);
+        }
+        
         return instanceIds;
     }
 
@@ -279,70 +284,5 @@ describe('Full Game Conservation', () => {
          * Verification is done in the integrity check after each step
          * No need for additional final verification
          */
-    });
-
-    it('should maintain discard conservation when stadiums are replaced', () => {
-        const stadium1 = { templateId: 'stadium-1', type: 'stadium' as const };
-        const stadium2 = { templateId: 'stadium-2', type: 'stadium' as const };
-        
-        const repositoryExtensions = new MockCardRepository({
-            stadiums: new Map([
-                [ 'stadium-1', {
-                    templateId: 'stadium-1',
-                    name: 'Stadium One',
-                    effects: [],
-                }],
-                [ 'stadium-2', {
-                    templateId: 'stadium-2',
-                    name: 'Stadium Two',
-                    effects: [],
-                }],
-            ]),
-        });
-        
-        const stateAfterGame = runBotGame({
-            customRepository: repositoryExtensions,
-            initialDecks: [
-                [
-                    'basic-creature', 'basic-creature', 'basic-creature',
-                    'high-hp-creature', 'high-hp-creature', 'high-hp-creature',
-                    'stadium-1', 'stadium-2',
-                ],
-                [
-                    'basic-creature', 'basic-creature', 'basic-creature',
-                    'high-hp-creature', 'high-hp-creature', 'high-hp-creature',
-                    'stadium-1', 'stadium-2',
-                ],
-            ],
-            maxSteps: 50,
-        });
-        
-        const state = stateAfterGame as ControllerState<Controllers>;
-        
-        // Count all stadium cards in the game
-        let totalStadiumCards = 0;
-        
-        // Check hands
-        for (const hand of state.hand) {
-            totalStadiumCards += hand.filter((card: GameCard) => card.type === 'stadium').length;
-        }
-        
-        // Check decks
-        for (const deck of state.deck) {
-            totalStadiumCards += deck.filter((card: GameCard) => card.type === 'stadium').length;
-        }
-        
-        // Check discards
-        for (const discard of state.discard) {
-            totalStadiumCards += discard.filter((card: GameCard) => card.type === 'stadium').length;
-        }
-        
-        // Check active stadium
-        if (state.stadium.activeStadium) {
-            totalStadiumCards += 1;
-        }
-        
-        // Should have 4 total stadium cards (2 per player)
-        expect(totalStadiumCards).to.equal(4, 'All stadium cards should be accounted for');
     });
 });

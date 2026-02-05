@@ -5,6 +5,7 @@ import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { StadiumData } from '../src/repository/card-types.js';
 import { EndTurnResponseMessage } from '../src/messages/response/end-turn-response-message.js';
+import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
 
 describe('Stadium Cards', () => {
     const basicStadium = { templateId: 'basic-stadium', type: 'stadium' as const };
@@ -193,29 +194,38 @@ describe('Stadium Cards', () => {
     });
 
     describe('Side Effects', () => {
-        it('should apply retreat cost reduction when retreat cost stadium is active', () => {
-            // Get the creature's field instance ID
-            const creatureInstanceId = 'tank-creature-0';
+        it('should reduce retreat cost when retreat cost stadium is active', () => {
+            // Tank creature has retreat cost 3, stadium reduces by 1 = need 2 energy
+            const activeCreatureId = 'tank-creature-0';
             
             const { state } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('retreat-cost-stadium', 'stadium'),
+                    new RetreatResponseMessage(1), // Retreat to bench position 1
                 ],
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withHand(0, [ retreatCostStadium ]),
-                    StateBuilder.withCreatures(0, 'tank-creature'), // Tank has retreat cost 3
-                    StateBuilder.withEnergy(creatureInstanceId, { fighting: 2 }),
+                    StateBuilder.withCreatures(0, 'tank-creature', [ 'basic-creature' ]), // Active, then benched
+                    StateBuilder.withEnergy(activeCreatureId, { fighting: 2 }), // Has exactly 2 energy
                 ),
-                maxSteps: 10,
+                maxSteps: 20,
             });
 
             // Stadium should be active
             expect(state.stadium.activeStadium).to.exist;
             expect(state.stadium.activeStadium?.templateId).to.equal('retreat-cost-stadium');
             
-            // Retreat cost reduction effect should be registered
-            const retreatEffects = state.effects.activePassiveEffects.filter((e: any) => e.effect.type === 'retreat-cost-reduction');
-            expect(retreatEffects.length).to.be.greaterThan(0, 'Retreat cost reduction effect should be registered');
+            // Retreat should have succeeded - basic creature should now be active
+            const activeCreature = state.field.creatures[0][0];
+            expect(activeCreature.evolutionStack[0].templateId).to.equal('basic-creature', 'Basic creature should be active after retreat');
+            
+            // Tank should be on bench at position 1
+            const benchCreature = state.field.creatures[0][1];
+            expect(benchCreature.evolutionStack[0].templateId).to.equal('tank-creature', 'Tank should be on bench');
+            
+            // Energy should have been discarded (2 energy used for retreat)
+            const tankEnergy = state.energy.attachedEnergyByInstance[benchCreature.fieldInstanceId];
+            expect(tankEnergy.fighting).to.equal(0, 'Fighting energy should be discarded for retreat cost');
         });
 
         it('should apply HP boost when HP boost stadium is active', () => {
@@ -237,6 +247,56 @@ describe('Stadium Cards', () => {
             // HP bonus effect should be registered
             const hpEffects = state.effects.activePassiveEffects.filter((e: any) => e.effect.type === 'hp-bonus');
             expect(hpEffects.length).to.be.greaterThan(0, 'HP bonus effect should be registered');
+        });
+        
+        it('should not allow retreat without stadium when energy is insufficient', () => {
+            // Tank creature has retreat cost 3, but only has 2 energy - should fail without stadium
+            const activeCreatureId = 'tank-creature-0';
+            
+            const { state } = runTestGame({
+                actions: [
+                    new RetreatResponseMessage(1), // Try to retreat
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withHand(0, []),
+                    StateBuilder.withCreatures(0, 'tank-creature', [ 'basic-creature' ]),
+                    StateBuilder.withEnergy(activeCreatureId, { fighting: 2 }), // Only 2 energy, needs 3
+                ),
+                maxSteps: 10,
+            });
+
+            // Retreat should have failed - tank should still be active
+            const activeCreature = state.field.creatures[0][0];
+            expect(activeCreature.evolutionStack[0].templateId).to.equal('tank-creature', 'Tank should still be active');
+        });
+        
+        it('should allow retreat with hp boost stadium replacing retreat cost stadium', () => {
+            // Test that replacing stadiums properly clears old effects
+            const activeCreatureId = 'tank-creature-0';
+            
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('retreat-cost-stadium', 'stadium'),
+                    new EndTurnResponseMessage(),
+                    new EndTurnResponseMessage(),
+                    new PlayCardResponseMessage('hp-boost-stadium', 'stadium'),
+                    new RetreatResponseMessage(1), // Now try to retreat - should fail (needs 3 energy)
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withHand(0, [ retreatCostStadium, hpBoostStadium ]),
+                    StateBuilder.withCreatures(0, 'tank-creature', [ 'basic-creature' ]),
+                    StateBuilder.withEnergy(activeCreatureId, { fighting: 2 }), // Only 2 energy
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                ),
+                maxSteps: 30,
+            });
+
+            // HP boost stadium should be active (replaced retreat cost stadium)
+            expect(state.stadium.activeStadium?.templateId).to.equal('hp-boost-stadium');
+            
+            // Retreat should have failed since retreat cost reduction is gone
+            const activeCreature = state.field.creatures[0][0];
+            expect(activeCreature.evolutionStack[0].templateId).to.equal('tank-creature', 'Tank should still be active - retreat failed');
         });
     });
 });

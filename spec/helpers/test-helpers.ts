@@ -54,14 +54,32 @@ export function createTestPlayersWithDifferentHandlers(
     ];
 }
 
-export function createActionTracker(actions: ResponseMessage[]) {
+export function createActionTracker(actions: ResponseMessage[], playerActions?: Map<number, ResponseMessage[]>) {
     let actionIndex = 0;
     
     return {
         handler: (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => {
-            if (actionIndex < actions.length) {
+            // If player-specific actions are provided, use those based on current turn
+            if (playerActions) {
+                const currentPlayer = handlerData.turn;
+                const playerActionList = playerActions.get(currentPlayer);
+                if (playerActionList && playerActionList.length > 0) {
+                    responses.push(playerActionList.shift()!);
+                }
+            } else if (actionIndex < actions.length) {
+                // Fallback to sequential actions for backward compatibility
                 responses.push(actions[actionIndex++]);
             }
+        },
+        getRemainingActions: () => {
+            if (playerActions) {
+                let total = 0;
+                for (const actions of playerActions.values()) {
+                    total += actions.length;
+                }
+                return total;
+            }
+            return actions.length - actionIndex;
         },
     };
 }
@@ -256,6 +274,22 @@ export function runTestGame(config: TestGameConfig) {
             }
         }
         driver.resume();
+        
+        // Check if we're in a waiting state with remaining actions
+        const currentState = driver.getState();
+        if (!currentState.completed && currentState.waiting && tracker.getRemainingActions() > 0) {
+            const waitingPositions = currentState.waiting.waiting;
+            if (waitingPositions) {
+                const positions = Array.isArray(waitingPositions) ? waitingPositions : [waitingPositions];
+                if (positions.length > 0) {
+                    // If there are actions left but we're waiting for a player, throw an error
+                    throw new Error(
+                        `Test has ${tracker.getRemainingActions()} actions remaining but game is waiting for player(s) ${positions.join(', ')}. ` +
+                        `Actions may be for the wrong player or turn order.`
+                    );
+                }
+            }
+        }
     }
 
     const state = driver.getState() as ControllerState<Controllers>;
