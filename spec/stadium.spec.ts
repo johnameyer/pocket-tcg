@@ -133,8 +133,6 @@ describe('Stadium Cards', () => {
 
     describe('Duplicate Name Prevention', () => {
         it('should prevent playing stadium with same name as active stadium', () => {
-            const duplicateStadium = { templateId: 'test-stadium-copy', type: 'stadium' as const };
-            
             const { state, getExecutedCount } = runTestGame({
                 actions: [
                     new PlayCardResponseMessage('basic-stadium', 'stadium'),

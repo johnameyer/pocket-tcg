@@ -38,6 +38,11 @@ export class StadiumController extends GlobalController<StadiumState, StadiumDep
 
     /**
      * Play a stadium card to the field. If there's an existing stadium, it will be discarded.
+     * 
+     * @param templateId - The template ID of the stadium card being played
+     * @param instanceId - The instance ID of the specific stadium card copy
+     * @param owner - The player index (0 or 1) who is playing the stadium
+     * @param name - The display name of the stadium for tracking and UI purposes
      */
     public playStadium(templateId: string, instanceId: string, owner: number, name: string): void {
         // Discard the existing stadium if there is one
