@@ -49,7 +49,7 @@ export class PreventAttackEffectHandler extends AbstractEffectHandler<PreventAtt
      */
     apply(controllers: Controllers, effect: PreventAttackEffect, context: EffectContext): void {
         if (effect.target.type !== 'resolved') {
-            throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
+            throw new Error(`Expected resolved target, got ${effect.target?.type ?? 'undefined'}`);
         }
         
         // Get resolved targets directly

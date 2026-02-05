@@ -57,6 +57,20 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Hand size limits (default 10 cards, customizable)
 - ✅ Stadium cards with persistent field effects
 
+### Passive Effects System
+- ✅ Damage prevention effects
+- ✅ Damage reduction effects
+- ✅ Damage boost effects
+- ✅ HP bonus effects
+- ✅ Retreat prevention effects
+- ✅ Retreat cost modifiers (increase/decrease)
+- ✅ Weakness disable effects
+- ✅ Attack prevention effects
+- ✅ Card playing prevention (by card type)
+- ✅ Energy attachment prevention
+- ✅ Attack energy cost modifiers
+- ✅ Evolution flexibility effects
+
 ### Battle Features
 - ✅ Special ex cards (2 points when knocked out)
 - ✅ Mega ex cards (3 points when knocked out)
