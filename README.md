@@ -160,24 +160,6 @@ Stadium cards are a special trainer card type that provide persistent field-wide
 - Stadium effects persist until replaced or removed
 - Support for passive effects like HP bonuses, damage modifiers, retreat cost changes, etc.
 
-Example stadium definition:
-
-```typescript
-const myStadiums = new Map<string, StadiumData>();
-myStadiums.set('power-plant', {
-  templateId: 'power-plant',
-  name: 'Power Plant',
-  effects: [
-    {
-      type: 'damage-boost',
-      amount: { type: 'constant', value: 10 },
-      target: { attributes: { types: ['electric'] } },
-      duration: { type: 'while-in-play', instanceId: '' }
-    }
-  ]
-});
-```
-
 ## Development
 
 ### Building

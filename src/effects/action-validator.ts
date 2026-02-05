@@ -218,10 +218,8 @@ export class ActionValidator {
             return false; // Cannot play duplicate stadium
         }
         
-        if (stadiumData.effects && stadiumData.effects.length > 0) {
-            return EffectValidator.canApplyCardEffects(stadiumData.effects, handlerData, playerId, stadiumData.name, undefined, cardRepository);
-        }
-        
+        // Stadiums can always be played regardless of whether their effects can currently be applied
+        // since they have persistent effects that may become relevant later
         return true;
     }
     

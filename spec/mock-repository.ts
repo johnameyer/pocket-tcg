@@ -130,16 +130,26 @@ mockStadiumData.set('basic-stadium', {
     effects: [],
 });
 
-mockStadiumData.set('test-stadium', {
-    templateId: 'test-stadium',
-    name: 'Test Stadium',
-    effects: [],
+mockStadiumData.set('hp-boost-stadium', {
+    templateId: 'hp-boost-stadium',
+    name: 'HP Boost Stadium',
+    effects: [{
+        type: 'hp-bonus',
+        amount: { type: 'constant', value: 20 },
+        target: {},
+        duration: { type: 'while-in-play', instanceId: '' },
+    }],
 });
 
-mockStadiumData.set('other-stadium', {
-    templateId: 'other-stadium',
-    name: 'Other Stadium',
-    effects: [],
+mockStadiumData.set('retreat-cost-stadium', {
+    templateId: 'retreat-cost-stadium',
+    name: 'Retreat Cost Stadium',
+    effects: [{
+        type: 'retreat-cost-reduction',
+        amount: { type: 'constant', value: 1 },
+        target: {},
+        duration: { type: 'while-in-play', instanceId: '' },
+    }],
 });
 
 export interface MockRepositoryExtensions {

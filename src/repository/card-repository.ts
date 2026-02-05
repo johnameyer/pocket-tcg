@@ -1,4 +1,4 @@
-import { CreatureData, SupporterData, ItemData, ToolData, StadiumData } from './card-types.js';
+import { CreatureData, SupporterData, ItemData, ToolData, StadiumData, CardData } from './card-types.js';
 
 export class CardRepository {
     private creatureNameMap: Map<string, CreatureData> = new Map();
@@ -106,7 +106,7 @@ export class CardRepository {
      * @returns The card data and its type
      * @throws Error if the card is not found in any collection
      */
-    public getCard(id: string): { data: CreatureData | SupporterData | ItemData | ToolData | StadiumData; type: string } {
+    public getCard(id: string): { data: CardData; type: string } {
         try {
             return { data: this.getCreature(id), type: 'creature' };
         } catch (e) {

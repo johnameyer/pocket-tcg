@@ -266,17 +266,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const activeStadium = controllers.stadium.getActiveStadium();
                     return activeStadium !== undefined && activeStadium.name === stadiumData.name;
                 }),
-                EventHandler.validate('Stadium effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
-                    if (message.cardType !== 'stadium') {
-                        return false; 
-                    }
-                    
-                    // Create proper HandlerData structure from controllers
-                    const handlerData = ControllerUtils.createPlayerView(controllers, source);
-                    
-                    // Use ActionValidator to check if the stadium can be played
-                    return !ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
-                }),
             ],
             fallback: (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                 // Forfeit on invalid card play
@@ -435,6 +424,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 });
                 
                 // Register passive effects from stadium
+                // TODO: We shouldn't need to explicitly specify all effect types here (or for tools/supporters above)
                 if (stadiumData.effects) {
                     for (const effect of stadiumData.effects) {
                         if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 

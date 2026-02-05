@@ -255,8 +255,6 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                     cardDescription = ' (Already played a Stadium this turn!)';
                 } else if (handlerData.stadium?.activeStadium?.name === stadiumData.name) {
                     cardDescription = ' (Stadium with same name already active!)';
-                } else {
-                    cardDescription = ' (Cannot play this card now)';
                 }
             } else if (stadiumData.effects && stadiumData.effects.length > 0) {
                 cardDescription = ` - ${stadiumData.effects[0].type}`;
@@ -347,6 +345,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     if (selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item' || selectedCard.type === 'stadium') {
         responsesQueue.push(new PlayCardResponseMessage(selectedCard.templateId, selectedCard.type, targetPlayerId, targetFieldCardIndex));
     } else {
+        // TODO: Remove this limitation - tool cards should be fully supported
         // Handle tool cards or other unsupported types
         await intermediary.form({ type: 'print', message: [ `Cannot play ${selectedCard.type} cards yet.` ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
