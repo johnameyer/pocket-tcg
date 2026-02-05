@@ -140,4 +140,163 @@ export class PassiveEffectMatcher {
         ),
         );
     }
+
+    /**
+     * Calculate the effective retreat cost for a creature, considering all retreat cost modifiers.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature (0 = active, 1+ = bench)
+     * @param baseRetreatCost The base retreat cost from the creature card
+     * @returns The effective retreat cost after applying all modifiers
+     */
+    static calculateEffectiveRetreatCost(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        baseRetreatCost: number,
+    ): number {
+        let effectiveRetreatCost = baseRetreatCost;
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return effectiveRetreatCost;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        // Apply retreat cost reduction effects
+        const reductionEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-reduction');
+        for (const passiveEffect of reductionEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
+                effectiveRetreatCost -= amount;
+            }
+        }
+        
+        // Apply retreat cost increase effects
+        const increaseEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-increase');
+        for (const passiveEffect of increaseEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
+                effectiveRetreatCost += amount;
+            }
+        }
+        
+        // Retreat cost cannot be negative
+        return Math.max(0, effectiveRetreatCost);
+    }
+
+    /**
+     * Check if a player is prevented from attaching energy.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID to check
+     * @returns True if the player is prevented from attaching energy
+     */
+    static isEnergyAttachmentPrevented(
+        controllers: Controllers,
+        playerId: number,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-energy-attachment');
+        for (const passiveEffect of preventEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect targets the player
+            const targetPlayer = effect.target === 'self' ? passiveEffect.sourcePlayer : 
+                               effect.target === 'opponent' ? (passiveEffect.sourcePlayer + 1) % controllers.players.count : 
+                               -1; // 'both' case
+            
+            if (targetPlayer === playerId || effect.target === 'both') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if a creature is prevented from attacking.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature
+     * @returns True if the creature is prevented from attacking
+     */
+    static isAttackPrevented(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-attack');
+        for (const passiveEffect of preventEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect applies to the creature
+            if (effect.target.type === 'resolved') {
+                for (const target of effect.target.targets) {
+                    if (target.playerId === playerId && target.fieldIndex === fieldIndex) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if weakness is disabled for a creature.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature
+     * @returns True if weakness is disabled for the creature
+     */
+    static isWeaknessDisabled(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+    ): boolean {
+        const disableEffects = controllers.effects.getPassiveEffectsByType('disable-weakness');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        for (const passiveEffect of disableEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

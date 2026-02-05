@@ -297,7 +297,7 @@ export type HpBonusEffect = {
 /**
  * Represents an effect that reduces the energy cost of retreating.
  * @property {string} type - Always 'retreat-cost-reduction' to identify this effect type
- * @property {EffectValue} amount - The amount to reduce retreat cost by
+ * @property {EffectValue} amount - The amount to reduce retreat cost by (must be positive)
  * @property {FieldTargetCriteria} target - Criteria for which creatures to reduce retreat cost for (evaluated passively)
  * @property {Duration} duration - How long the reduction persists
  * @example { type: 'retreat-cost-reduction', amount: { type: 'constant', value: 1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
@@ -305,6 +305,22 @@ export type HpBonusEffect = {
  */
 export type RetreatCostReductionEffect = {
     type: 'retreat-cost-reduction';
+    amount: EffectValue;
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that increases the energy cost of retreating.
+ * @property {string} type - Always 'retreat-cost-increase' to identify this effect type
+ * @property {EffectValue} amount - The amount to increase retreat cost by (must be positive)
+ * @property {FieldTargetCriteria} target - Criteria for which creatures to increase retreat cost for (evaluated passively)
+ * @property {Duration} duration - How long the increase persists
+ * @example { type: 'retreat-cost-increase', amount: { type: 'constant', value: 1 }, target: { player: 'opponent', position: 'active' }, duration: 'this-turn' }
+ * // Opponent's active creature needs 1 more energy to retreat this turn
+ */
+export type RetreatCostIncreaseEffect = {
+    type: 'retreat-cost-increase';
     amount: EffectValue;
     target: FieldTargetCriteria;
     duration: Duration;
@@ -329,6 +345,80 @@ export type ImmediateEffect =
     | EndTurnEffect;
 
 /**
+ * Represents an effect that prevents playing specific card types.
+ * @property {string} type - Always 'prevent-playing' to identify this effect type
+ * @property {Array<'creature' | 'item' | 'supporter' | 'tool'>} cardTypes - Which card types cannot be played
+ * @property {'self' | 'opponent' | 'both'} target - Which player(s) cannot play the cards
+ * @property {Duration} duration - How long the prevention persists
+ * @example { type: 'prevent-playing', cardTypes: ['item'], target: 'opponent', duration: 'this-turn' }
+ * // Opponent cannot play items this turn
+ */
+export type PreventPlayingEffect = {
+    type: 'prevent-playing';
+    cardTypes: Array<'creature' | 'item' | 'supporter' | 'tool'>;
+    target: 'self' | 'opponent' | 'both';
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that disables weakness bonus damage.
+ * @property {string} type - Always 'disable-weakness' to identify this effect type
+ * @property {FieldTargetCriteria} target - Criteria for which creatures have weakness disabled (evaluated passively)
+ * @property {Duration} duration - How long weakness is disabled
+ * @example { type: 'disable-weakness', target: { player: 'self', position: 'active' }, duration: 'this-turn' }
+ * // Your active creature doesn't take extra weakness damage this turn
+ */
+export type DisableWeaknessEffect = {
+    type: 'disable-weakness';
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that prevents a creature from attacking.
+ * @property {string} type - Always 'prevent-attack' to identify this effect type
+ * @property {FieldTarget} target - The creature that cannot attack
+ * @property {Duration} duration - How long the creature cannot attack
+ * @example { type: 'prevent-attack', target: { type: 'fixed', player: 'opponent', position: 'active' }, duration: 'until-end-of-next-turn' }
+ * // Opponent's active creature cannot attack until end of next turn
+ */
+export type PreventAttackEffect = {
+    type: 'prevent-attack';
+    target: FieldTarget;
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that prevents energy attachment to creatures.
+ * @property {string} type - Always 'prevent-energy-attachment' to identify this effect type
+ * @property {'self' | 'opponent' | 'both'} target - Which player(s) cannot attach energy
+ * @property {Duration} duration - How long energy attachment is prevented
+ * @example { type: 'prevent-energy-attachment', target: 'opponent', duration: 'this-turn' }
+ * // Opponent cannot attach energy this turn
+ */
+export type PreventEnergyAttachmentEffect = {
+    type: 'prevent-energy-attachment';
+    target: 'self' | 'opponent' | 'both';
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that modifies attack energy cost.
+ * @property {string} type - Always 'attack-energy-cost-modifier' to identify this effect type
+ * @property {EffectValue} amount - The amount to modify attack energy costs by (positive to increase, negative to decrease)
+ * @property {FieldTargetCriteria} target - Criteria for which creatures have modified attack costs (evaluated passively)
+ * @property {Duration} duration - How long the modifier persists
+ * @example { type: 'attack-energy-cost-modifier', amount: { type: 'constant', value: -1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
+ * // Your active creature's attacks cost 1 less energy this turn
+ */
+export type AttackEnergyCostModifierEffect = {
+    type: 'attack-energy-cost-modifier';
+    amount: EffectValue;
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
+
+/**
  * Modifier effects that can be passive and last over time.
  * These effects change values or prevent actions and are queried when needed.
  */
@@ -339,7 +429,13 @@ export type ModifierEffect =
     | EvolutionFlexibilityEffect
     | DamageBoostEffect
     | HpBonusEffect
-    | RetreatCostReductionEffect;
+    | RetreatCostReductionEffect
+    | RetreatCostIncreaseEffect
+    | PreventPlayingEffect
+    | DisableWeaknessEffect
+    | PreventAttackEffect
+    | PreventEnergyAttachmentEffect
+    | AttackEnergyCostModifierEffect;
 
 /**
  * Union type representing all possible effects that can be applied in the game.

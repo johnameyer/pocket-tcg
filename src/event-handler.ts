@@ -86,6 +86,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const cardData = controllers.cardRepository.getCreature(playerCard.templateId);
                     return message.attackIndex < 0 || message.attackIndex >= cardData.attacks.length;
                 }),
+                EventHandler.validate('Attack is prevented', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
+                    // Check if any prevent-attack effects apply to this creature
+                    return PassiveEffectMatcher.isAttackPrevented(controllers, source, 0);
+                }),
                 EventHandler.validate('Insufficient energy for attack', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
                     const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
                     if (!fieldInstanceId) {
@@ -207,6 +211,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const hand = controllers.hand.getHand(source);
                     return !hand.some(card => card.templateId === message.templateId);
                 }),
+                EventHandler.validate('Playing this card type is prevented', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                    // Check if any prevent-playing effects apply to this player and card type
+                    const preventPlayingEffects = controllers.effects.getPassiveEffectsByType('prevent-playing');
+                    for (const passiveEffect of preventPlayingEffects) {
+                        const effect = passiveEffect.effect;
+                        // Check if this effect targets the current player
+                        const targetPlayer = effect.target === 'self' ? passiveEffect.sourcePlayer : 
+                                           effect.target === 'opponent' ? (passiveEffect.sourcePlayer + 1) % controllers.players.count : 
+                                           -1; // 'both' case
+                        
+                        if (targetPlayer === source || effect.target === 'both') {
+                            // Check if the card type is prevented
+                            if (effect.cardTypes.includes(message.cardType)) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }),
                 EventHandler.validate('Supporter already played this turn', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     return message.cardType === 'supporter' && controllers.turnState.hasSupporterBeenPlayedThisTurn();
                 }),
@@ -309,7 +332,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
                             || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
                             || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                            || effect.type === 'retreat-prevention') {
+                            || effect.type === 'retreat-prevention' || effect.type === 'retreat-cost-increase'
+                            || effect.type === 'prevent-playing' || effect.type === 'disable-weakness'
+                            || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
+                            || effect.type === 'attack-energy-cost-modifier') {
                             // Get the field card instance ID for while-in-play duration
                             const benchCards = controllers.field.getCards(sourceHandler);
                             const justPlayedCard = benchCards.find(c => c?.templateId === message.templateId);
@@ -389,7 +415,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
                                 || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
                                 || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                                || effect.type === 'retreat-prevention') {
+                                || effect.type === 'retreat-prevention' || effect.type === 'retreat-cost-increase'
+                                || effect.type === 'prevent-playing' || effect.type === 'disable-weakness'
+                                || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
+                                || effect.type === 'attack-energy-cost-modifier') {
                                 controllers.effects.registerPassiveEffect(
                                     targetPlayerId,
                                     toolData.name,
@@ -674,6 +703,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('First turn restriction', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
                     return controllers.energy.isFirstTurnRestricted();
                 }),
+                EventHandler.validate('Energy attachment is prevented', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
+                    // Check if any prevent-energy-attachment effects apply to this player
+                    return PassiveEffectMatcher.isEnergyAttachmentPrevented(controllers, source);
+                }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
                 return new AttachEnergyResponseMessage(0);
@@ -839,11 +872,20 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     const creatureData = controllers.cardRepository.getCreature(activeCard.templateId);
-                    const retreatCost = creatureData.retreatCost;
+                    const baseRetreatCost = creatureData.retreatCost;
+                    
+                    // Calculate effective retreat cost with modifiers
+                    const effectiveRetreatCost = PassiveEffectMatcher.calculateEffectiveRetreatCost(
+                        controllers,
+                        source,
+                        0,
+                        baseRetreatCost,
+                    );
+                    
                     const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
                     const totalEnergy = Object.values(attachedEnergy).reduce((sum, amount) => sum + amount, 0);
                     
-                    return totalEnergy < retreatCost;
+                    return totalEnergy < effectiveRetreatCost;
                 }),
                 EventHandler.validate('Cannot retreat while paralyzed', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     return controllers.statusEffects.hasStatusEffect(source, 0, 'paralyzed');
@@ -880,13 +922,19 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 return; 
             }
             
-            // Calculate retreat cost after reductions
+            // Calculate effective retreat cost after modifiers
             const creatureData = controllers.cardRepository.getCreature(activeCard.templateId);
-            const retreatCost = creatureData.retreatCost;
+            const baseRetreatCost = creatureData.retreatCost;
+            const effectiveRetreatCost = PassiveEffectMatcher.calculateEffectiveRetreatCost(
+                controllers,
+                sourceHandler,
+                0,
+                baseRetreatCost,
+            );
             
             // Consume energy for retreat
             const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
-            let energyToRemove = retreatCost;
+            let energyToRemove = effectiveRetreatCost;
             
             // Remove energy in order of availability
             for (const [ energyType, amount ] of Object.entries(attachedEnergy)) {
