@@ -67,6 +67,7 @@ export class StateBuilder {
             turnState: {
                 shouldEndTurn: false,
                 supporterPlayedThisTurn: false,
+                stadiumPlayedThisTurn: false,
                 retreatedThisTurn: false,
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
@@ -106,6 +107,9 @@ export class StateBuilder {
             deck: [[], []], // Array of card arrays for each player
             hand: [[], []], // Array of card arrays for each player
             discard: [[], []], // Array of discarded card arrays for each player
+            stadium: {
+                activeStadium: undefined,
+            },
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided

@@ -338,4 +338,6 @@ export function runBotGame(config: {
             break;
         }
     }
+    
+    return driver.getState();
 }

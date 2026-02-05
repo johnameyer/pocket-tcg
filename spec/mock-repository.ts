@@ -130,6 +130,18 @@ mockStadiumData.set('basic-stadium', {
     effects: [],
 });
 
+mockStadiumData.set('test-stadium', {
+    templateId: 'test-stadium',
+    name: 'Test Stadium',
+    effects: [],
+});
+
+mockStadiumData.set('other-stadium', {
+    templateId: 'other-stadium',
+    name: 'Other Stadium',
+    effects: [],
+});
+
 export interface MockRepositoryExtensions {
     creatures?: Map<string, CreatureData>;
     supporters?: Map<string, SupporterData>;
