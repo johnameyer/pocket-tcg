@@ -31,6 +31,9 @@ export class RetreatCostModificationEffectHandler extends AbstractEffectHandler<
         // Get the amount of retreat cost modification
         const modificationAmount = getEffectValue(effect.amount, controllers, context);
         
+        // Determine operation based on effect type
+        const operation = effect.type === 'retreat-cost-reduction' ? 'decrease' : 'increase';
+        
         // Register as a passive effect with criteria matching
         controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
@@ -41,7 +44,7 @@ export class RetreatCostModificationEffectHandler extends AbstractEffectHandler<
         );
         
         // Send a message about the retreat cost modification
-        const changeText = effect.operation === 'decrease' 
+        const changeText = operation === 'decrease' 
             ? `reduces retreat cost by ${modificationAmount}` 
             : `increases retreat cost by ${modificationAmount}`;
         controllers.players.messageAll({

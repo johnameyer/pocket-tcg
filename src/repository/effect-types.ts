@@ -295,36 +295,42 @@ export type HpBonusEffect = {
 };
 
 /**
- * Represents an effect that modifies the energy cost of retreating.
- * @property {string} type - Always 'retreat-cost-modification' to identify this effect type
- * @property {EffectValue} amount - The amount to modify retreat cost by (must be positive)
- * @property {'increase' | 'decrease'} operation - Whether to increase or decrease retreat cost
- * @property {FieldTargetCriteria} target - Criteria for which creatures to modify retreat cost for (evaluated passively)
- * @property {Duration} duration - How long the modification persists
- * @example { type: 'retreat-cost-modification', operation: 'decrease', amount: { type: 'constant', value: 1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
+ * Represents an effect that reduces the energy cost of retreating.
+ * @property {string} type - Always 'retreat-cost-reduction' to identify this effect type
+ * @property {EffectValue} amount - The amount to reduce retreat cost by (must be positive)
+ * @property {FieldTargetCriteria} target - Criteria for which creatures to reduce retreat cost for (evaluated passively)
+ * @property {Duration} duration - How long the reduction persists
+ * @example { type: 'retreat-cost-reduction', amount: { type: 'constant', value: 1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
  * // Your active creature can retreat for 1 less energy this turn
- * @example { type: 'retreat-cost-modification', operation: 'increase', amount: { type: 'constant', value: 1 }, target: { player: 'opponent', position: 'active' }, duration: 'this-turn' }
- * // Opponent's active creature needs 1 more energy to retreat this turn
  */
-export type RetreatCostModificationEffect = {
-    type: 'retreat-cost-modification';
-    operation: 'increase' | 'decrease';
+export type RetreatCostReductionEffect = {
+    type: 'retreat-cost-reduction';
     amount: EffectValue;
     target: FieldTargetCriteria;
     duration: Duration;
 };
 
 /**
- * Legacy type alias for retreat cost reduction.
- * @deprecated Use RetreatCostModificationEffect with operation: 'decrease' instead
+ * Represents an effect that increases the energy cost of retreating.
+ * @property {string} type - Always 'retreat-cost-increase' to identify this effect type
+ * @property {EffectValue} amount - The amount to increase retreat cost by (must be positive)
+ * @property {FieldTargetCriteria} target - Criteria for which creatures to increase retreat cost for (evaluated passively)
+ * @property {Duration} duration - How long the increase persists
+ * @example { type: 'retreat-cost-increase', amount: { type: 'constant', value: 1 }, target: { player: 'opponent', position: 'active' }, duration: 'this-turn' }
+ * // Opponent's active creature needs 1 more energy to retreat this turn
  */
-export type RetreatCostReductionEffect = RetreatCostModificationEffect & { operation: 'decrease' };
+export type RetreatCostIncreaseEffect = {
+    type: 'retreat-cost-increase';
+    amount: EffectValue;
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
 
 /**
- * Legacy type alias for retreat cost increase.
- * @deprecated Use RetreatCostModificationEffect with operation: 'increase' instead
+ * Unified type for retreat cost modification effects.
+ * Combines reduction and increase into a single type with operation enum.
  */
-export type RetreatCostIncreaseEffect = RetreatCostModificationEffect & { operation: 'increase' };
+export type RetreatCostModificationEffect = RetreatCostReductionEffect | RetreatCostIncreaseEffect;
 
 /**
  * Immediate effects that are resolved immediately and don't persist over time.
@@ -415,7 +421,8 @@ export type ModifierEffect =
     | EvolutionFlexibilityEffect
     | DamageBoostEffect
     | HpBonusEffect
-    | RetreatCostModificationEffect
+    | RetreatCostReductionEffect
+    | RetreatCostIncreaseEffect
     | PreventPlayingEffect
     | PreventAttackEffect
     | PreventEnergyAttachmentEffect

@@ -167,8 +167,11 @@ export class PassiveEffectMatcher {
         // Create a handler data view for criteria matching
         const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
         
-        // Apply retreat cost modification effects
-        const modificationEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-modification');
+        // Apply retreat cost modification effects (both reduction and increase)
+        const modificationEffects = [
+            ...controllers.effects.getPassiveEffectsByType('retreat-cost-reduction'),
+            ...controllers.effects.getPassiveEffectsByType('retreat-cost-increase'),
+        ];
         for (const passiveEffect of modificationEffects) {
             const effect = passiveEffect.effect;
             // Check if this effect applies to the creature
@@ -181,7 +184,7 @@ export class PassiveEffectMatcher {
             
             if (matchesCriteria) {
                 const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
-                if (effect.operation === 'decrease') {
+                if (effect.type === 'retreat-cost-reduction') {
                     effectiveRetreatCost -= amount;
                 } else {
                     effectiveRetreatCost += amount;
