@@ -6,86 +6,23 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
-import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 import { PreventAttackEffectHandler } from '../../../src/effects/handlers/prevent-attack-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { PreventAttackEffect } from '../../../src/repository/effect-types.js';
-import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Prevent Attack Effect', () => {
-    describe('canApply', () => {
-        const handler = new PreventAttackEffectHandler();
-        const mockRepository = new MockCardRepository();
-
-        it('should return true when target exists', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
-            );
-
-            const effect: PreventAttackEffect = {
-                type: 'prevent-attack',
-                target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.true;
-        });
-
-        it('should return false when target does not exist (target resolution failure)', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-            );
-
-            const effect: PreventAttackEffect = {
-                type: 'prevent-attack',
-                target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.false;
-        });
-
-        it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
-            );
-
-            const effect: PreventAttackEffect = {
-                type: 'prevent-attack',
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.false;
-        });
-    });
-
     describe('getResolutionRequirements', () => {
         const handler = new PreventAttackEffectHandler();
 
-        it('should return target resolution requirement', () => {
+        it('should return empty resolution requirements (no target resolution needed)', () => {
             const effect: PreventAttackEffect = {
                 type: 'prevent-attack',
-                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                target: { player: 'opponent', position: 'active' },
                 duration: { type: 'until-end-of-turn' },
             };
 
             const result = handler.getResolutionRequirements(effect);
             
-            expect(result).to.have.lengthOf(1);
-            expect(result[0].targetProperty).to.equal('target');
-            expect(result[0].required).to.be.true;
+            expect(result).to.have.lengthOf(0);
         });
     });
 
@@ -120,7 +57,7 @@ describe('Prevent Attack Effect', () => {
                 name: 'Prevention Item',
                 effects: [{
                     type: 'prevent-attack',
-                    target: { type: 'fixed', player: 'opponent', position: 'active' },
+                    target: { player: 'opponent', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -129,7 +66,7 @@ describe('Prevent Attack Effect', () => {
                 name: 'Self Prevention Item',
                 effects: [{
                     type: 'prevent-attack',
-                    target: { type: 'fixed', player: 'self', position: 'active' },
+                    target: { player: 'self', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -138,7 +75,7 @@ describe('Prevent Attack Effect', () => {
                 name: 'Choice Prevention Item',
                 effects: [{
                     type: 'prevent-attack',
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field' }},
+                    target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -147,7 +84,7 @@ describe('Prevent Attack Effect', () => {
                 name: 'All Prevention Item',
                 effects: [{
                     type: 'prevent-attack',
-                    target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }},
+                    target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -403,7 +340,7 @@ describe('Prevent Attack Effect', () => {
                     name: 'Prevention Item',
                     effects: [{
                         type: 'prevent-attack',
-                        target: { type: 'fixed', player: 'opponent', position: 'active' },
+                        target: { player: 'opponent', position: 'active' },
                         duration: { type: 'until-end-of-next-turn' },
                     }],
                 }],
