@@ -4,6 +4,7 @@ import { AttachableEnergyType } from './energy-types.js';
 import { CardTarget } from './targets/card-target.js';
 import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
+import { EnergyTarget } from './targets/energy-target.js';
 
 /**
  * Represents when an effect can be triggered.
@@ -144,19 +145,15 @@ export type SwitchEffect = {
  * Represents an effect that transfers energy between cards.
  * Can target energy in discard pile as well as on field cards.
  * @property {string} type - Always 'energy-transfer' to identify this effect type
- * @property {FieldTarget} source - The source of the energy to transfer (where energy comes from)
- * @property {FieldTarget} target - The destination creature to receive energy (where energy goes to)
- * @property {EffectValue} amount - The amount of energy to transfer
- * @property {AttachableEnergyType[]} energyTypes - The types of energy that can be transferred
- * @example { type: 'energy-transfer', source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, target: { type: 'fixed', player: 'self', position: 'bench' }, amount: { type: 'constant', value: 1 }, energyTypes: ['fire', 'grass'] }
- * // Transfer 1 fire or grass energy from a field creature to a benched creature
+ * @property {EnergyTarget} source - The source of the energy to transfer (where energy comes from)
+ * @property {EnergyTarget} target - The destination for energy (where energy goes to)
+ * @example { type: 'energy-transfer', source: { type: 'field', fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, criteria: { energyTypes: ['fire', 'grass'] }, count: 1 }, target: { type: 'field', fieldTarget: { type: 'fixed', player: 'self', position: 'active' }, count: 1 } }
+ * // Transfer 1 fire or grass energy from a field creature to active creature
  */
 export type EnergyTransferEffect = {
     type: 'energy-transfer';
-    source: FieldTarget;
-    target: FieldTarget;
-    amount: EffectValue;
-    energyTypes: AttachableEnergyType[];
+    source: EnergyTarget;
+    target: EnergyTarget;
 };
 
 /**
