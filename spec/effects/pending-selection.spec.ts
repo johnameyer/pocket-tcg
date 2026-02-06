@@ -17,10 +17,13 @@ describe('Pending Target Selection', () => {
                         name: 'Dual Target Supporter',
                         effects: [{
                             type: 'energy-transfer',
-                            source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                            source: {
+                                type: 'field',
+                                fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                                criteria: { energyTypes: [ 'fire' ] },
+                                count: 1,
+                            },
                             target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
-                            amount: { type: 'constant', value: 1 },
-                            energyTypes: [ 'fire' ],
                         }],
                     }],
                 ]),

@@ -143,17 +143,16 @@ export type SwitchEffect = {
 
 /**
  * Represents an effect that transfers energy between cards.
- * Can target energy in discard pile as well as on field cards.
  * @property {string} type - Always 'energy-transfer' to identify this effect type
- * @property {EnergyTarget} source - The source of the energy to transfer (where energy comes from)
- * @property {EnergyTarget} target - The destination for energy (where energy goes to)
- * @example { type: 'energy-transfer', source: { type: 'field', fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, criteria: { energyTypes: ['fire', 'grass'] }, count: 1 }, target: { type: 'field', fieldTarget: { type: 'fixed', player: 'self', position: 'active' }, count: 1 } }
+ * @property {EnergyTarget} source - The source of the energy to transfer (specifies which energy and from where)
+ * @property {FieldTarget} target - The destination creature to receive energy (where energy goes to)
+ * @example { type: 'energy-transfer', source: { type: 'field', fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, criteria: { energyTypes: ['fire', 'grass'] }, count: 1 }, target: { type: 'fixed', player: 'self', position: 'active' } }
  * // Transfer 1 fire or grass energy from a field creature to active creature
  */
 export type EnergyTransferEffect = {
     type: 'energy-transfer';
     source: EnergyTarget;
-    target: EnergyTarget;
+    target: FieldTarget;
 };
 
 /**

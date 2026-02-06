@@ -27,9 +27,12 @@ describe('Energy Transfer Effect', () => {
 
             const effect: EnergyTransferEffect = {
                 type: 'energy-transfer',
-                energyTypes: [ 'fire' ],
-                amount: { type: 'constant', value: 1 },
-                source: { type: 'fixed', player: 'self', position: 'active' },
+                source: {
+                    type: 'field',
+                    fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                    criteria: { energyTypes: [ 'fire' ] },
+                    count: 1,
+                },
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
@@ -51,9 +54,12 @@ describe('Energy Transfer Effect', () => {
 
             const effect: EnergyTransferEffect = {
                 type: 'energy-transfer',
-                energyTypes: [ 'fire' ],
-                amount: { type: 'constant', value: 1 },
-                source: { type: 'fixed', player: 'self', position: 'active' },
+                source: {
+                    type: 'field',
+                    fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                    criteria: { energyTypes: [ 'fire' ] },
+                    count: 1,
+                },
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
@@ -74,9 +80,12 @@ describe('Energy Transfer Effect', () => {
 
             const effect: EnergyTransferEffect = {
                 type: 'energy-transfer',
-                energyTypes: [ 'fire' ],
-                amount: { type: 'constant', value: 1 },
-                source: { type: 'fixed', player: 'self', position: 'active' },
+                source: {
+                    type: 'field',
+                    fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                    criteria: { energyTypes: [ 'fire' ] },
+                    count: 1,
+                },
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
@@ -118,10 +127,13 @@ describe('Energy Transfer Effect', () => {
                 name: 'Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
-                    source: { type: 'fixed', player: 'self', position: 'active' },
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                        criteria: { energyTypes: [ 'fire' ] },
+                        count: 1,
+                    },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
-                    amount: { type: 'constant', value: 1 },
-                    energyTypes: [ 'fire' ],
                 }],
             }],
             [ 'choice-transfer-supporter', {
@@ -129,10 +141,13 @@ describe('Energy Transfer Effect', () => {
                 name: 'Choice Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
-                    source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
+                        criteria: { energyTypes: [ 'fire', 'water' ] },
+                        count: 1,
+                    },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
-                    amount: { type: 'constant', value: 1 },
-                    energyTypes: [ 'fire', 'water' ],
                 }],
             }],
             [ 'multi-transfer-supporter', {
@@ -140,10 +155,13 @@ describe('Energy Transfer Effect', () => {
                 name: 'Multi Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
-                    source: { type: 'fixed', player: 'self', position: 'active' },
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                        criteria: { energyTypes: [ 'fire' ] },
+                        count: 2,
+                    },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
-                    amount: { type: 'constant', value: 2 },
-                    energyTypes: [ 'fire' ],
                 }],
             }],
             [ 'water-transfer-supporter', {
@@ -151,10 +169,13 @@ describe('Energy Transfer Effect', () => {
                 name: 'Water Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
-                    source: { type: 'fixed', player: 'self', position: 'active' },
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                        criteria: { energyTypes: [ 'water' ] },
+                        count: 1,
+                    },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
-                    amount: { type: 'constant', value: 1 },
-                    energyTypes: [ 'water' ],
                 }],
             }],
             [ 'any-energy-transfer-supporter', {
@@ -162,10 +183,13 @@ describe('Energy Transfer Effect', () => {
                 name: 'Any Energy Transfer Supporter',
                 effects: [{
                     type: 'energy-transfer',
-                    source: { type: 'fixed', player: 'self', position: 'active' },
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                        criteria: { energyTypes: [ 'fire', 'water', 'grass', 'lightning', 'psychic', 'fighting', 'darkness', 'metal' ] },
+                        count: 1,
+                    },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
-                    amount: { type: 'constant', value: 1 },
-                    energyTypes: [ 'fire', 'water', 'grass', 'lightning', 'psychic', 'fighting', 'darkness', 'metal' ],
                 }],
             }],
         ]),

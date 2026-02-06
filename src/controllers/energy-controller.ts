@@ -473,6 +473,21 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return this.state.discardedEnergy[playerId] || EnergyController.emptyEnergyDict();
     }
     
+    // Remove discarded energy for a player (for effects that recover energy from discard)
+    public removeDiscardedEnergy(playerId: number, energyType: AttachableEnergyType, amount: number): boolean {
+        if (!this.state.discardedEnergy[playerId]) {
+            return false;
+        }
+        
+        const available = this.state.discardedEnergy[playerId][energyType] || 0;
+        if (available < amount) {
+            return false;
+        }
+        
+        this.state.discardedEnergy[playerId][energyType] -= amount;
+        return true;
+    }
+    
     // Get total discarded energy for a player
     public getTotalDiscardedEnergy(playerId: number): number {
         const discarded = this.getDiscardedEnergy(playerId);

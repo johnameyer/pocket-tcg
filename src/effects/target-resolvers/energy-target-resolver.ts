@@ -172,8 +172,8 @@ export class EnergyTargetResolver {
              */
             const energyOptions: EnergyOption[] = [];
             
-            for (const target of fieldResolution.targets) {
-                const creature = controllers.field.getRawCardByPosition(target.playerId, target.fieldIndex);
+            for (const fieldTarget of fieldResolution.targets) {
+                const creature = controllers.field.getRawCardByPosition(fieldTarget.playerId, fieldTarget.fieldIndex);
                 if (!creature) {
                     continue;
                 }
@@ -183,10 +183,10 @@ export class EnergyTargetResolver {
                 const availableEnergy = this.filterEnergyByCriteria(attachedEnergy, target.criteria);
 
                 if (this.getTotalEnergy(availableEnergy) > 0) {
-                    const cardData = controllers.cardRepository.cardRepository.getCreatureById(creature.templateId);
+                    const cardData = controllers.cardRepository.cardRepository.getCreature(creature.templateId);
                     energyOptions.push({
-                        playerId: target.playerId,
-                        fieldIndex: target.fieldIndex,
+                        playerId: fieldTarget.playerId,
+                        fieldIndex: fieldTarget.fieldIndex,
                         availableEnergy,
                         displayName: cardData?.name || 'Unknown',
                     });
