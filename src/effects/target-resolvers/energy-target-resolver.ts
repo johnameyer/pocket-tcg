@@ -183,7 +183,7 @@ export class EnergyTargetResolver {
                 const availableEnergy = this.filterEnergyByCriteria(attachedEnergy, target.criteria);
 
                 if (this.getTotalEnergy(availableEnergy) > 0) {
-                    const cardData = controllers.cardRepository.cardRepository.getCreature(creature.templateId);
+                    const cardData = controllers.cardRepository.getCreature(creature.templateId);
                     energyOptions.push({
                         playerId: fieldTarget.playerId,
                         fieldIndex: fieldTarget.fieldIndex,

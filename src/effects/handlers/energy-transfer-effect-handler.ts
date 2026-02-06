@@ -22,8 +22,10 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
      * @returns Empty array - resolution is handled in apply()
      */
     getResolutionRequirements(effect: EnergyTransferEffect): ResolutionRequirement[] {
-        // We handle resolution ourselves in the apply method
-        // because EnergyTarget wraps FieldTarget and needs custom handling
+        /*
+         * We handle resolution ourselves in the apply method
+         * because EnergyTarget wraps FieldTarget and needs custom handling
+         */
         return [];
     }
     
