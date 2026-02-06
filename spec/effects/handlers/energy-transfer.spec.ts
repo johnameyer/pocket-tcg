@@ -318,4 +318,54 @@ describe('Energy Transfer Effect', () => {
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(2, 'Active should keep all water energy');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0']).to.be.undefined;
     });
+
+    describe('Energy Target Features', () => {
+        // These tests validate the new energy target system
+        it.skip('should move all energy of a certain type from bench to active', () => {
+            /*
+             * TODO: Move all fire energy from benched creature to active
+             * This requires energy target with:
+             * - source: field target (bench) + energy filter (fire) + count (all)
+             * - target: field target (active)
+             */
+        });
+
+        it.skip('should move energy from a benched creature of choice to active', () => {
+            /*
+             * TODO: Player selects a benched creature, then moves 1 energy to active
+             * This requires energy target with:
+             * - source: single-choice field target (bench) + energy filter + count (1)
+             * - target: fixed field target (active)
+             */
+        });
+
+        it.skip('should move all energy from a benched creature to active', () => {
+            /*
+             * TODO: Move all energy (any type) from specific benched creature to active
+             * This requires energy target with:
+             * - source: field target (specific bench) + energy filter (all types) + count (all)
+             * - target: fixed field target (active)
+             */
+        });
+    });
+});
+
+describe('Energy Discard with Energy Targets', () => {
+    describe('Energy Target Features', () => {
+        it.skip('should discard two energy from a creature', () => {
+            /*
+             * TODO: Discard 2 energy of any type from active creature
+             * This requires energy target with:
+             * - target: field target (active) + energy filter (any) + count (2)
+             */
+        });
+
+        it.skip('should discard specific energy types (psychic and dark)', () => {
+            /*
+             * TODO: Discard 1 psychic and 1 dark energy from active creature
+             * This requires energy target with:
+             * - target: field target (active) + energy filter (psychic, dark) + count (1 each)
+             */
+        });
+    });
 });
