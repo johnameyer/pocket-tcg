@@ -19,6 +19,7 @@ import { FieldTarget } from './repository/targets/field-target.js';
 import { getCurrentTemplateId } from './utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from './effects/pending-selection-types.js';
 import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
+import { matchesPlayerTarget } from './utils/player-target-utils.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -217,11 +218,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     for (const passiveEffect of preventPlayingEffects) {
                         const effect = passiveEffect.effect;
                         // Check if this effect targets the current player
-                        const targetPlayer = effect.target === 'self' ? passiveEffect.sourcePlayer : 
-                                           effect.target === 'opponent' ? (passiveEffect.sourcePlayer + 1) % controllers.players.count : 
-                                           -1; // 'both' case
-                        
-                        if (targetPlayer === source || effect.target === 'both') {
+                        if (matchesPlayerTarget(source, effect.target, passiveEffect.sourcePlayer, controllers.players.count)) {
                             // Check if the card type is prevented
                             if (effect.cardTypes.includes(message.cardType)) {
                                 return true;
