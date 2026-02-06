@@ -110,9 +110,11 @@ describe('Attack Energy Cost Modifier Effect', () => {
     const reduceByTwo = { templateId: 'reduce-by-two', type: 'item' as const };
     const reduceActive = { templateId: 'reduce-active', type: 'item' as const };
 
-    // NOTE: These tests are marked as pending because attack-energy-cost-modifier is not fully wired yet
-    // The effect handler exists and registers passive effects, but the actual cost modification logic
-    // needs to be integrated into the attack validation/execution system
+    /*
+     * NOTE: These tests are marked as pending because attack-energy-cost-modifier is not fully wired yet
+     * The effect handler exists and registers passive effects, but the actual cost modification logic
+     * needs to be integrated into the attack validation/execution system
+     */
 
     it.skip('should reduce attack energy cost by 1 (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
@@ -327,25 +329,27 @@ describe('Attack Energy Cost Modifier Effect', () => {
         expect(state.field.creatures[1][0].damageTaken).to.equal(60, 'Should have dealt damage (previously too expensive)');
     });
 
-    // Integration notes for future implementation:
-    // 
-    // When wiring up attack-energy-cost-modifier, the following integration points need to be addressed:
-    // 
-    // 1. Attack validation: In the attack handler, before checking if a creature has enough energy
-    //    to use an attack, query all active attack-energy-cost-modifier effects that match the
-    //    attacking creature and adjust the required energy accordingly.
-    // 
-    // 2. Cost calculation: The energy requirement calculation should:
-    //    - Start with the base attack energy requirements
-    //    - Apply all matching cost modifier effects (sum the modifiers)
-    //    - Ensure the final cost doesn't go below 0
-    //    - Check if the creature has enough attached energy for the modified cost
-    // 
-    // 3. Effect matching: Use the FieldTargetCriteria matching logic to determine which creatures
-    //    are affected by each cost modifier effect (similar to damage-reduction, hp-bonus, etc.)
-    // 
-    // 4. Duration handling: Leverage the existing passive effect duration system to automatically
-    //    expire cost modifiers at the appropriate time
-    // 
-    // 5. UI feedback: Consider showing modified attack costs in status messages when effects are active
+    /*
+     * Integration notes for future implementation:
+     * 
+     * When wiring up attack-energy-cost-modifier, the following integration points need to be addressed:
+     * 
+     * 1. Attack validation: In the attack handler, before checking if a creature has enough energy
+     *    to use an attack, query all active attack-energy-cost-modifier effects that match the
+     *    attacking creature and adjust the required energy accordingly.
+     * 
+     * 2. Cost calculation: The energy requirement calculation should:
+     *    - Start with the base attack energy requirements
+     *    - Apply all matching cost modifier effects (sum the modifiers)
+     *    - Ensure the final cost doesn't go below 0
+     *    - Check if the creature has enough attached energy for the modified cost
+     * 
+     * 3. Effect matching: Use the FieldTargetCriteria matching logic to determine which creatures
+     *    are affected by each cost modifier effect (similar to damage-reduction, hp-bonus, etc.)
+     * 
+     * 4. Duration handling: Leverage the existing passive effect duration system to automatically
+     *    expire cost modifiers at the appropriate time
+     * 
+     * 5. UI feedback: Consider showing modified attack costs in status messages when effects are active
+     */
 });

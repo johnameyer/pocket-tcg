@@ -2,8 +2,8 @@ import { Controllers } from '../controllers/controllers.js';
 import { PassiveEffect } from '../controllers/effect-controller.js';
 import { RetreatPreventionEffect, PreventDamageEffect } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
-import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 import { matchesPlayerTarget } from '../utils/player-target-utils.js';
+import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 
 /**
  * Utility class for finding and filtering applicable passive effects.
@@ -254,8 +254,8 @@ export class PassiveEffectMatcher {
             if (matchesCriteria) {
                 // Also check player and position criteria
                 if (effect.target.player) {
-                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer : 
-                                       (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
+                        : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
                     if (targetPlayer !== playerId) {
                         continue;
                     }

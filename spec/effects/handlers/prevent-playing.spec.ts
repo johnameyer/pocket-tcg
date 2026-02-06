@@ -6,9 +6,7 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { CreatureData, ItemData, SupporterData, ToolData } from '../../../src/repository/card-types.js';
 import { PreventPlayingEffectHandler } from '../../../src/effects/handlers/prevent-playing-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { PreventPlayingEffect } from '../../../src/repository/effect-types.js';
-import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Prevent Playing Effect', () => {
     describe('getResolutionRequirements', () => {
@@ -17,7 +15,7 @@ describe('Prevent Playing Effect', () => {
         it('should return empty array (no resolution needed)', () => {
             const effect: PreventPlayingEffect = {
                 type: 'prevent-playing',
-                cardTypes: ['item'],
+                cardTypes: [ 'item' ],
                 target: 'opponent',
                 duration: { type: 'until-end-of-turn' },
             };
@@ -62,7 +60,7 @@ describe('Prevent Playing Effect', () => {
                 name: 'Prevent Item',
                 effects: [{
                     type: 'prevent-playing',
-                    cardTypes: ['item'],
+                    cardTypes: [ 'item' ],
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
@@ -72,7 +70,7 @@ describe('Prevent Playing Effect', () => {
                 name: 'Prevent Items and Supporters',
                 effects: [{
                     type: 'prevent-playing',
-                    cardTypes: ['item', 'supporter'],
+                    cardTypes: [ 'item', 'supporter' ],
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
@@ -82,7 +80,7 @@ describe('Prevent Playing Effect', () => {
                 name: 'Prevent Creatures',
                 effects: [{
                     type: 'prevent-playing',
-                    cardTypes: ['creature'],
+                    cardTypes: [ 'creature' ],
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
@@ -92,7 +90,7 @@ describe('Prevent Playing Effect', () => {
                 name: 'Prevent Tools',
                 effects: [{
                     type: 'prevent-playing',
-                    cardTypes: ['tool'],
+                    cardTypes: [ 'tool' ],
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
@@ -102,7 +100,7 @@ describe('Prevent Playing Effect', () => {
                 name: 'Prevent All',
                 effects: [{
                     type: 'prevent-playing',
-                    cardTypes: ['creature', 'item', 'supporter', 'tool'],
+                    cardTypes: [ 'creature', 'item', 'supporter', 'tool' ],
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
@@ -112,7 +110,7 @@ describe('Prevent Playing Effect', () => {
                 name: 'Self Prevent Item',
                 effects: [{
                     type: 'prevent-playing',
-                    cardTypes: ['supporter'],
+                    cardTypes: [ 'supporter' ],
                     target: 'self',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
