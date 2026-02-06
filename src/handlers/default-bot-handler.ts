@@ -7,7 +7,7 @@ import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
 import { FieldTargetResolver } from '../effects/target-resolvers/field-target-resolver.js';
 import { Controllers } from '../controllers/controllers.js';
-import { FieldEnergyTarget } from '../repository/targets/energy-target.js';
+import { EnergyTarget } from '../repository/targets/energy-target.js';
 import { FieldTarget } from '../repository/targets/field-target.js';
 
 export class DefaultBotHandler extends GameHandler {
@@ -175,7 +175,7 @@ export class DefaultBotHandler extends GameHandler {
         
         // Extract field target from energy target if necessary
         if ('fieldTarget' in target) {
-            target = (target as FieldEnergyTarget).fieldTarget;
+            target = (target as EnergyTarget).fieldTarget;
         }
         
         /*

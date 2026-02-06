@@ -1,4 +1,4 @@
-import { EnergyTarget, FieldEnergyTarget, DiscardEnergyTarget, EnergyCriteria } from '../../repository/targets/energy-target.js';
+import { EnergyTarget, EnergyCriteria } from '../../repository/targets/energy-target.js';
 import { Controllers } from '../../controllers/controllers.js';
 import { EffectContext } from '../effect-context.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
@@ -9,17 +9,15 @@ import { CardRepository } from '../../repository/card-repository.js';
 import { FieldTargetResolver } from './field-target-resolver.js';
 
 /**
- * Represents a resolved energy target with specific energy selections.
+ * Represents a resolved energy target with specific energy selections from a field card.
  */
 export type ResolvedEnergyTarget = {
     type: 'resolved';
-    /** Energy location */
-    location: 'field' | 'discard';
-    /** For field-based energy: the creature that has the energy */
-    playerId?: number;
-    fieldIndex?: number;
-    /** For discard pile energy: the player whose discard pile */
-    discardPlayerId?: number;
+    /** Energy location (always 'field' for EnergyTarget) */
+    location: 'field';
+    /** The creature that has the energy */
+    playerId: number;
+    fieldIndex: number;
     /** The specific energy amounts to transfer/discard */
     energy: Partial<Record<AttachableEnergyType, number>>;
 };
@@ -36,11 +34,9 @@ export type EnergyTargetResolutionResult =
  * Represents an energy selection option for the player.
  */
 export interface EnergyOption {
-    /** For field-based energy */
-    playerId?: number;
-    fieldIndex?: number;
-    /** For discard pile energy */
-    discardPlayerId?: number;
+    /** Field position of the energy */
+    playerId: number;
+    fieldIndex: number;
     /** Available energy that matches criteria */
     availableEnergy: Partial<Record<AttachableEnergyType, number>>;
     /** Display name for the option */
@@ -49,11 +45,11 @@ export interface EnergyOption {
 
 /**
  * Centralized class for handling energy target resolution.
- * Resolves energy targets from field cards or discard pile.
+ * Resolves energy targets from field cards only.
  */
 export class EnergyTargetResolver {
     /**
-     * Resolves an energy target, handling field-based and discard pile energy.
+     * Resolves an energy target, handling field-based energy only.
      * 
      * @param target The energy target to resolve
      * @param controllers Game controllers
@@ -69,13 +65,7 @@ export class EnergyTargetResolver {
             return { type: 'no-valid-targets' };
         }
 
-        if (target.type === 'field') {
-            return this.resolveFieldEnergyTarget(target, controllers, context);
-        } else if (target.type === 'discard') {
-            return this.resolveDiscardEnergyTarget(target, controllers, context);
-        }
-
-        return { type: 'no-valid-targets' };
+        return this.resolveFieldEnergyTarget(target, controllers, context);
     }
 
     /**
@@ -87,7 +77,7 @@ export class EnergyTargetResolver {
      * @returns Resolution result
      */
     private static resolveFieldEnergyTarget(
-        target: FieldEnergyTarget,
+        target: EnergyTarget,
         controllers: Controllers,
         context: EffectContext,
     ): EnergyTargetResolutionResult {
@@ -166,10 +156,8 @@ export class EnergyTargetResolver {
 
         // Handle all-matching targets
         if (fieldResolution.type === 'all-matching') {
-            /*
-             * For all-matching, we need to gather energy from all matching creatures
-             * This is complex - for now, we'll require selection
-             */
+            // For all-matching, we need to gather energy from all matching creatures
+            // This is complex - for now, we'll require selection
             const energyOptions: EnergyOption[] = [];
             
             for (const fieldTarget of fieldResolution.targets) {
@@ -201,38 +189,6 @@ export class EnergyTargetResolver {
         }
 
         return { type: 'no-valid-targets' };
-    }
-
-    /**
-     * Resolves a discard pile energy target.
-     * 
-     * @param target The discard energy target
-     * @param controllers Game controllers
-     * @param context Effect context
-     * @returns Resolution result
-     */
-    private static resolveDiscardEnergyTarget(
-        target: DiscardEnergyTarget,
-        controllers: Controllers,
-        context: EffectContext,
-    ): EnergyTargetResolutionResult {
-        const playerId = target.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer;
-        const discardedEnergy = controllers.energy.getDiscardedEnergy(playerId);
-        const availableEnergy = this.filterEnergyByCriteria(discardedEnergy, target.criteria);
-
-        if (this.getTotalEnergy(availableEnergy) === 0) {
-            return { type: 'no-valid-targets' };
-        }
-
-        // Select energy up to the requested count
-        const selectedEnergy = this.selectEnergy(availableEnergy, target.count);
-
-        return {
-            type: 'resolved',
-            location: 'discard',
-            discardPlayerId: playerId,
-            energy: selectedEnergy,
-        };
     }
 
     /**
@@ -317,24 +273,13 @@ export class EnergyTargetResolver {
     ): ResolvedEnergyTarget {
         const selectedEnergy = this.selectEnergy(option.availableEnergy, count);
 
-        if (option.playerId !== undefined && option.fieldIndex !== undefined) {
-            return {
-                type: 'resolved',
-                location: 'field',
-                playerId: option.playerId,
-                fieldIndex: option.fieldIndex,
-                energy: selectedEnergy,
-            };
-        } else if (option.discardPlayerId !== undefined) {
-            return {
-                type: 'resolved',
-                location: 'discard',
-                discardPlayerId: option.discardPlayerId,
-                energy: selectedEnergy,
-            };
-        }
-
-        throw new Error('Invalid energy option: missing location information');
+        return {
+            type: 'resolved',
+            location: 'field',
+            playerId: option.playerId,
+            fieldIndex: option.fieldIndex,
+            energy: selectedEnergy,
+        };
     }
 
     /**
@@ -366,44 +311,29 @@ export class EnergyTargetResolver {
             return false;
         }
 
-        if (target.type === 'field') {
-            // Check if field target has any creatures with matching energy
-            const fieldTarget = target.fieldTarget;
-            
-            // Use FieldTargetResolver to check if field target is available
-            const isFieldAvailable = FieldTargetResolver.isTargetAvailable(
-                fieldTarget,
-                handlerData,
-                context,
-                cardRepository,
-                (creature) => {
-                    // Custom validator: check if creature has energy matching criteria
-                    const instanceId = getCurrentInstanceId(creature);
-                    const attachedEnergy = handlerData.energy?.attachedEnergyByInstance?.[instanceId];
-                    
-                    if (!attachedEnergy) {
-                        return false;
-                    }
+        // Check if field target has any creatures with matching energy
+        const fieldTarget = target.fieldTarget;
+        
+        // Use FieldTargetResolver to check if field target is available
+        const isFieldAvailable = FieldTargetResolver.isTargetAvailable(
+            fieldTarget,
+            handlerData,
+            context,
+            cardRepository,
+            (creature) => {
+                // Custom validator: check if creature has energy matching criteria
+                const instanceId = getCurrentInstanceId(creature);
+                const attachedEnergy = handlerData.energy?.attachedEnergyByInstance?.[instanceId];
+                
+                if (!attachedEnergy) {
+                    return false;
+                }
 
-                    const filtered = this.filterEnergyByCriteria(attachedEnergy, target.criteria);
-                    return this.getTotalEnergy(filtered) > 0;
-                },
-            );
+                const filtered = this.filterEnergyByCriteria(attachedEnergy, target.criteria);
+                return this.getTotalEnergy(filtered) > 0;
+            },
+        );
 
-            return isFieldAvailable;
-        } else if (target.type === 'discard') {
-            // Check if discard pile has energy matching criteria
-            const playerId = target.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer;
-            const discardedEnergy = handlerData.energy?.discardedEnergy?.[playerId];
-            
-            if (!discardedEnergy) {
-                return false;
-            }
-
-            const filtered = this.filterEnergyByCriteria(discardedEnergy, target.criteria);
-            return this.getTotalEnergy(filtered) > 0;
-        }
-
-        return false;
+        return isFieldAvailable;
     }
 }

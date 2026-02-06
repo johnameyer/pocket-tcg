@@ -473,18 +473,38 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return this.state.discardedEnergy[playerId] || EnergyController.emptyEnergyDict();
     }
     
-    // Remove discarded energy for a player (for effects that recover energy from discard)
-    public removeDiscardedEnergy(playerId: number, energyType: AttachableEnergyType, amount: number): boolean {
+    /**
+     * Attach energy from discard pile to a card instance.
+     * Removes the specified energy from the player's discard pile and attaches it to the target instance.
+     * 
+     * @param playerId The player whose discard pile to take energy from
+     * @param instanceId The instance ID of the card to attach energy to
+     * @param energyTypes Dictionary of energy types and amounts to attach
+     * @returns True if all energy was successfully attached, false if insufficient energy in discard
+     */
+    public attachEnergyFromDiscard(playerId: number, instanceId: string, energyTypes: Partial<Record<AttachableEnergyType, number>>): boolean {
         if (!this.state.discardedEnergy[playerId]) {
             return false;
         }
         
-        const available = this.state.discardedEnergy[playerId][energyType] || 0;
-        if (available < amount) {
-            return false;
+        // First check if we have enough of all types
+        for (const energyType of Object.keys(energyTypes) as AttachableEnergyType[]) {
+            const amount = energyTypes[energyType] || 0;
+            const available = this.state.discardedEnergy[playerId][energyType] || 0;
+            if (available < amount) {
+                return false;
+            }
         }
         
-        this.state.discardedEnergy[playerId][energyType] -= amount;
+        // If we have enough, perform the transfer
+        for (const energyType of Object.keys(energyTypes) as AttachableEnergyType[]) {
+            const amount = energyTypes[energyType] || 0;
+            if (amount > 0) {
+                this.state.discardedEnergy[playerId][energyType] -= amount;
+                this.attachSpecificEnergyToInstance(instanceId, energyType, amount);
+            }
+        }
+        
         return true;
     }
     
