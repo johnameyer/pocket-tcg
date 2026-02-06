@@ -232,15 +232,46 @@ export class PassiveEffectMatcher {
         fieldIndex: number,
     ): boolean {
         const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-attack');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
         for (const passiveEffect of preventEffects) {
             const effect = passiveEffect.effect;
             // Check if this effect applies to the creature
-            if (effect.target.type === 'resolved') {
-                for (const target of effect.target.targets) {
-                    if (target.playerId === playerId && target.fieldIndex === fieldIndex) {
-                        return true;
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                // Also check player and position criteria
+                if (effect.target.player) {
+                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer : 
+                                       (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                    if (targetPlayer !== playerId) {
+                        continue;
                     }
                 }
+                
+                if (effect.target.position) {
+                    const isActive = fieldIndex === 0;
+                    if (effect.target.position === 'active' && !isActive) {
+                        continue;
+                    }
+                    if (effect.target.position === 'bench' && isActive) {
+                        continue;
+                    }
+                }
+                
+                return true;
             }
         }
         return false;

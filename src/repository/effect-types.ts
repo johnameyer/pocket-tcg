@@ -363,14 +363,14 @@ export type PreventPlayingEffect = {
 /**
  * Represents an effect that prevents a creature from attacking.
  * @property {string} type - Always 'prevent-attack' to identify this effect type
- * @property {FieldTarget} target - The creature that cannot attack
- * @property {Duration} duration - How long the creature cannot attack
- * @example { type: 'prevent-attack', target: { type: 'fixed', player: 'opponent', position: 'active' }, duration: 'until-end-of-next-turn' }
+ * @property {FieldTargetCriteria} target - Criteria for which creatures cannot attack (evaluated passively)
+ * @property {Duration} duration - How long creatures cannot attack
+ * @example { type: 'prevent-attack', target: { player: 'opponent', position: 'active' }, duration: 'until-end-of-next-turn' }
  * // Opponent's active creature cannot attack until end of next turn
  */
 export type PreventAttackEffect = {
     type: 'prevent-attack';
-    target: FieldTarget;
+    target: FieldTargetCriteria;
     duration: Duration;
 };
 
