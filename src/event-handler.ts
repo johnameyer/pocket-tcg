@@ -708,7 +708,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                return new AttachEnergyResponseMessage(0);
+                // Discard invalid energy attachment attempts
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
+                return undefined as any;
             },
         },
         merge: (controllers: Controllers, sourceHandler: number, message: AttachEnergyResponseMessage) => {
