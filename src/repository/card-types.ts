@@ -22,6 +22,7 @@ export type Trigger =
  */
 export type CreatureAttack = {
     name: string;
+    description?: string;
     damage: number | EffectValue;
     energyRequirements: EnergyRequirement[];
     effects?: Effect[];
@@ -32,6 +33,7 @@ export type CreatureAttack = {
  */
 export type CreatureAbility = {
     name: string;
+    description?: string;
     trigger: Trigger;
     effects: Effect[];
 };
@@ -71,6 +73,7 @@ export type CreatureData = {
 export type SupporterData = {
     templateId: string;
     name: string;
+    description?: string;
     effects: Effect[];
 };
 
@@ -80,6 +83,7 @@ export type SupporterData = {
 export type ItemData = {
     templateId: string;
     name: string;
+    description?: string;
     effects: Effect[];
 };
 
@@ -89,6 +93,7 @@ export type ItemData = {
 export type ToolData = {
     templateId: string;
     name: string;
+    description?: string;
     effects: Effect[];
     trigger?: Trigger;
 };
@@ -99,6 +104,7 @@ export type ToolData = {
 export type StadiumData = {
     templateId: string;
     name: string;
+    description?: string;
     effects: Effect[];
 };
 
