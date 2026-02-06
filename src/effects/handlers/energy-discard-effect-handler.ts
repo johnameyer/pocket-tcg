@@ -3,7 +3,7 @@ import { EnergyDiscardEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { HandlerData } from '../../game-handler.js';
-import { EnergyTargetResolver } from '../target-resolvers/energy-target-resolver.js';
+import { ResolvedEnergyTarget } from '../target-resolvers/energy-target-resolver.js';
 
 /**
  * Handler for energy discard effects that discard energy from creatures.
@@ -33,7 +33,7 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
         // EnergyTarget (energySource) is the top-level field
         // The resolver will handle the inner fieldTarget resolution
         return [
-            { targetProperty: 'energySource', target: effect.energySource, required: true },
+            { targetProperty: 'energySource', target: effect.energySource as any, required: true },
         ];
     }
     
@@ -53,7 +53,7 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
             throw new Error(`Expected resolved energy source, got ${energySource?.type || 'undefined'}`);
         }
         
-        const { playerId, fieldIndex, energy } = energySource;
+        const { playerId, fieldIndex, energy } = energySource as ResolvedEnergyTarget;
         
         const sourceInstanceId = controllers.field.getFieldInstanceId(playerId, fieldIndex);
         if (!sourceInstanceId) {
@@ -67,15 +67,15 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
         // Discard the specified energy
         let discardedCount = 0;
         for (const [energyType, count] of Object.entries(energy)) {
-            if (count > 0) {
+            if (count && count > 0) {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
                     playerId,
                     sourceInstanceId,
                     energyType as any,
-                    count,
+                    count as number,
                 );
                 if (success) {
-                    discardedCount += count;
+                    discardedCount += count as number;
                 }
             }
         }

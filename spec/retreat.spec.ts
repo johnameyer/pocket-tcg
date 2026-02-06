@@ -262,11 +262,10 @@ describe('Creature Retreat System', () => {
                         templateId: 'energy-discard',
                         name: 'Energy Discard',
                         effects: [{
-                            type: 'energy',
+                            type: 'energy-attach',
                             energyType: 'fire',
                             amount: { type: 'constant', value: 1 },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            operation: 'discard',
                         }],
                     }],
                 ]),

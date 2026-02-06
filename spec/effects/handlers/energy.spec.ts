@@ -5,9 +5,10 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary, EnergyState } from '../../../src/controllers/energy-controller.js';
-import { EnergyEffectHandler } from '../../../src/effects/handlers/energy-effect-handler.js';
+import { EnergyAttachEffectHandler } from '../../../src/effects/handlers/energy-attach-effect-handler.js';
+import { EnergyDiscardEffectHandler } from '../../../src/effects/handlers/energy-discard-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { EnergyEffect } from '../../../src/repository/effect-types.js';
+import { EnergyAttachEffect, EnergyDiscardEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 // Helper to get total energy from an energy dictionary
@@ -17,19 +18,18 @@ function getTotalEnergy(energyDict: EnergyDictionary): number {
 
 describe('Energy Effect', () => {
     describe('canApply', () => {
-        const handler = new EnergyEffectHandler();
+        const handler = new EnergyAttachEffectHandler();
 
         it('should return true for attach operation', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
 
-            const effect: EnergyEffect = {
-                type: 'energy',
+            const effect: EnergyAttachEffect = {
+                type: 'energy-attach',
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                operation: 'attach',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
@@ -44,12 +44,11 @@ describe('Energy Effect', () => {
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
-            const effect: EnergyEffect = {
-                type: 'energy',
+            const effect: EnergyAttachEffect = {
+                type: 'energy-attach',
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                operation: 'discard',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
@@ -64,12 +63,11 @@ describe('Energy Effect', () => {
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
 
-            const effect: EnergyEffect = {
-                type: 'energy',
+            const effect: EnergyAttachEffect = {
+                type: 'energy-attach',
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
-                operation: 'discard',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
@@ -84,12 +82,11 @@ describe('Energy Effect', () => {
                 HandlerDataBuilder.withDeck(10),
             );
 
-            const effect: EnergyEffect = {
-                type: 'energy',
+            const effect: EnergyAttachEffect = {
+                type: 'energy-attach',
                 energyType: 'fire',
                 amount: { type: 'constant', value: 1 },
                 target: { type: 'fixed', player: 'self', position: 'active' },
-                operation: 'attach',
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
@@ -107,11 +104,10 @@ describe('Energy Effect', () => {
                     templateId: 'energy-supporter',
                     name: 'Energy Supporter',
                     effects: [{
-                        type: 'energy',
+                        type: 'energy-attach',
                         energyType: 'fire',
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach',
                     }],
                 }],
             ]),
@@ -138,11 +134,10 @@ describe('Energy Effect', () => {
                     templateId: 'discard-supporter',
                     name: 'Discard Supporter',
                     effects: [{
-                        type: 'energy',
+                        type: 'energy-attach',
                         energyType: 'fire',
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'discard',
                     }],
                 }],
             ]),
@@ -172,11 +167,10 @@ describe('Energy Effect', () => {
                     templateId: 'water-supporter',
                     name: 'Water Supporter',
                     effects: [{
-                        type: 'energy',
+                        type: 'energy-attach',
                         energyType: 'water',
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach',
                     }],
                 }],
             ]),
@@ -203,11 +197,10 @@ describe('Energy Effect', () => {
                     templateId: 'multi-energy-supporter',
                     name: 'Multi Energy Supporter',
                     effects: [{
-                        type: 'energy',
+                        type: 'energy-attach',
                         energyType: 'fire',
                         amount: { type: 'constant', value: 2 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        operation: 'attach',
                     }],
                 }],
             ]),
@@ -234,14 +227,13 @@ describe('Energy Effect', () => {
                     templateId: 'choice-energy-supporter',
                     name: 'Choice Energy Supporter',
                     effects: [{
-                        type: 'energy',
+                        type: 'energy-attach',
                         energyType: 'grass',
                         amount: { type: 'constant', value: 1 },
                         target: {
                             type: 'fixed',
                             player: 'self', position: 'active',
                         },
-                        operation: 'attach',
                     }],
                 }],
             ]),
@@ -270,11 +262,10 @@ describe('Energy Effect', () => {
                     templateId: 'big-discard-supporter',
                     name: 'Big Discard Supporter',
                     effects: [{
-                        type: 'energy',
+                        type: 'energy-attach',
                         energyType: 'fire',
                         amount: { type: 'constant', value: 5 },
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
-                        operation: 'discard',
                     }],
                 }],
             ]),
@@ -305,11 +296,10 @@ describe('Energy Effect', () => {
                         templateId: 'energy-discard',
                         name: 'Energy Discard',
                         effects: [{
-                            type: 'energy',
+                            type: 'energy-attach',
                             energyType: 'fire',
                             amount: { type: 'constant', value: 2 },
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
-                            operation: 'discard',
                         }],
                     }],
                 ]),

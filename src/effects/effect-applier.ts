@@ -89,10 +89,11 @@ export class EffectApplier {
             const target = requirement.target;
             let resolvedTarget: ResolvedFieldTarget | ResolvedEnergyTarget | undefined;
             
-            // Check if this is an EnergyTarget or FieldTarget
-            if (target && typeof target === 'object' && 'fieldTarget' in target) {
+            // Check if this is an EnergyTarget (has fieldTarget, count, and type='field') or FieldTarget
+            // EnergyTarget has a 'count' property that FieldTarget doesn't have
+            if (target && typeof target === 'object' && 'fieldTarget' in target && 'count' in target) {
                 // This is an EnergyTarget - use EnergyTargetResolver
-                const energyTarget = target as EnergyTarget;
+                const energyTarget = target as unknown as EnergyTarget;
                 
                 // Check if selection is needed (EnergyTargetResolver handles inner fieldTarget resolution)
                 // TODO: Implement handleTargetSelection for EnergyTargetResolver if needed
