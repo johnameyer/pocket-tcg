@@ -132,17 +132,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'), // Retreat cost 1
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]), // Add bench
                 StateBuilder.withHand(0, [ increaseItem ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 1 }), // Only 1 energy, needs 2
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
@@ -162,17 +154,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'), // Retreat cost 1, becomes 2
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]), // Add bench
                 StateBuilder.withHand(0, [ increaseItem ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 2 }), // Has 2 energy to retreat
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
@@ -192,17 +176,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'), // Retreat cost 1, becomes 3
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]), // Retreat cost 1, becomes 3
                 StateBuilder.withHand(0, [ increaseByTwo ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 2 }), // Only 2 energy, needs 3
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
@@ -222,17 +198,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'zero-cost-creature'), // Retreat cost 0, becomes 1
+                StateBuilder.withCreatures(1, 'zero-cost-creature', [ 'high-cost-creature' ]), // Add bench creature
                 StateBuilder.withHand(0, [ increaseItem ]),
                 // No energy attached
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
@@ -252,17 +220,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'), // Active with retreat cost 1, becomes 2
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]), // Active with retreat cost 1, becomes 2
                 StateBuilder.withHand(0, [ increaseActive ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 1 }), // Only 1 energy
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
@@ -282,17 +242,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'), // Active with retreat cost 1
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]), // Active with retreat cost 1
                 StateBuilder.withHand(0, [ increaseBench ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 1 }), // Has enough to retreat
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
@@ -310,18 +262,10 @@ describe('Retreat Cost Increase Effect', () => {
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'low-cost-creature'), // Retreat cost 1, becomes 2
+                StateBuilder.withCreatures(0, 'low-cost-creature', [ 'high-cost-creature' ]), // Retreat cost 1, becomes 2
                 StateBuilder.withCreatures(1, 'low-cost-creature'),
                 StateBuilder.withHand(0, [ increaseSelf ]),
                 StateBuilder.withEnergy('low-cost-creature-0', { fire: 1 }), // Only 1 energy
-                (state) => {
-                    state.field.creatures[0].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 15,
         });
@@ -339,18 +283,10 @@ describe('Retreat Cost Increase Effect', () => {
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'low-cost-creature'),
+                StateBuilder.withCreatures(0, 'low-cost-creature', [ 'high-cost-creature' ]),
                 StateBuilder.withCreatures(1, 'low-cost-creature'),
                 StateBuilder.withHand(0, [ increaseItem ]),
                 StateBuilder.withEnergy('low-cost-creature-0', { fire: 1 }),
-                (state) => {
-                    state.field.creatures[0].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 15,
         });
@@ -373,17 +309,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'),
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]),
                 StateBuilder.withHand(0, [ increaseItem ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 1 }), // 1 energy (enough after expiration)
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 30,
         });
@@ -404,17 +332,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'low-cost-creature'), // Retreat cost 1, becomes 3 (1 + 1 + 1)
+                StateBuilder.withCreatures(1, 'low-cost-creature', [ 'high-cost-creature' ]), // Retreat cost 1, becomes 3 (1 + 1 + 1)
                 StateBuilder.withHand(0, [ increaseItem, increaseItem ]),
                 StateBuilder.withEnergy('low-cost-creature-1', { fire: 2 }), // Only 2 energy, needs 3
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'high-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 25,
         });
@@ -434,17 +354,9 @@ describe('Retreat Cost Increase Effect', () => {
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-cost-creature'),
-                StateBuilder.withCreatures(1, 'high-cost-creature'), // Retreat cost 3, becomes 4
+                StateBuilder.withCreatures(1, 'high-cost-creature', [ 'low-cost-creature' ]), // Retreat cost 3, becomes 4
                 StateBuilder.withHand(0, [ increaseItem ]),
                 StateBuilder.withEnergy('high-cost-creature-1', { water: 3 }), // Only 3 energy, needs 4
-                (state) => {
-                    state.field.creatures[1].push({
-                        fieldInstanceId: 'bench-creature',
-                        evolutionStack: [{ instanceId: 'bench-card', templateId: 'low-cost-creature' }],
-                        damageTaken: 0,
-                        turnLastPlayed: 0,
-                    });
-                },
             ),
             maxSteps: 20,
         });
