@@ -329,8 +329,8 @@ export function runTestGame(config: TestGameConfig) {
                     if (positions.length > 0) {
                         // If there are actions left but we're still waiting, throw an error
                         throw new Error(
-                            `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. ` +
-                            `Actions may be for the wrong player or turn order.`
+                            `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. `
+                            + 'Actions may be for the wrong player or turn order.',
                         );
                     }
                 }
