@@ -26,6 +26,7 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Card promotion from bench to active
 - ✅ Evolution restrictions (once per turn, not on first turn)
 - ✅ Individual card instance tracking for evolution logic
+- ✅ Optional human-readable descriptions for attacks, abilities, and all card types
 
 ### Game Flow
 - ✅ Game setup with active card selection
@@ -105,7 +106,8 @@ myCreatures.set('my-creature', {
   retreatCost: 1,
   attacks: [
     { 
-      name: 'Fireball', 
+      name: 'Fireball',
+      description: 'Launches a powerful fireball at the opponent', // Optional
       damage: 30, 
       energyRequirements: [{ type: 'fire', amount: 2 }] 
     }
@@ -117,6 +119,7 @@ const mySupporters = new Map<string, SupporterData>();
 mySupporters.set('my-supporter', {
   templateId: 'my-supporter',
   name: 'My Supporter',
+  description: 'Draw cards to refresh your hand', // Optional
   effects: [
     { 
       type: 'draw', 
