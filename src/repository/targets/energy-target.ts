@@ -15,7 +15,7 @@ export type EnergyCriteria = {
  * 
  * Will randomly select if not fully defined.
  */
-export type EnergyTarget = {
+export type FieldEnergyTarget = {
     type: 'field';
     /** The field card to target energy on */
     fieldTarget: FieldTarget;
@@ -24,3 +24,9 @@ export type EnergyTarget = {
     /** Number of energy to target */
     count: number;
 };
+
+/**
+ * Union type for all energy target types.
+ * Currently only includes field-based energy targeting.
+ */
+export type EnergyTarget = FieldEnergyTarget;

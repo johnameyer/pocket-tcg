@@ -60,19 +60,25 @@ export type DrawEffect = {
 
 /**
  * Represents an effect that modifies or transfers energy on creatures.
+ * For attach operations, uses simple target and energy type.
+ * For discard operations, can use EnergyTarget to specify which energy to discard.
  * @property {string} type - Always 'energy' to identify this effect type
- * @property {AttachableEnergyType} energyType - The type of energy to modify
- * @property {EffectValue} amount - The amount of energy to attach or discard
- * @property {FieldTarget} target - The target creature(s) to modify
+ * @property {AttachableEnergyType} energyType - The type of energy to modify (used for attach operation)
+ * @property {EffectValue} amount - The amount of energy to attach or discard (used for attach operation)
+ * @property {FieldTarget} target - The target creature(s) to modify (used for attach operation)
+ * @property {EnergyTarget} energySource - The energy to discard (used for discard operation)
  * @property {string} operation - Whether to 'attach' or 'discard' energy
  * @example { type: 'energy', energyType: 'fire', amount: { type: 'constant', value: 1 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'attach' }
  * // Attach 1 fire energy to your active creature
+ * @example { type: 'energy', energySource: { type: 'field', fieldTarget: { type: 'fixed', player: 'self', position: 'active' }, criteria: { energyTypes: ['psychic', 'darkness'] }, count: 2 }, operation: 'discard' }
+ * // Discard a psychic and a dark energy from your active creature
  */
 export type EnergyEffect = {
     type: 'energy';
-    energyType: AttachableEnergyType;
-    amount: EffectValue;
-    target: FieldTarget;
+    energyType?: AttachableEnergyType;
+    amount?: EffectValue;
+    target?: FieldTarget;
+    energySource?: EnergyTarget;
     operation: 'attach' | 'discard';
 };
 
