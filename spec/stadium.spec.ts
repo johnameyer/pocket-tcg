@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { GameCard } from '../src/controllers/card-types.js';
-import { StateBuilder } from './helpers/state-builder.js';
-import { runTestGame } from './helpers/test-helpers.js';
-import { StadiumData } from '../src/repository/card-types.js';
 import { EndTurnResponseMessage } from '../src/messages/response/end-turn-response-message.js';
 import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
+import { SelectActiveCardResponseMessage } from '../src/messages/response/select-active-card-response-message.js';
+import { runTestGame } from './helpers/test-helpers.js';
+import { StateBuilder } from './helpers/state-builder.js';
 
 describe('Stadium Cards', () => {
     const basicStadium = { templateId: 'basic-stadium', type: 'stadium' as const };
@@ -58,8 +58,10 @@ describe('Stadium Cards', () => {
     });
 
     describe('Stadium Replacement', () => {
-        // Note: These tests validate the mechanics but may not fully execute due to test framework limitations
-        // with multi-player action sequences. Core functionality is still validated.
+        /*
+         * Note: These tests validate the mechanics but may not fully execute due to test framework limitations
+         * with multi-player action sequences. Core functionality is still validated.
+         */
         it('should replace opponent stadium with own stadium', () => {
             const { state } = runTestGame({
                 actions: [
@@ -297,6 +299,51 @@ describe('Stadium Cards', () => {
             // Retreat should have failed since retreat cost reduction is gone
             const activeCreature = state.field.creatures[0][0];
             expect(activeCreature.evolutionStack[0].templateId).to.equal('tank-creature', 'Tank should still be active - retreat failed');
+        });
+        
+        it('should knock out creature when HP boost stadium is removed and damage exceeds original max HP', () => {
+            /*
+             * Create a creature with damage that would knock it out without HP boost
+             * Basic creature has 60 HP, HP boost adds 20 = 80 HP total
+             * Deal 65 damage - survives with HP boost, knocked out without it
+             */
+            const activeCreatureId = 'basic-creature-0';
+            
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('retreat-cost-stadium', 'stadium'), // Replace HP stadium, causing knockout
+                    new SelectActiveCardResponseMessage(1), // Need to select new active after knockout
+                ],
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withHand(0, [ retreatCostStadium ]),
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'tank-creature' ]),
+                    StateBuilder.withDamage(activeCreatureId, 65), // 65 damage - would be knocked out at 60 HP
+                    // Start with HP boost stadium already active
+                    (state) => {
+                        state.stadium = {
+                            activeStadium: {
+                                templateId: 'hp-boost-stadium',
+                                instanceId: 'hp-boost-instance',
+                                owner: 0,
+                                name: 'HP Boost Stadium',
+                            },
+                        };
+                        // Passive effects will be initialized automatically by initializePassiveEffectsForTestState
+                    },
+                ),
+                maxSteps: 20,
+            });
+
+            // Retreat cost stadium should be active (replaced HP boost)
+            expect(state.stadium.activeStadium?.templateId).to.equal('retreat-cost-stadium');
+            
+            // Basic creature should have been knocked out and tank should be active
+            const activeCreature = state.field.creatures[0][0];
+            expect(activeCreature.evolutionStack[0].templateId).to.equal('tank-creature', 'Tank should be active after basic creature knockout');
+            
+            // Basic creature should be in discard
+            const basicInDiscard = state.discard[0].some((card: GameCard) => card.templateId === 'basic-creature');
+            expect(basicInDiscard).to.be.true;
         });
     });
 });

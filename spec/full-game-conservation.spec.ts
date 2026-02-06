@@ -4,7 +4,6 @@ import { CreatureData } from '../src/repository/card-types.js';
 import { Controllers } from '../src/controllers/controllers.js';
 import { MockCardRepository } from './mock-repository.js';
 import { runBotGame } from './helpers/test-helpers.js';
-import { GameCard } from '../src/controllers/card-types.js';
 
 /**
  * Full End-to-End Game Conservation Test

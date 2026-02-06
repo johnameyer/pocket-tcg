@@ -218,8 +218,10 @@ export class ActionValidator {
             return false; // Cannot play duplicate stadium
         }
         
-        // Stadiums can always be played regardless of whether their effects can currently be applied
-        // since they have persistent effects that may become relevant later
+        /*
+         * Stadiums can always be played regardless of whether their effects can currently be applied
+         * since they have persistent effects that may become relevant later
+         */
         return true;
     }
     

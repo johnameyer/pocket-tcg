@@ -1,5 +1,4 @@
 import { GlobalController, GenericControllerProvider } from '@cards-ts/core';
-import { GameCard } from './card-types.js';
 import { DiscardController } from './discard-controller.js';
 
 export type StadiumState = {

@@ -423,8 +423,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     components: [ `Player ${sourceHandler + 1} played ${stadiumData.name}!` ],
                 });
                 
-                // Register passive effects from stadium
-                // TODO: We shouldn't need to explicitly specify all effect types here (or for tools/supporters above)
+                /*
+                 * Register passive effects from stadium
+                 * TODO: We shouldn't need to explicitly specify all effect types here (or for tools/supporters above)
+                 */
                 if (stadiumData.effects) {
                     for (const effect of stadiumData.effects) {
                         if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
@@ -446,8 +448,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Process any effects that were triggered by the stadium effects
                 EffectQueueProcessor.processQueue(controllers);
                 
-                // Check for knockouts due to side effects (e.g., HP changes)
-                // This is handled by the passive effect system automatically
+                /*
+                 * Check for knockouts due to side effects (e.g., HP changes)
+                 * This is handled by the passive effect system automatically
+                 */
             }
         },
     },
