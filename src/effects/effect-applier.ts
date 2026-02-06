@@ -2,6 +2,7 @@ import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
 import { ResolvedFieldTarget } from '../repository/targets/field-target.js';
+import { EnergyTarget } from '../repository/targets/energy-target.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
@@ -9,6 +10,7 @@ import { PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
+import { EnergyTargetResolver, ResolvedEnergyTarget } from './target-resolvers/energy-target-resolver.js';
 
 export class EffectApplier {
     /**
@@ -84,30 +86,57 @@ export class EffectApplier {
         let resolvedEffect = JSON.parse(JSON.stringify(effect));
         
         for (const requirement of requirements) {
-            // Check if this target needs selection
-            if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, requirement.target)) {
-                return null; // Pending selection
-            }
-            
-            // Determine if this is a single or multi target
             const target = requirement.target;
-            let resolvedTarget: ResolvedFieldTarget | undefined;
+            let resolvedTarget: ResolvedFieldTarget | ResolvedEnergyTarget | undefined;
             
-            if (!target) {
-                // No target specified
-                resolvedTarget = undefined;
-            } else if (target.type === 'all-matching' || target.type === 'multi-choice') {
-                // Multi-target: use resolveTarget and convert to array
-                const resolution = FieldTargetResolver.resolveTarget(target, controllers, context);
-                resolvedTarget = this.convertResolutionToResolvedTargets(resolution, context);
+            // Check if this is an EnergyTarget or FieldTarget
+            if (target && typeof target === 'object' && 'fieldTarget' in target) {
+                // This is an EnergyTarget - use EnergyTargetResolver
+                const energyTarget = target as EnergyTarget;
+                
+                // Check if selection is needed (EnergyTargetResolver handles inner fieldTarget resolution)
+                // TODO: Implement handleTargetSelection for EnergyTargetResolver if needed
+                
+                const resolution = EnergyTargetResolver.resolveTarget(energyTarget, controllers, context);
+                
+                if (resolution.type === 'requires-selection') {
+                    // Pending selection - not yet implemented
+                    return null;
+                }
+                
+                if (resolution.type === 'no-valid-targets') {
+                    if (requirement.required) {
+                        return null; // No valid targets for required property
+                    }
+                    resolvedTarget = undefined;
+                } else {
+                    // Resolved
+                    resolvedTarget = resolution as ResolvedEnergyTarget;
+                }
             } else {
-                // Single target (fixed, single-choice, or resolved): use resolveSingleTarget
-                const resolution = FieldTargetResolver.resolveSingleTarget(target, controllers, context);
-                resolvedTarget = this.convertSingleResolutionToResolvedTarget(resolution, context);
-            }
-            
-            if (!resolvedTarget && requirement.required) {
-                return null; // No valid targets for required property
+                // This is a FieldTarget - use FieldTargetResolver
+                // Check if this target needs selection
+                if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, target)) {
+                    return null; // Pending selection
+                }
+                
+                // Determine if this is a single or multi target
+                if (!target) {
+                    // No target specified
+                    resolvedTarget = undefined;
+                } else if (target.type === 'all-matching' || target.type === 'multi-choice') {
+                    // Multi-target: use resolveTarget and convert to array
+                    const resolution = FieldTargetResolver.resolveTarget(target, controllers, context);
+                    resolvedTarget = this.convertResolutionToResolvedTargets(resolution, context);
+                } else {
+                    // Single target (fixed, single-choice, or resolved): use resolveSingleTarget
+                    const resolution = FieldTargetResolver.resolveSingleTarget(target, controllers, context);
+                    resolvedTarget = this.convertSingleResolutionToResolvedTarget(resolution, context);
+                }
+                
+                if (!resolvedTarget && requirement.required) {
+                    return null; // No valid targets for required property
+                }
             }
             
             // Set resolved target on the effect using spread operator for type safety

@@ -2,7 +2,8 @@ import { EffectHandlerMap } from '../interfaces/effect-handler-interface.js';
 import { hpEffectHandler } from './hp-effect-handler.js';
 import { statusEffectHandler } from './status-effect-handler.js';
 import { drawEffectHandler } from './draw-effect-handler.js';
-import { energyEffectHandler } from './energy-effect-handler.js';
+import { energyAttachEffectHandler } from './energy-attach-effect-handler.js';
+import { energyDiscardEffectHandler } from './energy-discard-effect-handler.js';
 import { searchEffectHandler } from './search-effect-handler.js';
 import { shuffleEffectHandler } from './shuffle-effect-handler.js';
 import { handDiscardEffectHandler } from './hand-discard-effect-handler.js';
@@ -23,7 +24,8 @@ export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
     status: statusEffectHandler,
     draw: drawEffectHandler,
-    energy: energyEffectHandler,
+    'energy-attach': energyAttachEffectHandler,
+    'energy-discard': energyDiscardEffectHandler,
     search: searchEffectHandler,
     shuffle: shuffleEffectHandler,
     'hand-discard': handDiscardEffectHandler,
