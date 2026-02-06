@@ -349,32 +349,136 @@ describe('Energy Transfer Effect', () => {
     });
 
     describe('Energy Target Features', () => {
+        const allFireFromBenchRepository = new MockCardRepository({
+            creatures: new Map([
+                [ 'basic-creature', {
+                    templateId: 'basic-creature',
+                    name: 'Basic Creature',
+                    maxHp: 80,
+                    type: 'fire',
+                    weakness: 'water',
+                    retreatCost: 1,
+                    attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
+                }],
+                [ 'bench-creature', {
+                    templateId: 'bench-creature',
+                    name: 'Bench Creature',
+                    maxHp: 60,
+                    type: 'water',
+                    weakness: 'grass',
+                    retreatCost: 1,
+                    attacks: [],
+                }],
+            ]),
+            supporters: new Map([
+                [ 'move-all-fire-from-bench', {
+                    templateId: 'move-all-fire-from-bench',
+                    name: 'Move All Fire From Bench',
+                    effects: [{
+                        type: 'energy-transfer',
+                        source: {
+                            type: 'field',
+                            fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                            criteria: { energyTypes: [ 'fire' ] },
+                            count: 999, // Move all matching energy
+                        },
+                        target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                    }],
+                }],
+                [ 'move-energy-from-bench-choice', {
+                    templateId: 'move-energy-from-bench-choice',
+                    name: 'Move Energy From Bench Choice',
+                    effects: [{
+                        type: 'energy-transfer',
+                        source: {
+                            type: 'field',
+                            fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                            criteria: { energyTypes: [ 'fire', 'water', 'grass', 'lightning', 'psychic', 'fighting', 'darkness', 'metal' ] },
+                            count: 1,
+                        },
+                        target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                    }],
+                }],
+                [ 'move-all-energy-from-bench', {
+                    templateId: 'move-all-energy-from-bench',
+                    name: 'Move All Energy From Bench',
+                    effects: [{
+                        type: 'energy-transfer',
+                        source: {
+                            type: 'field',
+                            fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                            criteria: { energyTypes: [ 'fire', 'water', 'grass', 'lightning', 'psychic', 'fighting', 'darkness', 'metal' ] },
+                            count: 999,
+                        },
+                        target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                    }],
+                }],
+            ]),
+        });
+
         // These tests validate the new energy target system
-        it.skip('should move all energy of a certain type from bench to active', () => {
-            /*
-             * TODO: Move all fire energy from benched creature to active
-             * This requires energy target with:
-             * - source: field target (bench) + energy filter (fire) + count (all)
-             * - target: field target (active)
-             */
+        it('should move all energy of a certain type from active to bench', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new PlayCardResponseMessage('move-all-fire-from-bench', 'supporter') ],
+                customRepository: allFireFromBenchRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'bench-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'move-all-fire-from-bench', type: 'supporter' }]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 3, water: 1 }),
+                ),
+                maxSteps: 10,
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
+            
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(0, 'Active should have no fire energy remaining');
+            expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(1, 'Active should keep water energy');
+            expect(energyState.attachedEnergyByInstance['bench-creature-0-0'].fire).to.equal(3, 'Bench should have gained all 3 fire energy');
         });
 
-        it.skip('should move energy from a benched creature of choice to active', () => {
-            /*
-             * TODO: Player selects a benched creature, then moves 1 energy to active
-             * This requires energy target with:
-             * - source: single-choice field target (bench) + energy filter + count (1)
-             * - target: fixed field target (active)
-             */
+        it('should move energy from active to a benched creature of choice', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ 
+                    new PlayCardResponseMessage('move-energy-from-bench-choice', 'supporter'),
+                ],
+                customRepository: allFireFromBenchRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'bench-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'move-energy-from-bench-choice', type: 'supporter' }]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
+                ),
+                maxSteps: 10,
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
+            
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Active should have 1 fire energy remaining');
+            expect(energyState.attachedEnergyByInstance['bench-creature-0-0'].fire).to.equal(1, 'Bench creature should have gained 1 fire energy');
         });
 
-        it.skip('should move all energy from a benched creature to active', () => {
-            /*
-             * TODO: Move all energy (any type) from specific benched creature to active
-             * This requires energy target with:
-             * - source: field target (specific bench) + energy filter (all types) + count (all)
-             * - target: fixed field target (active)
-             */
+        it('should move all energy from active to bench', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new PlayCardResponseMessage('move-all-energy-from-bench', 'supporter') ],
+                customRepository: allFireFromBenchRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'bench-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'move-all-energy-from-bench', type: 'supporter' }]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1, lightning: 1 }),
+                ),
+                maxSteps: 10,
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
+            
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(0, 'Active should have no fire energy');
+            expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(0, 'Active should have no water energy');
+            expect(energyState.attachedEnergyByInstance['basic-creature-0'].lightning).to.equal(0, 'Active should have no lightning energy');
+            expect(energyState.attachedEnergyByInstance['bench-creature-0-0'].fire).to.equal(2, 'Bench should have gained 2 fire energy');
+            expect(energyState.attachedEnergyByInstance['bench-creature-0-0'].water).to.equal(1, 'Bench should have gained 1 water energy');
+            expect(energyState.attachedEnergyByInstance['bench-creature-0-0'].lightning).to.equal(1, 'Bench should have gained 1 lightning energy');
         });
     });
 });
