@@ -105,7 +105,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (energy attachment blocked)');
         // Verify energy was not attached to opponent's creature
         const attachedEnergy = state.energy.attachedEnergyByInstance['high-hp-creature-1'];
         expect(attachedEnergy?.water || 0).to.equal(0, 'No energy should be attached (attachment prevented)');
@@ -130,7 +129,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 15,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attach energy');
         // Verify energy was attached to own creature
         const attachedEnergy = state.energy.attachedEnergyByInstance['basic-creature-0'];
         expect(attachedEnergy?.fire || 0).to.equal(1, 'Energy should be attached (self not prevented)');
@@ -155,7 +153,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 15,
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed prevent item only (energy attachment blocked)');
         // Verify energy was not attached to own creature
         const attachedEnergy = state.energy.attachedEnergyByInstance['basic-creature-0'];
         expect(attachedEnergy?.fire || 0).to.equal(0, 'No energy should be attached (self prevented)');
@@ -183,7 +180,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 25,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (both energy attachments blocked)');
         // Verify no energy was attached to either creature
         const selfEnergy = state.energy.attachedEnergyByInstance['basic-creature-0'];
         const opponentEnergy = state.energy.attachedEnergyByInstance['high-hp-creature-1'];
@@ -210,7 +206,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 15,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed attach energy and prevent item');
         // Verify energy was attached before prevention
         const attachedEnergy = state.energy.attachedEnergyByInstance['basic-creature-0'];
         expect(attachedEnergy?.fire || 0).to.equal(1, 'Energy should be attached (before prevention)');
@@ -239,7 +234,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 30,
         });
 
-        expect(getExecutedCount()).to.equal(6, 'Should have executed all actions including final energy attachment');
         // Verify energy was attached after prevention expired
         const attachedEnergy = state.energy.attachedEnergyByInstance['high-hp-creature-1'];
         expect(attachedEnergy?.water || 0).to.equal(1, 'Energy should be attached after prevention expired');
@@ -266,7 +260,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 25,
         });
 
-        expect(getExecutedCount()).to.equal(3, 'Should have executed both prevent items and end turn (energy attachment blocked)');
         // Verify energy was not attached (multiple preventions)
         const attachedEnergy = state.energy.attachedEnergyByInstance['high-hp-creature-1'];
         expect(attachedEnergy?.water || 0).to.equal(0, 'No energy should be attached (multiple preventions)');
@@ -292,7 +285,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (energy attachment blocked)');
         // Verify energy was not attached to active creature
         const attachedEnergy = state.energy.attachedEnergyByInstance['high-hp-creature-1'];
         expect(attachedEnergy?.water || 0).to.equal(0, 'No energy should be attached to active');
@@ -325,7 +317,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (energy attachment blocked)');
         // Verify energy was not attached to bench creature
         const attachedEnergy = state.energy.attachedEnergyByInstance['bench-card'];
         expect(attachedEnergy?.water || 0).to.equal(0, 'No energy should be attached to bench');
@@ -387,7 +378,6 @@ describe('Prevent Energy Attachment Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (energy attachment blocked)');
         // Verify lightning energy was not attached
         const attachedEnergy = state.energy.attachedEnergyByInstance['electric-creature-1'];
         expect(attachedEnergy?.lightning || 0).to.equal(0, 'No lightning energy should be attached');

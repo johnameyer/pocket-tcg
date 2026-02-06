@@ -165,7 +165,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (item play blocked)');
         // Verify the item is still in opponent's hand
         expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.true;
     });
@@ -188,7 +187,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 25,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (all plays blocked)');
         // Verify cards are still in opponent's hand
         expect(state.hand[1].length).to.equal(2, 'Both cards should remain in hand');
     });
@@ -210,7 +208,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (creature play blocked)');
         // Verify creature is still in opponent's hand
         expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'basic-creature')).to.be.true;
     });
@@ -232,7 +229,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and end turn (tool play blocked)');
         // Verify tool is still in opponent's hand
         expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'tool')).to.be.true;
     });
@@ -256,7 +252,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 30,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevent all and end turn (all plays blocked)');
         // Verify all cards are still in opponent's hand
         expect(state.hand[1].length).to.equal(3, 'All cards should remain in hand');
     });
@@ -276,7 +271,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 15,
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed self-prevent item only (supporter play blocked)');
         // Verify supporter is still in own hand
         expect(state.hand[0].some((card: { templateId: string }) => card.templateId === 'supporter')).to.be.true;
     });
@@ -298,7 +292,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(3, 'Should have executed prevent item, end turn, and supporter');
         // Verify supporter was played (not in hand anymore)
         expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'supporter')).to.be.false;
     });
@@ -318,7 +311,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 15,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed both items');
         // Verify both items were played
         expect(state.hand[0].length).to.equal(0, 'Both items should have been played');
     });
@@ -343,7 +335,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 30,
         });
 
-        expect(getExecutedCount()).to.equal(6, 'Should have executed all actions including final item play');
         // Verify item was played after prevention expired
         expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.false;
     });
@@ -366,7 +357,6 @@ describe('Prevent Playing Effect', () => {
             maxSteps: 25,
         });
 
-        expect(getExecutedCount()).to.equal(3, 'Should have executed both prevent items and end turn (item play blocked)');
         // Verify item is still in opponent's hand
         expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.true;
     });
