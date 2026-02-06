@@ -8,6 +8,7 @@ import { StatusEffectType } from '../src/controllers/status-effect-controller.js
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame, resumeGame } from './helpers/test-helpers.js';
 import { mockRepository } from './mock-repository.js';
+import { CardRepository } from '../src/repository/card-repository.js';
 
 describe('Creature Pocket TCG Game', () => {
     const factory = gameFactory(mockRepository);
@@ -280,6 +281,48 @@ describe('Creature Pocket TCG Game', () => {
                 // Turn counter should still be well below limit
                 expect(state.turnCounter.turnNumber).to.be.lessThan(30, 'Turn counter should be below limit');
             });
+        });
+    });
+
+    describe('Card Descriptions', () => {
+        it('should accept optional descriptions on card types', () => {
+            // Just verify the types accept descriptions - no runtime validation needed
+            const testCreatures = new Map();
+            testCreatures.set('test', {
+                templateId: 'test',
+                name: 'Test',
+                maxHp: 100,
+                type: 'fire',
+                retreatCost: 1,
+                attacks: [{
+                    name: 'Attack',
+                    description: 'Attack description',
+                    damage: 50,
+                    energyRequirements: [{ type: 'fire', amount: 1 }],
+                }],
+                ability: {
+                    name: 'Ability',
+                    description: 'Ability description',
+                    trigger: { type: 'manual', unlimited: false },
+                    effects: [],
+                },
+            });
+
+            const testSupporters = new Map();
+            testSupporters.set('test-supporter', {
+                templateId: 'test-supporter',
+                name: 'Test Supporter',
+                description: 'Supporter description',
+                effects: [],
+            });
+
+            const repo = new CardRepository(testCreatures, testSupporters, new Map(), new Map(), new Map());
+            const creature = repo.getCreature('test');
+            const supporter = repo.getSupporter('test-supporter');
+
+            expect(creature.attacks[0].description).to.equal('Attack description');
+            expect(creature.ability?.description).to.equal('Ability description');
+            expect(supporter.description).to.equal('Supporter description');
         });
     });
 });
