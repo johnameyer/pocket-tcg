@@ -94,6 +94,20 @@ export type ToolData = {
 };
 
 /**
+ * Represents a stadium card.
+ */
+export type StadiumData = {
+    templateId: string;
+    name: string;
+    effects: Effect[];
+};
+
+/**
+ * Union type for all card data types.
+ */
+export type CardData = CreatureData | SupporterData | ItemData | ToolData | StadiumData;
+
+/**
  * Represents a single form in an evolution chain.
  */
 export type EvolutionStackCard = {

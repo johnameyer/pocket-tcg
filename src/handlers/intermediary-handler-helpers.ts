@@ -242,6 +242,23 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             } else if (toolData.effects && toolData.effects.length > 0) {
                 cardDescription = ` - ${toolData.effects[0].type}`;
             }
+        } else if (card.type === 'stadium') {
+            const stadiumData = cardRepository.getStadium(card.templateId);
+            if (!stadiumData) {
+                throw new Error(`Stadium not found: ${card.templateId}`);
+            }
+            cardName = stadiumData.name;
+            
+            // Check if card can be played using ActionValidator
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                if (handlerData.turnState.stadiumPlayedThisTurn) {
+                    cardDescription = ' (Already played a Stadium this turn!)';
+                } else if (handlerData.stadium?.activeStadium?.name === stadiumData.name) {
+                    cardDescription = ' (Stadium with same name already active!)';
+                }
+            } else if (stadiumData.effects && stadiumData.effects.length > 0) {
+                cardDescription = ` - ${stadiumData.effects[0].type}`;
+            }
         } else {
             // This should never happen if all card types are handled above
             const exhaustiveCheck: never = card;
@@ -325,10 +342,13 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     }
     
     // Create a play card action
-    if (selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item') {
+    if (selectedCard.type === 'creature' || selectedCard.type === 'supporter' || selectedCard.type === 'item' || selectedCard.type === 'stadium') {
         responsesQueue.push(new PlayCardResponseMessage(selectedCard.templateId, selectedCard.type, targetPlayerId, targetFieldCardIndex));
     } else {
-        // Handle tool cards or other unsupported types
+        /*
+         * TODO: Remove this limitation - tool cards should be fully supported
+         * Handle tool cards or other unsupported types
+         */
         await intermediary.form({ type: 'print', message: [ `Cannot play ${selectedCard.type} cards yet.` ] });
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
     }
@@ -685,6 +705,8 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     const activeFieldCard = toFieldCard(handlerData.field.creatures[playerId][0]); // Position 0 is active
     const benchedFieldCards = handlerData.field.creatures[playerId].slice(1).map(toFieldCard); // Positions 1+ are benched
     const supporterPlayed = handlerData.turnState.supporterPlayedThisTurn;
+    const stadiumPlayed = handlerData.turnState.stadiumPlayedThisTurn;
+    const activeStadium = handlerData.stadium?.activeStadium;
     
     // Get active FieldCard info with energy
     const fieldCardData = cardRepository.getCreature(activeFieldCard.templateId);
@@ -751,6 +773,8 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
     
     const activeEnergyDisplay = activeEnergyCount > 0 ? ` [${activeEnergyCount}${activeEnergyTypes ? ':' + activeEnergyTypes : ''}]` : '';
     
+    const stadiumDisplay = activeStadium ? `Stadium: ${activeStadium.name} (Player ${activeStadium.owner + 1})` : 'Stadium: None';
+    
     const statusLines = [
         `=== Your Turn (Turn: ${globalTurn}) ===`,
         `Active: ${fieldCardName} (${fieldCardHp}/${maxHp})${activeEnergyDisplay}${statusText}`,
@@ -758,6 +782,8 @@ export async function showPlayerStatus(cardRepository: CardRepository, intermedi
         `Energy Zone: ${currentEnergy} (Next: ${nextEnergy}) - Attached this turn: ${energyAttached ? 'Yes' : 'No'}`,
         `Hand (${hand.length} cards): ${handSummary.join(', ')}`,
         `Supporter played this turn: ${supporterPlayed ? 'Yes' : 'No'}`,
+        `Stadium played this turn: ${stadiumPlayed ? 'Yes' : 'No'}`,
+        stadiumDisplay,
         '================',
     ].join('\n');
     

@@ -55,12 +55,11 @@ export function createTestPlayersWithDifferentHandlers(
 }
 
 export function createActionTracker(actions: ResponseMessage[]) {
-    let actionIndex = 0;
-    
     return {
         handler: (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => {
-            if (actionIndex < actions.length) {
-                responses.push(actions[actionIndex++]);
+            // Shift the next action off the list
+            if (actions.length > 0) {
+                responses.push(actions.shift()!);
             }
         },
     };
@@ -196,6 +195,46 @@ export function initializePassiveEffectsForTestState(
             // Tool not found in repository, skip
         }
     }
+    
+    // Initialize passive effects for stadium
+    if (state.stadium?.activeStadium) {
+        const stadium = state.stadium.activeStadium;
+        
+        try {
+            const stadiumData = repository.getStadium(stadium.templateId);
+            
+            if (stadiumData.effects) {
+                for (const effect of stadiumData.effects) {
+                    // Check if this is a modifier effect that should be registered as passive
+                    if ('duration' in effect && effect.duration) {
+                        const modifierEffect = effect as ModifierEffect;
+                        
+                        // Create the passive effect entry
+                        const passiveEffect = {
+                            id: `${state.effects.nextEffectId++}`,
+                            sourcePlayer: stadium.owner,
+                            effectName: `${stadiumData.name}`,
+                            effect: {
+                                ...modifierEffect,
+                                // For while-in-play effects, populate the instanceId
+                                duration: modifierEffect.duration.type === 'while-in-play'
+                                    ? { type: 'while-in-play' as const, instanceId: stadium.instanceId }
+                                    : modifierEffect.duration,
+                            },
+                            duration: modifierEffect.duration.type === 'while-in-play'
+                                ? { type: 'while-in-play' as const, instanceId: stadium.instanceId }
+                                : modifierEffect.duration,
+                            createdTurn: state.turnCounter.turnNumber,
+                        };
+                        
+                        state.effects.activePassiveEffects.push(passiveEffect);
+                    }
+                }
+            }
+        } catch (e) {
+            // Stadium not found in repository, skip
+        }
+    }
 }
 
 export interface TestGameConfig {
@@ -207,15 +246,9 @@ export interface TestGameConfig {
 }
 
 export function runTestGame(config: TestGameConfig) {
-    /*
-     * TODO: State resumption has issues where the game gets stuck in waiting states
-     * and the action tracker handler is never called to provide new actions.
-     * The game remains in ACTIONLOOP_noop waiting for responses that never come.
-     * For same-turn effects, use single runTestGame with multiple actions instead.
-     */
-    
     let validatedCount = 0;
-    const tracker = createActionTracker(config.actions);
+    const actions = config.actions; // Pass by reference - will be mutated by shift()
+    const tracker = createActionTracker(actions);
     const players = createTestPlayers(tracker.handler);
     const params = new GameSetup().getDefaultParams();
     
@@ -240,6 +273,35 @@ export function runTestGame(config: TestGameConfig) {
     driver.resume();
     const maxSteps = config.maxSteps !== undefined ? config.maxSteps : 5;
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+        // Check if we're in a waiting state with actions available (only when resuming from an existing state)
+        if (config.resumeFrom) {
+            const currentState = driver.getState();
+            if (currentState.waiting && actions.length > 0) {
+                const waitingPositions = currentState.waiting.waiting;
+                if (waitingPositions) {
+                    const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
+                    
+                    /*
+                     * If waiting for a player and we have actions, directly handle the next action
+                     * This simulates the player providing their response when resuming a game
+                     */
+                    if (positions.length > 0) {
+                        // Get the waiting player
+                        const waitingPlayer = positions[0];
+                        
+                        // Get the next action directly from the array
+                        const nextAction = actions.shift();
+                        if (nextAction) {
+                            const wasValidated = driver.handleEvent(waitingPlayer, nextAction, undefined);
+                            if (wasValidated) {
+                                validatedCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing private handlerProxy API
         for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
             if (message) {
@@ -256,6 +318,24 @@ export function runTestGame(config: TestGameConfig) {
             }
         }
         driver.resume();
+        
+        // Check if we're still in a waiting state with remaining actions - this is an error
+        if (config.resumeFrom) {
+            const stateAfterResume = driver.getState();
+            if (!stateAfterResume.completed && stateAfterResume.waiting && actions.length > 0) {
+                const waitingPositions = stateAfterResume.waiting.waiting;
+                if (waitingPositions) {
+                    const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
+                    if (positions.length > 0) {
+                        // If there are actions left but we're still waiting, throw an error
+                        throw new Error(
+                            `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. `
+                            + 'Actions may be for the wrong player or turn order.',
+                        );
+                    }
+                }
+            }
+        }
     }
 
     const state = driver.getState() as ControllerState<Controllers>;
@@ -338,4 +418,6 @@ export function runBotGame(config: {
             break;
         }
     }
+    
+    return driver.getState();
 }

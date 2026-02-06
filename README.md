@@ -55,6 +55,7 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ First turn restrictions
 - ✅ Turn limits (default 30 turns, customizable)
 - ✅ Hand size limits (default 10 cards, customizable)
+- ✅ Stadium cards with persistent field effects
 
 ### Battle Features
 - ✅ Special ex cards (2 points when knocked out)
@@ -79,7 +80,7 @@ node dist/start.js --help
 
 ## Using Custom Card Definitions
 
-This package exports all card type definitions, allowing you to create your own card repositories with custom creatures, supporters, items, and tools.
+This package exports all card type definitions, allowing you to create your own card repositories with custom creatures, supporters, items, tools, and stadiums.
 
 ### Example Usage
 
@@ -89,7 +90,8 @@ import {
   CreatureData, 
   SupporterData, 
   ItemData, 
-  ToolData 
+  ToolData,
+  StadiumData 
 } from '@cards-ts/pocket-tcg';
 
 // Define your custom creatures
@@ -139,13 +141,24 @@ const cardRepository = new CardRepository(
 
 The package exports all necessary types for card definitions:
 
-- **Card Types**: `CreatureData`, `SupporterData`, `ItemData`, `ToolData`
+- **Card Types**: `CreatureData`, `SupporterData`, `ItemData`, `ToolData`, `StadiumData`
 - **Effect Types**: `Effect`, `HpEffect`, `StatusEffect`, `DrawEffect`, `EnergyEffect`, and more
 - **Target Types**: `Target`, `FixedTarget`, `SingleChoiceTarget`, `MultiChoiceTarget`, `AllMatchingTarget`
 - **Condition Types**: `Condition` for conditional effects
 - **Energy Types**: `AttachableEnergyType`, `EnergyRequirementType`
 - **Effect Values**: `EffectValue`, `ConstantValue`, `ResolvedValue`, `ConditionalValue`, and more
 - **Repository**: `CardRepository` class for managing card data
+
+### Stadium Cards
+
+Stadium cards are a special trainer card type that provide persistent field-wide effects:
+
+- Only one stadium can be active at a time
+- Playing a new stadium replaces the current one (discarded to owner's pile)
+- Cannot play a stadium with the same name as the active stadium
+- Only one stadium can be played per turn (similar to supporters)
+- Stadium effects persist until replaced or removed
+- Support for passive effects like HP bonuses, damage modifiers, retreat cost changes, etc.
 
 ## Development
 

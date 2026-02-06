@@ -121,6 +121,11 @@ describe('Full Game Conservation', () => {
             instanceIds.push(card.instanceId);
         }
         
+        // Stadium (if owned by this player)
+        if (state.stadium?.activeStadium && state.stadium.activeStadium.owner === playerId) {
+            instanceIds.push(state.stadium.activeStadium.instanceId);
+        }
+        
         return instanceIds;
     }
 

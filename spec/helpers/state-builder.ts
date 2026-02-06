@@ -67,6 +67,7 @@ export class StateBuilder {
             turnState: {
                 shouldEndTurn: false,
                 supporterPlayedThisTurn: false,
+                stadiumPlayedThisTurn: false,
                 retreatedThisTurn: false,
                 evolvedInstancesThisTurn: [],
                 usedAbilitiesThisTurn: [],
@@ -106,6 +107,9 @@ export class StateBuilder {
             deck: [[], []], // Array of card arrays for each player
             hand: [[], []], // Array of card arrays for each player
             discard: [[], []], // Array of discarded card arrays for each player
+            stadium: {
+                activeStadium: undefined,
+            },
         } satisfies ControllerState<Controllers>;
         
         // Apply customization if provided
@@ -322,6 +326,29 @@ export class StateBuilder {
         return (state: ControllerState<Controllers>) => {
             state.coinFlip.mockedResults = results;
             state.coinFlip.mockedResultIndex = 0;
+        };
+    }
+
+    /**
+     * Set up a stadium card as already active on the field
+     * @param templateId The stadium card template ID
+     * @param owner The player who owns the stadium (0 or 1)
+     * @param name Optional display name for the stadium
+     */
+    static withStadium(templateId: string, owner: number = 0, name?: string) {
+        return (state: ControllerState<Controllers>) => {
+            state.stadium = {
+                activeStadium: {
+                    templateId,
+                    instanceId: `${templateId}-instance`,
+                    owner,
+                    name: name || templateId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' '),
+                },
+            };
+            // Mark stadium as not played this turn (it was played in a previous turn)
+            state.turnState.stadiumPlayedThisTurn = false;
+            // Note: Passive effects will be initialized automatically by initializePassiveEffectsForTestState
         };
     }
 

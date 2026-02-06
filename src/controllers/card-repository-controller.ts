@@ -51,6 +51,10 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
         return this.repository.getTool(id); 
     }
 
+    getStadium(id: string) {
+        return this.repository.getStadium(id); 
+    }
+
     getAllCreatureIds() {
         return this.repository.getAllCreatureIds(); 
     }

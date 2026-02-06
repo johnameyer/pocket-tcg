@@ -140,6 +140,8 @@ export class ActionValidator {
                 return this.canPlayItemCard(handlerData, cardRepository, cardId, playerId);
             case 'supporter':
                 return this.canPlaySupporterCard(handlerData, cardRepository, cardId, playerId);
+            case 'stadium':
+                return this.canPlayStadiumCard(handlerData, cardRepository, cardId, playerId);
             default:
                 return false;
         }
@@ -194,6 +196,32 @@ export class ActionValidator {
             return EffectValidator.canApplyCardEffects(supporterData.effects, handlerData, playerId, supporterData.name, 'supporter', cardRepository);
         }
         
+        return true;
+    }
+    
+    /**
+     * Checks if a stadium card can be played.
+     */
+    private static canPlayStadiumCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
+        if (handlerData.turnState.stadiumPlayedThisTurn) {
+            return false; 
+        }
+        
+        const stadiumData = cardRepository.getStadium(cardId);
+        if (!stadiumData) {
+            return false; 
+        }
+        
+        // Check if there's already a stadium with the same name
+        const activeStadium = handlerData.stadium?.activeStadium;
+        if (activeStadium && activeStadium.name === stadiumData.name) {
+            return false; // Cannot play duplicate stadium
+        }
+        
+        /*
+         * Stadiums can always be played regardless of whether their effects can currently be applied
+         * since they have persistent effects that may become relevant later
+         */
         return true;
     }
     
