@@ -24,8 +24,10 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
      * @returns Empty array - resolution is handled manually in apply()
      */
     getResolutionRequirements(effect: EnergyTransferEffect): ResolutionRequirement[] {
-        // Manual resolution in apply() because source.fieldTarget is a nested property
-        // that the framework's resolvedEffect[targetProperty] = value doesn't support
+        /*
+         * Manual resolution in apply() because source.fieldTarget is a nested property
+         * that the framework's resolvedEffect[targetProperty] = value doesn't support
+         */
         return [];
     }
     
@@ -61,13 +63,13 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         // Resolve source.fieldTarget
         const sourceFieldResolution = FieldTargetResolver.resolveTarget(effect.source.fieldTarget, controllers, context);
         if (sourceFieldResolution.type !== 'resolved' || sourceFieldResolution.targets.length === 0) {
-            throw new Error(`Expected resolved source field target`);
+            throw new Error('Expected resolved source field target');
         }
 
         // Resolve target
         const targetResolution = FieldTargetResolver.resolveTarget(effect.target, controllers, context);
         if (targetResolution.type !== 'resolved' || targetResolution.targets.length === 0) {
-            throw new Error(`Expected resolved target field target`);
+            throw new Error('Expected resolved target field target');
         }
 
         const sourceFieldTarget = sourceFieldResolution.targets[0];

@@ -156,8 +156,10 @@ export class EnergyTargetResolver {
 
         // Handle all-matching targets
         if (fieldResolution.type === 'all-matching') {
-            // For all-matching, we need to gather energy from all matching creatures
-            // This is complex - for now, we'll require selection
+            /*
+             * For all-matching, we need to gather energy from all matching creatures
+             * This is complex - for now, we'll require selection
+             */
             const energyOptions: EnergyOption[] = [];
             
             for (const fieldTarget of fieldResolution.targets) {
