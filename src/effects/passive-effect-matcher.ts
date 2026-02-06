@@ -259,44 +259,4 @@ export class PassiveEffectMatcher {
         }
         return false;
     }
-
-    /**
-     * Check if weakness is disabled for a creature.
-     * 
-     * @param controllers Game controllers
-     * @param playerId The player ID of the creature
-     * @param fieldIndex The field position of the creature
-     * @returns True if weakness is disabled for the creature
-     */
-    static isWeaknessDisabled(
-        controllers: Controllers,
-        playerId: number,
-        fieldIndex: number,
-    ): boolean {
-        const disableEffects = controllers.effects.getPassiveEffectsByType('disable-weakness');
-        
-        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
-        if (!creature) {
-            return false;
-        }
-        
-        // Create a handler data view for criteria matching
-        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
-        
-        for (const passiveEffect of disableEffects) {
-            const effect = passiveEffect.effect;
-            // Check if this effect applies to the creature
-            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
-                effect.target.fieldCriteria || {},
-                creature,
-                controllers.cardRepository.cardRepository,
-                handlerData.energy?.attachedEnergyByInstance,
-            );
-            
-            if (matchesCriteria) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

@@ -64,7 +64,6 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ HP bonus effects
 - ✅ Retreat prevention effects
 - ✅ Retreat cost modifiers (increase/decrease)
-- ✅ Weakness disable effects
 - ✅ Attack prevention effects
 - ✅ Card playing prevention (by card type)
 - ✅ Energy attachment prevention

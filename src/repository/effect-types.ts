@@ -361,20 +361,6 @@ export type PreventPlayingEffect = {
 };
 
 /**
- * Represents an effect that disables weakness bonus damage.
- * @property {string} type - Always 'disable-weakness' to identify this effect type
- * @property {FieldTargetCriteria} target - Criteria for which creatures have weakness disabled (evaluated passively)
- * @property {Duration} duration - How long weakness is disabled
- * @example { type: 'disable-weakness', target: { player: 'self', position: 'active' }, duration: 'this-turn' }
- * // Your active creature doesn't take extra weakness damage this turn
- */
-export type DisableWeaknessEffect = {
-    type: 'disable-weakness';
-    target: FieldTargetCriteria;
-    duration: Duration;
-};
-
-/**
  * Represents an effect that prevents a creature from attacking.
  * @property {string} type - Always 'prevent-attack' to identify this effect type
  * @property {FieldTarget} target - The creature that cannot attack
@@ -432,7 +418,6 @@ export type ModifierEffect =
     | RetreatCostReductionEffect
     | RetreatCostIncreaseEffect
     | PreventPlayingEffect
-    | DisableWeaknessEffect
     | PreventAttackEffect
     | PreventEnergyAttachmentEffect
     | AttackEnergyCostModifierEffect;

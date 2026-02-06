@@ -79,11 +79,7 @@ export class AttackDamageResolver {
         if (targetcreature && totalDamage > 0) {
             const attackerData = controllers.cardRepository.getCreature(playercreature.templateId);
             const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);
-            
-            // Check if weakness is disabled for the target creature
-            const weaknessDisabled = PassiveEffectMatcher.isWeaknessDisabled(controllers, targetId, 0);
-            
-            if (targetData.weakness === attackerData.type && !weaknessDisabled) {
+            if (targetData.weakness === attackerData.type) {
                 totalDamage += 20; // +20 weakness damage
             }
         }

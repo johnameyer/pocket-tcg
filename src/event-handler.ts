@@ -333,7 +333,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
                             || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
                             || effect.type === 'retreat-prevention' || effect.type === 'retreat-cost-increase'
-                            || effect.type === 'prevent-playing' || effect.type === 'disable-weakness'
+                            || effect.type === 'prevent-playing'
                             || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
                             || effect.type === 'attack-energy-cost-modifier') {
                             // Get the field card instance ID for while-in-play duration
@@ -416,7 +416,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                 || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
                                 || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
                                 || effect.type === 'retreat-prevention' || effect.type === 'retreat-cost-increase'
-                                || effect.type === 'prevent-playing' || effect.type === 'disable-weakness'
+                                || effect.type === 'prevent-playing'
                                 || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
                                 || effect.type === 'attack-energy-cost-modifier') {
                                 controllers.effects.registerPassiveEffect(
