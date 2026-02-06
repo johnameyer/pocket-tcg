@@ -166,9 +166,9 @@ export class PassiveEffectMatcher {
         // Create a handler data view for criteria matching
         const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
         
-        // Apply retreat cost reduction effects
-        const reductionEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-reduction');
-        for (const passiveEffect of reductionEffects) {
+        // Apply retreat cost modification effects
+        const modificationEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-modification');
+        for (const passiveEffect of modificationEffects) {
             const effect = passiveEffect.effect;
             // Check if this effect applies to the creature
             const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
@@ -180,25 +180,11 @@ export class PassiveEffectMatcher {
             
             if (matchesCriteria) {
                 const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
-                effectiveRetreatCost -= amount;
-            }
-        }
-        
-        // Apply retreat cost increase effects
-        const increaseEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-increase');
-        for (const passiveEffect of increaseEffects) {
-            const effect = passiveEffect.effect;
-            // Check if this effect applies to the creature
-            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
-                effect.target.fieldCriteria || {},
-                creature,
-                controllers.cardRepository.cardRepository,
-                handlerData.energy?.attachedEnergyByInstance,
-            );
-            
-            if (matchesCriteria) {
-                const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
-                effectiveRetreatCost += amount;
+                if (effect.operation === 'decrease') {
+                    effectiveRetreatCost -= amount;
+                } else {
+                    effectiveRetreatCost += amount;
+                }
             }
         }
         

@@ -330,9 +330,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 if (creatureData.ability && creatureData.ability.trigger?.type === 'passive' && creatureData.ability.effects) {
                     for (const effect of creatureData.ability.effects) {
                         if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
                             || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                            || effect.type === 'retreat-prevention' || effect.type === 'retreat-cost-increase'
+                            || effect.type === 'retreat-prevention'
                             || effect.type === 'prevent-playing'
                             || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
                             || effect.type === 'attack-energy-cost-modifier') {
@@ -413,9 +413,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     if (toolData.effects) {
                         for (const effect of toolData.effects) {
                             if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                                || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
+                                || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
                                 || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                                || effect.type === 'retreat-prevention' || effect.type === 'retreat-cost-increase'
+                                || effect.type === 'retreat-prevention'
                                 || effect.type === 'prevent-playing'
                                 || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
                                 || effect.type === 'attack-energy-cost-modifier') {
