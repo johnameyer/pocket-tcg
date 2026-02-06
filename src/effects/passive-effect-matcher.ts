@@ -2,7 +2,6 @@ import { Controllers } from '../controllers/controllers.js';
 import { PassiveEffect } from '../controllers/effect-controller.js';
 import { RetreatPreventionEffect, PreventDamageEffect } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
-import { matchesPlayerTarget } from '../utils/player-target-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 
 /**
@@ -197,21 +196,58 @@ export class PassiveEffectMatcher {
     }
 
     /**
-     * Check if a player is prevented from attaching energy.
+     * Check if energy attachment is prevented for a specific creature.
      * 
      * @param controllers Game controllers
-     * @param playerId The player ID to check
-     * @returns True if the player is prevented from attaching energy
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature
+     * @returns True if energy attachment is prevented for this creature
      */
     static isEnergyAttachmentPrevented(
         controllers: Controllers,
         playerId: number,
+        fieldIndex: number,
     ): boolean {
         const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-energy-attachment');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
         for (const passiveEffect of preventEffects) {
             const effect = passiveEffect.effect;
-            // Check if this effect targets the player
-            if (matchesPlayerTarget(playerId, effect.target, passiveEffect.sourcePlayer, controllers.players.count)) {
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                // Also check player and position criteria
+                if (effect.target.player) {
+                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
+                        : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                    if (targetPlayer !== playerId) {
+                        continue;
+                    }
+                }
+                
+                if (effect.target.position) {
+                    const isActive = fieldIndex === 0;
+                    if (effect.target.position === 'active' && !isActive) {
+                        continue;
+                    }
+                    if (effect.target.position === 'bench' && isActive) {
+                        continue;
+                    }
+                }
+                
                 return true;
             }
         }

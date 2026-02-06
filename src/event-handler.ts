@@ -703,8 +703,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return controllers.energy.isFirstTurnRestricted();
                 }),
                 EventHandler.validate('Energy attachment is prevented', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                    // Check if any prevent-energy-attachment effects apply to this player
-                    return PassiveEffectMatcher.isEnergyAttachmentPrevented(controllers, source);
+                    // Check if any prevent-energy-attachment effects apply to the target creature
+                    return PassiveEffectMatcher.isEnergyAttachmentPrevented(controllers, source, message.fieldPosition);
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {

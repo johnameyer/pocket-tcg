@@ -383,14 +383,14 @@ export type PreventAttackEffect = {
 /**
  * Represents an effect that prevents energy attachment to creatures.
  * @property {string} type - Always 'prevent-energy-attachment' to identify this effect type
- * @property {'self' | 'opponent' | 'both'} target - Which player(s) cannot attach energy
+ * @property {FieldTargetCriteria} target - Criteria for which creatures cannot receive energy (evaluated passively)
  * @property {Duration} duration - How long energy attachment is prevented
- * @example { type: 'prevent-energy-attachment', target: 'opponent', duration: 'this-turn' }
- * // Opponent cannot attach energy this turn
+ * @example { type: 'prevent-energy-attachment', target: { player: 'opponent', position: 'active' }, duration: 'this-turn' }
+ * // Opponent cannot attach energy to their active creature this turn
  */
 export type PreventEnergyAttachmentEffect = {
     type: 'prevent-energy-attachment';
-    target: 'self' | 'opponent' | 'both';
+    target: FieldTargetCriteria;
     duration: Duration;
 };
 

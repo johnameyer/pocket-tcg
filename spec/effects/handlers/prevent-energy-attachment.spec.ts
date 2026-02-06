@@ -16,7 +16,7 @@ describe('Prevent Energy Attachment Effect', () => {
         it('should return empty array (no resolution needed)', () => {
             const effect: PreventEnergyAttachmentEffect = {
                 type: 'prevent-energy-attachment',
-                target: 'opponent',
+                target: { player: 'opponent' },
                 duration: { type: 'until-end-of-turn' },
             };
 
@@ -57,7 +57,7 @@ describe('Prevent Energy Attachment Effect', () => {
                 name: 'Prevent Energy Item',
                 effects: [{
                     type: 'prevent-energy-attachment',
-                    target: 'opponent',
+                    target: { player: 'opponent' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -66,7 +66,7 @@ describe('Prevent Energy Attachment Effect', () => {
                 name: 'Self Prevent Energy Item',
                 effects: [{
                     type: 'prevent-energy-attachment',
-                    target: 'self',
+                    target: { player: 'self' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -75,7 +75,7 @@ describe('Prevent Energy Attachment Effect', () => {
                 name: 'Both Prevent Energy Item',
                 effects: [{
                     type: 'prevent-energy-attachment',
-                    target: 'both',
+                    target: {},
                     duration: { type: 'until-end-of-next-turn' },
                 }],
             }],
@@ -359,7 +359,7 @@ describe('Prevent Energy Attachment Effect', () => {
                     name: 'Prevent Energy Item',
                     effects: [{
                         type: 'prevent-energy-attachment',
-                        target: 'opponent',
+                        target: { player: 'opponent' },
                         duration: { type: 'until-end-of-next-turn' },
                     }],
                 }],
