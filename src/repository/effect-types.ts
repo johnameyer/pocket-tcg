@@ -4,6 +4,7 @@ import { AttachableEnergyType } from './energy-types.js';
 import { CardTarget } from './targets/card-target.js';
 import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
+import { EnergyTarget } from './targets/energy-target.js';
 
 /**
  * Represents when an effect can be triggered.
@@ -58,21 +59,31 @@ export type DrawEffect = {
 };
 
 /**
- * Represents an effect that modifies or transfers energy on creatures.
- * @property {string} type - Always 'energy' to identify this effect type
- * @property {AttachableEnergyType} energyType - The type of energy to modify
- * @property {EffectValue} amount - The amount of energy to attach or discard
- * @property {FieldTarget} target - The target creature(s) to modify
- * @property {string} operation - Whether to 'attach' or 'discard' energy
- * @example { type: 'energy', energyType: 'fire', amount: { type: 'constant', value: 1 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'attach' }
+ * Represents an effect that attaches energy to creatures.
+ * @property {string} type - Always 'energy-attach' to identify this effect type
+ * @property {AttachableEnergyType} energyType - The type of energy to attach
+ * @property {EffectValue} amount - The amount of energy to attach
+ * @property {FieldTarget} target - The target creature(s) to attach energy to
+ * @example { type: 'energy-attach', energyType: 'fire', amount: { type: 'constant', value: 1 }, target: { type: 'fixed', player: 'self', position: 'active' } }
  * // Attach 1 fire energy to your active creature
  */
-export type EnergyEffect = {
-    type: 'energy';
+export type EnergyAttachEffect = {
+    type: 'energy-attach';
     energyType: AttachableEnergyType;
     amount: EffectValue;
     target: FieldTarget;
-    operation: 'attach' | 'discard';
+};
+
+/**
+ * Represents an effect that discards energy from creatures.
+ * @property {string} type - Always 'energy-discard' to identify this effect type
+ * @property {EnergyTarget} energySource - The energy to discard (includes field target, energy criteria, and count)
+ * @example { type: 'energy-discard', energySource: { type: 'field', fieldTarget: { type: 'fixed', player: 'self', position: 'active' }, criteria: { energyTypes: ['psychic', 'darkness'] }, count: 2 } }
+ * // Discard a psychic and a dark energy from your active creature
+ */
+export type EnergyDiscardEffect = {
+    type: 'energy-discard';
+    energySource: EnergyTarget;
 };
 
 /**
@@ -142,21 +153,16 @@ export type SwitchEffect = {
 
 /**
  * Represents an effect that transfers energy between cards.
- * Can target energy in discard pile as well as on field cards.
  * @property {string} type - Always 'energy-transfer' to identify this effect type
- * @property {FieldTarget} source - The source of the energy to transfer (where energy comes from)
+ * @property {EnergyTarget} source - The source of the energy to transfer (specifies which energy and from where)
  * @property {FieldTarget} target - The destination creature to receive energy (where energy goes to)
- * @property {EffectValue} amount - The amount of energy to transfer
- * @property {AttachableEnergyType[]} energyTypes - The types of energy that can be transferred
- * @example { type: 'energy-transfer', source: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, target: { type: 'fixed', player: 'self', position: 'bench' }, amount: { type: 'constant', value: 1 }, energyTypes: ['fire', 'grass'] }
- * // Transfer 1 fire or grass energy from a field creature to a benched creature
+ * @example { type: 'energy-transfer', source: { type: 'field', fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, criteria: { energyTypes: ['fire', 'grass'] }, count: 1 }, target: { type: 'fixed', player: 'self', position: 'active' } }
+ * // Transfer 1 fire or grass energy from a field creature to active creature
  */
 export type EnergyTransferEffect = {
     type: 'energy-transfer';
-    source: FieldTarget;
+    source: EnergyTarget;
     target: FieldTarget;
-    amount: EffectValue;
-    energyTypes: AttachableEnergyType[];
 };
 
 /**
@@ -320,7 +326,8 @@ export type ImmediateEffect =
     | HpEffect
     | StatusEffect
     | DrawEffect
-    | EnergyEffect
+    | EnergyAttachEffect
+    | EnergyDiscardEffect
     | SearchEffect
     | ShuffleEffect
     | HandDiscardEffect

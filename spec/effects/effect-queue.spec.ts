@@ -43,11 +43,10 @@ const createEnergySupporter = (id: string, energyType: AttachableEnergyType): Su
     templateId: id,
     name: 'Energy Supporter',
     effects: [{
-        type: 'energy',
+        type: 'energy-attach',
         energyType,
         amount: { type: 'constant', value: 1 },
         target: { type: 'fixed', player: 'self', position: 'active' },
-        operation: 'attach',
     }],
 });
 

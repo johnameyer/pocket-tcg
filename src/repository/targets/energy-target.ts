@@ -10,7 +10,8 @@ export type EnergyCriteria = {
 };
 
 /**
- * Represents an energy target on a field card.
+ * Represents an energy target on a field card only.
+ * For targeting energy, this combines a field target (which creature) with energy criteria (which types) and count.
  * 
  * Will randomly select if not fully defined.
  */
@@ -25,18 +26,7 @@ export type FieldEnergyTarget = {
 };
 
 /**
- * Represents an energy target in discard pile.
+ * Union type for all energy target types.
+ * Currently only includes field-based energy targeting.
  */
-export type DiscardEnergyTarget = {
-    type: 'discard';
-    player: 'self' | 'opponent';
-    /** Criteria for which energy to target */
-    criteria?: EnergyCriteria;
-    /** Number of energy to target */
-    count: number;
-};
-
-/**
- * Union type for energy targets.
- */
-export type EnergyTarget = FieldEnergyTarget | DiscardEnergyTarget;
+export type EnergyTarget = FieldEnergyTarget;
