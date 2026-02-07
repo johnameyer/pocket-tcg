@@ -93,17 +93,19 @@ export class StatusRecoveryEffectHandler extends AbstractEffectHandler<StatusRec
                     'poison': 'poison' as const,
                 };
                 
-                for (const condition of effect.conditions) {
-                    const statusType = statusMap[condition];
-                    if (statusType) {
-                        // Find and remove the status effect by comparing the enum value
-                        const effects = controllers.statusEffects.getActiveStatusEffects(playerId);
-                        const filteredEffects = effects.filter(e => String(e.type) !== statusType);
-                        controllers.statusEffects.clearAllStatusEffects(playerId);
-                        for (const eff of filteredEffects) {
-                            controllers.statusEffects.applyStatusEffect(playerId, eff.type);
-                        }
-                    }
+                // Get current effects
+                const currentEffects = controllers.statusEffects.getActiveStatusEffects(playerId);
+                
+                // Collect status types to remove
+                const typesToRemove = effect.conditions.map(c => statusMap[c]).filter(t => t !== undefined);
+                
+                // Filter out the effects to remove
+                const filteredEffects = currentEffects.filter(e => !typesToRemove.includes(String(e.type) as any));
+                
+                // Clear all and re-apply filtered effects
+                controllers.statusEffects.clearAllStatusEffects(playerId);
+                for (const eff of filteredEffects) {
+                    controllers.statusEffects.applyStatusEffect(playerId, eff.type);
                 }
                 
                 const conditionNames = effect.conditions.join(' and ');
