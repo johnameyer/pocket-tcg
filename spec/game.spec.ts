@@ -5,8 +5,9 @@ import { GameParams } from '../src/game-params.js';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { StatusEffectType } from '../src/controllers/status-effect-controller.js';
+import { CardRepository } from '../src/repository/card-repository.js';
 import { StateBuilder } from './helpers/state-builder.js';
-import { runTestGame, resumeGame } from './helpers/test-helpers.js';
+import { runTestGame } from './helpers/test-helpers.js';
 import { mockRepository } from './mock-repository.js';
 
 describe('Creature Pocket TCG Game', () => {
@@ -64,7 +65,6 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 5,
             });
 
             // Attack should be blocked with invalid index
@@ -79,7 +79,6 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 5,
             });
 
             // Attack should be blocked with invalid index
@@ -95,7 +94,6 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, []),
                 ),
-                maxSteps: 5,
             });
 
             expect(state.hand[0]).to.have.length(0, 'Card not in hand should not be playable');
@@ -108,7 +106,6 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'high-hp-creature', 'evolution-creature' ]),
                     StateBuilder.withHand(0, [{ templateId: 'basic-creature', type: 'creature' as const }]),
                 ),
-                maxSteps: 5,
             });
 
             expect(state.field.creatures[0].slice(1)).to.have.length(3, 'Should not exceed bench limit');
@@ -121,7 +118,6 @@ describe('Creature Pocket TCG Game', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' as const }]),
                 ),
-                maxSteps: 5,
             });
 
             expect(state.field.creatures[0].slice(1)).to.have.length(0, 'Evolved Creature should not be playable directly');
@@ -140,7 +136,7 @@ describe('Creature Pocket TCG Game', () => {
             expect(preConfiguredState?.statusEffects.activeStatusEffects[0][0]).to.deep.equal({ type: StatusEffectType.POISONED, appliedTurn: 0 });
         });
 
-        it.skip('should enforce first turn restrictions', () => {
+        it('should enforce first turn restrictions', () => {
             /*
              * TODO actually make this proper
              * This test verifies that turn counter can be set to 1 (first turn)
@@ -157,7 +153,7 @@ describe('Creature Pocket TCG Game', () => {
             expect((preConfiguredState as any)?.turnCounter).to.equal(1);
         });
 
-        it.skip('should track turn counter progression', () => {
+        it('should track turn counter progression', () => {
             /*
              * TODO actually make this proper
              * This test verifies that the turn counter can be tracked and modified
@@ -201,7 +197,6 @@ describe('Creature Pocket TCG Game', () => {
                         customState.params = { ...customState.params, maxHandSize };
                     },
                 ),
-                maxSteps: 1,
             });
         }
 
@@ -234,9 +229,8 @@ describe('Creature Pocket TCG Game', () => {
              * Note: This test has issues with bot handlers when resuming from mid-game state.
              * The simplified energy system (null vs dictionary) exposes a pre-existing issue
              * where resumed state with bot handlers doesn't properly handle turn progression.
-             * See TODO comment in resumeGame() about state resumption issues.
              */
-            it.skip('should end game in tie when turn limit is reached', () => {
+            it('should end game in tie when turn limit is reached', () => {
                 // Start earlier (turn 4) to let the game naturally progress to the limit
                 const params = {
                     ...new GameSetup().getDefaultParams(),
@@ -253,7 +247,26 @@ describe('Creature Pocket TCG Game', () => {
                 
                 const driver = factory.getGameDriver(handlers, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState);
                 
-                const state = resumeGame(driver, 200); // Increase even more
+                // Resume with bot handlers for up to 200 steps
+                driver.resume();
+                const maxSteps = 200;
+                for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing private handlerProxy API
+                    for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+                        if (message) {
+                            let payload, data;
+                            if (Array.isArray(message)) {
+                                ([ payload, data ] = message);
+                            } else {
+                                payload = message;
+                            }
+                            driver.handleEvent(position, payload, data);
+                        }
+                    }
+                    driver.resume();
+                }
+                
+                const state = driver.getState();
                 
                 // Game should complete when turn limit is reached
                 expect(state.completed).to.equal(true, 'Game should complete when turn limit reached');
@@ -275,11 +288,72 @@ describe('Creature Pocket TCG Game', () => {
                 
                 const driver = factory.getGameDriver(handlers, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState);
                 
-                const state = resumeGame(driver, 5);
+                // Resume with bot handlers for up to 5 steps
+                driver.resume();
+                const maxSteps = 5;
+                for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing private handlerProxy API
+                    for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
+                        if (message) {
+                            let payload, data;
+                            if (Array.isArray(message)) {
+                                ([ payload, data ] = message);
+                            } else {
+                                payload = message;
+                            }
+                            driver.handleEvent(position, payload, data);
+                        }
+                    }
+                    driver.resume();
+                }
+                
+                const state = driver.getState();
                 
                 // Turn counter should still be well below limit
                 expect(state.turnCounter.turnNumber).to.be.lessThan(30, 'Turn counter should be below limit');
             });
+        });
+    });
+
+    describe('Card Descriptions', () => {
+        it('should accept optional descriptions on card types', () => {
+            // Just verify the types accept descriptions - no runtime validation needed
+            const testCreatures = new Map();
+            testCreatures.set('test', {
+                templateId: 'test',
+                name: 'Test',
+                maxHp: 100,
+                type: 'fire',
+                retreatCost: 1,
+                attacks: [{
+                    name: 'Attack',
+                    description: 'Attack description',
+                    damage: 50,
+                    energyRequirements: [{ type: 'fire', amount: 1 }],
+                }],
+                ability: {
+                    name: 'Ability',
+                    description: 'Ability description',
+                    trigger: { type: 'manual', unlimited: false },
+                    effects: [],
+                },
+            });
+
+            const testSupporters = new Map();
+            testSupporters.set('test-supporter', {
+                templateId: 'test-supporter',
+                name: 'Test Supporter',
+                description: 'Supporter description',
+                effects: [],
+            });
+
+            const repo = new CardRepository(testCreatures, testSupporters, new Map(), new Map(), new Map());
+            const creature = repo.getCreature('test');
+            const supporter = repo.getSupporter('test-supporter');
+
+            expect(creature.attacks[0].description).to.equal('Attack description');
+            expect(creature.ability?.description).to.equal('Ability description');
+            expect(supporter.description).to.equal('Supporter description');
         });
     });
 });

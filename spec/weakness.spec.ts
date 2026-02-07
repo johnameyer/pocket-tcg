@@ -65,7 +65,6 @@ describe('Weakness System', () => {
                 StateBuilder.withCreatures(1, 'grass-defender'), // Grass type (weak to fire)
                 StateBuilder.withEnergy('fire-attacker-0', { fire: 1 }),
             ),
-            maxSteps: 10,
             customRepository: weaknessTestRepository,
         });
         
@@ -82,7 +81,6 @@ describe('Weakness System', () => {
                 StateBuilder.withCreatures(1, 'water-defender'), // Water type (weak to lightning, not fire)
                 StateBuilder.withEnergy('fire-attacker-0', { fire: 1 }),
             ),
-            maxSteps: 10,
             customRepository: weaknessTestRepository,
         });
         
@@ -98,7 +96,6 @@ describe('Weakness System', () => {
                 StateBuilder.withCreatures(1, 'psychic-defender'), // Fighting type (weak to psychic)
                 StateBuilder.withEnergy('zero-damage-attacker-0', { psychic: 1 }), // Use psychic energy instead of colorless
             ),
-            maxSteps: 10,
             customRepository: weaknessTestRepository,
         });
         

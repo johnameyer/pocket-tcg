@@ -30,7 +30,6 @@ describe('Effect Targeting', () => {
                     StateBuilder.withHand(0, [{ templateId: 'self-heal-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(20, 'Should heal 30 damage from self-active');
@@ -58,7 +57,6 @@ describe('Effect Targeting', () => {
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-damage-supporter', type: 'supporter' }]),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(40, 'Should damage opponent-active');
@@ -132,7 +130,6 @@ describe('Effect Targeting', () => {
                     StateBuilder.withHand(0, [{ templateId: 'choice-heal-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0-0', 40), // Damage to first bench creature
                 ),
-                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][1].damageTaken).to.equal(0, 'Should heal selected bench creature');
@@ -181,7 +178,6 @@ describe('Effect Targeting', () => {
                         });
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal damaged active creature');
@@ -220,7 +216,6 @@ describe('Effect Targeting', () => {
                         state.field.creatures[1][0].damageTaken = 30; 
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal own creature');
@@ -252,7 +247,6 @@ describe('Effect Targeting', () => {
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-field-supporter', type: 'supporter' }]),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should not damage own creature');
@@ -287,7 +281,6 @@ describe('Effect Targeting', () => {
                     StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature', 'basic-creature' ]),
                     StateBuilder.withHand(0, [{ templateId: 'all-bench-damage-supporter', type: 'supporter' }]),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(20, 'Active creature should take damage');

@@ -120,7 +120,6 @@ describe('Energy Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'energy-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10,
         });
 
         const energyState = state.energy;
@@ -152,7 +151,6 @@ describe('Energy Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'discard-supporter', type: 'supporter' }]),
                 StateBuilder.withEnergy('basic-creature-1', { fire: 2, water: 1 }),
             ),
-            maxSteps: 10,
         });
 
         const energyState: EnergyState = state.energy;
@@ -183,7 +181,6 @@ describe('Energy Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'water-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10,
         });
 
         const energyState: EnergyState = state.energy;
@@ -213,7 +210,6 @@ describe('Energy Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'multi-energy-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10,
         });
 
         const energyState: EnergyState = state.energy;
@@ -248,7 +244,6 @@ describe('Energy Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'choice-energy-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 15,
         });
 
         const energyState: EnergyState = state.energy;
@@ -280,7 +275,6 @@ describe('Energy Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'big-discard-supporter', type: 'supporter' }]),
                 StateBuilder.withEnergy('basic-creature-1', { fire: 2 }),
             ),
-            maxSteps: 10,
         });
 
         const energyState: EnergyState = state.energy;
@@ -314,7 +308,6 @@ describe('Energy Effect', () => {
                     StateBuilder.withHand(0, [{ templateId: 'energy-discard', type: 'supporter' }]),
                     StateBuilder.withEnergy('basic-creature-1', { fire: 3, water: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[1];
@@ -360,7 +353,6 @@ describe('Energy Effect', () => {
                     StateBuilder.withCreatures(1, 'defender'),
                     StateBuilder.withEnergy('defender-1', { water: 2, fire: 1 }),
                 ),
-                maxSteps: 15,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[1];

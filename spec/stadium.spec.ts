@@ -24,7 +24,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withHand(0, [ basicStadium, hpBoostStadium ]),
                     StateBuilder.withCreatures(0, 'basic-creature'),
                 ),
-                maxSteps: 10,
             });
 
             // Only first stadium should execute, second should be blocked
@@ -48,7 +47,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                 ),
-                maxSteps: 15,
             });
 
             // First stadium should execute, then turn should end
@@ -76,12 +74,15 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                 ),
-                maxSteps: 15,
             });
 
-            // First player's stadium should remain active (second player's turn isn't executed in test framework)
+            // Latest stadium should be active (opponent's stadium replaces active one)
             expect(state.stadium.activeStadium).to.exist;
-            expect(state.stadium.activeStadium?.templateId).to.equal('basic-stadium');
+            expect(state.stadium.activeStadium?.templateId).to.equal('hp-boost-stadium');
+            expect(state.stadium.activeStadium?.owner).to.equal(1);
+            
+            // Original stadium should be in discard
+            expect(state.discard[0].some((card: GameCard) => card.templateId === 'basic-stadium')).to.be.true;
         });
 
         it('should replace own stadium with different stadium', () => {
@@ -94,7 +95,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withStadium('basic-stadium', 0),
                 ),
-                maxSteps: 10,
             });
 
             // Second stadium should be active
@@ -119,11 +119,14 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                 ),
-                maxSteps: 15,
             });
 
-            // First player's stadium should still be active (multi-player limitation)
-            expect(state.stadium.activeStadium?.templateId).to.equal('basic-stadium');
+            // Opponent's stadium should be active (replaces first player's)
+            expect(state.stadium.activeStadium?.templateId).to.equal('hp-boost-stadium');
+            expect(state.stadium.activeStadium?.owner).to.equal(1);
+            
+            // First player's replaced stadium should be in their discard pile
+            expect(state.discard[0].some((card: GameCard) => card.templateId === 'basic-stadium')).to.be.true;
         });
     });
 
@@ -141,7 +144,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withCreatures(1, 'basic-creature'),
                 ),
-                maxSteps: 15,
             });
 
             // First stadium plays, second should be blocked (same name)
@@ -161,7 +163,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withHand(0, [ hpBoostStadium ]),
                     StateBuilder.withCreatures(0, 'basic-creature'),
                 ),
-                maxSteps: 10,
             });
 
             // Stadium should be active
@@ -179,7 +180,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withStadium('hp-boost-stadium', 0),
                 ),
-                maxSteps: 10,
             });
 
             // New stadium should be active
@@ -209,7 +209,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withEnergy(activeCreatureId, { fighting: 3 }), // Provide full cost (bug: reduction not applied)
                     StateBuilder.withStadium('retreat-cost-stadium', 0),
                 ),
-                maxSteps: 10,
             });
 
             // Stadium should be active
@@ -217,7 +216,7 @@ describe('Stadium Cards', () => {
             expect(state.stadium.activeStadium?.templateId).to.equal('retreat-cost-stadium');
             
             // Passive effect should be registered
-            const retreatCostEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'retreat-cost-reduction');
+            const retreatCostEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'retreat-cost-modification' && e.effect.operation === 'decrease');
             expect(retreatCostEffects.length).to.be.greaterThan(0, 'Retreat cost reduction effect should be registered');
             
             // Retreat should have succeeded - basic creature should now be active
@@ -228,9 +227,9 @@ describe('Stadium Cards', () => {
             const benchCreature = state.field.creatures[0][1];
             expect(benchCreature.evolutionStack[0].templateId).to.equal('tank-creature', 'Tank should be on bench');
             
-            // Energy should have been discarded (3 energy used for retreat - reduction not applied due to framework bug)
+            // Energy should have been discarded (tank cost 3, stadium reduces by 1, so 2 energy needed)
             const tankEnergy = state.energy.attachedEnergyByInstance[benchCreature.fieldInstanceId];
-            expect(tankEnergy.fighting).to.equal(0, 'Fighting energy should be discarded for retreat cost');
+            expect(tankEnergy.fighting).to.equal(1, 'Fighting energy should be reduced to 1 after paying retreat cost with stadium reduction');
         });
 
         it('should apply HP boost when HP boost stadium is active', () => {
@@ -242,7 +241,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withHand(0, [ hpBoostStadium ]),
                     StateBuilder.withCreatures(0, 'basic-creature'),
                 ),
-                maxSteps: 10,
             });
 
             // Stadium should be active
@@ -267,7 +265,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withCreatures(0, 'tank-creature', [ 'basic-creature' ]),
                     StateBuilder.withEnergy(activeCreatureId, { fighting: 2 }), // Only 2 energy, needs 3
                 ),
-                maxSteps: 10,
             });
 
             // Retreat should have failed - tank should still be active
@@ -290,7 +287,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withEnergy(activeCreatureId, { fighting: 2 }), // Only 2 energy
                     StateBuilder.withStadium('retreat-cost-stadium', 0),
                 ),
-                maxSteps: 20,
             });
 
             // HP boost stadium should be active (replaced retreat cost stadium)
@@ -320,7 +316,6 @@ describe('Stadium Cards', () => {
                     StateBuilder.withDamage(activeCreatureId, 65), // 65 damage - would be knocked out at 60 HP
                     StateBuilder.withStadium('hp-boost-stadium', 0),
                 ),
-                maxSteps: 20,
             });
 
             // Retreat cost stadium should be active (replaced HP boost)

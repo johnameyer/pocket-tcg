@@ -210,7 +210,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
                 StateBuilder.withEnergy('high-hp-creature-0-0', { water: 1 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
@@ -230,7 +229,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withHand(0, [ waterTransferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { water: 2, fire: 1 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed water transfer supporter');
@@ -250,7 +248,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withHand(0, [ multiTransferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 3 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi transfer supporter');
@@ -278,7 +275,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withHand(0, [ choiceTransferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(3, 'Should have executed supporter and both target selections');
@@ -297,7 +293,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withHand(0, [ anyEnergyTransferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { psychic: 1, lightning: 1 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed any energy transfer supporter');
@@ -318,7 +313,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withHand(0, [ multiTransferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }), // Only 1 energy, but effect wants to transfer 2
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi transfer supporter');
@@ -337,7 +331,6 @@ describe('Energy Transfer Effect', () => {
                 StateBuilder.withHand(0, [ transferSupporter ]),
                 StateBuilder.withEnergy('basic-creature-0', { water: 2 }), // Has water but effect needs fire
             ),
-            maxSteps: 10,
         });
 
         // Should fail validation and not execute

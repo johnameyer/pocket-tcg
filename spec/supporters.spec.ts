@@ -24,7 +24,6 @@ describe('Supporters', () => {
                     { templateId: 'basic-creature', type: 'creature' },
                 ]),
             ),
-            maxSteps: 10,
         });
 
         // Only first supporter should execute, second should be blocked

@@ -107,9 +107,10 @@ export async function handleAttack(cardRepository: CardRepository, intermediary:
         const energyText = ` [${attack.energyRequirements.map(req => `${req.amount} ${req.type}`).join(', ')}]`;
         const canUse = ActionValidator.canUseAttack(handlerData, cardRepository, currentPlayer, index);
         const statusText = canUse ? '' : ' (Not enough energy!)';
+        const descriptionText = attack.description ? ` - ${attack.description}` : '';
         
         return {
-            name: `${attack.name} (${attack.damage} damage)${energyText}${statusText}`,
+            name: `${attack.name} (${attack.damage} damage)${energyText}${descriptionText}${statusText}`,
             value: index,
         };
     });
@@ -202,11 +203,11 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                 } else {
                     cardDescription = ' (Cannot play this card now)';
                 }
-            } else {
+            } else if (itemData.description) {
+                cardDescription = ` - ${itemData.description}`;
+            } else if (itemData.effects && itemData.effects.length > 0 && itemData.effects[0].type) {
                 // Get the effect type if available
-                cardDescription = itemData.effects && itemData.effects.length > 0 && itemData.effects[0].type 
-                    ? ` - ${itemData.effects[0].type}` 
-                    : ' - Unknown effect';
+                cardDescription = ` - ${itemData.effects[0].type}`;
             }
         } else if (card.type === 'supporter') {
             const supporterData = cardRepository.getSupporter(card.templateId);
@@ -226,6 +227,8 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                 } else {
                     cardDescription = ' (Cannot play this card now)';
                 }
+            } else if (supporterData.description) {
+                cardDescription = ` - ${supporterData.description}`;
             } else if (supporterData.effects && supporterData.effects.length > 0) {
                 cardDescription = ` - ${supporterData.effects[0].type}`;
             }
@@ -239,6 +242,8 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
             // Check if card can be played using ActionValidator
             if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
                 cardDescription = ' (Cannot attach tool now)';
+            } else if (toolData.description) {
+                cardDescription = ` - ${toolData.description}`;
             } else if (toolData.effects && toolData.effects.length > 0) {
                 cardDescription = ` - ${toolData.effects[0].type}`;
             }
@@ -256,6 +261,8 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                 } else if (handlerData.stadium?.activeStadium?.name === stadiumData.name) {
                     cardDescription = ' (Stadium with same name already active!)';
                 }
+            } else if (stadiumData.description) {
+                cardDescription = ` - ${stadiumData.description}`;
             } else if (stadiumData.effects && stadiumData.effects.length > 0) {
                 cardDescription = ` - ${stadiumData.effects[0].type}`;
             }
@@ -633,7 +640,8 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     const activeCreatureData = cardRepository.getCreature(activeFieldCard.templateId);
     if (activeCreatureData && activeCreatureData.ability) {
         if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, 0)) {
-            actionOptions.push({ name: `Use ${activeCreatureData.ability.name} (Active)`, value: 'ability-active' });
+            const descriptionText = activeCreatureData.ability.description ? ` - ${activeCreatureData.ability.description}` : '';
+            actionOptions.push({ name: `Use ${activeCreatureData.ability.name}${descriptionText} (Active)`, value: 'ability-active' });
         }
     }
     
@@ -643,7 +651,8 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
         const fieldCardData = cardRepository.getCreature(fieldCard.templateId);
         if (fieldCardData && fieldCardData.ability) {
             if (ActionValidator.canUseAbility(handlerData, cardRepository, currentPlayer, benchIndex + 1)) {
-                actionOptions.push({ name: `Use ${fieldCardData.ability.name} (${fieldCardData.name})`, value: `ability-bench-${benchIndex}` });
+                const descriptionText = fieldCardData.ability.description ? ` - ${fieldCardData.ability.description}` : '';
+                actionOptions.push({ name: `Use ${fieldCardData.ability.name}${descriptionText} (${fieldCardData.name})`, value: `ability-bench-${benchIndex}` });
             }
         }
     });

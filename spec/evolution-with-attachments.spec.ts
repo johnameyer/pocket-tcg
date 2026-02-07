@@ -16,7 +16,6 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1 }),
                     StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 5,
             });
 
             // Creature should be evolved
@@ -43,7 +42,6 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2 }), // Evolution creature needs 2 fire energy
                     StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 10,
             });
 
             // Creature should be evolved
@@ -65,7 +63,6 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withEnergy('basic-creature-0-0', { fire: 2 }),
                     StateBuilder.withCanEvolve(0, 1),
                 ),
-                maxSteps: 5,
             });
 
             // Benched creature should be evolved
@@ -87,7 +84,6 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTool('basic-creature-0', 'basic-tool'),
                 ),
-                maxSteps: 1,
             });
 
             // Tool should be attached
@@ -108,7 +104,6 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withCanEvolve(0, 0),
                     StateBuilder.withDamage('basic-creature-0', 40),
                 ),
-                maxSteps: 5,
             });
 
             // Creature should be evolved
@@ -133,7 +128,6 @@ describe('Evolution with Energy and Tools', () => {
                     StateBuilder.withTool('basic-creature-0', 'basic-tool'),
                     StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 5,
             });
 
             // Creature should be evolved
@@ -176,7 +170,6 @@ describe('Evolution with Energy and Tools', () => {
                         });
                     },
                 ),
-                maxSteps: 1,
             });
 
             // Check the evolution stack

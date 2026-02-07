@@ -13,12 +13,8 @@ export type Duration =
      */
     | { type: 'until-end-of-next-turn' }
     /**
-     * Effect lasts while a specific card is in play.
-     * Cleared when that card leaves the field.
+     * Effect lasts while the card is in play.
+     * Removal is handled separately based on card state (e.g., leaves field, tool detached).
+     * Instance IDs are populated at effect application time, not at card definition.
      */
-    | { type: 'while-in-play'; instanceId: string }
-    /**
-     * Effect lasts while a tool is attached to a card.
-     * Cleared when the tool is removed.
-     */
-    | { type: 'while-attached'; toolInstanceId: string; cardInstanceId: string };
+    | { type: 'while-in-play' };

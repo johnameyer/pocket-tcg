@@ -95,7 +95,6 @@ describe('Creature Tools', () => {
                         { templateId: 'leftovers', type: 'tool' as const },
                     ]),
                 ),
-                maxSteps: 10,
                 customRepository: toolTestRepository,
             });
 
@@ -177,7 +176,7 @@ describe('Creature Tools', () => {
                     type: 'hp-bonus',
                     amount: { type: 'constant', value: 30 },
                     target: { player: 'self', position: 'active' },
-                    duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
+                    duration: { type: 'while-in-play' },
                 }],
             }],
         ]);
@@ -191,7 +190,6 @@ describe('Creature Tools', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'hp-bonus-tool', type: 'tool' as const }]),
                 ),
-                maxSteps: 10,
                 customRepository: extendedToolRepository,
             });
 
@@ -210,7 +208,6 @@ describe('Creature Tools', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTool('basic-creature-0', 'hp-bonus-tool'), // Pre-setup with tool
                 ),
-                maxSteps: 5,
                 customRepository: extendedToolRepository,
             });
 
@@ -229,7 +226,6 @@ describe('Creature Tools', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'hp-bonus-tool', type: 'tool' as const }]),
                 ),
-                maxSteps: 10,
                 customRepository: extendedToolRepository,
             });
 
@@ -240,7 +236,6 @@ describe('Creature Tools', () => {
                     StateBuilder.withCreatures(0, 'basic-creature'),
                     StateBuilder.withTool('basic-creature-0', 'hp-bonus-tool'),
                 ),
-                maxSteps: 5,
                 customRepository: extendedToolRepository,
             });
 
@@ -261,10 +256,10 @@ describe('Creature Tools', () => {
                 templateId: 'retreat-boost-tool',
                 name: 'Retreat Boost Tool',
                 effects: [{
-                    type: 'retreat-cost-reduction',
+                    type: 'retreat-cost-modification', operation: 'decrease',
                     amount: { type: 'constant', value: 1 },
                     target: { player: 'self', position: 'active' },
-                    duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
+                    duration: { type: 'while-in-play' },
                 }],
             }],
         ]);
@@ -281,12 +276,11 @@ describe('Creature Tools', () => {
                     StateBuilder.withTool('basic-creature-1', 'retreat-boost-tool'),
                     StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }), // Strong Attack costs 2 fighting
                 ),
-                maxSteps: 15,
                 customRepository: retreatToolRepository,
             });
             
             // Check that passive effect was cleared (creature was knocked out)
-            const retreatReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'retreat-cost-reduction');
+            const retreatReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'retreat-cost-modification' && e.effect.operation === 'decrease');
             expect(retreatReductionEffects).to.have.lengthOf(0, 'Retreat cost reduction effect should be cleared after knockout');
         });
     });

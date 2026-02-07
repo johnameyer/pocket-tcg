@@ -46,7 +46,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withHand(0, [{ templateId: 'dual-target-supporter', type: 'supporter' }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 15,
             });
 
             expect(getExecutedCount()).to.equal(3, 'Should execute supporter + 2 target selections');
@@ -89,7 +88,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 40),
                     StateBuilder.withDamage('basic-creature-0-0', 20),
                 ),
-                maxSteps: 10,
             });
 
             // Should have pending target effect
@@ -137,7 +135,6 @@ describe('Pending Target Selection', () => {
                         });
                     },
                 ),
-                maxSteps: 15,
             });
 
             // Should resolve and heal selected target
@@ -188,7 +185,6 @@ describe('Pending Target Selection', () => {
                         });
                     },
                 ),
-                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(15, 'Opponent should choose our active');
@@ -237,7 +233,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withHand(0, [{ templateId: 'multi-select', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                 ),
-                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal selected self');
@@ -277,7 +272,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withHand(0, [{ templateId: 'invalid-target', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 15,
             });
 
             // Should handle gracefully - either no effect or default to valid target
@@ -312,7 +306,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withHand(0, [{ templateId: 'no-targets', type: 'supporter' }]),
                     // No damage on any Pokemon
                 ),
-                maxSteps: 10,
             });
 
             // Should handle gracefully when no valid targets
@@ -357,7 +350,6 @@ describe('Pending Target Selection', () => {
                         });
                     },
                 ),
-                maxSteps: 10,
             });
 
             // Should have effect name in pending selection
@@ -397,7 +389,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withDamage('basic-creature-0', 50),
                     StateBuilder.withDamage('high-hp-creature-0-0', 40),
                 ),
-                maxSteps: 10,
             });
 
             expect(getExecutedCount()).to.equal(2, 'Should execute supporter + target selection');
@@ -434,7 +425,6 @@ describe('Pending Target Selection', () => {
                     StateBuilder.withHand(0, [{ templateId: 'heal-supporter', type: 'supporter' }]),
                     StateBuilder.withDamage('high-hp-creature-0-0', 60),
                 ),
-                maxSteps: 10,
             });
 
             const benchCreature = state.field.creatures[0][1];

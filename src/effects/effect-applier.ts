@@ -28,6 +28,7 @@ export class EffectApplier {
             return;
         }
 
+
         // Create HandlerData view for validation
         const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
 

@@ -301,16 +301,18 @@ export type HpBonusEffect = {
 };
 
 /**
- * Represents an effect that reduces the energy cost of retreating.
- * @property {string} type - Always 'retreat-cost-reduction' to identify this effect type
- * @property {EffectValue} amount - The amount to reduce retreat cost by
- * @property {FieldTargetCriteria} target - Criteria for which creatures to reduce retreat cost for (evaluated passively)
- * @property {Duration} duration - How long the reduction persists
- * @example { type: 'retreat-cost-reduction', amount: { type: 'constant', value: 1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
+ * Represents an effect that modifies the energy cost of retreating.
+ * @property {string} type - Always 'retreat-cost-modification' to identify this effect type
+ * @property {'increase' | 'decrease'} operation - Whether to increase or decrease the retreat cost
+ * @property {EffectValue} amount - The amount to modify retreat cost by (must be positive)
+ * @property {FieldTargetCriteria} target - Criteria for which creatures to modify retreat cost for (evaluated passively)
+ * @property {Duration} duration - How long the modification persists
+ * @example { type: 'retreat-cost-modification', operation: 'decrease', amount: { type: 'constant', value: 1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
  * // Your active creature can retreat for 1 less energy this turn
  */
-export type RetreatCostReductionEffect = {
-    type: 'retreat-cost-reduction';
+export type RetreatCostModificationEffect = {
+    type: 'retreat-cost-modification';
+    operation: 'increase' | 'decrease';
     amount: EffectValue;
     target: FieldTargetCriteria;
     duration: Duration;
@@ -336,6 +338,66 @@ export type ImmediateEffect =
     | EndTurnEffect;
 
 /**
+ * Represents an effect that prevents playing specific card types.
+ * @property {string} type - Always 'prevent-playing' to identify this effect type
+ * @property {Array<'creature' | 'item' | 'supporter' | 'tool'>} cardTypes - Which card types cannot be played
+ * @property {'self' | 'opponent' | 'both'} target - Which player(s) cannot play the cards
+ * @property {Duration} duration - How long the prevention persists
+ * @example { type: 'prevent-playing', cardTypes: ['item'], target: 'opponent', duration: 'this-turn' }
+ * // Opponent cannot play items this turn
+ */
+export type PreventPlayingEffect = {
+    type: 'prevent-playing';
+    cardTypes: Array<'creature' | 'item' | 'supporter' | 'tool'>;
+    target: 'self' | 'opponent' | 'both';
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that prevents a creature from attacking.
+ * @property {string} type - Always 'prevent-attack' to identify this effect type
+ * @property {FieldTargetCriteria} target - Criteria for which creatures cannot attack (evaluated passively)
+ * @property {Duration} duration - How long creatures cannot attack
+ * @example { type: 'prevent-attack', target: { player: 'opponent', position: 'active' }, duration: 'until-end-of-next-turn' }
+ * // Opponent's active creature cannot attack until end of next turn
+ */
+export type PreventAttackEffect = {
+    type: 'prevent-attack';
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that prevents energy attachment to creatures.
+ * @property {string} type - Always 'prevent-energy-attachment' to identify this effect type
+ * @property {FieldTargetCriteria} target - Criteria for which creatures cannot receive energy (evaluated passively)
+ * @property {Duration} duration - How long energy attachment is prevented
+ * @example { type: 'prevent-energy-attachment', target: { player: 'opponent', position: 'active' }, duration: 'this-turn' }
+ * // Opponent cannot attach energy to their active creature this turn
+ */
+export type PreventEnergyAttachmentEffect = {
+    type: 'prevent-energy-attachment';
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that modifies attack energy cost.
+ * @property {string} type - Always 'attack-energy-cost-modifier' to identify this effect type
+ * @property {EffectValue} amount - The amount to modify attack energy costs by (positive to increase, negative to decrease)
+ * @property {FieldTargetCriteria} target - Criteria for which creatures have modified attack costs (evaluated passively)
+ * @property {Duration} duration - How long the modifier persists
+ * @example { type: 'attack-energy-cost-modifier', amount: { type: 'constant', value: -1 }, target: { player: 'self', position: 'active' }, duration: 'this-turn' }
+ * // Your active creature's attacks cost 1 less energy this turn
+ */
+export type AttackEnergyCostModifierEffect = {
+    type: 'attack-energy-cost-modifier';
+    amount: EffectValue;
+    target: FieldTargetCriteria;
+    duration: Duration;
+};
+
+/**
  * Modifier effects that can be passive and last over time.
  * These effects change values or prevent actions and are queried when needed.
  */
@@ -346,7 +408,11 @@ export type ModifierEffect =
     | EvolutionFlexibilityEffect
     | DamageBoostEffect
     | HpBonusEffect
-    | RetreatCostReductionEffect;
+    | RetreatCostModificationEffect
+    | PreventPlayingEffect
+    | PreventAttackEffect
+    | PreventEnergyAttachmentEffect
+    | AttackEnergyCostModifierEffect;
 
 /**
  * Union type representing all possible effects that can be applied in the game.

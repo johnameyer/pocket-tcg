@@ -15,7 +15,6 @@ describe('Game-Ending Scenarios', () => {
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }),
                     StateBuilder.withDamage('high-hp-creature-1', 130), // 180 HP - 130 damage = 50 HP, attack does 50 damage = KO
                 ),
-                maxSteps: 10,
             });
 
             // Game should end when high-hp-creature is knocked out with no bench
@@ -35,7 +34,6 @@ describe('Game-Ending Scenarios', () => {
                     StateBuilder.withDeck(0, []),
                     StateBuilder.withHand(0, []),
                 ),
-                maxSteps: 5,
             });
 
             // Draw is skipped when deck is empty, game continues (move to turn-structure.spec.ts)
@@ -58,7 +56,6 @@ describe('Game-Ending Scenarios', () => {
                         // Both have bench creatures
                     },
                 ),
-                maxSteps: 15,
             });
 
             // Both Charizard should be knocked out (200 damage to defender, 50 self-damage to attacker)
@@ -87,7 +84,6 @@ describe('Game-Ending Scenarios', () => {
                         state.points = [ 1, 0 ];
                     },
                 ),
-                maxSteps: 10,
             });
 
             // Game should end when player 0 reaches 3 points
