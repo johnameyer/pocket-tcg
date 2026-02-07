@@ -70,6 +70,17 @@ Developed mainly though generative AI so even with test coverage there is a chan
 - ✅ Attack energy cost modifiers
 - ✅ Evolution flexibility effects
 
+### Dynamic Effect Values
+- ✅ Count-based values (count cards, energy, damage, creatures)
+  - Field card counting (all, benched, active, with criteria)
+  - Energy counting (all, specific types, on specific creatures)
+  - Card counting (in hand, deck, discard pile)
+  - Damage counting (on specific creatures)
+- ✅ Multiplication and addition operations
+- ✅ Conditional values based on field state
+- ✅ Coin flip-based values
+- ✅ Player context values (hand size, points)
+
 ### Battle Features
 - ✅ Special ex cards (2 points when knocked out)
 - ✅ Mega ex cards (3 points when knocked out)
