@@ -46,9 +46,11 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
             requirements.push({ targetProperty: 'target', target: effect.target, required: true });
         }
         
-        // For discard operations with energySource, we can't use automatic resolution
-        // because energySource.fieldTarget is a nested property that the framework doesn't support
-        // Resolution will be handled manually in apply()
+        /*
+         * For discard operations with energySource, we can't use automatic resolution
+         * because energySource.fieldTarget is a nested property that the framework doesn't support
+         * Resolution will be handled manually in apply()
+         */
         
         return requirements;
     }
@@ -88,7 +90,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      */
     private applyAttach(controllers: Controllers, effect: EnergyEffect, context: EffectContext): void {
         if (!effect.target || !effect.energyType || effect.amount === undefined) {
-            throw new Error(`Attach operation requires target, energyType, and amount`);
+            throw new Error('Attach operation requires target, energyType, and amount');
         }
         
         const amount = getEffectValue(effect.amount, controllers, context);
@@ -163,7 +165,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
         
         const fieldResolution = FieldTargetResolver.resolveTarget(energySource.fieldTarget, controllers, context);
         if (fieldResolution.type !== 'resolved' || fieldResolution.targets.length === 0) {
-            throw new Error(`Expected resolved field target for energySource`);
+            throw new Error('Expected resolved field target for energySource');
         }
         
         const sourceTarget = fieldResolution.targets[0];
@@ -224,7 +226,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      */
     private applyLegacyDiscard(controllers: Controllers, effect: EnergyEffect, context: EffectContext): void {
         if (!effect.target || !effect.energyType || effect.amount === undefined) {
-            throw new Error(`Legacy discard operation requires target, energyType, and amount`);
+            throw new Error('Legacy discard operation requires target, energyType, and amount');
         }
         
         const amount = getEffectValue(effect.amount, controllers, context);

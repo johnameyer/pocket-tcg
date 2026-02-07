@@ -90,14 +90,18 @@ export class EffectApplier {
             const target = requirement.target;
             let resolvedTarget: ResolvedFieldTarget | ResolvedEnergyTarget | undefined;
             
-            // Check if this is an EnergyTarget (has fieldTarget, count, and type='field') or FieldTarget
-            // EnergyTarget has a 'count' property that FieldTarget doesn't have
+            /*
+             * Check if this is an EnergyTarget (has fieldTarget, count, and type='field') or FieldTarget
+             * EnergyTarget has a 'count' property that FieldTarget doesn't have
+             */
             if (target && typeof target === 'object' && 'fieldTarget' in target && 'count' in target) {
                 // This is an EnergyTarget - use EnergyTargetResolver
                 const energyTarget = target as unknown as EnergyTarget;
                 
-                // Check if selection is needed (EnergyTargetResolver handles inner fieldTarget resolution)
-                // TODO: Implement handleTargetSelection for EnergyTargetResolver if needed
+                /*
+                 * Check if selection is needed (EnergyTargetResolver handles inner fieldTarget resolution)
+                 * TODO: Implement handleTargetSelection for EnergyTargetResolver if needed
+                 */
                 
                 const resolution = EnergyTargetResolver.resolveTarget(energyTarget, controllers, context);
                 
@@ -116,8 +120,10 @@ export class EffectApplier {
                     resolvedTarget = resolution as ResolvedEnergyTarget;
                 }
             } else {
-                // This is a FieldTarget - use FieldTargetResolver
-                // Check if this target needs selection
+                /*
+                 * This is a FieldTarget - use FieldTargetResolver
+                 * Check if this target needs selection
+                 */
                 if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, target)) {
                     return null; // Pending selection
                 }

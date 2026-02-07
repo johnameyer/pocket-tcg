@@ -165,15 +165,17 @@ export class DefaultBotHandler extends GameHandler {
         
         // Use TargetResolver to get valid targets compositionally
         const { effect, originalContext } = pendingSelection;
-        let target = 'target' in effect ? effect.target : undefined;
+        const target = 'target' in effect ? effect.target : undefined;
         
         if (!target || typeof target === 'string') {
             // No target selection needed or resolved already
             return;
         }
         
-        // Target should be a FieldTarget - do not handle FieldEnergyTarget here
-        // FieldEnergyTarget resolution is handled by EnergyTargetResolver automatically
+        /*
+         * Target should be a FieldTarget - do not handle FieldEnergyTarget here
+         * FieldEnergyTarget resolution is handled by EnergyTargetResolver automatically
+         */
         
         /*
          * Convert handlerData to Controllers for TargetResolver

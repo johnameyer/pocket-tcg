@@ -261,7 +261,7 @@ describe('Creature Retreat System', () => {
                             energySource: {
                                 type: 'field',
                                 fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
-                                criteria: { energyTypes: ['fire'] },
+                                criteria: { energyTypes: [ 'fire' ] },
                                 count: 1,
                             },
                         }],

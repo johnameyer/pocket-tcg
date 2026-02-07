@@ -4,6 +4,8 @@ import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { HandlerData } from '../../game-handler.js';
 import { ResolvedEnergyTarget } from '../target-resolvers/energy-target-resolver.js';
+import { EnergyTarget } from '../../repository/targets/energy-target.js';
+import { AttachableEnergyType } from '../../repository/energy-types.js';
 
 /**
  * Handler for energy discard effects that discard energy from creatures.
@@ -30,10 +32,12 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
      * @returns Array of resolution requirements
      */
     getResolutionRequirements(effect: EnergyDiscardEffect): ResolutionRequirement[] {
-        // EnergyTarget (energySource) is the top-level field
-        // The resolver will handle the inner fieldTarget resolution
+        /*
+         * EnergyTarget (energySource) is the top-level field
+         * The resolver will handle the inner fieldTarget resolution
+         */
         return [
-            { targetProperty: 'energySource', target: effect.energySource as any, required: true },
+            { targetProperty: 'energySource', target: effect.energySource as EnergyTarget, required: true },
         ];
     }
     
@@ -47,13 +51,13 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
      */
     apply(controllers: Controllers, effect: EnergyDiscardEffect, context: EffectContext): void {
         // The energySource should now be resolved by the EnergyTargetResolver
-        const energySource = effect.energySource as any; // Will be ResolvedEnergyTarget after resolution
+        const energySource = effect.energySource as ResolvedEnergyTarget | EnergyTarget;
         
         if (energySource.type !== 'resolved') {
             throw new Error(`Expected resolved energy source, got ${energySource?.type || 'undefined'}`);
         }
         
-        const { playerId, fieldIndex, energy } = energySource as ResolvedEnergyTarget;
+        const { playerId, fieldIndex, energy } = energySource;
         
         const sourceInstanceId = controllers.field.getFieldInstanceId(playerId, fieldIndex);
         if (!sourceInstanceId) {
@@ -66,12 +70,12 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
         
         // Discard the specified energy
         let discardedCount = 0;
-        for (const [energyType, count] of Object.entries(energy)) {
+        for (const [ energyType, count ] of Object.entries(energy)) {
             if (count && count > 0) {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
                     playerId,
                     sourceInstanceId,
-                    energyType as any,
+                    energyType as AttachableEnergyType,
                     count as number,
                 );
                 if (success) {

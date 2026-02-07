@@ -6,9 +6,8 @@ import { AttackResponseMessage } from '../../../src/messages/response/attack-res
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary, EnergyState } from '../../../src/controllers/energy-controller.js';
 import { EnergyAttachEffectHandler } from '../../../src/effects/handlers/energy-attach-effect-handler.js';
-import { EnergyDiscardEffectHandler } from '../../../src/effects/handlers/energy-discard-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { EnergyAttachEffect, EnergyDiscardEffect } from '../../../src/repository/effect-types.js';
+import { EnergyAttachEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 // Helper to get total energy from an energy dictionary
@@ -137,7 +136,7 @@ describe('Energy Effect', () => {
                         energySource: {
                             type: 'field',
                             fieldTarget: { type: 'fixed', player: 'opponent', position: 'active' },
-                            criteria: { energyTypes: ['fire'] },
+                            criteria: { energyTypes: [ 'fire' ] },
                             count: 1,
                         },
                     }],
@@ -264,7 +263,7 @@ describe('Energy Effect', () => {
                         energySource: {
                             type: 'field',
                             fieldTarget: { type: 'fixed', player: 'opponent', position: 'active' },
-                            criteria: { energyTypes: ['fire'] },
+                            criteria: { energyTypes: [ 'fire' ] },
                             count: 5,
                         },
                     }],
@@ -300,7 +299,7 @@ describe('Energy Effect', () => {
                             energySource: {
                                 type: 'field',
                                 fieldTarget: { type: 'fixed', player: 'opponent', position: 'active' },
-                                criteria: { energyTypes: ['fire'] },
+                                criteria: { energyTypes: [ 'fire' ] },
                                 count: 2,
                             },
                         }],
