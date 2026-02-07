@@ -94,6 +94,7 @@ export class FieldTargetCriteriaFilter {
                 card,
                 cardRepository,
                 handlerData.energy?.attachedEnergyByInstance,
+                handlerData.tools?.attachedTools,
             )) {
                 return false;
             }
@@ -111,6 +112,7 @@ export class FieldTargetCriteriaFilter {
      * @param card The creature to check
      * @param cardRepository Card repository for metadata lookup
      * @param attachedEnergy Optional map of energy by instance ID
+     * @param attachedTools Optional map of tools by instance ID
      * @returns True if the creature matches the criteria, false otherwise
      */
     static matchesFieldCriteria(
@@ -118,8 +120,9 @@ export class FieldTargetCriteriaFilter {
         card: FieldCard,
         cardRepository: CardRepository,
         attachedEnergy?: { [instanceId: string]: Record<AttachableEnergyType, number> },
+        attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string } },
     ): boolean {
-        return this.evaluateFieldCriteria(criteria, card, cardRepository, attachedEnergy);
+        return this.evaluateFieldCriteria(criteria, card, cardRepository, attachedEnergy, attachedTools);
     }
 
     /**
@@ -130,6 +133,7 @@ export class FieldTargetCriteriaFilter {
      * @param card The creature to check
      * @param cardRepository Card repository for metadata lookup
      * @param attachedEnergy Optional map of energy by instance ID
+     * @param attachedTools Optional map of tools by instance ID
      * @returns True if the creature matches the criteria, false otherwise
      */
     private static evaluateFieldCriteria(
@@ -137,6 +141,7 @@ export class FieldTargetCriteriaFilter {
         card: FieldCard,
         cardRepository: CardRepository,
         attachedEnergy?: { [instanceId: string]: Record<AttachableEnergyType, number> },
+        attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string } },
     ): boolean {
         // Evaluate card criteria if present - delegate to CardCriteriaFilter
         if (criteria.cardCriteria) {
@@ -167,6 +172,19 @@ export class FieldTargetCriteriaFilter {
             const requiredCount = criteria.hasEnergy[energyType] || 1;
 
             if ((creatureEnergy[energyType] || 0) < requiredCount) {
+                return false;
+            }
+        }
+
+        // Check hasTool condition
+        if (criteria.hasTool === true) {
+            if (!attachedTools) {
+                return false;
+            }
+
+            const fieldInstanceId = getFieldInstanceId(card);
+            const hasTool = attachedTools[fieldInstanceId] !== undefined;
+            if (!hasTool) {
                 return false;
             }
         }
