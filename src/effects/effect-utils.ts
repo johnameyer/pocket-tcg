@@ -1,8 +1,10 @@
 import { EffectValue } from '../repository/effect-value-types.js';
 import { Controllers } from '../controllers/controllers.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
-import { FieldCriteria } from '../repository/criteria/field-target-criteria.js';
+import { FieldCriteria, FieldTargetCriteria } from '../repository/criteria/field-target-criteria.js';
 import { EffectContext } from './effect-context.js';
+import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
+import { CardCriteriaFilter } from './filters/card-criteria-filter.js';
 
 // TODO remove
 /**
@@ -200,9 +202,244 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
         return conditionMet 
             ? getEffectValue(effectValue.trueValue, controllers, context) 
             : getEffectValue(effectValue.falseValue, controllers, context);
+    } else if (effectValue.type === 'count') {
+        return getCountValue(effectValue, controllers, context);
     }
     
     return 0;
+}
+
+/**
+ * Resolves a count value by counting matching cards/energy/damage based on criteria.
+ */
+function getCountValue(countValue: EffectValue & { type: 'count' }, controllers: Controllers, context: EffectContext): number {
+    if (countValue.countType === 'field') {
+        // Count field cards matching criteria
+        return countFieldCards(countValue.criteria, controllers, context);
+    } else if (countValue.countType === 'energy') {
+        // Count energy on field cards matching criteria
+        return countEnergy(countValue.fieldCriteria, countValue.energyCriteria, controllers, context);
+    } else if (countValue.countType === 'card') {
+        // Count cards in hand/deck/discard matching criteria
+        return countCards(countValue.player, countValue.location, countValue.criteria, controllers, context);
+    } else if (countValue.countType === 'damage') {
+        // Count damage on a specific creature
+        return countDamage(countValue.fieldCriteria, controllers, context);
+    }
+    return 0;
+}
+
+/**
+ * Counts field cards matching the given criteria.
+ */
+function countFieldCards(criteria: FieldTargetCriteria, controllers: Controllers, context: EffectContext): number {
+    // Determine which player(s) to count
+    const players = resolvePlayerFromCriteria(criteria, context, controllers);
+    
+    let count = 0;
+    for (const playerId of players) {
+        // Get all cards on field for this player
+        const allCards: Array<{ card: any; fieldIndex: number }> = [];
+        let fieldIndex = 0;
+        while (true) {
+            const card = controllers.field.getCardByPosition(playerId, fieldIndex);
+            if (!card) {
+                break;
+            }
+            allCards.push({ card, fieldIndex });
+            fieldIndex++;
+        }
+        
+        // Filter by criteria
+        const filtered = allCards.filter(({ card, fieldIndex }) => {
+            // Check position filter
+            if (criteria.position === 'active' && fieldIndex !== 0) {
+                return false;
+            }
+            if (criteria.position === 'bench' && fieldIndex === 0) {
+                return false;
+            }
+            
+            // Check field criteria
+            if (criteria.fieldCriteria) {
+                // Note: matchesFieldCriteria requires attachedEnergy parameter, passing undefined
+                // as we don't have direct access here. Consider refactoring if energy filtering is needed.
+                return FieldTargetCriteriaFilter.matchesFieldCriteria(
+                    criteria.fieldCriteria,
+                    card,
+                    controllers.cardRepository.cardRepository,
+                    undefined,
+                );
+            }
+            
+            return true;
+        });
+        
+        count += filtered.length;
+    }
+    
+    return count;
+}
+
+/**
+ * Counts energy on field cards matching criteria.
+ */
+function countEnergy(
+    fieldCriteria: FieldTargetCriteria,
+    energyCriteria: { energyTypes?: AttachableEnergyType[] } | undefined,
+    controllers: Controllers,
+    context: EffectContext,
+): number {
+    // Determine which player(s) to count
+    const players = resolvePlayerFromCriteria(fieldCriteria, context, controllers);
+    
+    let totalEnergy = 0;
+    for (const playerId of players) {
+        let fieldIndex = 0;
+        while (true) {
+            const card = controllers.field.getCardByPosition(playerId, fieldIndex);
+            if (!card) {
+                break;
+            }
+            
+            // Check if this card matches field criteria
+            const matchesFieldCriteria = !fieldCriteria.position || 
+                (fieldCriteria.position === 'active' && fieldIndex === 0) ||
+                (fieldCriteria.position === 'bench' && fieldIndex !== 0);
+            
+            if (!matchesFieldCriteria) {
+                fieldIndex++;
+                continue;
+            }
+            
+            // Check field criteria filters
+            if (fieldCriteria.fieldCriteria) {
+                // Note: matchesFieldCriteria requires attachedEnergy parameter, passing undefined
+                // as we don't have direct access here. Consider refactoring if energy filtering is needed.
+                const matches = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                    fieldCriteria.fieldCriteria,
+                    card,
+                    controllers.cardRepository.cardRepository,
+                    undefined,
+                );
+                if (!matches) {
+                    fieldIndex++;
+                    continue;
+                }
+            }
+            
+            // Get energy for this card
+            const fieldInstanceId = controllers.field.getFieldInstanceId(playerId, fieldIndex);
+            if (fieldInstanceId) {
+                const energyState = controllers.energy.getAttachedEnergyByInstance(fieldInstanceId);
+                if (energyState) {
+                    // Count energy based on criteria
+                    if (energyCriteria?.energyTypes) {
+                        // Count only specific energy types
+                        for (const energyType of energyCriteria.energyTypes) {
+                            totalEnergy += energyState[energyType] || 0;
+                        }
+                    } else {
+                        // Count all energy
+                        totalEnergy += Object.values(energyState).reduce((sum: number, count: number) => sum + count, 0);
+                    }
+                }
+            }
+            
+            fieldIndex++;
+        }
+    }
+    
+    return totalEnergy;
+}
+
+/**
+ * Counts cards in a specific location matching criteria.
+ */
+function countCards(
+    player: 'self' | 'opponent',
+    location: 'hand' | 'deck' | 'discard' | 'field',
+    criteria: any,
+    controllers: Controllers,
+    context: EffectContext,
+): number {
+    const playerId = player === 'self' ? context.sourcePlayer : (context.sourcePlayer + 1) % controllers.players.count;
+    
+    let cards: any[] = [];
+    if (location === 'hand') {
+        cards = controllers.hand.getHand(playerId) || [];
+    } else if (location === 'deck') {
+        cards = controllers.deck.getDeck(playerId) || [];
+    } else if (location === 'discard') {
+        cards = controllers.discard.getDiscardPile(playerId) || [];
+    } else if (location === 'field') {
+        // For field location, use field counting
+        let fieldIndex = 0;
+        while (true) {
+            const card = controllers.field.getCardByPosition(playerId, fieldIndex);
+            if (!card) {
+                break;
+            }
+            cards.push(card);
+            fieldIndex++;
+        }
+    }
+    
+    // Filter by criteria if provided
+    if (criteria) {
+        cards = CardCriteriaFilter.filter(cards, criteria, controllers.cardRepository.cardRepository);
+    }
+    
+    return cards.length;
+}
+
+/**
+ * Counts damage on a creature matching criteria.
+ */
+function countDamage(fieldCriteria: FieldTargetCriteria, controllers: Controllers, context: EffectContext): number {
+    // Resolve player
+    const players = resolvePlayerFromCriteria(fieldCriteria, context, controllers);
+    
+    // For damage counting, we typically target a single creature
+    // Default to active if no position specified
+    const position = fieldCriteria.position === 'bench' ? 1 : 0; // Simplified: bench position 1
+    
+    for (const playerId of players) {
+        const card = controllers.field.getCardByPosition(playerId, position);
+        if (card) {
+            // Check field criteria if specified
+            if (fieldCriteria.fieldCriteria) {
+                // Note: matchesFieldCriteria requires attachedEnergy parameter, passing undefined
+                // as we don't have direct access here. Consider refactoring if energy filtering is needed.
+                const matches = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                    fieldCriteria.fieldCriteria,
+                    card,
+                    controllers.cardRepository.cardRepository,
+                    undefined,
+                );
+                if (!matches) {
+                    continue;
+                }
+            }
+            return card.damageTaken || 0;
+        }
+    }
+    
+    return 0;
+}
+
+/**
+ * Resolves which player(s) to target based on criteria.
+ */
+function resolvePlayerFromCriteria(criteria: FieldTargetCriteria, context: EffectContext, controllers: Controllers): number[] {
+    if (criteria.player === 'self') {
+        return [context.sourcePlayer];
+    } else if (criteria.player === 'opponent') {
+        return [(context.sourcePlayer + 1) % controllers.players.count];
+    } else {
+        // No player specified, count both players
+        return [0, 1];
+    }
 }
 
 // TODO: Consider unifying this with ConditionEvaluator class to eliminate duplication
