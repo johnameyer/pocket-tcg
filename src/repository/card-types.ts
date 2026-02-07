@@ -15,7 +15,12 @@ export type Trigger =
     | { type: 'damaged', position?: string }
     | { type: 'passive' }
     | { type: 'energy-attachment', energyType?: string }
-    | { type: 'on-evolution' };
+    | { type: 'on-evolution' }
+    | { type: 'start-of-turn', ownTurnOnly?: boolean }
+    | { type: 'on-play', filterEvolution?: boolean }
+    | { type: 'before-knockout' }
+    | { type: 'on-checkup', ownTurnOnly?: boolean }
+    | { type: 'on-retreat' };
 
 /**
  * Represents a creature attack.
