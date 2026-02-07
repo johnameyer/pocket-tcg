@@ -419,7 +419,6 @@ describe('Energy Transfer Effect', () => {
                     StateBuilder.withHand(0, [{ templateId: 'move-all-fire-from-bench', type: 'supporter' }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 3, water: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
@@ -441,7 +440,6 @@ describe('Energy Transfer Effect', () => {
                     StateBuilder.withHand(0, [{ templateId: 'move-energy-from-bench-choice', type: 'supporter' }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 10,
             });
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
@@ -460,7 +458,6 @@ describe('Energy Transfer Effect', () => {
                     StateBuilder.withHand(0, [{ templateId: 'move-all-energy-from-bench', type: 'supporter' }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1, lightning: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed transfer supporter');
