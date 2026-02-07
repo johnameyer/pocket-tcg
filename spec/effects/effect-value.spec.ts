@@ -440,8 +440,8 @@ describe('Effect Value Calculation', () => {
                     actions: [ new PlayCardResponseMessage('count-all-field', 'supporter') ],
                     customRepository: testRepository,
                     stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature', 'basic-creature'),
-                        StateBuilder.withCreatures(1, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'basic-creature' ]),
+                        StateBuilder.withCreatures(1, 'basic-creature', [ 'basic-creature' ]),
                         StateBuilder.withHand(0, [{ templateId: 'count-all-field', type: 'supporter' }]),
                         StateBuilder.withDamage('basic-creature-0', 30),
                     ),
@@ -475,8 +475,8 @@ describe('Effect Value Calculation', () => {
                     actions: [ new PlayCardResponseMessage('count-benched', 'supporter') ],
                     customRepository: testRepository,
                     stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature', 'basic-creature'),
-                        StateBuilder.withCreatures(1, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'basic-creature' ]),
+                        StateBuilder.withCreatures(1, 'basic-creature', [ 'basic-creature' ]),
                         StateBuilder.withHand(0, [{ templateId: 'count-benched', type: 'supporter' }]),
                         StateBuilder.withDamage('basic-creature-0', 30),
                     ),
@@ -510,8 +510,8 @@ describe('Effect Value Calculation', () => {
                     actions: [ new PlayCardResponseMessage('count-own-bench', 'supporter') ],
                     customRepository: testRepository,
                     stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature', 'basic-creature'),
-                        StateBuilder.withCreatures(1, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'basic-creature' ]),
+                        StateBuilder.withCreatures(1, 'basic-creature', [ 'basic-creature' ]),
                         StateBuilder.withHand(0, [{ templateId: 'count-own-bench', type: 'supporter' }]),
                         StateBuilder.withDamage('basic-creature-0', 30),
                     ),
@@ -625,10 +625,10 @@ describe('Effect Value Calculation', () => {
                     actions: [ new PlayCardResponseMessage('count-energy', 'supporter') ],
                     customRepository: testRepository,
                     stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
                         StateBuilder.withHand(0, [{ templateId: 'count-energy', type: 'supporter' }]),
                         StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1 }),
-                        StateBuilder.withEnergy('basic-creature-1', { fire: 1 }),
+                        StateBuilder.withEnergy('basic-creature-0-0', { fire: 1 }),
                         StateBuilder.withDamage('basic-creature-0', 30),
                     ),
                 });
@@ -661,10 +661,10 @@ describe('Effect Value Calculation', () => {
                     actions: [ new PlayCardResponseMessage('count-active-energy', 'supporter') ],
                     customRepository: testRepository,
                     stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
                         StateBuilder.withHand(0, [{ templateId: 'count-active-energy', type: 'supporter' }]),
                         StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1 }),
-                        StateBuilder.withEnergy('basic-creature-1', { fire: 2 }),
+                        StateBuilder.withEnergy('basic-creature-0-0', { fire: 2 }),
                         StateBuilder.withDamage('basic-creature-0', 30),
                     ),
                 });

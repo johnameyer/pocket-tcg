@@ -4,6 +4,7 @@ import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messag
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { CreatureData } from './repository/card-types.js';
 import { isPendingEnergySelection, isPendingCardSelection } from './effects/pending-selection-types.js';
+import { TriggerProcessor } from './effects/trigger-processor.js';
 
 // Helper function to calculate points awarded for knocking out a creature
 const calculateKnockoutPoints = (creatureData: CreatureData): number => {
@@ -83,6 +84,17 @@ const processKnockouts = {
                 // Send knockout message
                 const targetCard = controllers.field.getCardByPosition(i, 0);
                 if (targetCard) {
+                    // Trigger before-knockout effects
+                    TriggerProcessor.processBeforeKnockout(
+                        controllers,
+                        i,
+                        targetCard.instanceId,
+                        targetCard.templateId,
+                    );
+                    
+                    // Process any effects that were triggered before knockout
+                    EffectQueueProcessor.processQueue(controllers);
+                    
                     const cardData = controllers.cardRepository.getCreature(targetCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(cardData.name));
                     
@@ -119,6 +131,17 @@ const processKnockouts = {
                 const { maxHp } = controllers.cardRepository.getCreature(benchCard.templateId);
                 
                 if (benchCard.damageTaken >= maxHp) {
+                    // Trigger before-knockout effects
+                    TriggerProcessor.processBeforeKnockout(
+                        controllers,
+                        i,
+                        benchCard.instanceId,
+                        benchCard.templateId,
+                    );
+                    
+                    // Process any effects that were triggered before knockout
+                    EffectQueueProcessor.processQueue(controllers);
+                    
                     // Send knockout message
                     const cardData = controllers.cardRepository.getCreature(benchCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
@@ -507,6 +530,32 @@ const gameTurn = loop<Controllers>({
                 })() : undefined;
                 
                 controllers.players.message(currentPlayer, new TurnSummaryMessage(myActiveInfo, opponentActiveInfo, myBenchInfo, opponentBenchInfo, handCards, drawnCardName));
+                
+                // Trigger start-of-turn effects for active card (after draw)
+                if (myActive) {
+                    TriggerProcessor.processStartOfTurn(
+                        controllers,
+                        currentPlayer,
+                        myActive.instanceId,
+                        myActive.templateId,
+                    );
+                    
+                    // Process any effects that were triggered by start-of-turn
+                    EffectQueueProcessor.processQueue(controllers);
+                }
+                
+                // Trigger start-of-turn effects for opponent's active card
+                if (opponentActive) {
+                    TriggerProcessor.processStartOfTurn(
+                        controllers,
+                        opponentId,
+                        opponentActive.instanceId,
+                        opponentActive.templateId,
+                    );
+                    
+                    // Process any effects that were triggered by start-of-turn
+                    EffectQueueProcessor.processQueue(controllers);
+                }
             },
         },
         
@@ -518,6 +567,22 @@ const gameTurn = loop<Controllers>({
             name: 'checkupPhase',
             run: (controllers: Controllers) => {
                 const currentPlayer = controllers.turn.get();
+                
+                // Trigger on-checkup effects for both players' active cards
+                for (let playerId = 0; playerId < 2; playerId++) {
+                    const activeCard = controllers.field.getCardByPosition(playerId, 0);
+                    if (activeCard) {
+                        TriggerProcessor.processOnCheckup(
+                            controllers,
+                            playerId,
+                            activeCard.instanceId,
+                            activeCard.templateId,
+                        );
+                    }
+                }
+                
+                // Process any effects that were triggered during the checkup phase
+                EffectQueueProcessor.processQueue(controllers);
                 
                 // Process between-turn damage for both players
                 for (let playerId = 0; playerId < 2; playerId++) {

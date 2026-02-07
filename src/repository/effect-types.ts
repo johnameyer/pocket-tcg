@@ -9,7 +9,7 @@ import { EnergyTarget } from './targets/energy-target.js';
 /**
  * Represents when an effect can be triggered.
  */
-export type TriggerType = 'on-play' | 'on-attack' | 'on-damage' | 'on-knockout' | 'between-turns' | 'on-evolve' | 'damaged' | 'end-of-turn' | 'energy-attachment' | 'manual';
+export type TriggerType = 'on-play' | 'on-attack' | 'on-damage' | 'on-knockout' | 'between-turns' | 'on-evolve' | 'damaged' | 'end-of-turn' | 'energy-attachment' | 'manual' | 'start-of-turn' | 'before-knockout' | 'on-checkup' | 'on-retreat';
 
 /**
  * Represents status conditions that can be applied to creatures.

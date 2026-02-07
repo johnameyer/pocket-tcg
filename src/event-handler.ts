@@ -330,6 +330,22 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
                 });
                 
+                // Trigger on-play effects for the played creature
+                const justPlayedCards = controllers.field.getCards(sourceHandler);
+                const justPlayedCard = justPlayedCards.find(c => c?.instanceId === cardInstanceId);
+                if (justPlayedCard) {
+                    TriggerProcessor.processOnPlay(
+                        controllers,
+                        sourceHandler,
+                        justPlayedCard.instanceId,
+                        justPlayedCard.templateId,
+                        false, // Not an evolution
+                    );
+                    
+                    // Process any effects that were triggered by on-play
+                    EffectQueueProcessor.processQueue(controllers);
+                }
+                
                 /*
                  * TODO: Unify passive effect registration strategy
                  * Currently passive effects are registered manually here to track instance IDs.
@@ -716,6 +732,21 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                 }
                 controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId, turnNumber);
+                
+                // Trigger on-play effects for the evolved creature (as evolution)
+                const evolvedCard = controllers.field.getCardByPosition(sourceHandler, 0);
+                if (evolvedCard) {
+                    TriggerProcessor.processOnPlay(
+                        controllers,
+                        sourceHandler,
+                        evolvedCard.instanceId,
+                        evolvedCard.templateId,
+                        true, // Is an evolution
+                    );
+                    
+                    // Process any effects that were triggered by on-play
+                    EffectQueueProcessor.processQueue(controllers);
+                }
             } else {
                 const benchedCards = controllers.field.getCards(sourceHandler).slice(1);
                 const targetCard = benchedCards[message.position - 1];
@@ -732,6 +763,22 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                 }
                 controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId, turnNumber);
+                
+                // Trigger on-play effects for the evolved creature (as evolution)
+                const benchCards = controllers.field.getCards(sourceHandler);
+                const evolvedCard = benchCards[message.position];
+                if (evolvedCard) {
+                    TriggerProcessor.processOnPlay(
+                        controllers,
+                        sourceHandler,
+                        evolvedCard.instanceId,
+                        evolvedCard.templateId,
+                        true, // Is an evolution
+                    );
+                    
+                    // Process any effects that were triggered by on-play
+                    EffectQueueProcessor.processQueue(controllers);
+                }
             }
             
             const { name } = controllers.cardRepository.getCreature(message.evolutionId);
@@ -974,6 +1021,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             if (!activeCard) {
                 return; 
             }
+            
+            // Trigger on-retreat effects for the retreating creature
+            TriggerProcessor.processOnRetreat(
+                controllers,
+                sourceHandler,
+                activeCard.instanceId,
+                activeCard.templateId,
+            );
+            
+            // Process any effects that were triggered by on-retreat
+            EffectQueueProcessor.processQueue(controllers);
             
             // Get field instance ID for energy operations
             const fieldInstanceId = controllers.field.getFieldInstanceId(sourceHandler, 0);
