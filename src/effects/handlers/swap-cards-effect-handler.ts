@@ -29,9 +29,8 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: SwapCardsEffect, context: EffectContext, cardRepository: CardRepository): boolean {
-        // Check if player has enough cards to discard
-        // We can't resolve the exact amount without controllers, so just check if hand has any cards
-        return handlerData.hand.length > 0;
+        // Always allow - the handler will discard what it can
+        return true;
     }
 
     /**

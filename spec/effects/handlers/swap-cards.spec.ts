@@ -31,7 +31,7 @@ describe('Swap Cards Effect', () => {
             expect(result).to.be.true;
         });
 
-        it('should return false when player has no cards in hand', () => {
+        it('should return true even when player has no cards in hand', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withHand([]),
             );
@@ -46,7 +46,7 @@ describe('Swap Cards Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.be.true;
         });
     });
 
@@ -108,7 +108,7 @@ describe('Swap Cards Effect', () => {
         });
 
         const { state } = runTestGame({
-            actions: [ new PlayCardResponseMessage('swap-item', 'item') ],
+            actions: [ new PlayCardResponseMessage('capped-swap-item', 'item') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -147,7 +147,7 @@ describe('Swap Cards Effect', () => {
         });
 
         const { state } = runTestGame({
-            actions: [ new PlayCardResponseMessage('swap-item', 'item') ],
+            actions: [ new PlayCardResponseMessage('disruptive-swap-item', 'item') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),

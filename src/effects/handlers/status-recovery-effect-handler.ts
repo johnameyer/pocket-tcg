@@ -84,23 +84,14 @@ export class StatusRecoveryEffectHandler extends AbstractEffectHandler<StatusRec
             
             // If specific conditions specified, remove only those
             if (effect.conditions && effect.conditions.length > 0) {
-                // Status effect type mapping
-                const statusMap = {
-                    'sleep': 'sleep' as const,
-                    'burn': 'burn' as const,
-                    'confusion': 'confusion' as const,
-                    'paralysis': 'paralysis' as const,
-                    'poison': 'poison' as const,
-                };
-                
                 // Get current effects
                 const currentEffects = controllers.statusEffects.getActiveStatusEffects(playerId);
                 
-                // Collect status types to remove
-                const typesToRemove = effect.conditions.map(c => statusMap[c]).filter(t => t !== undefined);
-                
-                // Filter out the effects to remove
-                const filteredEffects = currentEffects.filter(e => !typesToRemove.includes(String(e.type) as any));
+                // Filter out the effects to remove by checking the string representation
+                const filteredEffects = currentEffects.filter(e => {
+                    const typeStr = String(e.type);
+                    return !effect.conditions!.some(c => c === typeStr);
+                });
                 
                 // Clear all and re-apply filtered effects
                 controllers.statusEffects.clearAllStatusEffects(playerId);

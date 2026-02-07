@@ -34,13 +34,8 @@ export class ToolDiscardEffectHandler extends AbstractEffectHandler<ToolDiscardE
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: ToolDiscardEffect, context: EffectContext, cardRepository: CardRepository): boolean {
-        // If there's no target, we can't apply the effect
-        if (!effect.target) {
-            return false;
-        }
-        
-        // Use TargetResolver to check if the target is available
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        // Always allow - the handler will handle no-tool cases gracefully
+        return true;
     }
 
     /**

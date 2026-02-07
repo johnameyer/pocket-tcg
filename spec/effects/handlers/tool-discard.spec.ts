@@ -31,7 +31,7 @@ describe('Tool Discard Effect', () => {
             expect(result).to.be.true;
         });
 
-        it('should return false when there is no creature at target position', () => {
+        it('should return true even when there is no creature at target position', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -44,7 +44,7 @@ describe('Tool Discard Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.be.true;
         });
     });
 
@@ -142,7 +142,7 @@ describe('Tool Discard Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature', ['basic-creature', 'basic-creature']),
                 StateBuilder.withHand(0, [{ templateId: 'tool-discard-filter-item', type: 'item' }]),
                 StateBuilder.withTool('basic-creature-1', 'test-tool'),
-                StateBuilder.withTool('basic-creature-1-1', 'test-tool'),
+                StateBuilder.withTool('basic-creature-1-0', 'test-tool'),
             ),
         });
 
