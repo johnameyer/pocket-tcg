@@ -70,7 +70,7 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
         
         // Discard the specified energy
         let discardedCount = 0;
-        for (const [ energyType, count ] of Object.entries(energy)) {
+        for (const [energyType, count] of Object.entries(energy)) {
             if (count && count > 0) {
                 const success = controllers.energy.discardSpecificEnergyFromInstance(
                     playerId,
