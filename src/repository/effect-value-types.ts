@@ -12,23 +12,6 @@ export type ConstantValue = {
 };
 
 /**
- * @deprecated Use CountValue instead. ResolvedValue will be removed in a future version.
- * Represents a value that is resolved at runtime based on game state.
- * 
- * Migration guide:
- * - 'creature-count' → { type: 'count', countType: 'field', criteria: {} }
- * - 'benched-creature-count' → { type: 'count', countType: 'field', criteria: { position: 'bench' } }
- * - 'energy-count' → { type: 'count', countType: 'energy', fieldCriteria: {} }
- * - 'damage-taken' → { type: 'count', countType: 'damage', fieldCriteria: { position: 'active' } }
- * - 'cards-in-hand' → { type: 'count', countType: 'card', player: 'self', location: 'hand' }
- */
-export type ResolvedValue = {
-    type: 'resolved';
-    source: 'creature-count' | 'benched-creature-count' | 'energy-count' | 'damage-taken' | 'cards-in-hand';
-    multiplier?: number;
-};
-
-/**
  * Represents a value resolved from player context (like hand size, points).
  */
 export type PlayerContextResolvedValue = {
@@ -129,4 +112,4 @@ export type CountValue = FieldCountValue | EnergyCountValue | CardCountValue | D
  * Union type representing all possible effect values.
  * Used to define dynamic values in effects that can be resolved at runtime.
  */
-export type EffectValue = ConstantValue | ResolvedValue | PlayerContextResolvedValue | MultiplicationValue | CoinFlipValue | AdditionValue | ConditionalValue | CountValue;
+export type EffectValue = ConstantValue | PlayerContextResolvedValue | MultiplicationValue | CoinFlipValue | AdditionValue | ConditionalValue | CountValue;

@@ -1,11 +1,13 @@
 import { EffectValue } from '../repository/effect-value-types.js';
 import { Controllers } from '../controllers/controllers.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
-import { FieldCriteria } from '../repository/criteria/field-target-criteria.js';
+import { FieldCriteria, FieldTargetCriteria } from '../repository/criteria/field-target-criteria.js';
 import { EffectContext } from './effect-context.js';
 import { FieldTargetResolver } from './target-resolvers/field-target-resolver.js';
 import { CardTargetResolver } from './target-resolvers/card-target-resolver.js';
 import { CardCriteriaFilter } from './filters/card-criteria-filter.js';
+import { AllMatchingFieldTarget } from '../repository/targets/field-target.js';
+import { CardCriteria } from '../repository/criteria/card-criteria.js';
 
 // TODO remove
 /**
@@ -168,9 +170,9 @@ function getCountValue(countValue: EffectValue & { type: 'count' }, controllers:
 /**
  * Counts field cards matching the given criteria using FieldTargetResolver.
  */
-function countFieldCards(criteria: any, controllers: Controllers, context: EffectContext): number {
+function countFieldCards(criteria: FieldTargetCriteria, controllers: Controllers, context: EffectContext): number {
     // Use FieldTargetResolver with an all-matching target to get all matching creatures
-    const target: any = {
+    const target: AllMatchingFieldTarget = {
         type: 'all-matching',
         criteria: criteria,
     };
@@ -188,13 +190,13 @@ function countFieldCards(criteria: any, controllers: Controllers, context: Effec
  * Counts energy on field cards matching criteria.
  */
 function countEnergy(
-    fieldCriteria: any,
+    fieldCriteria: FieldTargetCriteria,
     energyCriteria: { energyTypes?: AttachableEnergyType[] } | undefined,
     controllers: Controllers,
     context: EffectContext,
 ): number {
     // First, get all matching field cards using FieldTargetResolver
-    const target: any = {
+    const target: AllMatchingFieldTarget = {
         type: 'all-matching',
         criteria: fieldCriteria,
     };
@@ -234,7 +236,7 @@ function countEnergy(
 function countCards(
     player: 'self' | 'opponent',
     location: 'hand' | 'deck' | 'discard' | 'field',
-    criteria: any,
+    criteria: CardCriteria | undefined,
     controllers: Controllers,
     context: EffectContext,
 ): number {
@@ -255,9 +257,9 @@ function countCards(
 /**
  * Counts damage on a creature matching criteria.
  */
-function countDamage(fieldCriteria: any, controllers: Controllers, context: EffectContext): number {
+function countDamage(fieldCriteria: FieldTargetCriteria, controllers: Controllers, context: EffectContext): number {
     // Use FieldTargetResolver to find the matching creature
-    const target: any = {
+    const target: AllMatchingFieldTarget = {
         type: 'all-matching',
         criteria: fieldCriteria,
     };
