@@ -69,6 +69,72 @@ describe('FieldTargetCriteriaFilter', () => {
             expect(result.length).to.equal(2);
             expect(result.every(r => r.fieldIndex > 0)).to.be.true;
         });
+
+        it('should filter by stage - basic only', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // Set up field: Basic, Stage 1, and Stage 2 creatures
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const stage1 = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const stage2 = { templateId: 'stage-2-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, stage1, stage2 ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { stage: 0 }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(0);
+        });
+
+        it('should filter by stage - stage 1 only', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // Set up field: Basic, Stage 1, and Stage 2 creatures
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const stage1 = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const stage2 = { templateId: 'stage-2-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, stage1, stage2 ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { stage: 1 }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(1);
+        });
+
+        it('should filter by stage - stage 2 only', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // Set up field: Basic, Stage 1, and Stage 2 creatures
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const stage1 = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const stage2 = { templateId: 'stage-2-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, stage1, stage2 ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { stage: 2 }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(2);
+        });
     });
 });
 

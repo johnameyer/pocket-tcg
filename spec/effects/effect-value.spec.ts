@@ -31,7 +31,6 @@ describe('Effect Value Calculation', () => {
                     StateBuilder.withHand(0, [{ templateId: 'constant-20', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal exactly 20');
@@ -61,7 +60,6 @@ describe('Effect Value Calculation', () => {
                     StateBuilder.withHand(0, [{ templateId: 'constant-50', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 40),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should heal all 40 damage');
@@ -98,7 +96,6 @@ describe('Effect Value Calculation', () => {
                     ]),
                     StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(47, 'Should heal 3 (hand size after playing)');
@@ -129,7 +126,6 @@ describe('Effect Value Calculation', () => {
                     StateBuilder.withHand(1, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
                     StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(25, 'Should heal 5 (opponent hand size)');
@@ -162,7 +158,6 @@ describe('Effect Value Calculation', () => {
                         state.points = [ 2, 1 ]; 
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 (current points)');
@@ -195,7 +190,6 @@ describe('Effect Value Calculation', () => {
                         state.points = [ 1, 0 ]; 
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 (3 - 1 = 2 points to win)');
@@ -231,7 +225,6 @@ describe('Effect Value Calculation', () => {
                     StateBuilder.withHand(0, [{ templateId: 'multiply-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal 20 (10 x 2)');
@@ -269,7 +262,6 @@ describe('Effect Value Calculation', () => {
                     ]),
                     StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should heal 20 (10 x 2 hand size)');
@@ -307,7 +299,6 @@ describe('Effect Value Calculation', () => {
                     StateBuilder.withHand(0, [{ templateId: 'addition-heal', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 30),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(15, 'Should heal 15 (10 + 5)');
@@ -348,7 +339,6 @@ describe('Effect Value Calculation', () => {
                     ]),
                     StateBuilder.withDamage('basic-creature-0', 50),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(27, 'Should heal 23 (20 + 3 hand size)');
@@ -386,7 +376,6 @@ describe('Effect Value Calculation', () => {
                         { templateId: 'basic-creature', type: 'creature' },
                     ]),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(4, 'Should deal damage equal to opponent hand size (4)');
@@ -419,7 +408,6 @@ describe('Effect Value Calculation', () => {
                         state.points = [ 1, 0 ]; 
                     }, // Player has 1 point, needs 2 more to win
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 HP (3 points needed - 1 current = 2)');

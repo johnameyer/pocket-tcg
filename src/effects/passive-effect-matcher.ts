@@ -140,4 +140,267 @@ export class PassiveEffectMatcher {
         ),
         );
     }
+
+    /**
+     * Calculate the effective retreat cost for a creature, considering all retreat cost modifiers.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature (0 = active, 1+ = bench)
+     * @param baseRetreatCost The base retreat cost from the creature card
+     * @returns The effective retreat cost after applying all modifiers
+     */
+    static calculateEffectiveRetreatCost(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        baseRetreatCost: number,
+    ): number {
+        let effectiveRetreatCost = baseRetreatCost;
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return effectiveRetreatCost;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        // Apply retreat cost modification effects
+        const modificationEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-modification');
+        for (const passiveEffect of modificationEffects) {
+            const effect = passiveEffect.effect;
+            
+            /*
+             * Check if this effect applies to the target player
+             * If no player specified, effect applies to both players (e.g., stadium)
+             */
+            if (effect.target.player !== undefined) {
+                const effectAppliesToThisPlayer = (effect.target.player === 'self' && passiveEffect.sourcePlayer === playerId)
+                                                   || (effect.target.player === 'opponent' && passiveEffect.sourcePlayer !== playerId);
+                if (!effectAppliesToThisPlayer) {
+                    continue;
+                }
+            }
+            
+            // Check if this effect applies to the field position
+            if (effect.target.position) {
+                const isActive = fieldIndex === 0;
+                const positionMatches = (effect.target.position === 'active' && isActive)
+                                        || (effect.target.position === 'bench' && !isActive);
+                if (!positionMatches) {
+                    continue;
+                }
+            }
+            
+            // Check field criteria (hasDamage, hasEnergy, cardCriteria)
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
+                if (effect.operation === 'decrease') {
+                    effectiveRetreatCost -= amount;
+                } else {
+                    effectiveRetreatCost += amount;
+                }
+            }
+        }
+        
+        // Retreat cost cannot be negative
+        return Math.max(0, effectiveRetreatCost);
+    }
+
+    /**
+     * Check if energy attachment is prevented for a specific creature.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature
+     * @returns True if energy attachment is prevented for this creature
+     */
+    static isEnergyAttachmentPrevented(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-energy-attachment');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        for (const passiveEffect of preventEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            
+            if (matchesCriteria) {
+                // Also check player and position criteria
+                if (effect.target.player) {
+                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
+                        : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                    if (targetPlayer !== playerId) {
+                        continue;
+                    }
+                }
+                
+                if (effect.target.position) {
+                    const isActive = fieldIndex === 0;
+                    if (effect.target.position === 'active' && !isActive) {
+                        continue;
+                    }
+                    if (effect.target.position === 'bench' && isActive) {
+                        continue;
+                    }
+                }
+                
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if a creature is prevented from attacking.
+     * 
+     * @param controllers Game controllers
+     * @param playerId The player ID of the creature
+     * @param fieldIndex The field position of the creature
+     * @returns True if the creature is prevented from attacking
+     */
+    static isAttackPrevented(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-attack');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        for (const passiveEffect of preventEffects) {
+            const effect = passiveEffect.effect;
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (matchesCriteria) {
+                // Also check player and position criteria
+                if (effect.target.player) {
+                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
+                        : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                    if (targetPlayer !== playerId) {
+                        continue;
+                    }
+                }
+                
+                if (effect.target.position) {
+                    const isActive = fieldIndex === 0;
+                    if (effect.target.position === 'active' && !isActive) {
+                        continue;
+                    }
+                    if (effect.target.position === 'bench' && isActive) {
+                        continue;
+                    }
+                }
+                
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static getModifiedAttackEnergyRequirements(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        baseRequirements: { type: string; amount: number }[],
+    ): { type: string; amount: number }[] {
+        const modifierEffects = controllers.effects.getPassiveEffectsByType('attack-energy-cost-modifier');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return baseRequirements;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        // Collect all applicable modifiers
+        const totalModifier: { [type: string]: number } = {};
+        
+        for (const passiveEffect of modifierEffects) {
+            const effect = passiveEffect.effect;
+            
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (!matchesCriteria) {
+                continue;
+            }
+            
+            // Check player targeting
+            if (effect.target.player) {
+                const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
+                    : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                if (targetPlayer !== playerId) {
+                    continue;
+                }
+            }
+            
+            // Check position targeting
+            if (effect.target.position) {
+                const isActive = fieldIndex === 0;
+                if (effect.target.position === 'active' && !isActive) {
+                    continue;
+                }
+                if (effect.target.position === 'bench' && isActive) {
+                    continue;
+                }
+            }
+            
+            // Extract the modifier amount
+            const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
+            totalModifier.all = (totalModifier.all || 0) + amount;
+        }
+        
+        // Apply modifiers to each requirement
+        if (totalModifier.all === 0) {
+            return baseRequirements;
+        }
+        
+        return baseRequirements.map(req => ({
+            ...req,
+            amount: Math.max(0, req.amount + (totalModifier.all || 0)),
+        }));
+    }
 }

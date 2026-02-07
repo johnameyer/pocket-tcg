@@ -17,7 +17,11 @@ import { endTurnEffectHandler } from './end-turn-effect-handler.js';
 import { coinFlipManipulationEffectHandler } from './coin-flip-manipulation-effect-handler.js';
 import { damageBoostEffectHandler } from './damage-boost-effect-handler.js';
 import { hpBonusEffectHandler } from './hp-bonus-effect-handler.js';
-import { retreatCostReductionEffectHandler } from './retreat-cost-reduction-effect-handler.js';
+import { retreatCostModificationEffectHandler } from './retreat-cost-modification-effect-handler.js';
+import { preventPlayingEffectHandler } from './prevent-playing-effect-handler.js';
+import { preventAttackEffectHandler } from './prevent-attack-effect-handler.js';
+import { preventEnergyAttachmentEffectHandler } from './prevent-energy-attachment-effect-handler.js';
+import { attackEnergyCostModifierEffectHandler } from './attack-energy-cost-modifier-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -38,5 +42,9 @@ export const effectHandlers: EffectHandlerMap = {
     'coin-flip-manipulation': coinFlipManipulationEffectHandler,
     'damage-boost': damageBoostEffectHandler,
     'hp-bonus': hpBonusEffectHandler,
-    'retreat-cost-reduction': retreatCostReductionEffectHandler,
+    'retreat-cost-modification': retreatCostModificationEffectHandler,
+    'prevent-playing': preventPlayingEffectHandler,
+    'prevent-attack': preventAttackEffectHandler,
+    'prevent-energy-attachment': preventEnergyAttachmentEffectHandler,
+    'attack-energy-cost-modifier': attackEnergyCostModifierEffectHandler,
 };

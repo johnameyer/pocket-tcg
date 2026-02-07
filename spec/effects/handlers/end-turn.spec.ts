@@ -60,7 +60,6 @@ describe('End Turn Effect', () => {
                 StateBuilder.withHand(0, [ endTurnItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed end turn item only');
@@ -83,7 +82,7 @@ describe('End Turn Effect', () => {
      *             StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
      *             StateBuilder.withEnergy('basic-creature-1', { fire: 1 })
      *         ),
-     *         maxSteps: 20
+     *
      *     });
      */
 
@@ -106,7 +105,6 @@ describe('End Turn Effect', () => {
                 StateBuilder.withEnergy('end-turn-creature-0', { psychic: 1 }),
                 StateBuilder.withEnergy('end-turn-creature-1', { psychic: 1 }),
             ),
-            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed both attacks');
@@ -128,7 +126,6 @@ describe('End Turn Effect', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 StateBuilder.withEnergy('basic-creature-1', { fire: 1 }), // Player 1 needs energy too
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack only');

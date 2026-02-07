@@ -108,7 +108,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ discardSupporter, basicCreature, highHpCreature, basicItem, researchSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed discard supporter');
@@ -124,7 +123,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withHand(0, [ opponentDiscardSupporter ]),
                 StateBuilder.withHand(1, [ basicCreature, highHpCreature, basicItem, researchSupporter, basicItem ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed opponent discard supporter');
@@ -141,7 +139,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withHand(0, [ variableDiscardSupporter ]),
                 StateBuilder.withHand(1, [ basicCreature, highHpCreature, basicItem ]), // 3 cards, so should discard 3
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed variable discard supporter');
@@ -158,7 +155,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withHand(0, [ bothDiscardSupporter, basicCreature, highHpCreature ]),
                 StateBuilder.withHand(1, [ basicItem, researchSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed both discard supporter');
@@ -175,7 +171,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withHand(0, [ shuffleDiscardSupporter, basicCreature, highHpCreature, basicItem ]),
                 StateBuilder.withDeck(0, [ researchSupporter ]), // Start with 1 card in deck
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed shuffle discard supporter');
@@ -192,7 +187,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withHand(0, [ opponentDiscardSupporter ]),
                 StateBuilder.withHand(1, [ basicCreature, highHpCreature ]), // Only 2 cards, but effect wants to discard 3
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed opponent discard supporter');
@@ -208,7 +202,6 @@ describe('Hand Discard Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ discardSupporter ]), // Only the supporter card
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed discard supporter');

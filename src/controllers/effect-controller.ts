@@ -49,6 +49,18 @@ export type PassiveEffect = {
      * Used for duration tracking.
      */
     createdTurn: number;
+    
+    /**
+     * For while-in-play effects on cards/abilities: the instance ID of the card.
+     * Used to remove the effect when the card leaves the field.
+     */
+    cardInstanceId?: string;
+    
+    /**
+     * For while-in-play effects on tools: the instance ID of the tool.
+     * Used to remove the effect when the tool is detached.
+     */
+    toolInstanceId?: string;
 };
 
 export type EffectState = {
@@ -142,7 +154,8 @@ export class EffectController extends GlobalController<EffectState, EffectContro
      * @param effect The modifier effect to apply
      * @param duration How long the effect remains active
      * @param createdTurn The turn number when the effect was created
-     * @param condition Optional condition for the effect to apply
+     * @param cardInstanceId Optional: ID of the card this effect is tied to (for removal tracking)
+     * @param toolInstanceId Optional: ID of the tool this effect is tied to (for removal tracking)
      * @returns The ID of the newly registered effect
      */
     public registerPassiveEffect(
@@ -151,6 +164,8 @@ export class EffectController extends GlobalController<EffectState, EffectContro
         effect: ModifierEffect,
         duration: Duration,
         createdTurn: number,
+        cardInstanceId?: string,
+        toolInstanceId?: string,
     ): string {
         const id = `passive-effect-${this.state.nextEffectId++}`;
         
@@ -161,6 +176,8 @@ export class EffectController extends GlobalController<EffectState, EffectContro
             effect,
             duration,
             createdTurn,
+            cardInstanceId,
+            toolInstanceId,
         };
         
         this.state.activePassiveEffects.push(passiveEffect);
@@ -177,9 +194,10 @@ export class EffectController extends GlobalController<EffectState, EffectContro
     public getPassiveEffectsByType<T extends ModifierEffect['type']>(
         effectType: T,
     ): Array<PassiveEffect & { effect: Extract<ModifierEffect, { type: T }> }> {
-        return this.state.activePassiveEffects.filter(
+        const result = this.state.activePassiveEffects.filter(
             (pe): pe is PassiveEffect & { effect: Extract<ModifierEffect, { type: T }> } => pe.effect.type === effectType,
         );
+        return result;
     }
 
     /**
@@ -237,13 +255,13 @@ export class EffectController extends GlobalController<EffectState, EffectContro
     public clearEffectsForInstance(instanceId: string): void {
         this.state.activePassiveEffects = this.state.activePassiveEffects.filter(
             pe => {
-                // Remove effects with while-in-play duration for this instance
-                if (pe.duration.type === 'while-in-play') {
-                    return pe.duration.instanceId !== instanceId;
+                // Remove effects tied to this card instance
+                if (pe.cardInstanceId === instanceId) {
+                    return false;
                 }
-                // Remove effects with while-attached duration for this instance
-                if (pe.duration.type === 'while-attached') {
-                    return pe.duration.cardInstanceId !== instanceId && pe.duration.toolInstanceId !== instanceId;
+                // Remove effects tied to tools on this card
+                if (pe.toolInstanceId === instanceId) {
+                    return false;
                 }
                 return true;
             },
@@ -260,8 +278,9 @@ export class EffectController extends GlobalController<EffectState, EffectContro
     public clearEffectsForTool(toolInstanceId: string, cardInstanceId: string): void {
         this.state.activePassiveEffects = this.state.activePassiveEffects.filter(
             pe => {
-                if (pe.duration.type === 'while-attached') {
-                    return pe.duration.toolInstanceId !== toolInstanceId || pe.duration.cardInstanceId !== cardInstanceId;
+                // Remove effects tied to this tool on this card
+                if (pe.toolInstanceId === toolInstanceId && pe.cardInstanceId === cardInstanceId) {
+                    return false;
                 }
                 return true;
             },

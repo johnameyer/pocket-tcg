@@ -29,7 +29,6 @@ describe('Evolution Mechanics', () => {
                 StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                 StateBuilder.withCanEvolve(0, 0),
             ),
-            maxSteps: 5,
         });
 
         // Player 0's basic creature should remain in the evolution stack, not in discard pile
@@ -55,7 +54,6 @@ describe('Evolution Mechanics', () => {
                 StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                 StateBuilder.withCanEvolve(0, 0),
             ),
-            maxSteps: 5,
         });
 
         // Player 0's benched basic creature should remain in the evolution stack, not in discard pile
@@ -106,7 +104,6 @@ describe('Evolution Mechanics', () => {
                     }
                 },
             ),
-            maxSteps: 15,
         });
 
         // After evolution and retreat, the evolved creature should be on bench
@@ -133,7 +130,6 @@ describe('Evolution Mechanics', () => {
                         }
                     },
                 ),
-                maxSteps: 10,
             });
 
             const statusEffects = state.statusEffects.activeStatusEffects[0];
@@ -159,7 +155,6 @@ describe('Evolution Mechanics', () => {
                         }
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(60, 'Damage should be preserved during evolution');
@@ -179,7 +174,6 @@ describe('Evolution Mechanics', () => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
                     },
                 ),
-                maxSteps: 10,
             });
 
             const statusEffects = state.statusEffects.activeStatusEffects[0];
@@ -193,7 +187,6 @@ describe('Evolution Mechanics', () => {
                 stateCustomizer: (state) => {
                     state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }, { type: StatusEffectType.BURNED, appliedTurn: 0 }];
                 },
-                maxSteps: 3,
             });
 
             const effects = state.statusEffects.activeStatusEffects[0];
@@ -210,7 +203,6 @@ describe('Evolution Mechanics', () => {
                         state.statusEffects.activeStatusEffects[0] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
                     },
                 ),
-                maxSteps: 5,
             });
 
             expect(state.field.creatures[0][0]).to.exist;
@@ -245,7 +237,6 @@ describe('Evolution Mechanics', () => {
                     StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
                     StateBuilder.withCanEvolve(0, 0),
                 ),
-                maxSteps: 5,
             });
 
             const activeCard = state.field.creatures[0][0];

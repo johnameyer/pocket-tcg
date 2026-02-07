@@ -100,7 +100,6 @@ describe('Status Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('poison-creature-0', { grass: 1 }),
             ),
-            maxSteps: 10,
         });
 
         const effects = state.statusEffects.activeStatusEffects[1];
@@ -140,7 +139,6 @@ describe('Status Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('burn-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10,
         });
 
         const effects = state.statusEffects.activeStatusEffects[1];
@@ -180,7 +178,6 @@ describe('Status Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('self-status-creature-0', { psychic: 1 }),
             ),
-            maxSteps: 10,
         });
 
         const effects = state.statusEffects.activeStatusEffects[0];
@@ -228,7 +225,6 @@ describe('Status Effect', () => {
                 StateBuilder.withEnergy('multi-status-creature-0', { psychic: 1 }),
                 StateBuilder.withStatusEffect(1, 'paralysis'),
             ),
-            maxSteps: 10,
         });
 
         const effects = state.statusEffects.activeStatusEffects[1];
@@ -275,7 +271,6 @@ describe('Status Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('toxic-creature-0', { grass: 2 }),
             ),
-            maxSteps: 10,
         });
 
         const effects = state.statusEffects.activeStatusEffects[1];
@@ -328,7 +323,6 @@ describe('Status Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withEnergy('toxic-creature-0', { grass: 2 }),
             ),
-            maxSteps: 15,
         });
 
         expect(state.field.creatures[1][0].damageTaken).to.equal(60, 'Should take 40 attack + 20 status (capped at 60 HP)');

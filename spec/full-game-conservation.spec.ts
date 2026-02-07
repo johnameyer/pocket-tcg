@@ -259,7 +259,6 @@ describe('Full Game Conservation', () => {
         runBotGame({
             customRepository: gameRepository,
             initialDecks: [ player1Deck, player2Deck ],
-            maxSteps: 500,
             integrityCheck: (currentState, step) => {
                 // Capture initial instance IDs on first step
                 if (!initialPlayer1InstanceIds) {

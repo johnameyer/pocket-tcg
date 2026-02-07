@@ -32,7 +32,7 @@ describe('Creature Abilities', () => {
                     amount: { type: 'constant', value: 10 },
                     damageSource: { player: 'opponent' },
                     target: { type: 'fixed', player: 'self', position: 'active' },
-                    duration: { type: 'while-in-play', instanceId: '' },
+                    duration: { type: 'while-in-play' },
                 }],
             },
         }],
@@ -51,7 +51,7 @@ describe('Creature Abilities', () => {
                     type: 'hp-bonus',
                     amount: { type: 'constant', value: 20 },
                     target: { player: 'self', position: 'active' },
-                    duration: { type: 'while-in-play', instanceId: '' },
+                    duration: { type: 'while-in-play' },
                 }],
             },
         }],
@@ -73,7 +73,6 @@ describe('Creature Abilities', () => {
                     StateBuilder.withCreatures(1, 'defensive-creature'), // Pre-setup with ability
                     StateBuilder.withEnergy('basic-attacker-0', { fire: 1 }),
                 ),
-                maxSteps: 10,
                 customRepository: abilityTestRepository,
             });
 
@@ -97,7 +96,6 @@ describe('Creature Abilities', () => {
                     StateBuilder.withCreatures(1, 'hp-boost-creature'), // Pre-setup with ability
                     StateBuilder.withEnergy('basic-attacker-0', { fire: 1 }),
                 ),
-                maxSteps: 10,
                 customRepository: abilityTestRepository,
             });
 
@@ -120,7 +118,6 @@ describe('Creature Abilities', () => {
                     StateBuilder.withCreatures(0, 'defensive-creature', [ 'hp-boost-creature' ]),
                     StateBuilder.withCreatures(1, 'basic-attacker'),
                 ),
-                maxSteps: 5,
                 customRepository: abilityTestRepository,
             });
 
@@ -146,7 +143,6 @@ describe('Creature Abilities', () => {
                     StateBuilder.withCreatures(1, 'defensive-creature'),
                     StateBuilder.withEnergy('basic-attacker-0', { fire: 4 }),
                 ),
-                maxSteps: 20,
                 customRepository: abilityTestRepository,
             });
 

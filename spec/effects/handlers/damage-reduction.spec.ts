@@ -24,7 +24,7 @@ describe('Damage Reduction Effect', () => {
                         amount: { type: 'constant', value: 20 },
                         damageSource: { player: 'opponent' },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        duration: { type: 'while-in-play', instanceId: '' },
+                        duration: { type: 'while-in-play' },
                     }],
                 },
             }],
@@ -44,7 +44,7 @@ describe('Damage Reduction Effect', () => {
                         amount: { type: 'constant', value: 20 },
                         damageSource: { player: 'opponent' },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        duration: { type: 'while-in-play', instanceId: '' },
+                        duration: { type: 'while-in-play' },
                     }],
                 },
             }],
@@ -64,7 +64,7 @@ describe('Damage Reduction Effect', () => {
                         amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
                         damageSource: { player: 'opponent' },
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        duration: { type: 'while-in-play', instanceId: '' },
+                        duration: { type: 'while-in-play' },
                     }],
                 },
             }],
@@ -101,7 +101,6 @@ describe('Damage Reduction Effect', () => {
                 StateBuilder.withCreatures(1, 'defensive-creature'), // Has damage reduction
                 StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -120,7 +119,6 @@ describe('Damage Reduction Effect', () => {
                     state.points = [ 0, 2 ]; // Player 1 has 2 points for reduction
                 },
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -137,7 +135,6 @@ describe('Damage Reduction Effect', () => {
                 StateBuilder.withCreatures(1, 'defensive-creature'), // 20 damage reduction
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -152,7 +149,6 @@ describe('Damage Reduction Effect', () => {
                 StateBuilder.withCreatures(1, 'high-hp-creature'), // No damage reduction
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -168,7 +164,6 @@ describe('Damage Reduction Effect', () => {
                 StateBuilder.withCreatures(1, 'high-hp-defensive-creature'),
                 StateBuilder.withEnergy('high-hp-creature-0', { fighting: 4 }),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
