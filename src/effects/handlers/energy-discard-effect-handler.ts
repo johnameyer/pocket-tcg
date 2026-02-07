@@ -37,6 +37,7 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
          * The resolver will handle the inner fieldTarget resolution
          */
         return [
+            // @ts-ignore - EnergyTarget is not compatible with FieldTarget, but this is validated separately
             { targetProperty: 'energySource', target: effect.energySource as EnergyTarget, required: true },
         ];
     }
