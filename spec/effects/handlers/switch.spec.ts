@@ -129,7 +129,6 @@ describe('Switch Effect', () => {
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDamage('high-hp-creature-1-0', 20),
             ),
-            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent bench should be active');
@@ -152,7 +151,6 @@ describe('Switch Effect', () => {
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDamage('high-hp-creature-1-0', 30),
             ),
-            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Damaged bench should be active');
@@ -189,7 +187,6 @@ describe('Switch Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature', [ 'high-hp-creature', 'evolution-creature' ]), // Multiple bench Pokemon for choice
                 StateBuilder.withHand(0, [{ templateId: 'switch-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed switch supporter and target selection');
@@ -207,7 +204,6 @@ describe('Switch Effect', () => {
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
                 // No bench Pokemon for opponent
             ),
-            maxSteps: 10,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('basic-creature', 'Active should remain unchanged');
@@ -234,7 +230,6 @@ describe('Switch Effect', () => {
                 StateBuilder.withDamage('high-hp-creature-1-0', 10),
                 StateBuilder.withDamage('evolution-creature-1-1', 20),
             ),
-            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Should switch to chosen Pokemon');
@@ -257,7 +252,6 @@ describe('Switch Effect', () => {
                 StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
                 StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 15,
         });
 
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Should complete switch');

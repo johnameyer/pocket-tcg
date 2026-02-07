@@ -134,7 +134,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withCreatures(0, 'flexible-basic'),
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -152,7 +151,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withCreatures(0, 'flexible-basic'),
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionLightning ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -170,7 +168,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withCreatures(0, 'flexible-basic'),
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater, flexibleEvolutionLightning, flexibleEvolutionFire ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -189,7 +186,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed flexibility item only (evolution blocked)');
@@ -208,7 +204,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionWater ]),
                 StateBuilder.withDamage('flexible-basic-0', 20),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -228,7 +223,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionLightning ]),
                 StateBuilder.withEnergy('flexible-basic-0', { lightning: 2 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -250,7 +244,6 @@ describe('Evolution Flexibility Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature', [ 'flexible-basic' ]),
                 StateBuilder.withHand(0, [ flexibilityItem, flexibleEvolutionFire ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed flexibility item and evolution');
@@ -278,7 +271,6 @@ describe('Evolution Flexibility Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.be.greaterThanOrEqual(2, 'Should have executed flexibility item and at least one evolution');

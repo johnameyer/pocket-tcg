@@ -178,7 +178,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ searchSupporter ]),
                 StateBuilder.withDeck(0, [ basicCreature, evolutionCreature, basicItem, researchSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed search supporter');
@@ -196,7 +195,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ trainerSearchSupporter ]),
                 StateBuilder.withDeck(0, [ basicCreature, evolutionCreature, basicItem, researchSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed trainer search supporter');
@@ -215,7 +213,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ multiSearchSupporter ]),
                 StateBuilder.withDeck(0, [ basicCreature, evolutionCreature, basicItem, researchSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi search supporter');
@@ -234,7 +231,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ variableSearchSupporter, basicItem, researchSupporter ]), // 3 cards total, so search for 3
                 StateBuilder.withDeck(0, [ basicCreature, basicCreature, basicCreature, evolutionCreature ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed variable search supporter');
@@ -251,7 +247,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ anySearchSupporter ]),
                 StateBuilder.withDeck(0, [ basicCreature, evolutionCreature, basicItem, researchSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed any search supporter');
@@ -270,7 +265,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ multiSearchSupporter ]),
                 StateBuilder.withDeck(0, [ basicCreature, basicItem, researchSupporter ]), // Only 1 Pokemon, but effect wants 2
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed multi search supporter');
@@ -288,7 +282,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ searchSupporter ]),
                 StateBuilder.withDeck(0, []), // Empty deck
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not execute search supporter when deck is empty');
@@ -305,7 +298,6 @@ describe('Search Effect', () => {
                 StateBuilder.withHand(0, [ searchSupporter ]),
                 StateBuilder.withDeck(0, [ basicItem, researchSupporter ]), // No basic creatures
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed search supporter');

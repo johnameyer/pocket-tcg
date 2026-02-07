@@ -118,7 +118,6 @@ describe('HP Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'heal-item', type: 'item' }]),
                 StateBuilder.withDamage('basic-creature-0', 30),
             ),
-            maxSteps: 15,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal 20 damage');
@@ -148,7 +147,6 @@ describe('HP Effect', () => {
                 StateBuilder.withCreatures(1, 'basic-creature'),
                 StateBuilder.withHand(0, [{ templateId: 'damage-supporter', type: 'supporter' }]),
             ),
-            maxSteps: 10,
         });
 
         expect(state.field.creatures[1][0].damageTaken).to.equal(30, 'Should deal 30 damage');
@@ -178,7 +176,6 @@ describe('HP Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'big-heal', type: 'supporter' }]),
                 StateBuilder.withDamage('basic-creature-0', 50),
             ),
-            maxSteps: 10,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should heal 50 damage completely');
@@ -212,7 +209,6 @@ describe('HP Effect', () => {
                 StateBuilder.withDamage('basic-creature-0', 30),
                 StateBuilder.withDamage('basic-creature-0-0', 25),
             ),
-            maxSteps: 10,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal active creature');
@@ -243,7 +239,6 @@ describe('HP Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'small-heal', type: 'item' }]),
                 StateBuilder.withDamage('basic-creature-0', 10),
             ),
-            maxSteps: 10,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should heal only to 0');
@@ -274,7 +269,6 @@ describe('HP Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'overkill', type: 'supporter' }]),
                 StateBuilder.withDamage('basic-creature-1', 20),
             ),
-            maxSteps: 10,
         });
 
         expect(state.field.creatures[1][0].damageTaken).to.equal(60, 'Should cap at max HP');

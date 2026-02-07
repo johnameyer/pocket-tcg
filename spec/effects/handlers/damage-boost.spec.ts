@@ -51,7 +51,6 @@ describe('Damage Boost Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'damage-boost-supporter', type: 'supporter' }]),
                 StateBuilder.withEnergy('basic-attacker-0', { fire: 1 }),
             ),
-            maxSteps: 10,
         });
 
         expect(state.field.creatures[1][0].damageTaken).to.equal(50, 'Should deal 50 damage (30 base + 20 boost)');

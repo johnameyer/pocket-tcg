@@ -39,7 +39,7 @@ describe('HP Bonus Effect', () => {
                     type: 'hp-bonus',
                     amount: { type: 'constant', value: 30 },
                     target: { player: 'self', position: 'active' },
-                    duration: { type: 'while-attached', toolInstanceId: '', cardInstanceId: '' },
+                    duration: { type: 'while-in-play' },
                 }],
             }],
         ]),
@@ -58,7 +58,6 @@ describe('HP Bonus Effect', () => {
                 StateBuilder.withEnergy('low-hp-creature-0', { grass: 1 }),
                 StateBuilder.withDamage('basic-creature-1', 40), // Pre-damage: would be KO'd at 50 HP base
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -74,7 +73,6 @@ describe('HP Bonus Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ hpTool ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have attached HP tool');
@@ -93,7 +91,6 @@ describe('HP Bonus Effect', () => {
                 StateBuilder.withEnergy('low-hp-creature-0', { grass: 1 }),
                 StateBuilder.withDamage('low-hp-creature-1', 45), // 45 + 60 = 105 damage, would KO 50 HP but not 80 HP
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -109,7 +106,6 @@ describe('HP Bonus Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature', [ 'low-hp-creature' ]),
                 StateBuilder.withHand(0, [ hpTool ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have attached HP tool to bench');
@@ -126,7 +122,6 @@ describe('HP Bonus Effect', () => {
                 StateBuilder.withTool('basic-creature-0', 'hp-tool'), // Already has tool
                 StateBuilder.withHand(0, [ hpTool ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have attached second tool');

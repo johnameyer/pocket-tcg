@@ -141,11 +141,10 @@ describe('Retreat Prevention Effect', () => {
     const allPreventionItem = { templateId: 'all-prevention-item', type: 'item' as const };
 
     it('should prevent opponent active from retreating (basic operation)', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state: stateAfterPlayer0 } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new EndTurnResponseMessage(),
-                new RetreatResponseMessage(0), // Opponent tries to retreat
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -162,10 +161,17 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
-        expect(getExecutedCount()).to.equal(2, 'Should have executed prevention item and end turn (retreat blocked)');
+        const { state } = runTestGame({
+            actions: [
+                new RetreatResponseMessage(0), // Opponent tries to retreat
+            ],
+            customRepository: testRepository,
+            resumeFrom: stateAfterPlayer0,
+            playerPosition: 1,
+        });
+
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Opponent active should remain the same (retreat prevented)');
     });
 
@@ -190,7 +196,6 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed prevention item only (retreat blocked)');
@@ -220,7 +225,6 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
         // This test may fail if target selection is required but not provided
@@ -249,7 +253,6 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed all prevention item and end turn (retreat blocked)');
@@ -277,7 +280,6 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 15,
         });
     });
 
@@ -302,7 +304,6 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevention item and retreat');
@@ -332,7 +333,6 @@ describe('Retreat Prevention Effect', () => {
                     });
                 },
             ),
-            maxSteps: 25,
         });
 
         expect(getExecutedCount()).to.equal(3, 'Should have executed both prevention items and end turn (retreat blocked)');

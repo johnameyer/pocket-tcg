@@ -166,14 +166,34 @@ export class PassiveEffectMatcher {
         // Create a handler data view for criteria matching
         const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
         
-        // Apply retreat cost modification effects (both reduction and increase)
-        const modificationEffects = [
-            ...controllers.effects.getPassiveEffectsByType('retreat-cost-reduction'),
-            ...controllers.effects.getPassiveEffectsByType('retreat-cost-increase'),
-        ];
+        // Apply retreat cost modification effects
+        const modificationEffects = controllers.effects.getPassiveEffectsByType('retreat-cost-modification');
         for (const passiveEffect of modificationEffects) {
             const effect = passiveEffect.effect;
-            // Check if this effect applies to the creature
+            
+            /*
+             * Check if this effect applies to the target player
+             * If no player specified, effect applies to both players (e.g., stadium)
+             */
+            if (effect.target.player !== undefined) {
+                const effectAppliesToThisPlayer = (effect.target.player === 'self' && passiveEffect.sourcePlayer === playerId)
+                                                   || (effect.target.player === 'opponent' && passiveEffect.sourcePlayer !== playerId);
+                if (!effectAppliesToThisPlayer) {
+                    continue;
+                }
+            }
+            
+            // Check if this effect applies to the field position
+            if (effect.target.position) {
+                const isActive = fieldIndex === 0;
+                const positionMatches = (effect.target.position === 'active' && isActive)
+                                        || (effect.target.position === 'bench' && !isActive);
+                if (!positionMatches) {
+                    continue;
+                }
+            }
+            
+            // Check field criteria (hasDamage, hasEnergy, cardCriteria)
             const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
                 effect.target.fieldCriteria || {},
                 creature,
@@ -183,7 +203,7 @@ export class PassiveEffectMatcher {
             
             if (matchesCriteria) {
                 const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
-                if (effect.type === 'retreat-cost-reduction') {
+                if (effect.operation === 'decrease') {
                     effectiveRetreatCost -= amount;
                 } else {
                     effectiveRetreatCost += amount;
@@ -227,6 +247,7 @@ export class PassiveEffectMatcher {
                 controllers.cardRepository.cardRepository,
                 handlerData.energy?.attachedEnergyByInstance,
             );
+            
             
             if (matchesCriteria) {
                 // Also check player and position criteria
@@ -311,5 +332,75 @@ export class PassiveEffectMatcher {
             }
         }
         return false;
+    }
+
+    static getModifiedAttackEnergyRequirements(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        baseRequirements: { type: string; amount: number }[],
+    ): { type: string; amount: number }[] {
+        const modifierEffects = controllers.effects.getPassiveEffectsByType('attack-energy-cost-modifier');
+        
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return baseRequirements;
+        }
+        
+        // Create a handler data view for criteria matching
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        
+        // Collect all applicable modifiers
+        const totalModifier: { [type: string]: number } = {};
+        
+        for (const passiveEffect of modifierEffects) {
+            const effect = passiveEffect.effect;
+            
+            // Check if this effect applies to the creature
+            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
+                effect.target.fieldCriteria || {},
+                creature,
+                controllers.cardRepository.cardRepository,
+                handlerData.energy?.attachedEnergyByInstance,
+            );
+            
+            if (!matchesCriteria) {
+                continue;
+            }
+            
+            // Check player targeting
+            if (effect.target.player) {
+                const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
+                    : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                if (targetPlayer !== playerId) {
+                    continue;
+                }
+            }
+            
+            // Check position targeting
+            if (effect.target.position) {
+                const isActive = fieldIndex === 0;
+                if (effect.target.position === 'active' && !isActive) {
+                    continue;
+                }
+                if (effect.target.position === 'bench' && isActive) {
+                    continue;
+                }
+            }
+            
+            // Extract the modifier amount
+            const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
+            totalModifier.all = (totalModifier.all || 0) + amount;
+        }
+        
+        // Apply modifiers to each requirement
+        if (totalModifier.all === 0) {
+            return baseRequirements;
+        }
+        
+        return baseRequirements.map(req => ({
+            ...req,
+            amount: Math.max(0, req.amount + (totalModifier.all || 0)),
+        }));
     }
 }

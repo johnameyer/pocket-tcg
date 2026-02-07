@@ -59,7 +59,6 @@ describe('Coin Flip Manipulation Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ coinFlipSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed Will');
@@ -79,7 +78,6 @@ describe('Coin Flip Manipulation Effect', () => {
                 StateBuilder.withHand(0, [ coinFlipSupporter ]),
                 StateBuilder.withEnergy('coin-flip-attacker-0', { lightning: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed Will and attack');
@@ -97,7 +95,6 @@ describe('Coin Flip Manipulation Effect', () => {
                 StateBuilder.withEnergy('coin-flip-attacker-0', { lightning: 1 }),
                 StateBuilder.withMockedCoinFlips([ false ]), // Force tails
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -114,7 +111,6 @@ describe('Coin Flip Manipulation Effect', () => {
                 StateBuilder.withEnergy('coin-flip-attacker-0', { lightning: 1 }),
                 StateBuilder.withMockedCoinFlips([ true ]), // Force heads
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
@@ -132,7 +128,6 @@ describe('Coin Flip Manipulation Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ coinFlipSupporter ]),
             ),
-            maxSteps: 10,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed Will');

@@ -31,8 +31,8 @@ export class RetreatCostModificationEffectHandler extends AbstractEffectHandler<
         // Get the amount of retreat cost modification
         const modificationAmount = getEffectValue(effect.amount, controllers, context);
         
-        // Determine operation based on effect type
-        const operation = effect.type === 'retreat-cost-reduction' ? 'decrease' : 'increase';
+        // Determine operation from unified effect type
+        const operation = effect.operation;
         
         // Register as a passive effect with criteria matching
         controllers.effects.registerPassiveEffect(

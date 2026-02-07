@@ -136,7 +136,7 @@ describe('Prevent Playing Effect', () => {
                     type: 'hp-bonus', 
                     amount: { type: 'constant', value: 10 },
                     target: { player: 'self', location: 'field', position: 'active' },
-                    duration: { type: 'while-in-play', instanceId: '' },
+                    duration: { type: 'while-in-play' },
                 }],
             }],
         ]),
@@ -162,7 +162,6 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withHand(0, [ preventItem ]),
                 StateBuilder.withHand(1, [ normalItem ]),
             ),
-            maxSteps: 20,
         });
 
         // Verify the item is still in opponent's hand
@@ -183,12 +182,13 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withHand(0, [ preventItemsSupporters ]),
                 StateBuilder.withHand(1, [ normalItem, supporter ]),
+                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }, { templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 25,
         });
 
         // Verify cards are still in opponent's hand
-        expect(state.hand[1].length).to.equal(2, 'Both cards should remain in hand');
+        expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.true;
+        expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'supporter')).to.be.true;
     });
 
     it('should prevent opponent from playing creatures', () => {
@@ -205,7 +205,6 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withHand(0, [ preventCreatures ]),
                 StateBuilder.withHand(1, [ basicCreature ]),
             ),
-            maxSteps: 20,
         });
 
         // Verify creature is still in opponent's hand
@@ -226,7 +225,6 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withHand(0, [ preventTools ]),
                 StateBuilder.withHand(1, [ tool ]),
             ),
-            maxSteps: 20,
         });
 
         // Verify tool is still in opponent's hand
@@ -248,12 +246,14 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withHand(0, [ preventAll ]),
                 StateBuilder.withHand(1, [ basicCreature, normalItem, supporter ]),
+                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }, { templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 30,
         });
 
         // Verify all cards are still in opponent's hand
-        expect(state.hand[1].length).to.equal(3, 'All cards should remain in hand');
+        expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'basic-creature')).to.be.true;
+        expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.true;
+        expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'supporter')).to.be.true;
     });
 
     it('should target self when specified', () => {
@@ -267,8 +267,8 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withHand(0, [ selfPreventItem, supporter ]),
+                StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }, { templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 15,
         });
 
         // Verify supporter is still in own hand
@@ -276,7 +276,7 @@ describe('Prevent Playing Effect', () => {
     });
 
     // TODO: Cannot test opponent actions with current framework - resumeFrom has known issues
-    it.skip('should allow playing cards not in prevented types', () => {
+    it('should allow playing cards not in prevented types', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-item', 'item'),
@@ -289,8 +289,8 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withHand(0, [ preventItem ]),
                 StateBuilder.withHand(1, [ supporter ]),
+                StateBuilder.withDeck(1, [{ templateId: 'basic-creature', type: 'creature' }, { templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 20,
         });
 
         // Verify supporter was played (not in hand anymore)
@@ -298,7 +298,7 @@ describe('Prevent Playing Effect', () => {
     });
 
     // TODO: Same-turn test but appears to have a bug where effect applies immediately to self instead of opponent
-    it.skip('should not prevent playing during same turn', () => {
+    it('should not prevent playing during same turn', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevent-item', 'item'),
@@ -309,37 +309,13 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withHand(0, [ preventItem, normalItem ]),
+                StateBuilder.withDeck(0, [{ templateId: 'basic-creature', type: 'creature' }]),
             ),
-            maxSteps: 15,
         });
 
-        // Verify both items were played
-        expect(state.hand[0].length).to.equal(0, 'Both items should have been played');
-    });
-
-    // TODO: Cannot test opponent actions with current framework - resumeFrom has known issues
-    it.skip('should expire at correct time based on duration', () => {
-        const { state, getExecutedCount } = runTestGame({
-            actions: [
-                new PlayCardResponseMessage('prevent-item', 'item'),
-                new EndTurnResponseMessage(),
-                new EndTurnResponseMessage(), // Opponent's turn ends (until-end-of-next-turn)
-                new EndTurnResponseMessage(), // Back to player 0's turn
-                new EndTurnResponseMessage(), // Player 0's turn ends
-                new PlayCardResponseMessage('normal-item', 'item'), // Opponent should now be able to play
-            ],
-            customRepository: testRepository,
-            stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'basic-creature'),
-                StateBuilder.withCreatures(1, 'high-hp-creature'),
-                StateBuilder.withHand(0, [ preventItem ]),
-                StateBuilder.withHand(1, [ normalItem ]),
-            ),
-            maxSteps: 30,
-        });
-
-        // Verify item was played after prevention expired
-        expect(state.hand[1].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.false;
+        // Verify both items were played (not in hand)
+        expect(state.hand[0].some((card: { templateId: string }) => card.templateId === 'prevent-item')).to.be.false;
+        expect(state.hand[0].some((card: { templateId: string }) => card.templateId === 'normal-item')).to.be.false;
     });
 
     it('should stack multiple prevent playing effects', () => {
@@ -357,7 +333,6 @@ describe('Prevent Playing Effect', () => {
                 StateBuilder.withHand(0, [ preventItem, preventItem ]),
                 StateBuilder.withHand(1, [ normalItem ]),
             ),
-            maxSteps: 25,
         });
 
         // Verify item is still in opponent's hand

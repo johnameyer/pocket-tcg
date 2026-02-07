@@ -83,7 +83,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withHand(0, [ preventItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');
@@ -103,7 +102,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withHand(0, [ preventExItem ]),
                 StateBuilder.withEnergy('ex-creature-0', { water: 2 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
@@ -123,7 +121,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withHand(0, [ preventExItem ]),
                 StateBuilder.withEnergy('mega-ex-creature-0', { lightning: 3 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
@@ -143,7 +140,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withHand(0, [ preventExItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent ex item and attack');
@@ -163,7 +159,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withHand(0, [ preventItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 2 }), // Enough energy for attack
             ),
-            maxSteps: 20,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');
@@ -183,7 +178,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withHand(0, [ preventItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');
@@ -204,7 +198,6 @@ describe('Prevent Damage Effect', () => {
                 StateBuilder.withEnergy('ex-creature-0', { water: 2 }),
                 StateBuilder.withDamage('basic-creature-1', 50), // Pre-damage: 50 + 60 = 110 > 80 HP
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(2, 'Should have executed prevent item and attack');

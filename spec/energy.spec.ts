@@ -55,7 +55,6 @@ describe('Energy System', () => {
                     StateBuilder.withFirstTurnRestriction(true),
                     StateBuilder.withNoEnergy(0),
                 ),
-                maxSteps: 5,
             });
 
             // Energy should not be attached on first turn
@@ -75,7 +74,6 @@ describe('Energy System', () => {
                     StateBuilder.withTurnNumber(2),
                     StateBuilder.withCurrentEnergy(0, 'fire'), // Provide initial energy
                 ),
-                maxSteps: 3, // Reduce steps to prevent turn transitions
             });
 
             // Should only have one energy attached (currentEnergy becomes null after first attachment)
@@ -94,7 +92,6 @@ describe('Energy System', () => {
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed Fire Storm');
@@ -109,7 +106,6 @@ describe('Energy System', () => {
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 5 }),
                 ),
-                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed Fire Storm with excess fire');
@@ -124,7 +120,6 @@ describe('Energy System', () => {
                     StateBuilder.withCreatures(1, 'high-hp-creature'),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed Ember');

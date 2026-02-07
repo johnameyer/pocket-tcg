@@ -93,7 +93,6 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                     StateBuilder.withHand(0, [{ templateId: 'search-supporter', type: 'supporter' }]),
                     StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.hand[0].length).to.equal(1, 'Should have searched 1 card from deck');
@@ -123,7 +122,6 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                     StateBuilder.withHand(0, [{ templateId: 'multi-search-supporter', type: 'supporter' }]),
                     StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.hand[0].length).to.equal(2, 'Should have searched 2 cards from deck');
@@ -153,7 +151,6 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                     StateBuilder.withHand(0, [{ templateId: 'greedy-search', type: 'supporter' }]),
                     StateBuilder.withDeck(0, Array(3).fill({ templateId: 'basic-creature', type: 'creature' })),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.hand[0].length).to.equal(3, 'Should have searched only 3 available cards');

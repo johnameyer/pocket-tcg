@@ -26,8 +26,6 @@ describe('Prevent Attack Effect', () => {
         });
     });
 
-    const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
-    const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
     const preventionItem = { templateId: 'prevention-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
@@ -96,7 +94,7 @@ describe('Prevent Attack Effect', () => {
     const allPreventionItem = { templateId: 'all-prevention-item', type: 'item' as const };
 
     it('should prevent opponent active from attacking (basic operation)', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new EndTurnResponseMessage(),
@@ -109,14 +107,13 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withHand(0, [ preventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
             ),
-            maxSteps: 20,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should take no damage (attack prevented)');
     });
 
     it('should target different creatures (self-active)', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('self-prevention-item', 'item'),
                 new AttackResponseMessage(0), // Try to attack with own active
@@ -128,7 +125,6 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withHand(0, [ selfPreventionItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(state.field.creatures[1][0].damageTaken).to.equal(0, 'Opponent should take no damage (self attack prevented)');
@@ -157,14 +153,13 @@ describe('Prevent Attack Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
         // This test may fail if target selection is required but not provided
     });
 
     it('should target all matching creatures', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('all-prevention-item', 'item'),
                 new EndTurnResponseMessage(),
@@ -185,7 +180,6 @@ describe('Prevent Attack Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should take no damage (all creatures prevented)');
@@ -204,7 +198,6 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withCreatures(1, 'high-hp-creature'),
                 StateBuilder.withHand(0, [ preventionItem ]),
             ),
-            maxSteps: 15,
         });
 
         // The prevention should be registered in state
@@ -212,7 +205,7 @@ describe('Prevent Attack Effect', () => {
     });
 
     it('should not prevent attack during same turn', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new AttackResponseMessage(0), // Same turn attack (should work since prevent-attack is for opponent)
@@ -224,14 +217,13 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withHand(0, [ preventionItem ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 15,
         });
 
         expect(state.field.creatures[1][0].damageTaken).to.equal(20, 'Should have dealt damage (prevention is for opponent)');
     });
 
     it('should stack multiple attack preventions', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new PlayCardResponseMessage('prevention-item', 'item'),
@@ -245,14 +237,13 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withHand(0, [ preventionItem, preventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
             ),
-            maxSteps: 25,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should take no damage (multiple preventions)');
     });
 
     it('should prevent attacks from bench creatures when targeted', () => {
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('all-prevention-item', 'item'), // Prevent all opponent creatures
                 new EndTurnResponseMessage(),
@@ -274,22 +265,27 @@ describe('Prevent Attack Effect', () => {
                     });
                 },
             ),
-            maxSteps: 20,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should take no damage (active prevented)');
     });
 
     // TODO: Cannot test opponent actions with current framework - resumeFrom has known issues
-    it.skip('should allow attacks after prevention expires', () => {
-        const { state, getExecutedCount } = runTestGame({
+    it('should allow attacks after prevention expires', () => {
+        const { state: finalState } = runTestGame({
             actions: [
+                // Turn 2: P0 plays prevention item and ends turn
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new EndTurnResponseMessage(),
-                new EndTurnResponseMessage(), // Opponent's turn ends (until-end-of-next-turn)
-                new EndTurnResponseMessage(), // Back to player 0's turn
-                new EndTurnResponseMessage(), // Player 0's turn ends
-                new AttackResponseMessage(0), // Opponent should now be able to attack
+                
+                // Turn 3: P1 ends turn
+                new EndTurnResponseMessage(),
+                
+                // Turn 4: P0 ends turn
+                new EndTurnResponseMessage(),
+                
+                // Turn 5: P1 attacks after effect expired
+                new AttackResponseMessage(0),
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -298,11 +294,9 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withHand(0, [ preventionItem ]),
                 StateBuilder.withEnergy('high-hp-creature-1', { water: 2 }),
             ),
-            maxSteps: 30,
         });
 
-        // Verify attack went through after prevention expired
-        expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should take damage after prevention expired');
+        expect(finalState.field.creatures[0][0].damageTaken).to.equal(50, 'Should take damage after prevention expired (30 base + 20 weakness)');
     });
 
     it('should prevent high damage attacks', () => {
@@ -340,9 +334,8 @@ describe('Prevent Attack Effect', () => {
             ]),
         });
 
-        const highDamageCreature = { templateId: 'high-damage-creature', type: 'creature' as const };
 
-        const { state, getExecutedCount } = runTestGame({
+        const { state } = runTestGame({
             actions: [
                 new PlayCardResponseMessage('prevention-item', 'item'),
                 new EndTurnResponseMessage(),
@@ -355,7 +348,6 @@ describe('Prevent Attack Effect', () => {
                 StateBuilder.withHand(0, [ preventionItem ]),
                 StateBuilder.withEnergy('high-damage-creature-1', { water: 4 }),
             ),
-            maxSteps: 20,
         });
 
         expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should take no damage (high damage attack prevented)');

@@ -71,7 +71,6 @@ describe('Shuffle Effect', () => {
                 StateBuilder.withHand(1, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
                 StateBuilder.withDeck(1, Array(10).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[1].length).to.equal(3, 'Opponent should draw 3 cards');
@@ -96,7 +95,6 @@ describe('Shuffle Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'self-shuffle', type: 'supporter' }]),
                 StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.deck[0].length).to.equal(5, 'Own deck should maintain size');
@@ -126,7 +124,6 @@ describe('Shuffle Effect', () => {
                 StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
                 StateBuilder.withDeck(1, Array(6).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(1, 'Player should draw 1 card');
@@ -156,7 +153,6 @@ describe('Shuffle Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'shuffle-draw', type: 'supporter' }]),
                 StateBuilder.withDeck(0, Array(8).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(2, 'Should draw 2 cards after shuffle');
@@ -182,7 +178,6 @@ describe('Shuffle Effect', () => {
                 StateBuilder.withHand(1, Array(4).fill({ templateId: 'basic-creature', type: 'creature' })),
                 StateBuilder.withDeck(1, Array(6).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[1].length).to.equal(0, 'Opponent should not draw cards');
@@ -212,7 +207,6 @@ describe('Shuffle Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'empty-shuffle', type: 'supporter' }]),
                 StateBuilder.withDeck(0, []),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(0, 'Should not draw from empty deck');
@@ -277,7 +271,6 @@ describe('Shuffle Effect', () => {
                 ], [
                     basicCreature, researchSupporter,
                 ]),
-                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed shuffle supporter');
@@ -295,7 +288,6 @@ describe('Shuffle Effect', () => {
                 stateCustomizer: withShuffleTestState([ discardItem ], [
                     basicCreature, researchSupporter, healingItem, highHpCreature, highHpCreature,
                 ]),
-                maxSteps: 10,
             });
             
             expect(getExecutedCount()).to.equal(1, 'Should have executed discard item');

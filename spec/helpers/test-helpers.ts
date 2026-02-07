@@ -12,18 +12,35 @@ import { StateBuilder } from './state-builder.js';
 type ActionHandler = (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => void;
 type MessageHandler = (handlerData: HandlerData, message: ResponseMessage) => void;
 
+export const handlerCallLog: Array<{ player: number; handler: string }> = [];
+
 export function createTestPlayers(actionHandler: ActionHandler, messageHandler?: MessageHandler) {
-    const gameHandler: () => GameHandler = () => ({
-        handleAction: actionHandler,
-        handleSelectActivecreature: actionHandler,
-        handleSelectActiveCard: actionHandler,
-        handleSelectTarget: actionHandler,
-        handleSelectEnergy: actionHandler,
-        handleSelectCard: actionHandler,
-        handleSelectChoice: actionHandler,
-        handleSetup: actionHandler,
-        handleMessage: messageHandler || (() => {}),
-    });
+    const gameHandler: () => GameHandler = () => {
+        const handlers: GameHandler = {
+            handleAction: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+            handleSelectActiveCard: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+            handleSelectTarget: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+            handleSelectEnergy: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+            handleSelectCard: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+            handleSelectChoice: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+            handleSetup: (data: HandlerData, queue: HandlerResponsesQueue<ResponseMessage>) => {
+                return actionHandler(data, queue);
+            },
+        };
+        return handlers;
+    };
 
     // @ts-expect-error - HandlerChain constructor typing
     return Array.from({ length: 2 }, () => new HandlerChain([ gameHandler() ]));
@@ -54,12 +71,20 @@ export function createTestPlayersWithDifferentHandlers(
     ];
 }
 
-export function createActionTracker(actions: ResponseMessage[]) {
+export function createActionTracker(actions: ResponseMessage[], playerPosition?: number) {
     return {
         handler: (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => {
+            /*
+             * If playerPosition is specified, only handle actions for that player
+             * If not specified, handle actions for any player
+             */
+            if (playerPosition !== undefined && handlerData.turn !== playerPosition) {
+                return;
+            }
             // Shift the next action off the list
             if (actions.length > 0) {
-                responses.push(actions.shift()!);
+                const action = actions.shift()!;
+                responses.push(action);
             }
         },
     };
@@ -109,17 +134,10 @@ export function initializePassiveEffectsForTestState(
                                 id: `${state.effects.nextEffectId++}`,
                                 sourcePlayer: playerId,
                                 effectName: `${creatureData.name}'s ${creatureData.ability.name}`,
-                                effect: {
-                                    ...modifierEffect,
-                                    // For while-in-play effects, populate the instanceId
-                                    duration: modifierEffect.duration.type === 'while-in-play'
-                                        ? { type: 'while-in-play' as const, instanceId: currentForm.instanceId }
-                                        : modifierEffect.duration,
-                                },
-                                duration: modifierEffect.duration.type === 'while-in-play'
-                                    ? { type: 'while-in-play' as const, instanceId: currentForm.instanceId }
-                                    : modifierEffect.duration,
+                                effect: modifierEffect,
+                                duration: modifierEffect.duration,
                                 createdTurn: state.turnCounter.turnNumber,
+                                cardInstanceId: currentForm.instanceId, // Track which card instance this is tied to
                             };
                             
                             state.effects.activePassiveEffects.push(passiveEffect);
@@ -155,17 +173,11 @@ export function initializePassiveEffectsForTestState(
                             id: `${state.effects.nextEffectId++}`,
                             sourcePlayer: 0, // We need to determine which player owns this creature
                             effectName: `${toolData.name}`,
-                            effect: {
-                                ...modifierEffect,
-                                // For while-attached effects, populate the IDs
-                                duration: modifierEffect.duration.type === 'while-attached'
-                                    ? { type: 'while-attached' as const, toolInstanceId: tool.instanceId, cardInstanceId: creatureInstanceId }
-                                    : modifierEffect.duration,
-                            },
-                            duration: modifierEffect.duration.type === 'while-attached'
-                                ? { type: 'while-attached' as const, toolInstanceId: tool.instanceId, cardInstanceId: creatureInstanceId }
-                                : modifierEffect.duration,
+                            effect: modifierEffect,
+                            duration: modifierEffect.duration,
                             createdTurn: state.turnCounter.turnNumber,
+                            toolInstanceId: tool.instanceId, // Track which tool instance this is tied to
+                            cardInstanceId: creatureInstanceId, // Track which card the tool is attached to
                         };
                         
                         // Determine which player owns this creature
@@ -214,17 +226,10 @@ export function initializePassiveEffectsForTestState(
                             id: `${state.effects.nextEffectId++}`,
                             sourcePlayer: stadium.owner,
                             effectName: `${stadiumData.name}`,
-                            effect: {
-                                ...modifierEffect,
-                                // For while-in-play effects, populate the instanceId
-                                duration: modifierEffect.duration.type === 'while-in-play'
-                                    ? { type: 'while-in-play' as const, instanceId: stadium.instanceId }
-                                    : modifierEffect.duration,
-                            },
-                            duration: modifierEffect.duration.type === 'while-in-play'
-                                ? { type: 'while-in-play' as const, instanceId: stadium.instanceId }
-                                : modifierEffect.duration,
+                            effect: modifierEffect,
+                            duration: modifierEffect.duration,
                             createdTurn: state.turnCounter.turnNumber,
+                            cardInstanceId: stadium.instanceId, // Track which stadium instance this is tied to
                         };
                         
                         state.effects.activePassiveEffects.push(passiveEffect);
@@ -241,15 +246,57 @@ export interface TestGameConfig {
     actions: ResponseMessage[];
     stateCustomizer?: (state: ControllerState<Controllers>) => void;
     resumeFrom?: ControllerState<Controllers>;
-    maxSteps?: number;
     customRepository?: MockCardRepository;
     playerPosition?: number;
 }
 
+/**
+ * Run a game scenario with specified actions.
+ * 
+ * USAGE PATTERNS:
+ * 
+ * 1. SINGLE TURN: All actions happen on one player's turn
+ *    ```
+ *    const { state } = runTestGame({
+ *      actions: [action1, action2, new EndTurnResponseMessage()],
+ *      stateCustomizer: setup
+ *    });
+ *    ```
+ * 
+ * 2. MULTI-TURN (continuous): Multiple players' turns in one game
+ *    ```
+ *    const { state } = runTestGame({
+ *      actions: [
+ *        // P0 turn (starts at turn 2 by default)
+ *        action1,
+ *        new EndTurnResponseMessage(),
+ *        // P1 turn (turn 3)
+ *        action2,
+ *        new EndTurnResponseMessage(),
+ *        // P0 turn (turn 4)
+ *        action3,
+ *      ],
+ *      stateCustomizer: setup
+ *    });
+ *    ```
+ *    Turn counter increments after each player's turn (turn 2 → 3 → 4 → 5 → ...).
+ * 
+ * 3. MULTI-TURN WITH STATE INTROSPECTION: When you need to inspect state between turns
+ *    (only use when you need getExecutedCount() or state validation between turns):
+ *    ```
+ *    let state = runTestGame({actions: [P0_actions], stateCustomizer: setup}).state;
+ *    // Inspect state here if needed
+ *    state = runTestGame({actions: [P1_actions], resumeFrom: state}).state;
+ *    ```
+ * 
+ * DEBUG TIP: If actions seem to be converted to EndTurnResponseMessage unexpectedly,
+ * check getExecutedCount() to verify actions were validated. Failed validations
+ * cause the action to be skipped and turn to end.
+ */
 export function runTestGame(config: TestGameConfig) {
     let validatedCount = 0;
     const actions = config.actions; // Pass by reference - will be mutated by shift()
-    const tracker = createActionTracker(actions);
+    const tracker = createActionTracker(actions, config.playerPosition);
     const players = createTestPlayers(tracker.handler);
     const params = new GameSetup().getDefaultParams();
     
@@ -272,7 +319,7 @@ export function runTestGame(config: TestGameConfig) {
     const driver = gameFactory(repository).getGameDriver(players, params, [ 'TestPlayer', 'OpponentPlayer' ], preConfiguredState as any);
     
     driver.resume();
-    const maxSteps = config.maxSteps !== undefined ? config.maxSteps : 5;
+    const maxSteps = 5; // prevent infinite loops
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing private handlerProxy API
         for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
@@ -290,10 +337,9 @@ export function runTestGame(config: TestGameConfig) {
             }
         }
         
-        // If we're in a waiting state with actions available and NO pending selection, handle actions before resume
+        // If we're in a waiting state with actions available, handle actions before resume
         const currentState = driver.getState();
-        const hasPendingSelection = currentState.turnState?.pendingSelection !== undefined;
-        if (!currentState.completed && currentState.waiting && !hasPendingSelection && actions.length > 0) {
+        if (!currentState.completed && currentState.waiting && actions.length > 0) {
             const waitingPositions = currentState.waiting.waiting;
             if (waitingPositions) {
                 const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
@@ -306,19 +352,20 @@ export function runTestGame(config: TestGameConfig) {
                 if (positions.length > 0) {
                     // Get the waiting player
                     const waitingPlayer = positions[0];
+                    const targetPlayer = config.playerPosition ?? 0;
                     
-                    // If playerPosition is configured, only handle actions for that player
-                    if (config.playerPosition !== undefined && waitingPlayer !== config.playerPosition) {
+                    // Only handle actions for the target player
+                    if (waitingPlayer !== targetPlayer) {
                         // TODO nicer contextual error message
                         throw new Error('Action for wrong player');
-                    } else {
-                        // Get the next action directly from the array
-                        const nextAction = actions.shift();
-                        if (nextAction) {
-                            const wasValidated = driver.handleEvent(waitingPlayer, nextAction, undefined);
-                            if (wasValidated) {
-                                validatedCount++;
-                            }
+                    }
+                    
+                    // Get the next action directly from the array
+                    const nextAction = actions.shift();
+                    if (nextAction) {
+                        const wasValidated = driver.handleEvent(waitingPlayer, nextAction, undefined);
+                        if (wasValidated) {
+                            validatedCount++;
                         }
                     }
                 }
@@ -326,20 +373,20 @@ export function runTestGame(config: TestGameConfig) {
         }
         
         driver.resume();
-        
-        // Check if we're still in a waiting state with remaining actions - this is an error
-        const stateAfterResume = driver.getState();
-        if (!stateAfterResume.completed && stateAfterResume.waiting && actions.length > 0) {
-            const waitingPositions = stateAfterResume.waiting.waiting;
-            if (waitingPositions) {
-                const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
-                if (positions.length > 0) {
-                    // If there are actions left but we're still waiting, throw an error
-                    throw new Error(
-                        `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. `
-                        + 'Actions may be for the wrong player or turn order.',
-                    );
-                }
+    }
+    
+    // Final check: if we still have actions after the loop completes, that's an error
+    const finalState = driver.getState();
+    if ((finalState.completed || finalState.waiting) && actions.length > 0) {
+        const waitingPositions = finalState.waiting.waiting;
+        if (waitingPositions) {
+            const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
+            if (positions.length > 0) {
+                // If there are actions left but we're still waiting, throw an error
+                throw new Error(
+                    `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. `
+                    + 'Actions may be for the wrong player or turn order.',
+                );
             }
         }
     }
@@ -348,7 +395,61 @@ export function runTestGame(config: TestGameConfig) {
     
     return {
         driver,
+        /**
+         * Number of actions that were successfully validated and executed.
+         * Use to debug if actions aren't being validated - if getExecutedCount() < actions.length,
+         * some actions failed validation and were skipped (usually converting to EndTurnResponseMessage).
+         */
         getExecutedCount: () => validatedCount,
         state,
     };
+}
+
+/**
+ * Helper function to run a complete bot game with optional integrity checks
+ * @param config Configuration for the bot game
+ */
+export function runBotGame(config: {
+    customRepository?: MockCardRepository;
+    initialDecks: string[][];
+    maxSteps?: number;
+    integrityCheck?: (state: ControllerState<Controllers>, step: number) => void;
+}) {
+    const repository = config.customRepository || mockRepository;
+    const factory = gameFactory(repository);
+    
+    // Create bot handlers
+    const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain());
+    
+    const params = {
+        ...factory.getGameSetup().getDefaultParams(),
+        initialDecks: config.initialDecks,
+    };
+    
+    const names = [ 'Player1', 'Player2' ];
+    const driver = factory.getGameDriver(handlers, params, names);
+    
+    driver.resume();
+    
+    const maxSteps = config.maxSteps || 200;
+    let stepCount = 0;
+    
+    while (!driver.getState().completed && stepCount < maxSteps) {
+        driver.handleSyncResponses();
+        driver.resume();
+        stepCount++;
+        
+        const stateAfter = driver.getState() as ControllerState<Controllers>;
+        
+        // Call integrity check if provided
+        if (config.integrityCheck) {
+            config.integrityCheck(stateAfter, stepCount);
+        }
+        
+        if (stateAfter.completed) {
+            break;
+        }
+    }
+    
+    return driver.getState();
 }

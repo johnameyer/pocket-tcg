@@ -34,7 +34,6 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 40),
                     StateBuilder.withDamage('basic-creature-1', 40),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal self active');
@@ -65,7 +64,6 @@ describe('Target Matching', () => {
                     StateBuilder.withCreatures(1, 'basic-creature'),
                     StateBuilder.withHand(0, [{ templateId: 'opponent-target', type: 'supporter' }]),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should not damage self');
@@ -106,7 +104,6 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 30),
                     StateBuilder.withDamage('basic-creature-0-0', 25), // Damage to first bench creature
                 ),
-                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should not heal active');
@@ -145,7 +142,6 @@ describe('Target Matching', () => {
                     StateBuilder.withHand(0, [{ templateId: 'opponent-choice', type: 'supporter' }]),
                     StateBuilder.withDamage('basic-creature-0', 20),
                 ),
-                maxSteps: 15,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(5, 'Opponent should choose our active');
@@ -194,7 +190,6 @@ describe('Target Matching', () => {
                         });
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal active');
@@ -243,7 +238,6 @@ describe('Target Matching', () => {
                         });
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal damaged active');
@@ -282,7 +276,6 @@ describe('Target Matching', () => {
                     StateBuilder.withDamage('basic-creature-0', 20),
                     StateBuilder.withDamage('basic-creature-1', 20),
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal self');
@@ -324,7 +317,6 @@ describe('Target Matching', () => {
                         });
                     },
                 ),
-                maxSteps: 10,
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should not damage self');

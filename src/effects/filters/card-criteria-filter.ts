@@ -179,7 +179,7 @@ export class CardCriteriaFilter {
         }
 
         try {
-            const prevStageData = cardRepository.getCreature(cardData.previousStageName);
+            const prevStageData = cardRepository.getCreatureByName(cardData.previousStageName);
             if (!prevStageData.previousStageName) {
                 return 1; // Stage 1 (evolves from Basic)
             }

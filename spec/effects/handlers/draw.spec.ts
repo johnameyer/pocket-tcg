@@ -64,7 +64,6 @@ describe('Draw Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'draw-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(2, 'Should draw 2 cards');
@@ -89,7 +88,6 @@ describe('Draw Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'big-draw', type: 'supporter' }]),
                 StateBuilder.withDeck(0, Array(10).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(4, 'Should draw 4 cards');
@@ -113,7 +111,6 @@ describe('Draw Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'big-draw', type: 'supporter' }]),
                 StateBuilder.withDeck(0, Array(2).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(2, 'Should draw only available cards');
@@ -138,7 +135,6 @@ describe('Draw Effect', () => {
                 StateBuilder.withHand(0, [{ templateId: 'draw-supporter', type: 'supporter' }]),
                 StateBuilder.withDeck(0, []),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(1, 'Card should remain in hand when draw is blocked due to empty deck');
@@ -169,7 +165,6 @@ describe('Draw Effect', () => {
                 ]),
                 StateBuilder.withDeck(0, Array(10).fill({ templateId: 'basic-creature', type: 'creature' })),
             ),
-            maxSteps: 10,
         });
 
         expect(state.hand[0].length).to.equal(4, 'Should draw 2 cards (hand size after playing) + 2 existing');

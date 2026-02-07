@@ -88,8 +88,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.attackIndex < 0 || message.attackIndex >= cardData.attacks.length;
                 }),
                 EventHandler.validate('Attack is prevented', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
-                    // Check if any prevent-attack effects apply to this creature
-                    return PassiveEffectMatcher.isAttackPrevented(controllers, source, 0);
+                    const isPrevented = PassiveEffectMatcher.isAttackPrevented(controllers, source, 0);
+                    return isPrevented;
                 }),
                 EventHandler.validate('Insufficient energy for attack', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
                     const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
@@ -100,7 +100,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const { attacks } = controllers.cardRepository.getCreature(playerCard.templateId);
                     const attack = attacks[message.attackIndex];
                     
-                    return !controllers.energy.canUseAttackByInstance(fieldInstanceId, attack.energyRequirements);
+                    // Get modified energy requirements accounting for passive cost modifier effects
+                    const modifiedRequirements = PassiveEffectMatcher.getModifiedAttackEnergyRequirements(
+                        controllers,
+                        source,
+                        0,
+                        attack.energyRequirements,
+                    );
+                    
+                    return !controllers.energy.canUseAttackByInstance(fieldInstanceId, modifiedRequirements);
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttackResponseMessage) => {
@@ -322,13 +330,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
                 });
                 
+                /*
+                 * TODO: Unify passive effect registration strategy
+                 * Currently passive effects are registered manually here to track instance IDs.
+                 * Consider moving all passive effect registration to effect handlers (like DamageBoostEffectHandler)
+                 * and passing instance IDs through EffectContext instead.
+                 */
                 // Register passive effects from creature abilities
                 const creatureData = controllers.cardRepository.getCreature(message.templateId);
                 if (creatureData.ability && creatureData.ability.trigger?.type === 'passive' && creatureData.ability.effects) {
                     for (const effect of creatureData.ability.effects) {
                         if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
-                            || effect.type === 'retreat-cost-increase'
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
                             || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
                             || effect.type === 'retreat-prevention'
                             || effect.type === 'prevent-playing'
@@ -344,7 +357,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                     effect,
                                     effect.duration,
                                     controllers.turnCounter.getTurnNumber(),
-                                    effect.condition,
+                                    justPlayedCard.instanceId,
                                 );
                             }
                         }
@@ -365,7 +378,42 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     context.targetFieldCardIndex = message.targetFieldIndex;
                 }
                 
-                EffectApplier.applyEffects(supporterData.effects, controllers, context);
+                // Register passive effects from supporter
+                if (supporterData.effects) {
+                    for (const effect of supporterData.effects) {
+                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
+                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
+                            || effect.type === 'retreat-prevention'
+                            || effect.type === 'prevent-playing'
+                            || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
+                            || effect.type === 'attack-energy-cost-modifier') {
+                            controllers.effects.registerPassiveEffect(
+                                sourceHandler,
+                                supporterData.name,
+                                effect,
+                                effect.duration,
+                                controllers.turnCounter.getTurnNumber(),
+                                cardInstanceId,
+                            );
+                        }
+                    }
+                }
+                
+                // Apply instant effects (non-modifier effects)
+                if (supporterData.effects) {
+                    const instantEffects = supporterData.effects.filter(effect => !(effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
+                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
+                            || effect.type === 'retreat-prevention'
+                            || effect.type === 'prevent-playing'
+                            || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
+                            || effect.type === 'attack-energy-cost-modifier'),
+                    );
+                    if (instantEffects.length > 0) {
+                        EffectApplier.applyEffects(instantEffects, controllers, context);
+                    }
+                }
                 
                 // Process any effects that were triggered by the supporter effects
                 EffectQueueProcessor.processQueue(controllers);
@@ -411,8 +459,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     if (toolData.effects) {
                         for (const effect of toolData.effects) {
                             if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                                || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
-                                || effect.type === 'retreat-cost-increase'
+                                || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
                                 || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
                                 || effect.type === 'retreat-prevention'
                                 || effect.type === 'prevent-playing'
@@ -424,7 +471,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                     effect,
                                     effect.duration,
                                     controllers.turnCounter.getTurnNumber(),
-                                    effect.condition,
+                                    rawTargetCard.fieldInstanceId,
+                                    toolInstanceId,
                                 );
                             }
                         }
@@ -458,16 +506,16 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 if (stadiumData.effects) {
                     for (const effect of stadiumData.effects) {
                         if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-reduction'
+                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
                             || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
                             || effect.type === 'retreat-prevention') {
                             controllers.effects.registerPassiveEffect(
                                 sourceHandler,
                                 stadiumData.name,
                                 effect,
-                                { type: 'while-in-play', instanceId: cardInstanceId! },
+                                effect.duration,
                                 controllers.turnCounter.getTurnNumber(),
-                                effect.condition,
+                                cardInstanceId,
                             );
                         }
                     }
@@ -486,6 +534,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
     'end-turn-response': {
         canRespond: EventHandler.isTurn('turn'),
         merge: (controllers: Controllers, sourceHandler: number, message: EndTurnResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
             const currentPlayer = sourceHandler;
             
             // Trigger end-of-turn effects for active card (tools + abilities)
@@ -697,18 +746,27 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         validateEvent: {
             validators: [
                 EventHandler.validate('No energy available to attach', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                    return !controllers.energy.canAttachEnergy(source);
+                    const canAttach = controllers.energy.canAttachEnergy(source);
+                    return !canAttach;
                 }),
                 EventHandler.validate('First turn restriction', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
                     return controllers.energy.isFirstTurnRestricted();
                 }),
                 EventHandler.validate('Energy attachment is prevented', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                    // Check if any prevent-energy-attachment effects apply to the target creature
-                    return PassiveEffectMatcher.isEnergyAttachmentPrevented(controllers, source, message.fieldPosition);
+                    const preventionEffects = controllers.effects.getPassiveEffectsByType('prevent-energy-attachment');
+                    console.log('[ENERGY] Checking prevention for player', source, 'position', message.fieldPosition, 'effects count:', preventionEffects.length);
+                    if (preventionEffects.length > 0) {
+                        console.log('[ENERGY] Effects:', preventionEffects.map(e => e.effectName + ' target:' + JSON.stringify(e.effect.target)));
+                    }
+                    const isPrevented = PassiveEffectMatcher.isEnergyAttachmentPrevented(controllers, source, message.fieldPosition);
+                    console.log('[ENERGY] Prevention result:', isPrevented);
+                    return isPrevented;
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
-                // Discard invalid energy attachment attempts
+                // Discard invalid energy attachment attempts and end turn
+                controllers.waiting.removePosition(source);
+                controllers.turnState.setShouldEndTurn(true);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },

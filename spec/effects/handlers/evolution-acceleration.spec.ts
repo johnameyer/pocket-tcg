@@ -157,7 +157,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -177,7 +176,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
                 StateBuilder.withHand(0, [ choiceAccelerationItem, stage1Creature ]),
             ),
-            maxSteps: 20,
         });
 
         // This test may fail if target selection is required but not provided
@@ -194,7 +192,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ doubleAccelerationItem, stage2Creature ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed double acceleration item');
@@ -212,7 +209,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withCreatures(0, 'stage1-creature'), // Already evolved, not basic
                 StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (blocked by validation)');
@@ -231,7 +227,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
                 StateBuilder.withDamage('basic-creature-0', 30), // Pre-damage the basic creature
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -250,7 +245,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withHand(0, [ accelerationItem, stage2Creature ]),
                 StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -271,7 +265,6 @@ describe('Evolution Acceleration Effect', () => {
                 StateBuilder.withCreatures(0, 'basic-creature'),
                 StateBuilder.withHand(0, [ accelerationItem ]), // No Stage 2 evolution in hand
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
@@ -293,7 +286,6 @@ describe('Evolution Acceleration Effect', () => {
                     state.field.creatures[0][0].turnLastPlayed = state.turnCounter.turnNumber;
                 },
             ),
-            maxSteps: 15,
         });
 
         expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (blocked by validation)');

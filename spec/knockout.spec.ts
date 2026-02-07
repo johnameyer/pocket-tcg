@@ -20,7 +20,6 @@ describe('Knockout System', () => {
                         state.points = [ 0, 0 ]; 
                     },
                 ),
-                maxSteps: 10,
             });
             
             expect(state.points[0]).to.be.greaterThan(0, 'Player 0 should have gained points for knocking out creature');
@@ -38,7 +37,6 @@ describe('Knockout System', () => {
                     StateBuilder.withDamage('basic-creature-1', 40), // Pre-damage so 20 damage attack will KO (40 + 20 = 60 HP)
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 15,
             });
 
             expect(state.points[0]).to.equal(1, 'Player 0 should have 1 point from basic knockout');
@@ -56,7 +54,6 @@ describe('Knockout System', () => {
                     StateBuilder.withDamage('ex-creature-1', 100), // Pre-damage so 20 damage attack will KO (100 + 20 = 120 HP)
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 15,
             });
 
             expect(state.points[0]).to.equal(2, 'Player 0 should have 2 points from ex knockout');
@@ -74,7 +71,6 @@ describe('Knockout System', () => {
                     StateBuilder.withDamage('mega-ex-creature-1', 100), // Pre-damage so 20 damage attack will KO (100 + 20 = 120 HP)
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 15,
             });
 
             expect(state.points[0]).to.equal(3, 'Player 0 should have 3 points from mega ex knockout');
@@ -93,7 +89,6 @@ describe('Knockout System', () => {
                 StateBuilder.withDamage('evolution-creature-1', 180), // Close to KO
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10,
         });
         
         expect(getCurrentTemplateId(state.field.creatures[1][0])).to.equal('high-hp-creature', 'Bench creature should be promoted to active after knockout');
@@ -111,7 +106,6 @@ describe('Knockout System', () => {
                 StateBuilder.withDamage('evolution-creature-1', 180), // Close to KO
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
             ),
-            maxSteps: 10,
         });
         
         // Player 1's active creature should be knocked out and in discard pile
@@ -149,7 +143,6 @@ describe('Knockout System', () => {
                     }
                 },
             ),
-            maxSteps: 10,
         });
         
         // Both the base form and evolved form should be in the discard pile
@@ -176,7 +169,6 @@ describe('Knockout System', () => {
                 StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 StateBuilder.withTool('evolution-creature-1', 'basic-tool'),
             ),
-            maxSteps: 10,
         });
         
         // Tool should be detached after knockout
@@ -196,7 +188,6 @@ describe('Knockout System', () => {
                 StateBuilder.withEnergy('basic-creature-1', { fire: 1 }),
                 StateBuilder.withTool('basic-creature-0-0', 'basic-tool'),
             ),
-            maxSteps: 10,
         });
         
         // If bench creature was knocked out, tool should be detached

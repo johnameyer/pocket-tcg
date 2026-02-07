@@ -412,7 +412,10 @@ const handlePlayerActions = loop<Controllers>({
 // Basic game turn
 const gameTurn = loop<Controllers>({
     id: 'gameTurnLoop',
-    breakingIf: (controllers: Controllers) => controllers.turnCounter.isMaxTurnsReached() || isGameOver(controllers),
+    breakingIf: (controllers: Controllers) => {
+        const shouldBreak = controllers.turnCounter.isMaxTurnsReached() || isGameOver(controllers);
+        return shouldBreak;
+    },
     run: sequence<Controllers>([
         // Reset turn state at the start of each turn
         {
@@ -420,6 +423,8 @@ const gameTurn = loop<Controllers>({
             run: (controllers: Controllers) => {
                 const currentPlayer = controllers.turn.get();
                 controllers.turnState.startTurn();
+                // Clear effects that expired at the end of the next turn
+                controllers.effects.clearEndOfNextTurnEffects(controllers.turnCounter.getTurnNumber());
                 // No need to reset energy flags - energy attachment is tracked by currentEnergy being null
             },
         },
@@ -572,10 +577,8 @@ const gameTurn = loop<Controllers>({
                     }
                     
                     controllers.turn.next();
-                    // Only advance turn counter after both players have played
-                    if (controllers.turn.get() === 0) {
-                        controllers.turnCounter.advanceTurn();
-                    }
+                    // Advance turn counter after each player's turn
+                    controllers.turnCounter.advanceTurn();
                 }
             },
         },

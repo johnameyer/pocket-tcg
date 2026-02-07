@@ -34,6 +34,17 @@ mockCreatureData.set('evolution-creature', {
     attacks: [{ name: 'Evolved Attack', damage: 50, energyRequirements: [{ type: 'fire', amount: 2 }] }],
 });
 
+mockCreatureData.set('stage-2-creature', {
+    templateId: 'stage-2-creature',
+    name: 'Stage 2 Creature',
+    maxHp: 150,
+    type: 'fire',
+    weakness: 'water',
+    retreatCost: 3,
+    previousStageName: 'Evolution Creature',
+    attacks: [{ name: 'Final Attack', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }],
+});
+
 mockCreatureData.set('tank-creature', {
     templateId: 'tank-creature',
     name: 'Tank Creature',
@@ -137,7 +148,7 @@ mockStadiumData.set('hp-boost-stadium', {
         type: 'hp-bonus',
         amount: { type: 'constant', value: 20 },
         target: {},
-        duration: { type: 'while-in-play', instanceId: '' },
+        duration: { type: 'while-in-play' },
     }],
 });
 
@@ -145,10 +156,10 @@ mockStadiumData.set('retreat-cost-stadium', {
     templateId: 'retreat-cost-stadium',
     name: 'Retreat Cost Stadium',
     effects: [{
-        type: 'retreat-cost-reduction',
+        type: 'retreat-cost-modification', operation: 'decrease',
         amount: { type: 'constant', value: 1 },
         target: {},
-        duration: { type: 'while-in-play', instanceId: '' },
+        duration: { type: 'while-in-play' },
     }],
 });
 

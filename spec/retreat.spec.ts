@@ -177,7 +177,6 @@ describe('Creature Retreat System', () => {
                     StateBuilder.withEnergy('high-hp-creature-0-0', { lightning: 1 }),
                     StateBuilder.withEnergy('basic-creature-0-1', { water: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature', 'First retreat should succeed, second should be blocked');
@@ -195,7 +194,6 @@ describe('Creature Retreat System', () => {
                     StateBuilder.withEnergy('high-hp-creature-0-0', { lightning: 1 }),
                     StateBuilder.withEnergy('basic-creature-0-1', { water: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             // First retreat succeeds, second is blocked by once-per-turn validation
@@ -211,7 +209,6 @@ describe('Creature Retreat System', () => {
                     StateBuilder.withCreatures(0, 'evolution-creature', [ 'basic-creature' ]), // retreat cost = 2
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 2, water: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -227,7 +224,6 @@ describe('Creature Retreat System', () => {
                     StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]), // retreat cost = 3
                     StateBuilder.withEnergy('high-hp-creature-0', { fire: 1, water: 1, grass: 1 }),
                 ),
-                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -246,7 +242,6 @@ describe('Creature Retreat System', () => {
                     StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]), // retreat cost = 1
                     StateBuilder.withEnergy('basic-creature-0', { fire: 2 }),
                 ),
-                maxSteps: 10,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -283,7 +278,6 @@ describe('Creature Retreat System', () => {
                     StateBuilder.withHand(0, [{ templateId: 'energy-discard', type: 'supporter' }]),
                     StateBuilder.withEnergy('evolution-creature-0', { fire: 4 }),
                 ),
-                maxSteps: 15,
             });
 
             const discardedEnergy = state.energy.discardedEnergy[0];
@@ -294,18 +288,17 @@ describe('Creature Retreat System', () => {
     });
 
     describe('Passive effects cleared on retreat', () => {
-        it('should clear retreat cost reduction effects when creature retreats', () => {
-            // Create a supporter that reduces retreat cost
+        it('should clear tool passive effects when creature retreats', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map([
-                    [ 'retreat-boost', {
-                        templateId: 'retreat-boost',
-                        name: 'Retreat Boost',
+                tools: new Map([
+                    [ 'retreat-reducer', {
+                        templateId: 'retreat-reducer',
+                        name: 'Swift Legs',
                         effects: [{
-                            type: 'retreat-cost-reduction',
+                            type: 'retreat-cost-modification', operation: 'decrease',
                             amount: { type: 'constant', value: 1 },
                             target: { type: 'fixed', player: 'self', position: 'active' },
-                            duration: { type: 'while-in-play', instanceId: 'basic-creature-0' },
+                            duration: { type: 'while-in-play' },
                         }],
                     }],
                 ]),
@@ -313,21 +306,20 @@ describe('Creature Retreat System', () => {
 
             const { state } = runTestGame({
                 actions: [
-                    new PlayCardResponseMessage('retreat-boost', 'supporter'),
+                    new PlayCardResponseMessage('retreat-reducer', 'tool', 0, 0),
                     new RetreatResponseMessage(0),
                 ],
                 customRepository: testRepository,
                 stateCustomizer: StateBuilder.combine(
                     StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
-                    StateBuilder.withHand(0, [{ templateId: 'retreat-boost', type: 'supporter' as const }]),
+                    StateBuilder.withHand(0, [{ templateId: 'retreat-reducer', type: 'tool' as const }]),
                     StateBuilder.withEnergy('basic-creature-0', { fire: 1 }),
                 ),
-                maxSteps: 15,
             });
 
-            // After retreat, the retreat cost reduction effect should be cleared
-            const retreatReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'retreat-cost-reduction');
-            expect(retreatReductionEffects).to.have.lengthOf(0, 'Retreat cost reduction effect should be cleared after retreat');
+            // After retreat, the tool passive effect should be cleared because the tool retreated with the creature
+            const retreatReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'retreat-cost-modification' && e.effect.operation === 'decrease');
+            expect(retreatReductionEffects).to.have.lengthOf(0, 'Tool passive effect should be cleared when creature with tool retreats');
             
             // The creature should have successfully retreated
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('high-hp-creature');
