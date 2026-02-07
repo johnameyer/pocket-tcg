@@ -129,4 +129,4 @@ export type CountValue = FieldCountValue | EnergyCountValue | CardCountValue | D
  * Union type representing all possible effect values.
  * Used to define dynamic values in effects that can be resolved at runtime.
  */
-export type EffectValue = ConstantValue | PlayerContextResolvedValue | MultiplicationValue | CoinFlipValue | AdditionValue | ConditionalValue | CountValue;
+export type EffectValue = ConstantValue | ResolvedValue | PlayerContextResolvedValue | MultiplicationValue | CoinFlipValue | AdditionValue | ConditionalValue | CountValue;
