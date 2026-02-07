@@ -243,6 +243,7 @@ export interface TestGameConfig {
     resumeFrom?: ControllerState<Controllers>;
     maxSteps?: number;
     customRepository?: MockCardRepository;
+    playerPosition?: number;
 }
 
 export function runTestGame(config: TestGameConfig) {
@@ -273,35 +274,6 @@ export function runTestGame(config: TestGameConfig) {
     driver.resume();
     const maxSteps = config.maxSteps !== undefined ? config.maxSteps : 5;
     for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        // Check if we're in a waiting state with actions available (only when resuming from an existing state)
-        if (config.resumeFrom) {
-            const currentState = driver.getState();
-            if (currentState.waiting && actions.length > 0) {
-                const waitingPositions = currentState.waiting.waiting;
-                if (waitingPositions) {
-                    const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
-                    
-                    /*
-                     * If waiting for a player and we have actions, directly handle the next action
-                     * This simulates the player providing their response when resuming a game
-                     */
-                    if (positions.length > 0) {
-                        // Get the waiting player
-                        const waitingPlayer = positions[0];
-                        
-                        // Get the next action directly from the array
-                        const nextAction = actions.shift();
-                        if (nextAction) {
-                            const wasValidated = driver.handleEvent(waitingPlayer, nextAction, undefined);
-                            if (wasValidated) {
-                                validatedCount++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Accessing private handlerProxy API
         for (const [ position, message ] of (driver as any).handlerProxy.receiveSyncResponses()) {
             if (message) {
@@ -317,22 +289,56 @@ export function runTestGame(config: TestGameConfig) {
                 }
             }
         }
+        
+        // If we're in a waiting state with actions available and NO pending selection, handle actions before resume
+        const currentState = driver.getState();
+        const hasPendingSelection = currentState.turnState?.pendingSelection !== undefined;
+        if (!currentState.completed && currentState.waiting && !hasPendingSelection && actions.length > 0) {
+            const waitingPositions = currentState.waiting.waiting;
+            if (waitingPositions) {
+                const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
+                
+                /*
+                 * If waiting for a player action and this is an action for that player
+                 * submit the action manually so the game will then be able to resume.
+                 * If playerPosition is configured, only process actions for that player.
+                 */
+                if (positions.length > 0) {
+                    // Get the waiting player
+                    const waitingPlayer = positions[0];
+                    
+                    // If playerPosition is configured, only handle actions for that player
+                    if (config.playerPosition !== undefined && waitingPlayer !== config.playerPosition) {
+                        // TODO nicer contextual error message
+                        throw new Error('Action for wrong player');
+                    } else {
+                        // Get the next action directly from the array
+                        const nextAction = actions.shift();
+                        if (nextAction) {
+                            const wasValidated = driver.handleEvent(waitingPlayer, nextAction, undefined);
+                            if (wasValidated) {
+                                validatedCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         driver.resume();
         
         // Check if we're still in a waiting state with remaining actions - this is an error
-        if (config.resumeFrom) {
-            const stateAfterResume = driver.getState();
-            if (!stateAfterResume.completed && stateAfterResume.waiting && actions.length > 0) {
-                const waitingPositions = stateAfterResume.waiting.waiting;
-                if (waitingPositions) {
-                    const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
-                    if (positions.length > 0) {
-                        // If there are actions left but we're still waiting, throw an error
-                        throw new Error(
-                            `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. `
-                            + 'Actions may be for the wrong player or turn order.',
-                        );
-                    }
+        const stateAfterResume = driver.getState();
+        if (!stateAfterResume.completed && stateAfterResume.waiting && actions.length > 0) {
+            const waitingPositions = stateAfterResume.waiting.waiting;
+            if (waitingPositions) {
+                const positions = Array.isArray(waitingPositions) ? waitingPositions : [ waitingPositions ];
+                if (positions.length > 0) {
+                    // If there are actions left but we're still waiting, throw an error
+                    throw new Error(
+                        `Test has ${actions.length} actions remaining but game is waiting for player(s) ${positions.join(', ')}. `
+                        + 'Actions may be for the wrong player or turn order.',
+                    );
                 }
             }
         }
@@ -345,79 +351,4 @@ export function runTestGame(config: TestGameConfig) {
         getExecutedCount: () => validatedCount,
         state,
     };
-}
-
-/**
- * Helper function to resume a game driver for a specified number of steps
- * @param driver The game driver to resume
- * @param maxSteps Maximum number of steps to run
- * @returns The final state after running
- */
-export function resumeGame(driver: ReturnType<ReturnType<typeof gameFactory>['getGameDriver']>, maxSteps: number) {
-    driver.resume();
-    for (let step = 0; step < maxSteps && !driver.getState().completed; step++) {
-        // @ts-expect-error Accessing private handlerProxy API for test framework
-        for (const [ position, message ] of driver.handlerProxy.receiveSyncResponses()) {
-            if (message) {
-                let payload, data;
-                if (Array.isArray(message)) {
-                    ([ payload, data ] = message);
-                } else {
-                    payload = message;
-                }
-                driver.handleEvent(position, payload, data);
-            }
-        }
-        driver.resume();
-    }
-    return driver.getState() as ControllerState<Controllers>;
-}
-
-/**
- * Helper function to run a complete bot game with optional integrity checks
- * @param config Configuration for the bot game
- */
-export function runBotGame(config: {
-    customRepository?: MockCardRepository;
-    initialDecks: string[][];
-    maxSteps?: number;
-    integrityCheck?: (state: ControllerState<Controllers>, step: number) => void;
-}) {
-    const repository = config.customRepository || mockRepository;
-    const factory = gameFactory(repository);
-    
-    // Create bot handlers
-    const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain());
-    
-    const params = {
-        ...factory.getGameSetup().getDefaultParams(),
-        initialDecks: config.initialDecks,
-    };
-    
-    const names = [ 'Player1', 'Player2' ];
-    const driver = factory.getGameDriver(handlers, params, names);
-    
-    driver.resume();
-    
-    const maxSteps = config.maxSteps || 200;
-    let stepCount = 0;
-    
-    while (!driver.getState().completed && stepCount < maxSteps) {
-        driver.handleSyncResponses();
-        driver.resume();
-        stepCount++;
-        
-        const stateAfter = driver.getState() as ControllerState<Controllers>;
-        
-        // Call integrity check if provided
-        if (config.integrityCheck) {
-            config.integrityCheck(stateAfter, stepCount);
-        }
-        
-        if (stateAfter.completed) {
-            break;
-        }
-    }
-    
-    return driver.getState();
 }
