@@ -413,4 +413,300 @@ describe('Effect Value Calculation', () => {
             expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 HP (3 points needed - 1 current = 2)');
         });
     });
+
+    describe('Count Values', () => {
+        describe('Field Count', () => {
+            it('should count all creatures on field', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-all-field', {
+                            templateId: 'count-all-field',
+                            name: 'Count All Field',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: {},
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-all-field', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(1, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-all-field', type: 'supporter' }]),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count 3 own + 2 opponent = 5 total creatures
+                expect(state.field.creatures[0][0].damageTaken).to.equal(25, 'Should heal 5 (total creatures on field)');
+            });
+
+            it('should count only benched creatures', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-benched', {
+                            templateId: 'count-benched',
+                            name: 'Count Benched',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: { position: 'bench' },
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-benched', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(1, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-benched', type: 'supporter' }]),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count 2 own bench + 1 opponent bench = 3 benched
+                expect(state.field.creatures[0][0].damageTaken).to.equal(27, 'Should heal 3 (benched creatures)');
+            });
+
+            it('should count own benched creatures only', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-own-bench', {
+                            templateId: 'count-own-bench',
+                            name: 'Count Own Bench',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: { player: 'self', position: 'bench' },
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-own-bench', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature', 'basic-creature'),
+                        StateBuilder.withCreatures(1, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-own-bench', type: 'supporter' }]),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count only 2 own benched
+                expect(state.field.creatures[0][0].damageTaken).to.equal(28, 'Should heal 2 (own benched creatures)');
+            });
+        });
+
+        describe('Card Count', () => {
+            it('should count cards in hand', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-hand', {
+                            templateId: 'count-hand',
+                            name: 'Count Hand',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'card',
+                                    player: 'self',
+                                    location: 'hand',
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-hand', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature'),
+                        StateBuilder.withHand(0, [
+                            { templateId: 'count-hand', type: 'supporter' },
+                            { templateId: 'basic-creature', type: 'creature' },
+                            { templateId: 'basic-creature', type: 'creature' },
+                            { templateId: 'basic-creature', type: 'creature' },
+                        ]),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count 3 cards remaining after playing the supporter
+                expect(state.field.creatures[0][0].damageTaken).to.equal(27, 'Should heal 3 (cards in hand after playing)');
+            });
+
+            it('should count opponent hand', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-opp-hand', {
+                            templateId: 'count-opp-hand',
+                            name: 'Count Opponent Hand',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'card',
+                                    player: 'opponent',
+                                    location: 'hand',
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-opp-hand', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-opp-hand', type: 'supporter' }]),
+                        StateBuilder.withHand(1, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count 5 cards in opponent's hand
+                expect(state.field.creatures[0][0].damageTaken).to.equal(25, 'Should heal 5 (opponent hand size)');
+            });
+        });
+
+        describe('Energy Count', () => {
+            it('should count all energy on own creatures', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-energy', {
+                            templateId: 'count-energy',
+                            name: 'Count Energy',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'energy',
+                                    fieldCriteria: { player: 'self' },
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-energy', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-energy', type: 'supporter' }]),
+                        StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1 }),
+                        StateBuilder.withEnergy('basic-creature-1', { fire: 1 }),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count 2+1+1 = 4 energy
+                expect(state.field.creatures[0][0].damageTaken).to.equal(26, 'Should heal 4 (total energy on own creatures)');
+            });
+
+            it('should count energy on active creature only', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-active-energy', {
+                            templateId: 'count-active-energy',
+                            name: 'Count Active Energy',
+                            effects: [{
+                                type: 'hp',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'energy',
+                                    fieldCriteria: { player: 'self', position: 'active' },
+                                },
+                                target: { type: 'fixed', player: 'self', position: 'active' },
+                                operation: 'heal',
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-active-energy', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature', 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-active-energy', type: 'supporter' }]),
+                        StateBuilder.withEnergy('basic-creature-0', { fire: 2, water: 1 }),
+                        StateBuilder.withEnergy('basic-creature-1', { fire: 2 }),
+                        StateBuilder.withDamage('basic-creature-0', 30),
+                    ),
+                });
+
+                // Should count only active's 3 energy (not bench's 2)
+                expect(state.field.creatures[0][0].damageTaken).to.equal(27, 'Should heal 3 (energy on active only)');
+            });
+        });
+
+        describe('Damage Count', () => {
+            it('should count damage on active creature', () => {
+                const testRepository = new MockCardRepository({
+                    supporters: new Map<string, SupporterData>([
+                        [ 'count-damage', {
+                            templateId: 'count-damage',
+                            name: 'Count Damage',
+                            effects: [{
+                                type: 'draw',
+                                amount: {
+                                    type: 'count',
+                                    countType: 'damage',
+                                    fieldCriteria: { player: 'self', position: 'active' },
+                                },
+                            }],
+                        }],
+                    ]),
+                });
+
+                const { state } = runTestGame({
+                    actions: [ new PlayCardResponseMessage('count-damage', 'supporter') ],
+                    customRepository: testRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'basic-creature'),
+                        StateBuilder.withHand(0, [{ templateId: 'count-damage', type: 'supporter' }]),
+                        StateBuilder.withDamage('basic-creature-0', 50),
+                        StateBuilder.withDeck(0, Array(10).fill({ templateId: 'basic-creature', type: 'creature' })),
+                    ),
+                });
+
+                // Should draw 50 cards (but limited by deck size of 10)
+                expect(state.hand[0].length).to.equal(10, 'Should draw based on damage (limited by deck)');
+            });
+        });
+    });
 });

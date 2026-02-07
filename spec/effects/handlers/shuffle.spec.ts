@@ -230,7 +230,7 @@ describe('Shuffle Effect', () => {
                         type: 'shuffle', 
                         target: 'self',
                         shuffleHand: true,
-                        drawAfter: { type: 'resolved', source: 'cards-in-hand' },
+                        drawAfter: { type: 'count', countType: 'card', player: 'self', location: 'hand' },
                     }],
                 }],
                 [ 'draw-supporter', {
