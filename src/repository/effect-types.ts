@@ -340,7 +340,8 @@ export type ImmediateEffect =
     | ToolDiscardEffect
     | StatusRecoveryEffect
     | SwapCardsEffect
-    | MoveCardsEffect;
+    | RemoveFieldCardEffect
+    | PullEvolutionEffect;
 
 /**
  * Represents an effect that prevents playing specific card types.
@@ -468,31 +469,38 @@ export type SwapCardsEffect = {
 };
 
 /**
- * Represents an effect that moves field cards to deck, hand, or discard.
- * Can include tools and evolution stack. Supports pull evolution functionality.
- * @property {string} type - Always 'move-cards' to identify this effect type
- * @property {FieldTarget} target - The creature(s) to move
+ * Represents an effect that removes field cards to deck, hand, or discard.
+ * Always includes all attached tools and evolution stack.
+ * @property {string} type - Always 'remove-field-card' to identify this effect type
+ * @property {FieldTarget} target - The creature(s) to remove
  * @property {'deck' | 'hand' | 'discard'} destination - Where to move the card(s)
- * @property {'all' | 'tool' | 'evolution'} [include] - What to include with the card (tools, evolutions, or both)
- * @property {FieldTarget} [switchWith] - Optional creature to switch in when moving active creature
- * @property {boolean} [pullEvolution] - If true, pulls an evolution from deck and immediately evolves the target
- * @property {CardCriteria} [evolutionCriteria] - Criteria for the evolution to pull (only used with pullEvolution)
- * @property {boolean} [skipRestrictions] - If true, skips normal evolution restrictions (only used with pullEvolution)
- * @example { type: 'move-cards', target: { type: 'fixed', player: 'opponent', position: 'active' }, destination: 'hand', include: 'all' }
- * // Move opponent's active creature with all tools and evolutions to their hand
- * @example { type: 'move-cards', target: { type: 'fixed', player: 'self', position: 'active' }, destination: 'deck', pullEvolution: true, evolutionCriteria: { cardType: 'creature', stage: 2 } }
- * // Pull a stage 2 evolution from deck and evolve your active creature
+ * @example { type: 'remove-field-card', target: { type: 'fixed', player: 'opponent', position: 'active' }, destination: 'hand' }
+ * // Remove opponent's active creature with all tools and evolutions to their hand
+ * @example { type: 'remove-field-card', target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }}, destination: 'discard' }
+ * // Remove all opponent's field creatures to discard
  */
-export type MoveCardsEffect = {
-    type: 'move-cards';
+export type RemoveFieldCardEffect = {
+    type: 'remove-field-card';
     target: FieldTarget;
     destination: 'deck' | 'hand' | 'discard';
-    include?: 'all' | 'tool' | 'evolution';
-    switchWith?: FieldTarget;
-    pullEvolution?: boolean;
+};
+
+/**
+ * Represents an effect that pulls an evolution from deck and immediately evolves the target.
+ * @property {string} type - Always 'pull-evolution' to identify this effect type
+ * @property {FieldTarget} target - The creature(s) to evolve
+ * @property {CardCriteria} [evolutionCriteria] - Criteria for the evolution to pull
+ * @property {boolean} [skipRestrictions] - If true, skips normal evolution restrictions
+ * @example { type: 'pull-evolution', target: { type: 'fixed', player: 'self', position: 'active' }, evolutionCriteria: { cardType: 'creature', stage: 2 } }
+ * // Pull a stage 2 evolution from deck and evolve your active creature
+ */
+export type PullEvolutionEffect = {
+    type: 'pull-evolution';
+    target: FieldTarget;
     evolutionCriteria?: CardCriteria;
     skipRestrictions?: boolean;
 };
+
 
 /**
  * Modifier effects that can be passive and last over time.

@@ -27,7 +27,8 @@ import { toolDiscardEffectHandler } from './tool-discard-effect-handler.js';
 import { statusRecoveryEffectHandler } from './status-recovery-effect-handler.js';
 import { statusPreventionEffectHandler } from './status-prevention-effect-handler.js';
 import { swapCardsEffectHandler } from './swap-cards-effect-handler.js';
-import { moveCardsEffectHandler } from './move-cards-effect-handler.js';
+import { removeFieldCardEffectHandler } from './remove-field-card-effect-handler.js';
+import { pullEvolutionEffectHandler } from './pull-evolution-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -58,5 +59,6 @@ export const effectHandlers: EffectHandlerMap = {
     'status-recovery': statusRecoveryEffectHandler,
     'status-prevention': statusPreventionEffectHandler,
     'swap-cards': swapCardsEffectHandler,
-    'move-cards': moveCardsEffectHandler,
+    'remove-field-card': removeFieldCardEffectHandler,
+    'pull-evolution': pullEvolutionEffectHandler,
 };
