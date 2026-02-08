@@ -93,8 +93,10 @@ export class MoveCardsEffectHandler extends AbstractEffectHandler<MoveCardsEffec
             // Get the creature data for messaging
             const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
             
-            // TODO: Implement actual card movement with tools and evolution stack
-            // For now, just message that the effect would happen
+            /*
+             * TODO: Implement actual card movement with tools and evolution stack
+             * For now, just message that the effect would happen
+             */
             let moveDescription = '';
             if (effect.include === 'all') {
                 moveDescription = ' with all tools and evolutions';

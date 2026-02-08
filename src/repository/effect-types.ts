@@ -450,14 +450,14 @@ export type StatusPreventionEffect = {
 
 /**
  * Represents an effect that discards cards from hand and draws new ones.
+ * Only usable by the current player (self only).
  * @property {string} type - Always 'swap-cards' to identify this effect type
  * @property {EffectValue} discardAmount - The number of cards to discard from hand
  * @property {EffectValue} drawAmount - The number of cards to draw
  * @property {number} [maxDrawn] - Optional maximum number of cards that can be drawn (caps the draw)
- * @property {PlayerTarget} target - The player performing the swap
- * @example { type: 'swap-cards', discardAmount: { type: 'constant', value: 2 }, drawAmount: { type: 'constant', value: 2 }, target: 'self' }
+ * @example { type: 'swap-cards', discardAmount: { type: 'constant', value: 2 }, drawAmount: { type: 'constant', value: 2 } }
  * // Discard 2 cards and draw 2 cards
- * @example { type: 'swap-cards', discardAmount: { type: 'constant', value: 1 }, drawAmount: { type: 'constant', value: 3 }, maxDrawn: 2, target: 'self' }
+ * @example { type: 'swap-cards', discardAmount: { type: 'constant', value: 1 }, drawAmount: { type: 'constant', value: 3 }, maxDrawn: 2 }
  * // Discard 1 card and draw up to 2 cards
  */
 export type SwapCardsEffect = {
@@ -465,7 +465,6 @@ export type SwapCardsEffect = {
     discardAmount: EffectValue;
     drawAmount: EffectValue;
     maxDrawn?: number;
-    target: PlayerTarget;
 };
 
 /**

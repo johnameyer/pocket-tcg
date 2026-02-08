@@ -7,13 +7,32 @@ import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 import { StatusRecoveryEffectHandler } from '../../../src/effects/handlers/status-recovery-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { StatusRecoveryEffect } from '../../../src/repository/effect-types.js';
+import { StatusEffectType } from '../../../src/controllers/status-effect-controller.js';
 
 describe('Status Recovery Effect', () => {
     describe('canApply', () => {
         const handler = new StatusRecoveryEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when there is a valid target', () => {
+        it('should return true when target has status effects', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
+                HandlerDataBuilder.withStatusEffects(0, [{ type: StatusEffectType.POISONED, appliedTurn: 1 }]),
+            );
+
+            const effect: StatusRecoveryEffect = {
+                type: 'status-recovery',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
+            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when target has no status effects', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -27,7 +46,7 @@ describe('Status Recovery Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.false;
         });
 
         it('should return false when there is no creature at target position', () => {
@@ -87,14 +106,14 @@ describe('Status Recovery Effect', () => {
                     effects: [{
                         type: 'status-recovery',
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        conditions: ['poison'],
+                        conditions: [ 'poison' ],
                     }],
                 }],
             ]),
         });
 
         const { state } = runTestGame({
-            actions: [ new PlayCardResponseMessage('full-heal-item', 'item') ],
+            actions: [ new PlayCardResponseMessage('antidote-item', 'item') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -120,14 +139,14 @@ describe('Status Recovery Effect', () => {
                     effects: [{
                         type: 'status-recovery',
                         target: { type: 'fixed', player: 'self', position: 'active' },
-                        conditions: ['poison', 'burn'],
+                        conditions: [ 'poison', 'burn' ],
                     }],
                 }],
             ]),
         });
 
         const { state } = runTestGame({
-            actions: [ new PlayCardResponseMessage('full-heal-item', 'item') ],
+            actions: [ new PlayCardResponseMessage('dual-cure-item', 'item') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -160,7 +179,7 @@ describe('Status Recovery Effect', () => {
         });
 
         const { state } = runTestGame({
-            actions: [ new PlayCardResponseMessage('full-heal-item', 'item') ],
+            actions: [ new PlayCardResponseMessage('benevolent-heal-item', 'item') ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),

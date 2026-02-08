@@ -195,10 +195,10 @@ export class HandlerDataBuilder {
      * Set tools attached to creatures.
      * @param attachedTools Map of field card instance ID to tool info
      */
-    static withTools(attachedTools: { [fieldCardInstanceId: string]: { templateId: string; instanceId: string } }): HandlerDataCustomizer {
+    static withTools(attachedTools: { [fieldCardInstanceId: string]: { templateId: string; instanceId: string }}): HandlerDataCustomizer {
         return (data: HandlerData) => {
             if (!data.tools) {
-                data.tools = { attachedTools: {} };
+                data.tools = { attachedTools: {}};
             }
             data.tools.attachedTools = attachedTools;
         };

@@ -148,8 +148,8 @@ describe('FieldTargetCriteriaFilter', () => {
             // Set up tool attachment: creature1 and creature3 have tools
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withTools({
-                    '1': { templateId: 'test-tool', instanceId: 'tool-1' },
-                    '3': { templateId: 'test-tool', instanceId: 'tool-2' },
+                    1: { templateId: 'test-tool', instanceId: 'tool-1' },
+                    3: { templateId: 'test-tool', instanceId: 'tool-2' },
                 }),
             );
             

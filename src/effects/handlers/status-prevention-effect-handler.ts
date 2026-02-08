@@ -28,8 +28,10 @@ export class StatusPreventionEffectHandler extends AbstractEffectHandler<StatusP
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: StatusPreventionEffect, context: EffectContext): void {
-        // Passive effect - no immediate action needed
-        // The effect will be queried when status effects are being applied
+        /*
+         * Passive effect - no immediate action needed
+         * The effect will be queried when status effects are being applied
+         */
     }
 }
 

@@ -6,6 +6,8 @@ import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
+import { FieldCard } from '../../controllers/field-controller.js';
+import { StatusEffectType } from '../../controllers/status-effect-controller.js';
 
 /**
  * Handler for status recovery effects that remove status conditions from creatures.
@@ -25,7 +27,8 @@ export class StatusRecoveryEffectHandler extends AbstractEffectHandler<StatusRec
     }
     
     /**
-     * Optional validation method to check if a status recovery effect can be applied.
+     * Validate if status recovery effect can be applied.
+     * Effect should only be playable if there are status effects to remove.
      * 
      * @param handlerData Handler data view
      * @param effect The status recovery effect to validate
@@ -38,8 +41,28 @@ export class StatusRecoveryEffectHandler extends AbstractEffectHandler<StatusRec
             return false;
         }
         
-        // Use TargetResolver to check if the target is available
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        // Check if creature has status effects that can be removed
+        const hasStatusEffectsToRemove = (creature: FieldCard, handlerData: HandlerData): boolean => {
+            /*
+             * Status effects only apply to active creature (position 0)
+             * We need to determine which player's active creature this is
+             * For now, check if any player has status effects (simplified validation)
+             */
+            const player0Effects = handlerData.statusEffects?.activeStatusEffects[0] || [];
+            const player1Effects = handlerData.statusEffects?.activeStatusEffects[1] || [];
+            
+            // If specific conditions are specified, check if any of those exist
+            if (effect.conditions && effect.conditions.length > 0) {
+                const allEffects = [ ...player0Effects, ...player1Effects ];
+                return allEffects.some(e => effect.conditions!.some(c => c === String(e.type)));
+            }
+            
+            // Otherwise, check if any status effects exist
+            return player0Effects.length > 0 || player1Effects.length > 0;
+        };
+        
+        // Use TargetResolver to check if the target is available and has status effects
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, hasStatusEffectsToRemove);
     }
 
     /**
@@ -84,19 +107,21 @@ export class StatusRecoveryEffectHandler extends AbstractEffectHandler<StatusRec
             
             // If specific conditions specified, remove only those
             if (effect.conditions && effect.conditions.length > 0) {
-                // Get current effects
-                const currentEffects = controllers.statusEffects.getActiveStatusEffects(playerId);
+                // Map conditions to StatusEffectType enum values
+                const statusMap: Record<string, StatusEffectType> = {
+                    sleep: StatusEffectType.ASLEEP,
+                    burn: StatusEffectType.BURNED,
+                    confusion: StatusEffectType.CONFUSED,
+                    paralysis: StatusEffectType.PARALYZED,
+                    poison: StatusEffectType.POISONED,
+                };
                 
-                // Filter out the effects to remove by checking the string representation
-                const filteredEffects = currentEffects.filter(e => {
-                    const typeStr = String(e.type);
-                    return !effect.conditions!.some(c => c === typeStr);
-                });
-                
-                // Clear all and re-apply filtered effects
-                controllers.statusEffects.clearAllStatusEffects(playerId);
-                for (const eff of filteredEffects) {
-                    controllers.statusEffects.applyStatusEffect(playerId, eff.type);
+                // Remove each specified condition
+                for (const condition of effect.conditions) {
+                    const statusType = statusMap[condition];
+                    if (statusType) {
+                        controllers.statusEffects.removeStatusEffect(playerId, statusType);
+                    }
                 }
                 
                 const conditionNames = effect.conditions.join(' and ');

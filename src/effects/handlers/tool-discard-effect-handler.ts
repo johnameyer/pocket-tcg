@@ -7,6 +7,7 @@ import { getFieldInstanceId } from '../../utils/field-card-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
+import { FieldCard } from '../../controllers/field-controller.js';
 
 /**
  * Handler for tool discard effects that remove tools from creatures.
@@ -26,7 +27,8 @@ export class ToolDiscardEffectHandler extends AbstractEffectHandler<ToolDiscardE
     }
     
     /**
-     * Optional validation method to check if a tool discard effect can be applied.
+     * Validate if tool discard effect can be applied.
+     * Effect should only be playable if there are tools that can be discarded.
      * 
      * @param handlerData Handler data view
      * @param effect The tool discard effect to validate
@@ -34,8 +36,19 @@ export class ToolDiscardEffectHandler extends AbstractEffectHandler<ToolDiscardE
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: ToolDiscardEffect, context: EffectContext, cardRepository: CardRepository): boolean {
-        // Always allow - the handler will handle no-tool cases gracefully
-        return true;
+        // If there's no target, we can't apply the effect
+        if (!effect.target) {
+            return false;
+        }
+        
+        // Check if there are any creatures with tools attached
+        const hasToolAttached = (creature: FieldCard, handlerData: HandlerData): boolean => {
+            const fieldInstanceId = getFieldInstanceId(creature);
+            return handlerData.tools?.attachedTools[fieldInstanceId] !== undefined;
+        };
+        
+        // Use TargetResolver with validation function to check if any valid targets exist
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, hasToolAttached);
     }
 
     /**

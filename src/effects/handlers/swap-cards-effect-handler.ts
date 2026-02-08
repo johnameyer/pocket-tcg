@@ -8,6 +8,7 @@ import { HandlerData } from '../../game-handler.js';
 
 /**
  * Handler for swap cards effects that discard cards and draw new ones.
+ * Only affects the current player (self).
  */
 export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffect> {
     /**
@@ -21,7 +22,9 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
     }
     
     /**
-     * Optional validation method to check if a swap cards effect can be applied.
+     * Validate if swap cards effect can be applied.
+     * Effect should only be playable if it would change game state:
+     * - Player must have cards in hand to discard OR cards in deck to draw
      * 
      * @param handlerData Handler data view
      * @param effect The swap cards effect to validate
@@ -29,21 +32,26 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
      * @returns True if the effect can be applied, false otherwise
      */
     canApply(handlerData: HandlerData, effect: SwapCardsEffect, context: EffectContext, cardRepository: CardRepository): boolean {
-        // Always allow - the handler will discard what it can
-        return true;
+        // Check if player has cards in hand to discard OR cards in deck to draw
+        const hasCardsToDiscard = handlerData.hand.length > 0;
+        const hasCardsToDraw = handlerData.deck > 0;
+        
+        // Effect can be applied if either discarding or drawing would happen
+        return hasCardsToDiscard || hasCardsToDraw;
     }
 
     /**
      * Apply a fully resolved swap cards effect.
      * This is called after all targets have been resolved.
+     * Always affects the current player (self).
      * 
      * @param controllers Game controllers
      * @param effect The swap cards effect to apply (with resolved targets)
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: SwapCardsEffect, context: EffectContext): void {
-        // Determine which player based on target
-        const playerId = effect.target === 'opponent' ? 1 - context.sourcePlayer : context.sourcePlayer;
+        // Always applies to the source player (self only)
+        const playerId = context.sourcePlayer;
         
         // Resolve amounts
         const discardAmount = getEffectValue(effect.discardAmount, controllers, context);
@@ -66,12 +74,12 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
         if (effect.maxDrawn !== undefined && drawAmount > effect.maxDrawn) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} causes ${playerId === context.sourcePlayer ? 'you' : 'opponent'} to discard ${cardsToDiscard.length} card(s) and draw up to ${effect.maxDrawn} card(s)!` ],
+                components: [ `${context.effectName} causes you to discard ${cardsToDiscard.length} card(s) and draw up to ${effect.maxDrawn} card(s)!` ],
             });
         } else {
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} causes ${playerId === context.sourcePlayer ? 'you' : 'opponent'} to discard ${cardsToDiscard.length} card(s) and draw ${actualDrawAmount} card(s)!` ],
+                components: [ `${context.effectName} causes you to discard ${cardsToDiscard.length} card(s) and draw ${actualDrawAmount} card(s)!` ],
             });
         }
     }
