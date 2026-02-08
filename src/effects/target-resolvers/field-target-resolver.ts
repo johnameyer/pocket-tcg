@@ -516,6 +516,7 @@ export class FieldTargetResolver {
                 creature,
                 cardRepository,
                 handlerData.energy?.attachedEnergyByInstance,
+                handlerData.tools?.attachedTools,
             )) {
                 return false;
             }

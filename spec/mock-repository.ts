@@ -134,6 +134,12 @@ mockToolData.set('leftovers', {
     trigger: { type: 'end-of-turn' },
 });
 
+mockToolData.set('test-tool', {
+    templateId: 'test-tool',
+    name: 'Test Tool',
+    effects: [],
+});
+
 const mockStadiumData = new Map<string, StadiumData>();
 mockStadiumData.set('basic-stadium', {
     templateId: 'basic-stadium',

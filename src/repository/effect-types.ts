@@ -5,6 +5,7 @@ import { CardTarget } from './targets/card-target.js';
 import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
 import { EnergyTarget } from './targets/energy-target.js';
+import { CardCriteria } from './criteria/card-criteria.js';
 
 /**
  * Represents when an effect can be triggered.
@@ -335,7 +336,12 @@ export type ImmediateEffect =
     | EnergyTransferEffect
     | CoinFlipManipulationEffect
     | EvolutionAccelerationEffect
-    | EndTurnEffect;
+    | EndTurnEffect
+    | ToolDiscardEffect
+    | StatusRecoveryEffect
+    | SwapCardsEffect
+    | RemoveFieldCardEffect
+    | PullEvolutionEffect;
 
 /**
  * Represents an effect that prevents playing specific card types.
@@ -398,6 +404,105 @@ export type AttackEnergyCostModifierEffect = {
 };
 
 /**
+ * Represents an effect that discards tools from target creatures.
+ * @property {string} type - Always 'tool-discard' to identify this effect type
+ * @property {FieldTarget} target - The creature(s) to discard tools from
+ * @example { type: 'tool-discard', target: { type: 'fixed', player: 'opponent', position: 'active' } }
+ * // Discard tool from opponent's active creature
+ */
+export type ToolDiscardEffect = {
+    type: 'tool-discard';
+    target: FieldTarget;
+};
+
+/**
+ * Represents an effect that removes status conditions from target creatures.
+ * @property {string} type - Always 'status-recovery' to identify this effect type
+ * @property {FieldTarget} target - The creature(s) to recover from status conditions
+ * @property {StatusCondition[]} [conditions] - Optional specific conditions to remove; if not specified, removes all
+ * @example { type: 'status-recovery', target: { type: 'fixed', player: 'self', position: 'active' } }
+ * // Remove all status conditions from your active creature
+ * @example { type: 'status-recovery', target: { type: 'fixed', player: 'self', position: 'active' }, conditions: ['poison', 'burn'] }
+ * // Remove poison and burn from your active creature
+ */
+export type StatusRecoveryEffect = {
+    type: 'status-recovery';
+    target: FieldTarget;
+    conditions?: StatusCondition[];
+};
+
+/**
+ * Represents an effect that prevents status conditions from being applied.
+ * @property {string} type - Always 'status-prevention' to identify this effect type
+ * @property {FieldTargetCriteria} target - Criteria for which creatures are protected (evaluated passively)
+ * @property {StatusCondition[]} [conditions] - Optional specific conditions to prevent; if not specified, prevents all
+ * @property {Duration} duration - How long the prevention lasts
+ * @example { type: 'status-prevention', target: { player: 'self', position: 'active' }, duration: 'this-turn' }
+ * // Your active creature cannot receive any status conditions this turn
+ * @example { type: 'status-prevention', target: { player: 'self' }, conditions: ['poison', 'burn'], duration: 'until-end-of-next-turn' }
+ * // Your creatures cannot be poisoned or burned until end of next turn
+ */
+export type StatusPreventionEffect = {
+    type: 'status-prevention';
+    target: FieldTargetCriteria;
+    conditions?: StatusCondition[];
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that discards cards from hand and draws new ones.
+ * Only usable by the current player (self only).
+ * @property {string} type - Always 'swap-cards' to identify this effect type
+ * @property {EffectValue} discardAmount - The number of cards to discard from hand
+ * @property {EffectValue} drawAmount - The number of cards to draw
+ * @property {number} [maxDrawn] - Optional maximum number of cards that can be drawn (caps the draw)
+ * @example { type: 'swap-cards', discardAmount: { type: 'constant', value: 2 }, drawAmount: { type: 'constant', value: 2 } }
+ * // Discard 2 cards and draw 2 cards
+ * @example { type: 'swap-cards', discardAmount: { type: 'constant', value: 1 }, drawAmount: { type: 'constant', value: 3 }, maxDrawn: 2 }
+ * // Discard 1 card and draw up to 2 cards
+ */
+export type SwapCardsEffect = {
+    type: 'swap-cards';
+    discardAmount: EffectValue;
+    drawAmount: EffectValue;
+    maxDrawn?: number;
+};
+
+/**
+ * Represents an effect that removes field cards to deck, hand, or discard.
+ * Always includes all attached tools and evolution stack.
+ * @property {string} type - Always 'remove-field-card' to identify this effect type
+ * @property {FieldTarget} target - The creature(s) to remove
+ * @property {'deck' | 'hand' | 'discard'} destination - Where to move the card(s)
+ * @example { type: 'remove-field-card', target: { type: 'fixed', player: 'opponent', position: 'active' }, destination: 'hand' }
+ * // Remove opponent's active creature with all tools and evolutions to their hand
+ * @example { type: 'remove-field-card', target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }}, destination: 'discard' }
+ * // Remove all opponent's field creatures to discard
+ */
+export type RemoveFieldCardEffect = {
+    type: 'remove-field-card';
+    target: FieldTarget;
+    destination: 'deck' | 'hand' | 'discard';
+};
+
+/**
+ * Represents an effect that pulls an evolution from deck and immediately evolves the target.
+ * @property {string} type - Always 'pull-evolution' to identify this effect type
+ * @property {FieldTarget} target - The creature(s) to evolve
+ * @property {CardCriteria} [evolutionCriteria] - Criteria for the evolution to pull
+ * @property {boolean} [skipRestrictions] - If true, skips normal evolution restrictions
+ * @example { type: 'pull-evolution', target: { type: 'fixed', player: 'self', position: 'active' }, evolutionCriteria: { cardType: 'creature', stage: 2 } }
+ * // Pull a stage 2 evolution from deck and evolve your active creature
+ */
+export type PullEvolutionEffect = {
+    type: 'pull-evolution';
+    target: FieldTarget;
+    evolutionCriteria?: CardCriteria;
+    skipRestrictions?: boolean;
+};
+
+
+/**
  * Modifier effects that can be passive and last over time.
  * These effects change values or prevent actions and are queried when needed.
  */
@@ -412,7 +517,8 @@ export type ModifierEffect =
     | PreventPlayingEffect
     | PreventAttackEffect
     | PreventEnergyAttachmentEffect
-    | AttackEnergyCostModifierEffect;
+    | AttackEnergyCostModifierEffect
+    | StatusPreventionEffect;
 
 /**
  * Union type representing all possible effects that can be applied in the game.

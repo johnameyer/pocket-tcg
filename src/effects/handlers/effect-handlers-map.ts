@@ -23,6 +23,12 @@ import { preventPlayingEffectHandler } from './prevent-playing-effect-handler.js
 import { preventAttackEffectHandler } from './prevent-attack-effect-handler.js';
 import { preventEnergyAttachmentEffectHandler } from './prevent-energy-attachment-effect-handler.js';
 import { attackEnergyCostModifierEffectHandler } from './attack-energy-cost-modifier-effect-handler.js';
+import { toolDiscardEffectHandler } from './tool-discard-effect-handler.js';
+import { statusRecoveryEffectHandler } from './status-recovery-effect-handler.js';
+import { statusPreventionEffectHandler } from './status-prevention-effect-handler.js';
+import { swapCardsEffectHandler } from './swap-cards-effect-handler.js';
+import { removeFieldCardEffectHandler } from './remove-field-card-effect-handler.js';
+import { pullEvolutionEffectHandler } from './pull-evolution-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -49,4 +55,10 @@ export const effectHandlers: EffectHandlerMap = {
     'prevent-attack': preventAttackEffectHandler,
     'prevent-energy-attachment': preventEnergyAttachmentEffectHandler,
     'attack-energy-cost-modifier': attackEnergyCostModifierEffectHandler,
+    'tool-discard': toolDiscardEffectHandler,
+    'status-recovery': statusRecoveryEffectHandler,
+    'status-prevention': statusPreventionEffectHandler,
+    'swap-cards': swapCardsEffectHandler,
+    'remove-field-card': removeFieldCardEffectHandler,
+    'pull-evolution': pullEvolutionEffectHandler,
 };

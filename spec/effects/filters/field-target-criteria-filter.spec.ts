@@ -135,6 +135,57 @@ describe('FieldTargetCriteriaFilter', () => {
             expect(result.length).to.equal(1);
             expect(result[0].fieldIndex).to.equal(2);
         });
+
+        it('should filter by hasTool - creatures with tools only', () => {
+            const cardRepository = new MockCardRepository();
+            
+            // Set up creatures
+            const creature1 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const creature2 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const creature3 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ creature1, creature2, creature3 ];
+            
+            // Set up tool attachment: creature1 and creature3 have tools
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withTools({
+                    1: { templateId: 'test-tool', instanceId: 'tool-1' },
+                    3: { templateId: 'test-tool', instanceId: 'tool-2' },
+                }),
+            );
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasTool: true }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(0);
+            expect(result[1].fieldIndex).to.equal(2);
+        });
+
+        it('should filter by hasTool - no creatures with tools', () => {
+            const cardRepository = new MockCardRepository();
+            
+            // Set up creatures without tools
+            const creature1 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const creature2 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ creature1, creature2 ];
+            
+            const handlerData = HandlerDataBuilder.default();
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasTool: true }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(0);
+        });
     });
 });
 

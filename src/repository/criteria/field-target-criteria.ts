@@ -8,11 +8,13 @@ import { CreatureCardCriteria } from './card-criteria.js';
  * @example { cardCriteria: { stage: 0 }, hasDamage: true } // Basic creatures with damage
  * @example { cardCriteria: { isType: 'water' }, hasEnergy: { water: 2 } } // Water types with 2+ water energy
  * @example { hasDamage: true } // Any creature with damage
+ * @example { hasTool: true } // Any creature with a tool attached
  */
 export type FieldCriteria = {
     cardCriteria?: CreatureCardCriteria;
     hasDamage?: boolean;
     hasEnergy?: Partial<Record<AttachableEnergyType, number>>;
+    hasTool?: boolean;
 };
 
 /**
