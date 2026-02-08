@@ -257,8 +257,12 @@ export class StateBuilder {
             if (!effectType) {
                 throw new Error(`Unknown status effect: ${effect}`);
             }
-            // Include appliedTurn property with a default value of 1
-            state.statusEffects.activeStatusEffects[player] = [{ type: effectType, appliedTurn: 1 }];
+            // Initialize array if it doesn't exist
+            if (!state.statusEffects.activeStatusEffects[player]) {
+                state.statusEffects.activeStatusEffects[player] = [];
+            }
+            // Append to existing effects instead of replacing
+            state.statusEffects.activeStatusEffects[player].push({ type: effectType, appliedTurn: 1 });
         };
     }
 
