@@ -117,23 +117,48 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         if (!Array.isArray(this.state.currentEnergy)) {
             throw new Error('Shape of object is wrong');
         }
+        
+        // Validate that availableTypes is provided for each player
+        if (!Array.isArray(this.state.availableTypes)) {
+            throw new Error('availableTypes must be an array');
+        }
+        for (let player = 0; player < this.state.availableTypes.length; player++) {
+            const types = this.state.availableTypes[player];
+            if (types === undefined) {
+                throw new Error(`availableTypes must be defined for player ${player}`);
+            }
+            if (!Array.isArray(types) || types.length === 0) {
+                throw new Error(`availableTypes must be a non-empty array for player ${player}`);
+            }
+        }
+        
+        // Validate that discarded energy keys are valid energy types
+        const validEnergyTypes = new Set([ 'grass', 'fire', 'water', 'lightning', 'psychic', 'fighting', 'darkness', 'metal' ]);
+        for (let player = 0; player < this.state.discardedEnergy.length; player++) {
+            const energyDict = this.state.discardedEnergy[player];
+            for (const energyType of Object.keys(energyDict)) {
+                if (!validEnergyTypes.has(energyType)) {
+                    throw new Error(`Invalid energy type "${energyType}" in player ${player} discarded energy`);
+                }
+            }
+        }
+        
+        // Validate that attached energy instances use valid energy types
+        for (const [ instanceId, energyDict ] of Object.entries(this.state.attachedEnergyByInstance)) {
+            for (const energyType of Object.keys(energyDict)) {
+                if (!validEnergyTypes.has(energyType)) {
+                    throw new Error(`Invalid energy type "${energyType}" attached to instance "${instanceId}"`);
+                }
+            }
+        }
     }
 
     // Generate energy for a player's turn
     public generateEnergy(playerId: number): AttachableEnergyType {
         const availableTypes = this.state.availableTypes[playerId];
         
-        // If no available types, default to fire
         if (!availableTypes || availableTypes.length === 0) {
-            const defaultType: AttachableEnergyType = 'fire';
-            
-            // Set current energy
-            this.state.currentEnergy[playerId] = defaultType;
-            
-            // Generate next energy preview
-            this.state.nextEnergy[playerId] = defaultType;
-            
-            return defaultType;
+            throw new Error(`No available energy types for player ${playerId}`);
         }
         
         // Generate random energy for current turn
@@ -512,5 +537,10 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
     public getTotalDiscardedEnergy(playerId: number): number {
         const discarded = this.getDiscardedEnergy(playerId);
         return Object.values(discarded).reduce((sum, count) => sum + count, 0);
+    }
+
+    // Get all instance IDs that have energy attached (for validation purposes)
+    public getInstancesWithEnergy(): string[] {
+        return Object.keys(this.state.attachedEnergyByInstance);
     }
 }

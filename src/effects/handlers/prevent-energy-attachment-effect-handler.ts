@@ -28,7 +28,6 @@ export class PreventEnergyAttachmentEffectHandler extends AbstractEffectHandler<
      */
     apply(controllers: Controllers, effect: PreventEnergyAttachmentEffect, context: EffectContext): void {
         // Register as a passive effect with criteria matching
-        console.log('[HANDLER] PreventEnergyAttachment.apply() called, context:', context.effectName, 'sourcePlayer:', context.sourcePlayer);
         controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,

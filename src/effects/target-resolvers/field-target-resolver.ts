@@ -13,7 +13,7 @@ import { FieldTargetCriteriaFilter } from '../filters/field-target-criteria-filt
  * Result of target resolution, indicating whether a target was resolved,
  * requires selection, or has no valid targets.
  */
-export type TargetResolutionResult = 
+export type TargetResolutionResult =
     | ResolvedFieldTarget // Using the new ResolvedTarget interface
     | { type: 'requires-selection', availableTargets: TargetOption[] }
     | { type: 'no-valid-targets' }
@@ -34,7 +34,7 @@ export interface TargetOption {
 /**
  * Result of single target resolution, excluding multi-target results.
  */
-export type SingleTargetResolutionResult = 
+export type SingleTargetResolutionResult =
     | ResolvedFieldTarget // Using the new ResolvedTarget interface
     | { type: 'requires-selection', availableTargets: TargetOption[] }
     | { type: 'no-valid-targets' }

@@ -87,15 +87,15 @@ describe('HP Bonus Effect', () => {
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'low-hp-creature'),
                 StateBuilder.withCreatures(1, 'low-hp-creature'),
-                StateBuilder.withTool('low-hp-creature-1', 'hp-tool'), // Target has HP bonus
+                StateBuilder.withTool('low-hp-creature-1', 'hp-tool'), // Target has HP bonus (50 + 30 = 80 HP)
                 StateBuilder.withEnergy('low-hp-creature-0', { grass: 1 }),
-                StateBuilder.withDamage('low-hp-creature-1', 45), // 45 + 60 = 105 damage, would KO 50 HP but not 80 HP
+                StateBuilder.withDamage('low-hp-creature-1', 10), // 10 + 60 = 70 damage, would KO 50 HP base but not 80 HP with bonus
             ),
         });
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
         expect(state.field.creatures[1][0]).to.exist; // Should survive with HP bonus
-        expect(state.field.creatures[1][0].damageTaken).to.equal(80, 'Should have maximum damage for survival'); // Capped at effective HP
+        expect(state.field.creatures[1][0].damageTaken).to.equal(70, 'Should have taken 70 damage and survived with 10 HP');
     });
 
     it('should work with bench Pokemon', () => {

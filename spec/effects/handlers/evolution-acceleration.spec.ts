@@ -16,7 +16,27 @@ describe('Evolution Acceleration Effect', () => {
         const handler = new EvolutionAccelerationEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when target is valid basic creature', () => {
+        it('should return true when target is valid basic creature with Stage 2 evolution in hand', () => {
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withHand([{ templateId: 'stage2-creature', type: 'creature' }]),
+                HandlerDataBuilder.withTurnNumber(3),
+            );
+
+            const effect: EvolutionAccelerationEffect = {
+                type: 'evolution-acceleration',
+                target: { type: 'fixed', player: 'self', position: 'active' },
+                skipStages: 1,
+                restrictions: [ 'basic-creature-only' ],
+            };
+
+            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const result = handler.canApply(handlerData, effect, context, testRepository);
+            
+            expect(result).to.be.true;
+        });
+
+        it('should return false when target is valid basic creature but no Stage 2 evolution in hand', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withTurnNumber(3),
@@ -30,9 +50,9 @@ describe('Evolution Acceleration Effect', () => {
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            const result = handler.canApply(handlerData, effect, context, testRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.false;
         });
 
         it('should return false when target does not exist (target resolution failure)', () => {
@@ -46,7 +66,7 @@ describe('Evolution Acceleration Effect', () => {
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            const result = handler.canApply(handlerData, effect, context, testRepository);
             
             expect(result).to.be.false;
         });
@@ -54,6 +74,7 @@ describe('Evolution Acceleration Effect', () => {
         it('should return false when creature was played this turn', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
+                HandlerDataBuilder.withHand([{ templateId: 'stage2-creature', type: 'creature' }]),
                 HandlerDataBuilder.withTurnNumber(1),
             );
             // Set creature as played this turn
@@ -67,7 +88,7 @@ describe('Evolution Acceleration Effect', () => {
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
+            const result = handler.canApply(handlerData, effect, context, testRepository);
             
             expect(result).to.be.false;
         });
@@ -255,10 +276,10 @@ describe('Evolution Acceleration Effect', () => {
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(2, 'Should preserve energy after evolution');
     });
 
-    it('should not allow evolution without proper evolution line', () => {
+    it('should not allow playing acceleration item without valid Stage 2 evolution in hand', () => {
         const { state, getExecutedCount } = runTestGame({
             actions: [
-                new PlayCardResponseMessage('acceleration-item', 'item'), // Should not evolve - no valid Stage 2 in hand
+                new PlayCardResponseMessage('acceleration-item', 'item'), // Cannot play - no valid Stage 2 in hand
             ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
@@ -267,9 +288,9 @@ describe('Evolution Acceleration Effect', () => {
             ),
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed acceleration item');
-        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should remain as basic creature (no valid evolution)');
-        expect(state.hand[0].length).to.equal(0, 'Acceleration item should be consumed');
+        expect(getExecutedCount()).to.equal(0, 'Should not have executed acceleration item (canApply failed)');
+        expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('basic-creature', 'Should remain as basic creature');
+        expect(state.hand[0].length).to.equal(1, 'Acceleration item should remain in hand');
     });
 
     it('should not evolve Pokemon played this turn', () => {

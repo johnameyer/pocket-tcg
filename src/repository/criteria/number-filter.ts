@@ -7,7 +7,7 @@
  * @example [0, 1, 2] // Only values 0, 1, or 2
  * @example 1 // Exactly 1
  */
-export type NumberFilter = 
+export type NumberFilter =
     | { max: number }
     | { min: number }
     | number[]

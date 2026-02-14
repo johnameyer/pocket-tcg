@@ -8,6 +8,7 @@ import { GameCard } from './card-types.js';
 // Dependencies for this controller
 type DiscardDependencies = {
     players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>;
+    cardRepository: import('./card-repository-controller.js').CardRepositoryController;
 };
 
 export class DiscardControllerProvider implements GenericControllerProvider<GameCard[][], DiscardDependencies, DiscardController> {
@@ -22,7 +23,7 @@ export class DiscardControllerProvider implements GenericControllerProvider<Game
     }
     
     dependencies() {
-        return { players: true } as const;
+        return { players: true, cardRepository: true } as const;
     }
 }
 
@@ -35,6 +36,19 @@ export class DiscardController extends GlobalController<GameCard[][], DiscardDep
     validate(): void {
         if (!Array.isArray(this.state)) {
             throw new Error('Discard piles must be an array');
+        }
+        
+        // Validate that all cards exist in the repository
+        const cardRepository = this.controllers.cardRepository;
+        for (let player = 0; player < this.state.length; player++) {
+            for (const card of this.state[player]) {
+                try {
+                    cardRepository.getCard(card.templateId);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    throw new Error(`Invalid card templateId "${card.templateId}" in player ${player} discard pile: ${errorMessage}`);
+                }
+            }
         }
     }
     

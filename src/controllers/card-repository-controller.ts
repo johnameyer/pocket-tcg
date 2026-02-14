@@ -68,6 +68,31 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
     }
 
     getCard(id: string) {
-        return this.repository.getCard(id); 
+        return this.repository.getCard(id);
+    }
+
+    /**
+     * Validates that every creature's previousStageName (evolvesFrom) exists in the repository.
+     * Throws an error if any creature references a non-existent previous stage.
+     */
+    validateEvolutions(): void {
+        const creatureIds = this.repository.getAllCreatureIds();
+        const errors: string[] = [];
+
+        for (const creatureId of creatureIds) {
+            const creature = this.repository.getCreature(creatureId);
+            
+            if (creature.previousStageName) {
+                try {
+                    this.repository.getCreatureByName(creature.previousStageName);
+                } catch {
+                    errors.push(`Creature "${creature.name}" (${creatureId}) references non-existent previousStageName: "${creature.previousStageName}"`);
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error(`Evolution validation failed:\n${errors.join('\n')}`);
+        }
     }
 }

@@ -179,10 +179,16 @@ export class EffectApplier {
                         fieldIndex: resolution.fieldIndex,
                     }],
                 };
+            
+            case 'no-valid-targets':
+                // No valid targets found - effect cannot be applied
+                return undefined;
+                
+            case 'requires-selection':
+                throw new Error('requires-selection encountered in resolution phase (should have been captured by selection phase)');
                 
             default:
-                console.warn(`Unexpected resolution type: ${resolution.type}`);
-                return undefined;
+                throw new Error(`Unexpected resolution type: ${(resolution as { type?: string }).type ?? resolution}`);
         }
     }
     
@@ -217,12 +223,20 @@ export class EffectApplier {
                         fieldIndex: t.fieldIndex,
                     })),
                 };
-                
-            default:
+            
+            case 'no-valid-targets':
+                // No valid targets - return empty resolved target
                 return {
                     type: 'resolved',
                     targets: [],
                 };
+                
+            case 'requires-selection':
+                // This shouldn't reach here - requires-selection needs handler input
+                throw new Error('requires-selection encountered in resolution phase (should have been captured by selection phase)');
+                
+            default:
+                throw new Error(`Unexpected resolution type: ${(resolution as { type?: string }).type ?? resolution}`);
         }
     }
     

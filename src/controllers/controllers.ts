@@ -34,7 +34,7 @@ export const buildProviders = (cardRepository: CardRepository) => {
         energy: new EnergyControllerProvider(),
         statusEffects: new StatusEffectControllerProvider(),
         coinFlip: new CoinFlipControllerProvider(),
-        tools: new ToolControllerProvider(cardRepository),
+        tools: new ToolControllerProvider(),
         discard: new DiscardControllerProvider(),
         effects: new EffectControllerProvider(),
         stadium: new StadiumControllerProvider(),

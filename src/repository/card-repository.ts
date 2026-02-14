@@ -1,7 +1,11 @@
-import { CreatureData, SupporterData, ItemData, ToolData, StadiumData, CardData } from './card-types.js';
+import { CreatureData, SupporterData, ItemData, ToolData, StadiumData } from './card-types.js';
 
 export class CardRepository {
     private creatureNameMap: Map<string, CreatureData> = new Map();
+
+    private evolutionsOfMap: Map<string, string[]> = new Map();
+
+    private typeMap: Map<string, string[]> = new Map();
     
     constructor(
         private creatureData: Map<string, CreatureData> = new Map(),
@@ -15,6 +19,26 @@ export class CardRepository {
             // Store first occurrence of each name (multiple creatures may share the same name)
             if (!this.creatureNameMap.has(creature.name)) {
                 this.creatureNameMap.set(creature.name, creature);
+            }
+        }
+        
+        // Build reverse evolution map: creatureName -> [IDs that evolve from it]
+        for (const [ templateId, creature ] of creatureData) {
+            if (creature.previousStageName) {
+                if (!this.evolutionsOfMap.has(creature.previousStageName)) {
+                    this.evolutionsOfMap.set(creature.previousStageName, []);
+                }
+                this.evolutionsOfMap.get(creature.previousStageName)!.push(templateId);
+            }
+        }
+        
+        // Build type map: creatureType -> [IDs of that type]
+        for (const [ templateId, creature ] of creatureData) {
+            if (creature.type) {
+                if (!this.typeMap.has(creature.type)) {
+                    this.typeMap.set(creature.type, []);
+                }
+                this.typeMap.get(creature.type)!.push(templateId);
             }
         }
     }
@@ -106,7 +130,12 @@ export class CardRepository {
      * @returns The card data and its type
      * @throws Error if the card is not found in any collection
      */
-    public getCard(id: string): { data: CardData; type: string } {
+    public getCard(id: string): 
+        | { data: CreatureData; type: 'creature' }
+        | { data: SupporterData; type: 'supporter' }
+        | { data: ItemData; type: 'item' }
+        | { data: ToolData; type: 'tool' }
+        | { data: StadiumData; type: 'stadium' } {
         try {
             return { data: this.getCreature(id), type: 'creature' };
         } catch (e) {
@@ -163,5 +192,27 @@ export class CardRepository {
         } catch (error) {
             return -1; // FieldCard not found
         }
+    }
+    
+    /**
+     * Gets all creature IDs that evolve from a given creature name.
+     * Uses O(1) lookup via pre-built index.
+     * 
+     * @param creatureName The name of the creature to get evolutions for
+     * @returns Array of creature IDs that evolve from this creature
+     */
+    public getEvolutionsOf(creatureName: string): string[] {
+        return this.evolutionsOfMap.get(creatureName) || [];
+    }
+    
+    /**
+     * Gets all creature IDs of a specific type.
+     * Uses O(1) lookup via pre-built index.
+     * 
+     * @param type The creature type to filter by
+     * @returns Array of creature IDs of that type
+     */
+    public getCreaturesOfType(type: string): string[] {
+        return this.typeMap.get(type) || [];
     }
 }

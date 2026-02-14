@@ -8,6 +8,7 @@ import { ToolController } from './tool-controller.js';
 import { EnergyController } from './energy-controller.js';
 import { StatusEffectController } from './status-effect-controller.js';
 import { DiscardController } from './discard-controller.js';
+import { EffectController } from './effect-controller.js';
 
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
@@ -34,7 +35,8 @@ type FieldDependencies = {
     tools: ToolController,
     energy: EnergyController,
     statusEffects: StatusEffectController,
-    discard: DiscardController
+    discard: DiscardController,
+    effects: EffectController,
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -52,7 +54,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true } as const;
+        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true, effects: true } as const;
     }
 }
 
@@ -60,6 +62,43 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     validate() {
         if (!Array.isArray(this.state.creatures)) {
             throw new Error('Shape of object is wrong');
+        }
+
+        // Build set of valid field instance IDs
+        const validFieldInstanceIds = new Set<string>();
+        for (let player = 0; player < this.state.creatures.length; player++) {
+            const creatures = this.state.creatures[player];
+            for (const creature of creatures) {
+                if ('fieldInstanceId' in creature) {
+                    validFieldInstanceIds.add(creature.fieldInstanceId);
+                }
+                if (creature.evolutionStack) {
+                    for (const card of creature.evolutionStack) {
+                        try {
+                            this.controllers.cardRepository.getCreature(card.templateId);
+                        } catch (error) {
+                            const errorMessage = error instanceof Error ? error.message : String(error);
+                            throw new Error(`Invalid creature templateId "${card.templateId}" for player ${player}: ${errorMessage}`);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Validate that only field creatures have energy attached
+        const instancesWithEnergy = this.controllers.energy.getInstancesWithEnergy();
+        for (const instanceId of instancesWithEnergy) {
+            if (!validFieldInstanceIds.has(instanceId)) {
+                throw new Error(`Energy attached to non-existent field card instance "${instanceId}". Valid instances: ${Array.from(validFieldInstanceIds).join(', ')}`);
+            }
+        }
+
+        // Validate that only field creatures have tools attached
+        const instancesWithTools = this.controllers.tools.getInstancesWithTools();
+        for (const instanceId of instancesWithTools) {
+            if (!validFieldInstanceIds.has(instanceId)) {
+                throw new Error(`Tool attached to non-existent field card instance "${instanceId}". Valid instances: ${Array.from(validFieldInstanceIds).join(', ')}`);
+            }
         }
     }
 
@@ -237,15 +276,50 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     public isKnockedOut(playerId: number): boolean {
         const card = this.state.creatures[playerId]?.[0]; // Active card is at position 0
         
-        // If there's no active card, throw an error
+        // If there's no active card, the player has no creatures (already defeated)
         if (!card) {
-            throw new Error(`No active card found for player ${playerId} when checking knockout status`);
+            return false;
         }
         
-        const templateId = getCurrentTemplateId(card);
-        const { maxHp } = this.controllers.cardRepository.getCreature(templateId);
+        const maxHp = this.getEffectiveMaxHp(card, playerId);
 
         return card.damageTaken >= maxHp;
+    }
+
+    /**
+     * Calculate the effective max HP for a creature, including passive HP bonus effects.
+     * 
+     * @param card The field card to calculate max HP for
+     * @param playerId The player ID (for passive effect lookup)
+     * @returns The effective max HP including bonuses
+     */
+    private getEffectiveMaxHp(card: InstancedFieldCard, playerId: number): number {
+        const templateId = getCurrentTemplateId(card);
+        const { maxHp } = this.controllers.cardRepository.getCreature(templateId);
+        
+        // Get HP bonus passive effects that apply to this creature
+        const hpBonusEffects = this.controllers.effects.getPassiveEffectsByType('hp-bonus');
+        
+        // Calculate total HP bonus from all passive effects
+        let totalBonus = 0;
+        for (const passiveEffectWrapper of hpBonusEffects) {
+            const passiveEffect = passiveEffectWrapper.effect;
+            /*
+             * Check if the effect targets the active creature of this player
+             * For passive effects, 'self' should refer to the sourcePlayer (who owns the tool/ability)
+             */
+            const sourcPlayer = passiveEffectWrapper.sourcePlayer;
+            const targetPlayer = passiveEffect.target?.player === 'self' ? sourcPlayer : passiveEffect.target?.player;
+            
+            if (targetPlayer === playerId && (passiveEffect.target?.position === 'active' || !passiveEffect.target?.position)) {
+                // Extract constant value directly (HP bonuses are always constants)
+                if (passiveEffect.amount && passiveEffect.amount.type === 'constant') {
+                    totalBonus += passiveEffect.amount.value;
+                }
+            }
+        }
+        
+        return maxHp + totalBonus;
     }
 
     // Remove a card from the bench (for knockouts) and discard it
@@ -254,6 +328,16 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         if (benchPosition < this.state.creatures[playerId].length) {
             const removedCard = this.state.creatures[playerId][benchPosition];
             this.state.creatures[playerId].splice(benchPosition, 1);
+            // Automatically discard the removed card
+            this.controllers.discard.discardFieldCard(playerId, removedCard);
+        }
+    }
+
+    // Remove the active card when knocked out with no bench available
+    public removeActiveCard(playerId: number): void {
+        if (this.state.creatures[playerId].length > 0) {
+            const removedCard = this.state.creatures[playerId][0];
+            this.state.creatures[playerId].splice(0, 1);
             // Automatically discard the removed card
             this.controllers.discard.discardFieldCard(playerId, removedCard);
         }
@@ -288,6 +372,11 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     // Check if a player has any cards left (benched cards)
     public hasRemainingCards(playerId: number): boolean {
         return this.state.creatures[playerId].length > 1; // More than just active card
+    }
+    
+    // Check if a player has any creatures left at all (active or benched)
+    public hasAnyCreatures(playerId: number): boolean {
+        return this.state.creatures[playerId].length > 0;
     }
     
     // Set the active card for a player

@@ -40,7 +40,7 @@ export type TriggerEffectContext = BaseEffectContext & {
     };
 };
 
-export type EffectContext = 
+export type EffectContext =
     | AttackEffectContext 
     | AbilityEffectContext 
     | CardEffectContext 

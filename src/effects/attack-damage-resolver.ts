@@ -202,7 +202,8 @@ export class AttackDamageResolver {
                 attachedEnergyMap,
             );
             return conditionMet 
-                ? getEffectValue(attack.damage.trueValue, controllers, context) : 0;
+                ? getEffectValue(attack.damage.trueValue, controllers, context) 
+                : getEffectValue(attack.damage.falseValue, controllers, context);
         } else if (attack.damage.type === 'constant') {
             // Handle constant damage
             return attack.damage.value;
@@ -223,13 +224,27 @@ export class AttackDamageResolver {
             return false; 
         }
         
+        // Check if the target matches the target criteria
+        // The target property specifies which opponent creatures receive the boosted damage
+        if (typeof boost.target === 'object' && 'criteria' in boost.target) {
+            // For all-matching targets, check against the criteria
+            const targetCriteria = boost.target.criteria;
+            if (targetCriteria?.fieldCriteria && !FieldTargetCriteriaFilter.matchesFieldCriteria(
+                targetCriteria.fieldCriteria,
+                targetcreature,
+                controllers.cardRepository.cardRepository,
+            )) {
+                return false;
+            }
+        }
+        
         /*
-         * Use proper criteria-based evaluation instead of string matching
-         * damageSource has both targeting info and fieldCriteria
+         * Use proper criteria-based evaluation for damageSource
+         * damageSource specifies which attacker's moves get the boost
          */
         const fieldCriteria = boost.damageSource.fieldCriteria;
         if (!fieldCriteria) {
-            // No criteria means it applies to all targets
+            // No criteria means it applies to all attacks
             return true;
         }
         

@@ -219,7 +219,7 @@ describe('Shuffle Effect', () => {
         const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
         const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
         const healingItem = { templateId: 'basic-item', type: 'item' as const };
-        const researchSupporter = { templateId: 'research-supporter', type: 'supporter' as const };
+        const researchSupporter = { templateId: 'draw-supporter', type: 'supporter' as const };
 
         const testRepository = new MockCardRepository({
             supporters: new Map([

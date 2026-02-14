@@ -64,7 +64,7 @@ export default defineConfig([
             '@stylistic/computed-property-spacing': 'error',
             '@stylistic/dot-location': ['error', 'property'],
             '@stylistic/eol-last': 'error',
-            '@stylistic/func-call-spacing': 'error',
+            '@stylistic/function-call-spacing': 'error',
 
             '@stylistic/generator-star-spacing': ['error', {
                 before: true,
@@ -77,7 +77,7 @@ export default defineConfig([
             '@stylistic/keyword-spacing': 'error',
             '@stylistic/linebreak-style': 'error',
             '@stylistic/lines-between-class-members': 'error',
-            '@stylistic/multiline-comment-style': 'error',
+            '@stylistic/multiline-comment-style': 'off',
             '@stylistic/new-parens': 'error',
             '@stylistic/newline-per-chained-call': 'error',
             '@stylistic/no-multi-spaces': 'error',
@@ -92,7 +92,23 @@ export default defineConfig([
                 objectsInObjects: false,
             }],
 
-            '@stylistic/operator-linebreak': ['error', 'before'],
+            '@stylistic/operator-linebreak': ['error', 'before', {
+                overrides: {
+                    '=': 'after',
+                    '+=': 'after',
+                    '-=': 'after',
+                    '*=': 'after',
+                    '/=': 'after',
+                    '%=': 'after',
+                    '**=': 'after',
+                    '&=': 'after',
+                    '|=': 'after',
+                    '^=': 'after',
+                    '<<=': 'after',
+                    '>>=': 'after',
+                    '>>>=': 'after',
+                },
+            }],
             '@stylistic/quote-props': ['error', 'as-needed'],
             '@stylistic/quotes': ['error', 'single'],
             '@stylistic/semi': ['error', 'always'],

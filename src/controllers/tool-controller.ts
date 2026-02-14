@@ -1,7 +1,7 @@
 import { GenericControllerProvider, GenericHandlerController, GlobalController, SystemHandlerParams } from '@cards-ts/core';
-import { CardRepository } from '../repository/card-repository.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
+import { CardRepositoryController } from './card-repository-controller.js';
 
 export type ToolState = {
     // Map of FieldCard instance ID to attached tool info
@@ -12,13 +12,12 @@ export type ToolState = {
 
 type ToolDependencies = {
     players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>;
+    cardRepository: CardRepositoryController;
 };
 
 export class ToolControllerProvider implements GenericControllerProvider<ToolState, ToolDependencies, ToolController> {
-    constructor(private cardRepository: CardRepository) {}
-
     controller(state: ToolState, controllers: ToolDependencies): ToolController {
-        return new ToolController(state, controllers, this.cardRepository);
+        return new ToolController(state, controllers);
     }
     
     initialState(): ToolState {
@@ -28,21 +27,21 @@ export class ToolControllerProvider implements GenericControllerProvider<ToolSta
     }
     
     dependencies() {
-        return { players: true } as const;
+        return { players: true, cardRepository: true } as const;
     }
 }
 
 export class ToolController extends GlobalController<ToolState, ToolDependencies> {
-    constructor(
-        state: ToolState,
-        controllers: ToolDependencies,
-        private cardRepository: CardRepository,
-    ) {
-        super(state, controllers);
-    }
-
     validate() {
-        // No validation needed
+        // Validate that all attached tools exist in the repository
+        for (const [ fieldCardInstanceId, tool ] of Object.entries(this.state.attachedTools)) {
+            try {
+                this.controllers.cardRepository.getTool(tool.templateId);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                throw new Error(`Invalid tool templateId "${tool.templateId}" attached to field card "${fieldCardInstanceId}": ${errorMessage}`);
+            }
+        }
     }
     
     // Get attached tool for a FieldCard
@@ -58,7 +57,7 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
         }
         
         // Verify tool exists
-        const toolData = this.cardRepository.getTool(toolTemplateId);
+        const toolData = this.controllers.cardRepository.getTool(toolTemplateId);
         if (!toolData) {
             return false;
         }
@@ -90,7 +89,7 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
             return 0; 
         }
         
-        const toolData = this.cardRepository.getTool(tool.templateId);
+        const toolData = this.controllers.cardRepository.getTool(tool.templateId);
         if (!toolData || !toolData.effects) {
             return 0; 
         }
@@ -108,5 +107,10 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
         }
         
         return hpBonus;
+    }
+
+    // Get all field card instance IDs that have tools attached (for validation purposes)
+    public getInstancesWithTools(): string[] {
+        return Object.keys(this.state.attachedTools);
     }
 }

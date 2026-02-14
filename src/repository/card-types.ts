@@ -9,7 +9,7 @@ export type OperationType = 'heal' | 'damage' | 'attach' | 'discard';
 /**
  * Represents a trigger condition that determines when an effect should activate.
  */
-export type Trigger = 
+export type Trigger =
     | { type: 'manual', unlimited: boolean }
     | { type: 'end-of-turn', ownTurnOnly?: boolean, firstTurnOnly?: boolean }
     | { type: 'damaged', position?: string }

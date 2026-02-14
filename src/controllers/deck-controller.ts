@@ -142,14 +142,35 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
             for (let i = 0; i < params.initialDecks.length; i++) {
                 const deck = params.initialDecks[i];
                 if (deck.length > 0 && typeof deck[0] === 'string') {
-                    for (const templateId of deck as string[]) {
+                    const stringDeck = deck as string[];
+                    let hasBasicCreature = false;
+
+                    for (const templateId of stringDeck) {
                         try {
-                            this.controllers.cardRepository.getCard(templateId);
+                            const cardResult = this.controllers.cardRepository.getCard(templateId);
+                            // Check if this is a basic creature (no previousStageName)
+                            if (cardResult.type === 'creature' && !cardResult.data.previousStageName) {
+                                hasBasicCreature = true;
+                            }
                         } catch (error) {
                             const errorMessage = error instanceof Error ? error.message : String(error);
                             throw new Error(`Invalid card in player ${i} deck: ${errorMessage}`);
                         }
                     }
+
+                    if (!hasBasicCreature) {
+                        throw new Error(`Player ${i} deck must contain at least one basic creature to draw initial hand`);
+                    }
+                }
+            }
+        }
+
+        // Validate that each player has energy types
+        if (params.playerEnergyTypes) {
+            for (let i = 0; i < params.playerEnergyTypes.length; i++) {
+                const energyTypes = params.playerEnergyTypes[i];
+                if (!energyTypes || energyTypes.length === 0) {
+                    throw new Error(`Player ${i} must have at least one energy type`);
                 }
             }
         }
