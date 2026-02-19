@@ -32,7 +32,7 @@
     "url": "https://github.com/johnameyer/pocket-tcg/issues"
   },
   "dependencies": {
-    "@cards-ts/core": "^0.8.2",
+    "@cards-ts/core": "github:johnameyer/cards-ts#feature/get-validation-error&path:libs/core",
     "@cards-ts/state-machine": "^0.8.2",
     "yargs": "^17.7.2"
   },

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cards-ts/core':
-        specifier: ^0.8.2
-        version: 0.8.2(@types/node@22.19.10)
+        specifier: github:johnameyer/cards-ts#feature/get-validation-error&path:libs/core
+        version: https://codeload.github.com/johnameyer/cards-ts/tar.gz/a59b892970a10afa34a9254c323e72b4951b32f8#path:libs/core(@types/node@22.19.10)
       '@cards-ts/state-machine':
         specifier: ^0.8.2
         version: 0.8.2(@types/node@22.19.10)
@@ -86,6 +86,10 @@ packages:
 
   '@cards-ts/core@0.8.2':
     resolution: {integrity: sha512-PAw1V1pk+63/+ovr84R8UbYDTQg9M5+ELlZ/ctM95jsLbOfXsMDXPAQ6zEBTYFSZjDPSiG4b68JZrBLwiwwcLg==}
+
+  '@cards-ts/core@https://codeload.github.com/johnameyer/cards-ts/tar.gz/a59b892970a10afa34a9254c323e72b4951b32f8#path:libs/core':
+    resolution: {path: libs/core, tarball: https://codeload.github.com/johnameyer/cards-ts/tar.gz/a59b892970a10afa34a9254c323e72b4951b32f8}
+    version: 0.8.2
 
   '@cards-ts/state-machine@0.8.2':
     resolution: {integrity: sha512-+166Z3MyuOBdqUL5i1vQS1k9EF6x6KG+jBhI8+pn8xb+nwqbySUXn0v5cAftm8KV7BhFJ4+EcdNfVfwzyLLyVQ==}
@@ -1897,6 +1901,17 @@ packages:
 snapshots:
 
   '@cards-ts/core@0.8.2(@types/node@22.19.10)':
+    dependencies:
+      inquirer: 9.3.8(@types/node@22.19.10)
+      inquirer-orderedcheckbox: 1.0.0
+      inquirer-ordinal-prompt: 1.0.0(inquirer@9.3.8(@types/node@22.19.10))
+      inquirer-select-line: 1.1.3
+      inquirer-table-prompt: 0.2.1
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@cards-ts/core@https://codeload.github.com/johnameyer/cards-ts/tar.gz/a59b892970a10afa34a9254c323e72b4951b32f8#path:libs/core(@types/node@22.19.10)':
     dependencies:
       inquirer: 9.3.8(@types/node@22.19.10)
       inquirer-orderedcheckbox: 1.0.0
