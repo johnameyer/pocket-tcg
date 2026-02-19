@@ -6,7 +6,7 @@ import { GameCard } from '../../controllers/card-types.js';
 /**
  * Result of card target resolution.
  */
-export type CardTargetResolutionResult = 
+export type CardTargetResolutionResult =
     | { type: 'resolved', cards: GameCard[] }
     | { type: 'requires-selection', availableCards: GameCard[] }
     | { type: 'no-valid-targets' };

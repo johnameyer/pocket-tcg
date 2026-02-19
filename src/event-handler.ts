@@ -801,12 +801,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
                 EventHandler.validate('Energy attachment is prevented', (controllers: Controllers, source: number, message: AttachEnergyResponseMessage) => {
                     const preventionEffects = controllers.effects.getPassiveEffectsByType('prevent-energy-attachment');
-                    console.log('[ENERGY] Checking prevention for player', source, 'position', message.fieldPosition, 'effects count:', preventionEffects.length);
-                    if (preventionEffects.length > 0) {
-                        console.log('[ENERGY] Effects:', preventionEffects.map(e => e.effectName + ' target:' + JSON.stringify(e.effect.target)));
-                    }
                     const isPrevented = PassiveEffectMatcher.isEnergyAttachmentPrevented(controllers, source, message.fieldPosition);
-                    console.log('[ENERGY] Prevention result:', isPrevented);
                     return isPrevented;
                 }),
             ],

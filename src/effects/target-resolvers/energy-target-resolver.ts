@@ -25,7 +25,7 @@ export type ResolvedEnergyTarget = {
 /**
  * Result of energy target resolution.
  */
-export type EnergyTargetResolutionResult = 
+export type EnergyTargetResolutionResult =
     | ResolvedEnergyTarget
     | { type: 'requires-selection', availableTargets: EnergyOption[] }
     | { type: 'no-valid-targets' };

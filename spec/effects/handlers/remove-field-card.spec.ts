@@ -4,6 +4,7 @@ import { RemoveFieldCardEffectHandler } from '../../../src/effects/handlers/remo
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { RemoveFieldCardEffect } from '../../../src/repository/effect-types.js';
 import { MockCardRepository } from '../../mock-repository.js';
+import { FieldTarget } from '../../../src/index.js';
 
 describe('Remove Field Card Effect', () => {
     describe('canApply', () => {
@@ -53,7 +54,7 @@ describe('Remove Field Card Effect', () => {
 
             const effect: RemoveFieldCardEffect = {
                 type: 'remove-field-card',
-                target: undefined as any,
+                target: undefined as unknown as FieldTarget,
                 destination: 'hand',
             };
 

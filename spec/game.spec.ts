@@ -17,8 +17,15 @@ describe('Creature Pocket TCG Game', () => {
     };
 
     it('should create and run a basic game with bot handlers', () => {
-        const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain(),
-        );
+        const params: GameParams = {
+            initialDecks: [
+                [ 'basic-creature', 'basic-creature', 'basic-supporter', 'basic-item' ],
+                [ 'basic-creature', 'basic-creature', 'basic-supporter', 'basic-item' ],
+            ],
+            maxHandSize: 10,
+            maxTurns: 30,
+        };
+        const handlers = Array.from({ length: 2 }, () => factory.getDefaultBotHandlerChain());
         
         const names = [ 'Player1', 'Player2' ];
         const driver = factory.getGameDriver(handlers, params, names);

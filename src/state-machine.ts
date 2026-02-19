@@ -39,7 +39,7 @@ const isCardKnockedOut = (controllers: Controllers) => {
 
 // Check if a player has no remaining cards (active is knocked out and no bench)
 const isPlayerDefeated = (controllers: Controllers, playerId: number) => {
-    return controllers.field.isKnockedOut(playerId) && !controllers.field.hasRemainingCards(playerId);
+    return !controllers.field.hasRemainingCards(playerId) && !controllers.field.getCardByPosition(playerId, 0);
 };
 
 // Check if a player has won by points (3 points)
@@ -80,6 +80,8 @@ const processKnockouts = {
         // Check each player
         for (let i = 0; i < controllers.players.count; i++) {
             // Check active card knockout
+            const hasRemaining = controllers.field.hasRemainingCards(i);
+            
             if (controllers.field.isKnockedOut(i)) {
                 // Send knockout message
                 const targetCard = controllers.field.getCardByPosition(i, 0);
@@ -120,7 +122,11 @@ const processKnockouts = {
                     const pointsToAward = calculateKnockoutPoints(cardData);
                     controllers.points.increaseScore(opponentId, pointsToAward);
                     
-                    // Note: Card will be automatically discarded when promoteToBattle is called
+                    // If no benched cards available, remove immediately and end game
+                    // Otherwise, let promoteToBattle handle the discard during promotion
+                    if (!hasRemaining) {
+                        controllers.field.removeActiveCard(i);
+                    }
                 }
             }
             

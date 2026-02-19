@@ -72,11 +72,8 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
                 }
             });
             
-            /*
-             * For validation, we allow the item to be played even if there's no valid evolution
-             * The evolution will just fail silently in the apply method
-             */
-            return true;
+            // Card cannot be played if there's no valid Stage 2 evolution
+            return hasValidEvolution;
         }
         
         /*

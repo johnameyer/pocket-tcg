@@ -120,7 +120,7 @@ export class FieldTargetCriteriaFilter {
         card: FieldCard,
         cardRepository: CardRepository,
         attachedEnergy?: { [instanceId: string]: Record<AttachableEnergyType, number> },
-        attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string } },
+        attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string }},
     ): boolean {
         return this.evaluateFieldCriteria(criteria, card, cardRepository, attachedEnergy, attachedTools);
     }
@@ -141,7 +141,7 @@ export class FieldTargetCriteriaFilter {
         card: FieldCard,
         cardRepository: CardRepository,
         attachedEnergy?: { [instanceId: string]: Record<AttachableEnergyType, number> },
-        attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string } },
+        attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string }},
     ): boolean {
         // Evaluate card criteria if present - delegate to CardCriteriaFilter
         if (criteria.cardCriteria) {

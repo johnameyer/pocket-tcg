@@ -3,11 +3,13 @@ import { GameParams } from '../game-params.js';
 import { GameCard } from './card-types.js';
 import { DeckController } from './deck-controller.js';
 import { DiscardController } from './discard-controller.js';
+import { CardRepositoryController } from './card-repository-controller.js';
 
 type HandDependencies = {
     deck: DeckController;
     params: ParamsController<GameParams>;
     discard: DiscardController;
+    cardRepository: CardRepositoryController;
 };
 
 export class HandControllerProvider implements GenericControllerProvider<GameCard[][], HandDependencies, HandController> {
@@ -21,7 +23,7 @@ export class HandControllerProvider implements GenericControllerProvider<GameCar
     }
     
     dependencies() {
-        return { deck: true, params: true, discard: true } as const;
+        return { deck: true, params: true, discard: true, cardRepository: true } as const;
     }
 }
 
@@ -61,44 +63,53 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Draw initial hand (5 cards) ensuring at least one basic creature
     drawInitialHand(playerId: number): void {
-        // Draw 5 cards normally first
-        for (let i = 0; i < 5; i++) {
-            this.drawCard(playerId);
-        }
-        
-        // Check if hand has any basic creature (non-evolution creature)
         const hand = this.state[playerId];
-        const hasBasicCreature = hand.some(card => {
-            if (card.type === 'creature') {
-                // We'll just assume all creatures are basic for now
-                return true;
-            }
-            return false;
-        });
+        const deck = this.controllers.deck.getDeck(playerId);
         
-        // If no basic creature, replace a non-creature card with a basic creature from deck
-        if (!hasBasicCreature) {
-            const deck = this.controllers.deck.getDeck(playerId);
-            const basicCreatureInDeck = deck.find(card => card.type === 'creature');
-            
-            if (basicCreatureInDeck) {
-                // Find a non-creature card to replace
-                const nonCreatureIndex = hand.findIndex(card => card.type !== 'creature');
-                if (nonCreatureIndex !== -1) {
-                    // Put the non-creature card back in deck
-                    const replacedCard = hand[nonCreatureIndex];
-                    deck.push(replacedCard);
-                    
-                    // Remove basic creature from deck and add to hand
-                    const deckIndex = deck.indexOf(basicCreatureInDeck);
-                    deck.splice(deckIndex, 1);
-                    hand[nonCreatureIndex] = basicCreatureInDeck;
-                    
-                    // Shuffle deck
-                    this.controllers.deck.shuffleDeck(playerId);
+        // Helper function to check if a creature is basic
+        const isBasicCreature = (card: GameCard): boolean => {
+            const cardResult = this.controllers.cardRepository.getCard(card.templateId);
+            if (cardResult.type !== 'creature') {
+                return false;
+            }
+            const creatureData = cardResult.data;
+            // A creature is basic if it has no previousStageName (doesn't evolve from another form)
+            return !creatureData.previousStageName;
+        };
+        
+        // Shuffle the deck
+        this.controllers.deck.shuffleDeck(playerId);
+        
+        // Try up to 4 times - slice deck into 4 groups of 5, one must be valid
+        for (let attempt = 0; attempt < 4; attempt++) {
+            // Draw 5 cards for this attempt
+            const cardsDrawn: GameCard[] = [];
+            for (let i = 0; i < 5; i++) {
+                const card = this.controllers.deck.drawCard(playerId);
+                if (card) {
+                    cardsDrawn.push(card);
+                    hand.push(card);
                 }
             }
+            
+            // Check if this hand has at least one basic creature
+            if (hand.some(isBasicCreature)) {
+                return;
+            }
+            
+            /*
+             * If no basic creature found, put cards back in deck and try again
+             * Cards were drawn from the end (pop), so we put them back at the FRONT (unshift)
+             * This rotates the deck so the next attempt gets different cards
+             */
+            for (let i = 0; i < cardsDrawn.length; i++) {
+                deck.unshift(cardsDrawn[i]);
+            }
+            // Also remove them from hand
+            hand.splice(-cardsDrawn.length, cardsDrawn.length);
         }
+        
+        throw new Error(`Unable to draw initial hand with basic creature for player ${playerId} after 4 attempts. Deck must contain at least one basic creature.`);
     }
     
     // Play a card from hand
@@ -157,6 +168,16 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     
     // Required by AbstractController
     validate(): void {
-        // Validation logic if needed
+        // Validate that all cards exist in the repository
+        for (let player = 0; player < this.state.length; player++) {
+            for (const card of this.state[player]) {
+                try {
+                    this.controllers.cardRepository.getCard(card.templateId);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    throw new Error(`Invalid card templateId "${card.templateId}" in player ${player} hand: ${errorMessage}`);
+                }
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 /**
  * Represents how long a passive effect should remain active.
  */
-export type Duration = 
+export type Duration =
     /**
      * Effect lasts until the end of the current turn.
      * Cleared at the start of the next turn.

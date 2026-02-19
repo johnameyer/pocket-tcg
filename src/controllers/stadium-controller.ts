@@ -1,5 +1,6 @@
 import { GlobalController, GenericControllerProvider } from '@cards-ts/core';
 import { DiscardController } from './discard-controller.js';
+import { CardRepositoryController } from './card-repository-controller.js';
 
 export type StadiumState = {
     activeStadium?: {
@@ -12,6 +13,7 @@ export type StadiumState = {
 
 type StadiumDependencies = {
     discard: DiscardController;
+    cardRepository: CardRepositoryController;
 };
 
 export class StadiumControllerProvider implements GenericControllerProvider<StadiumState, StadiumDependencies, StadiumController> {
@@ -26,12 +28,20 @@ export class StadiumControllerProvider implements GenericControllerProvider<Stad
     }
     
     dependencies() {
-        return { discard: true } as const;
+        return { discard: true, cardRepository: true } as const;
     }
 }
 
 export class StadiumController extends GlobalController<StadiumState, StadiumDependencies> {
     validate() {
+        if (this.state.activeStadium) {
+            try {
+                this.controllers.cardRepository.getStadium(this.state.activeStadium.templateId);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                throw new Error(`Invalid stadium templateId "${this.state.activeStadium.templateId}": ${errorMessage}`);
+            }
+        }
         return true;
     }
 

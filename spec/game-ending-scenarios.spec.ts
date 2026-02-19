@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
+import { GameCard } from '../src/controllers/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 
@@ -19,6 +20,19 @@ describe('Game-Ending Scenarios', () => {
 
             // Game should end when high-hp-creature is knocked out with no bench
             expect(state.completed).to.equal(true, 'Game should end when player has no creatures left');
+            
+            // Player 1's active field should be empty (creature removed)
+            expect(state.field.creatures[1]).to.have.length(0, 'Player 1 should have no creatures left on field');
+            
+            // The knocked-out creature should be in the discard pile
+            expect(state.discard[1].length).to.be.greaterThan(0, 'Player 1 should have cards in discard pile');
+            expect(state.discard[1].some((card: GameCard) => card.templateId === 'high-hp-creature')).to.be.true;
+            
+            // Player 0 should be awarded points for the knockout
+            expect(state.points[0]).to.be.greaterThan(0, 'Player 0 should be awarded points for knocking out Player 1\'s last creature');
+            
+            // Player 1 should not be prompted to select another creature (game ended instead)
+            expect(state.completed).to.be.true;
         });
     });
 
@@ -47,7 +61,7 @@ describe('Game-Ending Scenarios', () => {
             const { state } = runTestGame({
                 actions: [ new AttackResponseMessage(0) ],
                 stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'evolution-creature'),
+                    StateBuilder.withCreatures(0, 'evolution-creature', [ 'high-hp-creature' ]),
                     StateBuilder.withCreatures(1, 'evolution-creature', [ 'high-hp-creature' ]),
                     StateBuilder.withDamage('evolution-creature-0', 160),
                     StateBuilder.withDamage('evolution-creature-1', 170),
@@ -58,7 +72,7 @@ describe('Game-Ending Scenarios', () => {
                 ),
             });
 
-            // Both Charizard should be knocked out (200 damage to defender, 50 self-damage to attacker)
+            // Both evolution-creatures should be knocked out (200 damage to defender, 50 self-damage to attacker)
             const attackerKO = state.field.creatures[0][0].damageTaken >= 180;
             const defenderKO = state.field.creatures[1][0].damageTaken >= 180;
             

@@ -4,6 +4,7 @@ import { PullEvolutionEffectHandler } from '../../../src/effects/handlers/pull-e
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { PullEvolutionEffect } from '../../../src/repository/effect-types.js';
 import { MockCardRepository } from '../../mock-repository.js';
+import { FieldTarget } from '../../../src/index.js';
 
 describe('Pull Evolution Effect', () => {
     describe('canApply', () => {
@@ -51,7 +52,7 @@ describe('Pull Evolution Effect', () => {
 
             const effect: PullEvolutionEffect = {
                 type: 'pull-evolution',
-                target: undefined as any,
+                target: undefined as unknown as FieldTarget,
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
