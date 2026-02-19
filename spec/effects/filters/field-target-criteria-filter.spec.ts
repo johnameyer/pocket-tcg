@@ -186,6 +186,209 @@ describe('FieldTargetCriteriaFilter', () => {
 
             expect(result.length).to.equal(0);
         });
+
+        it('should filter by stage using NumberFilter - array of stages', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // Set up field: Basic, Stage 1, and Stage 2 creatures
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const stage1 = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const stage2 = { templateId: 'stage-2-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, stage1, stage2 ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { stage: [ 1, 2 ] }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(1);
+            expect(result[1].fieldIndex).to.equal(2);
+        });
+
+        it('should filter by stage using NumberFilter - min stage', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // Set up field: Basic, Stage 1, and Stage 2 creatures
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const stage1 = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const stage2 = { templateId: 'stage-2-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, stage1, stage2 ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { stage: { min: 1 }}}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(1);
+            expect(result[1].fieldIndex).to.equal(2);
+        });
+
+        it('should filter by stage using NumberFilter - max stage', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // Set up field: Basic, Stage 1, and Stage 2 creatures
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const stage1 = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const stage2 = { templateId: 'stage-2-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, stage1, stage2 ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { stage: { max: 1 }}}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(0);
+            expect(result[1].fieldIndex).to.equal(1);
+        });
+
+        it('should filter by maxHp - exact value', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // basic-creature: 60 HP, high-hp-creature: 180 HP
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const highHp = { templateId: 'high-hp-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ basic, highHp ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { maxHp: 60 }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(0);
+        });
+
+        it('should filter by maxHp - max threshold', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // basic-creature: 60 HP, evolution-creature: 120 HP, high-hp-creature: 180 HP
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const highHp = { templateId: 'high-hp-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, evolution, highHp ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { maxHp: { max: 120 }}}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(0);
+            expect(result[1].fieldIndex).to.equal(1);
+        });
+
+        it('should filter by maxHp - min threshold', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // basic-creature: 60 HP, evolution-creature: 120 HP, high-hp-creature: 180 HP
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const highHp = { templateId: 'high-hp-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, evolution, highHp ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { maxHp: { min: 120 }}}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(1);
+            expect(result[1].fieldIndex).to.equal(2);
+        });
+
+        it('should filter by retreatCost - exact value', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // basic-creature: 1 retreat, evolution-creature: 2 retreat, tank-creature: 3 retreat
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const tank = { templateId: 'tank-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, evolution, tank ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { retreatCost: 2 }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(1);
+        });
+
+        it('should filter by retreatCost - min threshold', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // basic-creature: 1 retreat, evolution-creature: 2 retreat, tank-creature: 3 retreat
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const tank = { templateId: 'tank-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, evolution, tank ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { retreatCost: { min: 3 }}}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(2);
+        });
+
+        it('should filter by retreatCost - array of values', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+            
+            // basic-creature: 1 retreat, evolution-creature: 2 retreat, tank-creature: 3 retreat
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const tank = { templateId: 'tank-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, evolution, tank ];
+            
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { retreatCost: [ 1, 3 ] }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result[0].fieldIndex).to.equal(0);
+            expect(result[1].fieldIndex).to.equal(2);
+        });
     });
 });
 
