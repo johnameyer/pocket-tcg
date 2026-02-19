@@ -1,4 +1,5 @@
 import { AttachableEnergyType } from '../energy-types.js';
+import { NumberFilter } from './number-filter.js';
 
 
 /**
@@ -36,7 +37,9 @@ export type ItemCardCriteria = BaseCardCriteria & {
  */
 export type CreatureCardCriteria = {
     name?: string[]; 
-    stage?: 0 | 1 | 2;
+    stage?: NumberFilter;
+    maxHp?: NumberFilter;
+    retreatCost?: NumberFilter;
     previousStageName?: string;
     isType?: AttachableEnergyType;
     attributes?: {

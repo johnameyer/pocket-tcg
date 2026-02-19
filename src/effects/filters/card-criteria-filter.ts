@@ -2,6 +2,7 @@ import { CardCriteria, CreatureCardCriteria } from '../../repository/criteria/ca
 import { CardRepository } from '../../repository/card-repository.js';
 import { GameCard } from '../../controllers/card-types.js';
 import { CreatureData } from '../../repository/card-types.js';
+import { NumberFilter } from './number-filter.js';
 
 /**
  * Filters cards based on criteria to enable pre-filtering before user selection.
@@ -60,7 +61,7 @@ export class CardCriteriaFilter {
         }
 
         // Handle creature criteria
-        if ('isType' in criteria || 'stage' in criteria || 'previousStageName' in criteria || 'attributes' in criteria) {
+        if ('isType' in criteria || 'stage' in criteria || 'maxHp' in criteria || 'retreatCost' in criteria || 'previousStageName' in criteria || 'attributes' in criteria) {
             return this.matchesCreatureCriteria(card, criteria, cardRepository);
         }
 
@@ -97,7 +98,21 @@ export class CardCriteriaFilter {
             // Check stage condition
             if (criteria.stage !== undefined) {
                 const actualStage = this.calculateStage(creatureData, cardRepository);
-                if (criteria.stage !== actualStage) {
+                if (!NumberFilter.matches(actualStage, criteria.stage)) {
+                    return false;
+                }
+            }
+
+            // Check maxHp condition
+            if (criteria.maxHp !== undefined) {
+                if (!NumberFilter.matches(creatureData.maxHp, criteria.maxHp)) {
+                    return false;
+                }
+            }
+
+            // Check retreatCost condition
+            if (criteria.retreatCost !== undefined) {
+                if (!NumberFilter.matches(creatureData.retreatCost, criteria.retreatCost)) {
                     return false;
                 }
             }
