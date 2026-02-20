@@ -163,28 +163,40 @@ export class DefaultBotHandler extends GameHandler {
             return;
         }
         
-        // Bot strategy: simply select first available creature targets without validating
-        // We can't use FieldTargetResolver here because handlers only have player view (HandlerData)
-        // and FieldTargetResolver needs full Controllers
+        // Use TargetResolver to get valid targets compositionally
+        const { effect, originalContext } = pendingSelection;
+        const target = 'target' in effect ? effect.target : undefined;
         
-        const targetCount = pendingSelection.count || 1;
-        const selectedTargets: Array<{ playerId: number; fieldIndex: number }> = [];
-        
-        // Try to get creature targets from our own field first
-        const ownCreatures = handlerData.field?.creatures || [];
-        for (let i = 0; i < ownCreatures.length && selectedTargets.length < targetCount; i++) {
-            if (ownCreatures[i]) {
-                selectedTargets.push({ playerId: 0, fieldIndex: i });
-            }
+        if (!target || typeof target === 'string') {
+            // No target selection needed or resolved already
+            return;
         }
         
-        // If we need more targets and can select opponent, we would add those
-        // But we don't have opponent field data in HandlerData for the current player
-        // So just send what we have
+        /*
+         * Target should be a FieldTarget - do not handle FieldEnergyTarget here
+         * FieldEnergyTarget resolution is handled by EnergyTargetResolver automatically
+         */
         
-        if (selectedTargets.length > 0) {
-            responsesQueue.push(new SelectTargetResponseMessage(selectedTargets));
+        /*
+         * Convert handlerData to Controllers for TargetResolver
+         * HandlerData is structurally compatible with Controllers (it's a view of Controllers)
+         * This pattern is used throughout the codebase for handler methods
+         */
+        const controllers = handlerData as unknown as Controllers;
+        const resolution = FieldTargetResolver.resolveTarget(target as FieldTarget, controllers, originalContext);
+        
+        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+            return;
         }
+        
+        // For bot: select first N available targets up to count
+        const targetCount = Math.min(pendingSelection.count || 1, resolution.availableTargets.length);
+        const selectedTargets = resolution.availableTargets.slice(0, targetCount).map(t => ({
+            playerId: t.playerId,
+            fieldIndex: t.fieldIndex,
+        }));
+        
+        responsesQueue.push(new SelectTargetResponseMessage(selectedTargets));
     }
     
     handleSelectEnergy(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectEnergyResponseMessage>): void {
