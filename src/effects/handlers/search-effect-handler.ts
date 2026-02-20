@@ -30,23 +30,16 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
     
     /**
      * Validate if a search effect can be applied.
-     * For deck searches, checks if the deck has cards.
+     * Search effects always can be applied - they just have no effect if no cards match.
+     * The apply method handles no-valid-targets gracefully.
      * 
      * @param handlerData Handler data view
      * @param effect The search effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns Always true - apply method handles empty deck/no matching cards
      */
     canApply(handlerData: HandlerData, effect: SearchEffect, context: EffectContext, cardRepository?: CardRepository): boolean {
-        // Extract location from source target
-        const location = 'location' in effect.source ? effect.source.location : 'deck';
-        
-        // For deck searches, check if deck has cards
-        if (location === 'deck') {
-            const deckSize = handlerData.deck;
-            return deckSize > 0;
-        }
-        
+        // Search effects always can be applied - they just do nothing if no cards found
         return true;
     }
     

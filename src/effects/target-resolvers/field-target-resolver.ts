@@ -83,7 +83,20 @@ export class FieldTargetResolver {
             for (const playerId of playerIds) {
                 // Get all creature (active and benched)
                 const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
-                const allCreatures = controllers.field.getCards(playerId) || [];
+                // Handle both full controllers and player view (HandlerData)
+                    let allCreatures: any[] = [];
+                    if (typeof (controllers.field as any).getCards === 'function') {
+                        // Full controllers
+                        allCreatures = (controllers.field as any).getCards(playerId) || [];
+                    } else if ((controllers.field as any).creatures !== undefined) {
+                        // Player view - only has access to current player's creatures
+                        if (playerId === context.sourcePlayer) {
+                            allCreatures = (controllers.field as any).creatures || [];
+                        } else {
+                            // Can't access opponent creatures from player view
+                            allCreatures = [];
+                        }
+                    }
                 
                 for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
                     const creature = allCreatures[fieldIndex];
