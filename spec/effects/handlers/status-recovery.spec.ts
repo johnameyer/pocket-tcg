@@ -14,7 +14,7 @@ describe('Status Recovery Effect', () => {
         const handler = new StatusRecoveryEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when target has status effects', () => {
+        it('should return undefined when target has status effects', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -29,10 +29,10 @@ describe('Status Recovery Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when target has no status effects', () => {
+        it('should return rejection reason when target has no status effects', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -46,10 +46,10 @@ describe('Status Recovery Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when there is no creature at target position', () => {
+        it('should return rejection reason when there is no creature at target position', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -62,7 +62,7 @@ describe('Status Recovery Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

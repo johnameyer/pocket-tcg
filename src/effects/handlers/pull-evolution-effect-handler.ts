@@ -29,16 +29,17 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
      * @param handlerData Handler data view
      * @param effect The pull evolution effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: PullEvolutionEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: PullEvolutionEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // If there's no target, we can't apply the effect
         if (!effect.target) {
-            return false;
+            return 'No target for pull evolution';
         }
         
         // Use TargetResolver to check if the target is available
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)
+            ? undefined : 'No valid targets for pull evolution';
     }
 
     /**

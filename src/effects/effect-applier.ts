@@ -373,7 +373,8 @@ export class EffectApplier {
         
         // If all required targets are available, then check if the handler has additional validation
         if (handler.canApply) {
-            return handler.canApply(handlerData, effect, context, cardRepository);
+            const reason = handler.canApply(handlerData, effect, context, cardRepository);
+            return !reason; // undefined means valid (true), string means invalid (false)
         }
         
         // If no additional validation is needed, the effect can be applied

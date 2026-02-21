@@ -60,9 +60,9 @@ export interface EffectHandler<T extends Effect> {
      * @param handlerData Handler data view
      * @param effect The effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply?(handlerData: HandlerData, effect: T, context: EffectContext, cardRepository: CardRepository): boolean;
+    canApply?(handlerData: HandlerData, effect: T, context: EffectContext, cardRepository: CardRepository): string | undefined;
 }
 
 /**

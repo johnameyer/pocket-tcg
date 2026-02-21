@@ -17,7 +17,7 @@ describe('Retreat Prevention Effect', () => {
         const handler = new RetreatPreventionEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when target exists', () => {
+        it('should return undefined when target exists', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -32,10 +32,10 @@ describe('Retreat Prevention Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when target does not exist (target resolution failure)', () => {
+        it('should return rejection reason when target does not exist (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -49,10 +49,10 @@ describe('Retreat Prevention Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
+        it('should return rejection reason when targeting bench with no bench creatures (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -67,7 +67,7 @@ describe('Retreat Prevention Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

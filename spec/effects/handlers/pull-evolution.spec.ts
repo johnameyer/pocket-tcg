@@ -11,7 +11,7 @@ describe('Pull Evolution Effect', () => {
         const handler = new PullEvolutionEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when target creature exists', () => {
+        it('should return undefined when target creature exists', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -26,10 +26,10 @@ describe('Pull Evolution Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when target creature does not exist', () => {
+        it('should return rejection reason when target creature does not exist', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
             );
@@ -42,10 +42,10 @@ describe('Pull Evolution Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when no target is specified', () => {
+        it('should return rejection reason when no target is specified', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -58,7 +58,7 @@ describe('Pull Evolution Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

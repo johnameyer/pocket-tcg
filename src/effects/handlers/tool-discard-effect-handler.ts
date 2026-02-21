@@ -33,12 +33,12 @@ export class ToolDiscardEffectHandler extends AbstractEffectHandler<ToolDiscardE
      * @param handlerData Handler data view
      * @param effect The tool discard effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: ToolDiscardEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: ToolDiscardEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // If there's no target, we can't apply the effect
         if (!effect.target) {
-            return false;
+            return 'No target for tool discard';
         }
         
         // Check if there are any creatures with tools attached
@@ -48,7 +48,8 @@ export class ToolDiscardEffectHandler extends AbstractEffectHandler<ToolDiscardE
         };
         
         // Use TargetResolver with validation function to check if any valid targets exist
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, hasToolAttached);
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, hasToolAttached)
+            ? undefined : 'No tools available to discard';
     }
 
     /**

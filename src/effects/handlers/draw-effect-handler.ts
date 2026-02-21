@@ -16,9 +16,9 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
      * @param handlerData Handler data view
      * @param effect The draw effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: DrawEffect, context: EffectContext): boolean {
+    canApply(handlerData: HandlerData, effect: DrawEffect, context: EffectContext): string | undefined {
         const playerId = context.sourcePlayer;
         
         // Get the deck size from handler data
@@ -28,7 +28,7 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
          * If the deck is completely empty, don't allow playing draw effects that require drawing
          * TODO probably we should print a message to the user somehow
          */
-        return deckSize !== 0;
+        return deckSize !== 0 ? undefined : 'No cards in deck to draw';
     }
 
     // TODO make this optional in the interface and remove for all it would be [] for?

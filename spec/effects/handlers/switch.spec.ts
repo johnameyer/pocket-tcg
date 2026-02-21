@@ -16,7 +16,7 @@ describe('Switch Effect', () => {
         const handler = new SwitchEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when there are benched creatures to switch with', () => {
+        it('should return undefined when there are benched creatures to switch with', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -31,10 +31,10 @@ describe('Switch Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when there are no benched creatures (target resolution failure)', () => {
+        it('should return rejection reason when there are no benched creatures (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -48,10 +48,10 @@ describe('Switch Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when switchWith is not provided', () => {
+        it('should return rejection reason when switchWith is not provided', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
             );
@@ -67,7 +67,7 @@ describe('Switch Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

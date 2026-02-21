@@ -16,7 +16,7 @@ describe('Evolution Acceleration Effect', () => {
         const handler = new EvolutionAccelerationEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when target is valid basic creature with Stage 2 evolution in hand', () => {
+        it('should return undefined when target is valid basic creature with Stage 2 evolution in hand', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withHand([{ templateId: 'stage2-creature', type: 'creature' }]),
@@ -33,10 +33,10 @@ describe('Evolution Acceleration Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when target is valid basic creature but no Stage 2 evolution in hand', () => {
+        it('should return rejection reason when target is valid basic creature but no Stage 2 evolution in hand', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withTurnNumber(3),
@@ -52,10 +52,10 @@ describe('Evolution Acceleration Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when target does not exist (target resolution failure)', () => {
+        it('should return rejection reason when target does not exist (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default();
 
             const effect: EvolutionAccelerationEffect = {
@@ -68,10 +68,10 @@ describe('Evolution Acceleration Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when creature was played this turn', () => {
+        it('should return rejection reason when creature was played this turn', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withHand([{ templateId: 'stage2-creature', type: 'creature' }]),
@@ -90,7 +90,7 @@ describe('Evolution Acceleration Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

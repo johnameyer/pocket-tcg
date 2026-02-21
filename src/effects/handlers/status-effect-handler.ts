@@ -31,16 +31,17 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
      * @param handlerData Handler data view
      * @param effect The status effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: StatusEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: StatusEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // If there's no target, we can't apply the effect
         if (!effect.target) {
-            return false;
+            return 'No target for status effect';
         }
         
         // Use TargetResolver to check if the target is available
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)
+            ? undefined : 'No valid targets for status effect';
     }
 
     /**

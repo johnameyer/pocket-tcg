@@ -13,7 +13,7 @@ describe('Swap Cards Effect', () => {
         const handler = new SwapCardsEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when player has cards in hand and deck', () => {
+        it('should return undefined when player has cards in hand and deck', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withHand([{ templateId: 'test-card', type: 'item' }]),
                 HandlerDataBuilder.withDeck(5),
@@ -28,10 +28,10 @@ describe('Swap Cards Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return true when player has no cards in hand but has deck', () => {
+        it('should return undefined when player has no cards in hand but has deck', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withHand([]),
                 HandlerDataBuilder.withDeck(5),
@@ -46,11 +46,11 @@ describe('Swap Cards Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            // Should return true because player can draw cards
-            expect(result).to.be.true;
+            // Should return undefined because player can draw cards
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when player has no cards in deck', () => {
+        it('should return undefined when player has no cards in deck', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withHand([{ templateId: 'test-card', type: 'item' }]),
                 HandlerDataBuilder.withDeck(0),
@@ -65,11 +65,11 @@ describe('Swap Cards Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            // Should still return true because player can discard cards
-            expect(result).to.be.true;
+            // Should still return undefined because player can discard cards
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when player has neither cards in hand nor deck', () => {
+        it('should return rejection reason when player has neither cards in hand nor deck', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withHand([]),
                 HandlerDataBuilder.withDeck(0),
@@ -84,7 +84,7 @@ describe('Swap Cards Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

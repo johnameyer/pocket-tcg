@@ -17,11 +17,11 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
      * @param handlerData Handler data view
      * @param effect The energy discard effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: EnergyDiscardEffect, context: EffectContext): boolean {
+    canApply(handlerData: HandlerData, effect: EnergyDiscardEffect, context: EffectContext): string | undefined {
         // Always allow discard effects to be applied
-        return true;
+        return undefined;
     }
 
     /**

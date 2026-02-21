@@ -17,16 +17,17 @@ export class SwitchEffectHandler extends AbstractEffectHandler<SwitchEffect> {
      * @param handlerData Handler data view
      * @param effect The switch effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: SwitchEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: SwitchEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // If there's no switchWith target, we can't apply the effect
         if (!effect.switchWith) {
-            return false;
+            return 'No target creature to switch with';
         }
         
         // Use TargetResolver to check if the target is available
-        return FieldTargetResolver.isTargetAvailable(effect.switchWith, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.switchWith, handlerData, context, cardRepository)
+            ? undefined : 'No valid switch targets';
     }
 
     getResolutionRequirements(effect: SwitchEffect): ResolutionRequirement[] {

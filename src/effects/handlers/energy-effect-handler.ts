@@ -24,14 +24,14 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
      * @param handlerData Handler data view
      * @param effect The energy effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: EnergyEffect, context: EffectContext): boolean {
+    canApply(handlerData: HandlerData, effect: EnergyEffect, context: EffectContext): string | undefined {
         /*
          * Always allow energy effects to be applied
          * The effect will attach as many energy cards as possible (or none if none are available)
          */
-        return true;
+        return undefined;
     }
 
     /**

@@ -94,9 +94,9 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
      * @param handlerData Handler data view
      * @param effect The HP effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: HpEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: HpEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // For heal effects, check if there are any damaged creature that can be healed
         if (effect.operation === 'heal') {
             // Create validation function to check if creature can be healed
@@ -105,11 +105,13 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             };
             
             // Use TargetResolver with validation function
-            return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, canBeHealed);
+            return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, canBeHealed)
+                ? undefined : 'No damaged creatures to heal';
         }
         
         // For damage effects, targets are always available if they exist
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)
+            ? undefined : 'No valid targets for damage';
     }
     
     /**

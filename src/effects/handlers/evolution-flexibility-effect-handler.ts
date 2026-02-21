@@ -25,11 +25,11 @@ export class EvolutionFlexibilityEffectHandler extends AbstractEffectHandler<Evo
      * @param handlerData Handler data view
      * @param effect The evolution flexibility effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: EvolutionFlexibilityEffect, context: EffectContext): boolean {
+    canApply(handlerData: HandlerData, effect: EvolutionFlexibilityEffect, context: EffectContext): string | undefined {
         // Evolution flexibility effects can always be applied
-        return true;
+        return undefined;
     }
     
     /**

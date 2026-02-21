@@ -14,7 +14,7 @@ describe('Tool Discard Effect', () => {
         const handler = new ToolDiscardEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when target has a tool attached', () => {
+        it('should return undefined when target has a tool attached', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -31,10 +31,10 @@ describe('Tool Discard Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when target has no tool attached', () => {
+        it('should return rejection reason when target has no tool attached', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -48,10 +48,10 @@ describe('Tool Discard Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when there is no creature at target position', () => {
+        it('should return rejection reason when there is no creature at target position', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -64,7 +64,7 @@ describe('Tool Discard Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

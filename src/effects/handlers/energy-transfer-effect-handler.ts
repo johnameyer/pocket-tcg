@@ -39,15 +39,21 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
      * @param effect The energy transfer effect to validate
      * @param context Effect context
      * @param cardRepository Card repository
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: EnergyTransferEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: EnergyTransferEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // Use EnergyTargetResolver to check if source is available
         const sourceAvailable = EnergyTargetResolver.isTargetAvailable(effect.source, handlerData, context, cardRepository);
         // Use FieldTargetResolver to check if target is available
         const targetAvailable = FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
         
-        return sourceAvailable && targetAvailable;
+        if (!sourceAvailable) {
+            return 'No energy available at source';
+        }
+        if (!targetAvailable) {
+            return 'No valid target for energy transfer';
+        }
+        return undefined;
     }
     
     apply(controllers: Controllers, effect: EnergyTransferEffect, context: EffectContext): void {

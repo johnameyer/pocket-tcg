@@ -21,12 +21,12 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
      * @param handlerData Handler data view
      * @param effect The evolution acceleration effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: EvolutionAccelerationEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: EvolutionAccelerationEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // Use TargetResolver to check if the target is available
         if (!FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository)) {
-            return false;
+            return 'No valid evolution acceleration target';
         }
         
         // For fixed targets like self active, we can check basic requirements
@@ -34,13 +34,13 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             const targetCreature = handlerData.field.creatures[context.sourcePlayer]?.[0];
             
             if (!targetCreature) {
-                return false;
+                return 'No active creature to accelerate evolution';
             }
             
             // Check if creature was played this turn (can't evolve on first turn)
             const currentTurn = handlerData.turnCounter.turnNumber;
             if (targetCreature.turnLastPlayed === currentTurn) {
-                return false;
+                return 'Creature was just played and cannot evolve yet';
             }
             
             // Check restrictions - for now, only basic-creature-only is supported
@@ -49,7 +49,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
                 const isBasicCreature = !currentData.previousStageName;
                 
                 if (!isBasicCreature) {
-                    return false;
+                    return 'Target creature is not a basic form';
                 }
             }
             
@@ -73,14 +73,14 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             });
             
             // Card cannot be played if there's no valid Stage 2 evolution
-            return hasValidEvolution;
+            return hasValidEvolution ? undefined : 'No valid Stage 2 evolution in hand';
         }
         
         /*
          * For other target types, we can't easily determine the target in canApply
          * so we'll allow it and let the apply method handle validation
          */
-        return true;
+        return undefined;
     }
 
     /**

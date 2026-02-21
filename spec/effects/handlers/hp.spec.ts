@@ -15,7 +15,7 @@ describe('HP Effect', () => {
         const handler = new HpEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true for heal when there are damaged creatures', () => {
+        it('should return undefined for heal when there are damaged creatures', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withDamage(0, 0, 20),
@@ -31,10 +31,10 @@ describe('HP Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Heal', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false for heal when target has no damage (target resolution failure)', () => {
+        it('should return rejection reason for heal when target has no damage (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withDamage(0, 0, 0),
@@ -50,10 +50,10 @@ describe('HP Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Heal', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return true for damage when target exists', () => {
+        it('should return undefined for damage when target exists', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -69,10 +69,10 @@ describe('HP Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Damage', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false for damage when target does not exist (target resolution failure)', () => {
+        it('should return rejection reason for damage when target does not exist (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -87,7 +87,7 @@ describe('HP Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Damage', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

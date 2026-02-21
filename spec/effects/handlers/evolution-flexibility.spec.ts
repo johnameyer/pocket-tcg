@@ -15,7 +15,7 @@ describe('Evolution Flexibility Effect', () => {
     describe('canApply', () => {
         const handler = new EvolutionFlexibilityEffectHandler();
 
-        it('should always return true (evolution flexibility effects can always be applied)', () => {
+        it('should always return undefined (evolution flexibility effects can always be applied)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'flexible-basic', []),
             );
@@ -30,10 +30,10 @@ describe('Evolution Flexibility Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return true even when no creatures exist', () => {
+        it('should return undefined even when no creatures exist', () => {
             const handlerData = HandlerDataBuilder.default();
 
             const effect: EvolutionFlexibilityEffect = {
@@ -46,7 +46,7 @@ describe('Evolution Flexibility Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
     });
 

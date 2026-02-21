@@ -14,7 +14,7 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
         const handler = new SearchEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when deck has cards for fixed deck search', () => {
+        it('should return undefined when deck has cards for fixed deck search', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(10),
             );
@@ -29,10 +29,10 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false for item when deck is empty', () => {
+        it('should return error string for item when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(0),
             );
@@ -47,10 +47,10 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.be.a('string');
         });
 
-        it('should return false for supporter when deck is empty', () => {
+        it('should return error string for supporter when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(0),
             );
@@ -65,7 +65,7 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Search', 'supporter');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.be.a('string');
         });
     });
 

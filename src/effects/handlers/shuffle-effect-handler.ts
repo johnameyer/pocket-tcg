@@ -17,11 +17,11 @@ export class ShuffleEffectHandler extends AbstractEffectHandler<ShuffleEffect> {
      * @param handlerData Handler data view
      * @param effect The shuffle effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: ShuffleEffect, context: EffectContext): boolean {
+    canApply(handlerData: HandlerData, effect: ShuffleEffect, context: EffectContext): string | undefined {
         // Shuffle effects can always be applied
-        return true;
+        return undefined;
     }
 
     /**

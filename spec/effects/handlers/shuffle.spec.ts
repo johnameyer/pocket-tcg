@@ -14,7 +14,7 @@ describe('Shuffle Effect', () => {
     describe('canApply', () => {
         const handler = new ShuffleEffectHandler();
 
-        it('should always return true (shuffle effects can always be applied)', () => {
+        it('should always return undefined (shuffle effects can always be applied)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(0),
             );
@@ -27,10 +27,10 @@ describe('Shuffle Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return true even when deck is empty', () => {
+        it('should return undefined even when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(0),
             );
@@ -43,7 +43,7 @@ describe('Shuffle Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
     });
 

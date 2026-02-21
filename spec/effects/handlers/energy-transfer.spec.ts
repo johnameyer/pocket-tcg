@@ -15,7 +15,7 @@ describe('Energy Transfer Effect', () => {
         const handler = new EnergyTransferEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when source has required energy', () => {
+        it('should return undefined when source has required energy', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
             );
@@ -39,10 +39,10 @@ describe('Energy Transfer Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when source has no required energy (target resolution failure)', () => {
+        it('should return rejection reason when source has no required energy (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
             );
@@ -66,10 +66,10 @@ describe('Energy Transfer Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when no valid destination (target resolution failure)', () => {
+        it('should return rejection reason when no valid destination (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -92,7 +92,7 @@ describe('Energy Transfer Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

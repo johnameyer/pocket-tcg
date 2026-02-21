@@ -13,7 +13,7 @@ describe('Status Effect', () => {
         const handler = new StatusEffectHandler();
         const mockRepository = new MockCardRepository();
 
-        it('should return true when there is a valid target', () => {
+        it('should return undefined when there is a valid target', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -28,10 +28,10 @@ describe('Status Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when there is no creature at target position (target resolution failure)', () => {
+        it('should return rejection reason when there is no creature at target position (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -45,10 +45,10 @@ describe('Status Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
 
-        it('should return false when target is bench but no benched creatures exist (target resolution failure)', () => {
+        it('should return rejection reason when target is bench but no benched creatures exist (target resolution failure)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -63,7 +63,7 @@ describe('Status Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

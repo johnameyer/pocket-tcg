@@ -35,19 +35,20 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
      * @param handlerData Handler data view
      * @param effect The search effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: SearchEffect, context: EffectContext, cardRepository?: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: SearchEffect, context: EffectContext, cardRepository?: CardRepository): string | undefined {
         // Extract location from source target
         const location = 'location' in effect.source ? effect.source.location : 'deck';
         
         // For deck searches, check if deck has cards
         if (location === 'deck') {
             const deckSize = handlerData.deck;
-            return deckSize > 0;
+            // console.error(`[SEARCH-CANAPPLY] deckSize=${deckSize}, typeof=${typeof deckSize}, value=${JSON.stringify(deckSize)}`);
+            return deckSize > 0 ? undefined : 'No cards in deck to search';
         }
         
-        return true;
+        return undefined;
     }
     
     /**

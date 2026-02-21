@@ -18,12 +18,12 @@ export class RetreatPreventionEffectHandler extends AbstractEffectHandler<Retrea
      * @param handlerData Handler data view
      * @param effect The retreat prevention effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: RetreatPreventionEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: RetreatPreventionEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // Use TargetResolver to check if the target is available
         const result = FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
-        return result;
+        return result ? undefined : 'No valid targets for retreat prevention';
     }
 
     /**

@@ -13,7 +13,7 @@ describe('Draw Effect', () => {
     describe('canApply', () => {
         const handler = new DrawEffectHandler();
 
-        it('should return true when deck has cards', () => {
+        it('should return undefined when deck has cards', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(10),
             );
@@ -26,10 +26,10 @@ describe('Draw Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return false when deck is empty', () => {
+        it('should return rejection reason when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(0),
             );
@@ -42,7 +42,7 @@ describe('Draw Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.false;
+            expect(result).to.not.be.undefined;
         });
     });
 

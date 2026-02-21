@@ -261,28 +261,30 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     return !controllers.tools.canAttachTool(fieldInstanceId);
                 }),
-                EventHandler.validate('Item effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                (controllers: Controllers, source: number, message: PlayCardResponseMessage): Error | undefined => {
                     if (message.cardType !== 'item') {
-                        return false; 
+                        return undefined; 
                     }
                     
                     // Create proper HandlerData structure from controllers
                     const handlerData = ControllerUtils.createPlayerView(controllers, source);
                     
                     // Use ActionValidator to check if the item can be played
-                    return !ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
-                }),
-                EventHandler.validate('Supporter effects cannot be applied', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
+                    const reason = ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
+                    return reason ? new Error(`Item cannot be played: ${reason}`) : undefined;
+                },
+                (controllers: Controllers, source: number, message: PlayCardResponseMessage): Error | undefined => {
                     if (message.cardType !== 'supporter') {
-                        return false; 
+                        return undefined; 
                     }
                     
                     // Create proper HandlerData structure from controllers
                     const handlerData = ControllerUtils.createPlayerView(controllers, source);
                     
                     // Use ActionValidator to check if the supporter can be played
-                    return !ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
-                }),
+                    const reason = ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
+                    return reason ? new Error(`Supporter cannot be played: ${reason}`) : undefined;
+                },
                 EventHandler.validate('Stadium already played this turn', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     return message.cardType === 'stadium' && controllers.turnState.hasStadiumBeenPlayedThisTurn();
                 }),

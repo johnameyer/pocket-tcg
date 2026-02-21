@@ -19,7 +19,7 @@ describe('Energy Effect', () => {
     describe('canApply', () => {
         const handler = new EnergyAttachEffectHandler();
 
-        it('should return true for attach operation', () => {
+        it('should return undefined for attach operation', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
             );
@@ -34,10 +34,10 @@ describe('Energy Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return true for discard operation', () => {
+        it('should return undefined for discard operation', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -53,10 +53,10 @@ describe('Energy Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            expect(result).to.be.true;
+            expect(result).to.be.undefined;
         });
 
-        it('should return true when target has no energy (discard will have no effect)', () => {
+        it('should return undefined when target has no energy (discard will have no effect)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
@@ -72,11 +72,11 @@ describe('Energy Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            // Energy effects always return true - even if there's no energy to discard
-            expect(result).to.be.true;
+            // Energy effects always return undefined - even if there's no energy to discard
+            expect(result).to.be.undefined;
         });
 
-        it('should return true when no target exists (effect will fail gracefully during apply)', () => {
+        it('should return undefined when no target exists (effect will fail gracefully during apply)', () => {
             const handlerData = HandlerDataBuilder.default(
                 HandlerDataBuilder.withDeck(10),
             );
@@ -91,8 +91,8 @@ describe('Energy Effect', () => {
             const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
-            // Energy effects always return true - target validation happens during apply
-            expect(result).to.be.true;
+            // Energy effects always return undefined - target validation happens during apply
+            expect(result).to.be.undefined;
         });
     });
 

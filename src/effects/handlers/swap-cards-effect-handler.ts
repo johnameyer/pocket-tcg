@@ -29,15 +29,15 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
      * @param handlerData Handler data view
      * @param effect The swap cards effect to validate
      * @param context Effect context
-     * @returns True if the effect can be applied, false otherwise
+     * @returns undefined if valid, rejection reason if invalid
      */
-    canApply(handlerData: HandlerData, effect: SwapCardsEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+    canApply(handlerData: HandlerData, effect: SwapCardsEffect, context: EffectContext, cardRepository: CardRepository): string | undefined {
         // Check if player has cards in hand to discard OR cards in deck to draw
         const hasCardsToDiscard = handlerData.hand.length > 0;
         const hasCardsToDraw = handlerData.deck > 0;
         
         // Effect can be applied if either discarding or drawing would happen
-        return hasCardsToDiscard || hasCardsToDraw;
+        return (hasCardsToDiscard || hasCardsToDraw) ? undefined : 'No cards to swap';
     }
 
     /**
