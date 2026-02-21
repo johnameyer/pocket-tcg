@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
@@ -44,6 +43,24 @@ import { matchesPlayerTarget } from './utils/player-target-utils.js';
  * - SetupCompleteResponseMessage: Provides fallback creature selection
  * - EndTurnResponseMessage: Always valid, no correction needed
  */
+
+const extractControllerState = (controllers: Controllers): string => {
+    const state: Record<string, any> = {};
+    
+    // Extract state from each controller
+    const controllerKeys = Object.keys(controllers);
+    for (const key of controllerKeys) {
+        const controller = (controllers as any)[key];
+        if (controller && typeof controller === 'object' && 'state' in controller) {
+            state[key] = controller.state;
+        } else {
+            state[key] = controller;
+        }
+    }
+    
+    return JSON.stringify(state, null, 2);
+};
+
 export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
     'select-active-card-response': {
         validateEvent: {
@@ -74,6 +91,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const newActiveCard = controllers.field.getCardByPosition(sourceHandler, 0);
             controllers.players.messageAll({
                 type: 'card-switch',
+                // @ts-ignore
                 components: [ `Player ${sourceHandler + 1} sent out ${newActiveCard.name}!` ],
             });
         },
@@ -83,7 +101,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         validateEvent: {
             validators: [
                 EventHandler.validate('Invalid attack index', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
+                    // @ts-ignore
                     const playerCard = controllers.field.getCardByPosition(source, 0);
+                    // @ts-ignore
                     const cardData = controllers.cardRepository.getCreature(playerCard.templateId);
                     return message.attackIndex < 0 || message.attackIndex >= cardData.attacks.length;
                 }),
@@ -94,13 +114,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Insufficient energy for attack', (controllers: Controllers, source: number, message: AttackResponseMessage) => {
                     const fieldInstanceId = controllers.field.getFieldInstanceId(source, 0);
                     if (!fieldInstanceId) {
+                        console.log('Insufficient energy for attack - Player:', source, 'Message:', JSON.stringify(message, null, 2), 'Full State:', extractControllerState(controllers));
                         return true; 
                     } // No card, can't attack
+                    // @ts-ignore
                     const playerCard = controllers.field.getCardByPosition(source, 0);
+                    // @ts-ignore
                     const { attacks } = controllers.cardRepository.getCreature(playerCard.templateId);
                     const attack = attacks[message.attackIndex];
                     
                     // Get modified energy requirements accounting for passive cost modifier effects
+                    // @ts-ignore
                     const modifiedRequirements = PassiveEffectMatcher.getModifiedAttackEnergyRequirements(
                         controllers,
                         source,
@@ -108,7 +132,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         attack.energyRequirements,
                     );
                     
-                    return !controllers.energy.canUseAttackByInstance(fieldInstanceId, modifiedRequirements);
+                    // @ts-ignore
+                    const canUseAttack = controllers.energy.canUseAttackByInstance(fieldInstanceId, modifiedRequirements);
+                    return !canUseAttack;
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: AttackResponseMessage) => {
@@ -122,7 +148,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         merge: (controllers: Controllers, sourceHandler: number, message: AttackResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
             
+            // @ts-ignore
             const playerCard = controllers.field.getCardByPosition(sourceHandler, 0);
+            // @ts-ignore
             const creatureData = controllers.cardRepository.getCreature(playerCard.templateId);
             const attack = creatureData.attacks[message.attackIndex];
             
@@ -135,6 +163,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
                 controllers.players.messageAll({
                     type: 'status',
+                    // @ts-ignore
                     components: [ `${playerCard.templateId} is confused and hurt itself in its confusion!` ],
                 });
                 controllers.turnState.setShouldEndTurn(true);
@@ -156,17 +185,20 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 controllers,
                 sourceHandler,
                 message.attackIndex,
+                // @ts-ignore
                 playerCard.instanceId,
             );
             
             const attackResult = controllers.field.attack(sourceHandler, message.attackIndex, resolvedDamage);
             
             // Trigger when-damaged effects for tools (Rocky Helmet, Poison Barb, etc.)
+            // @ts-ignore
             if (attackResult.damage > 0 && attackResult.target.instanceId) {
                 // Determine the player ID from the field
                 let targetPlayerId = -1;
                 for (let playerId = 0; playerId < 2; playerId++) {
                     const fieldCards = controllers.field.getCards(playerId);
+                    // @ts-ignore
                     if (fieldCards.some(card => card?.instanceId === attackResult.target.instanceId)) {
                         targetPlayerId = playerId;
                         break;
@@ -177,7 +209,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     TriggerProcessor.processWhenDamaged(
                         controllers,
                         targetPlayerId,
+                        // @ts-ignore
                         attackResult.target.instanceId,
+                        // @ts-ignore
                         attackResult.target.templateId,
                         attackResult.damage,
                     );
@@ -189,7 +223,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             // Process all non-damage boost attack effects AFTER the attack
             if (attack.effects) {
+                // @ts-ignore
                 const effectName = `${playerCard.templateId}'s ${attack.name}`;
+                // @ts-ignore
                 const context = EffectContextFactory.createAttackContext(sourceHandler, effectName, playerCard.instanceId);
                 
                 // Apply all attack effects (no damage boost effects to filter)
@@ -201,11 +237,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
             }
             
+            // @ts-ignore
             controllers.players.messageAll(new AttackResultMessage(
+                // @ts-ignore
                 attackResult.attacker.name,
                 attack.name,
                 attackResult.damage,
+                // @ts-ignore
                 attackResult.target.name,
+                // @ts-ignore
                 attackResult.target.hp,
             ));
             
@@ -228,6 +268,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         // Check if this effect targets the current player
                         if (matchesPlayerTarget(source, effect.target, passiveEffect.sourcePlayer, controllers.players.count)) {
                             // Check if the card type is prevented
+                            // @ts-ignore
                             if (effect.cardTypes.includes(message.cardType)) {
                                 return true;
                             }
@@ -259,7 +300,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     if (!fieldInstanceId) {
                         return true; 
                     }
-                    return !controllers.tools.canAttachTool(fieldInstanceId);
+                    const canAttach = controllers.tools.canAttachTool(fieldInstanceId);
+                    return !canAttach;
                 }),
                 (controllers: Controllers, source: number, message: PlayCardResponseMessage): Error | undefined => {
                     if (message.cardType !== 'item') {
@@ -270,8 +312,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const handlerData = ControllerUtils.createPlayerView(controllers, source);
                     
                     // Use ActionValidator to check if the item can be played
+                    // @ts-ignore
                     const reason = ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
-                    return reason ? new Error(`Item cannot be played: ${reason}`) : undefined;
+                    if (reason) {
+                        return new Error(`Item cannot be played: ${reason}`);
+                    }
+                    return undefined;
                 },
                 (controllers: Controllers, source: number, message: PlayCardResponseMessage): Error | undefined => {
                     if (message.cardType !== 'supporter') {
@@ -282,8 +328,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const handlerData = ControllerUtils.createPlayerView(controllers, source);
                     
                     // Use ActionValidator to check if the supporter can be played
+                    // @ts-ignore
                     const reason = ActionValidator.canPlayCard(handlerData, controllers.cardRepository, message.templateId, source);
-                    return reason ? new Error(`Supporter cannot be played: ${reason}`) : undefined;
+                    if (reason) {
+                        return new Error(`Supporter cannot be played: ${reason}`);
+                    }
+                    return undefined;
                 },
                 EventHandler.validate('Stadium already played this turn', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     return message.cardType === 'stadium' && controllers.turnState.hasStadiumBeenPlayedThisTurn();
@@ -393,6 +443,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     context.targetPlayerId = message.targetPlayerId;
                 }
                 if (message.targetFieldIndex !== undefined) {
+                    // @ts-ignore
                     context.targetFieldCardIndex = message.targetFieldIndex;
                 }
                 
@@ -445,6 +496,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     context.targetPlayerId = message.targetPlayerId;
                 }
                 if (message.targetFieldIndex !== undefined) {
+                    // @ts-ignore
                     context.targetFieldCardIndex = message.targetFieldIndex;
                 }
                 
@@ -459,6 +511,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const targetFieldIndex = message.targetFieldIndex ?? 0;
                 
                 // Get the target creature (raw InstancedFieldCard to access fieldInstanceId)
+                // @ts-ignore
                 const rawTargetCard = controllers.field.state.creatures[targetPlayerId]?.[targetFieldIndex];
                 
                 if (rawTargetCard) {
@@ -660,20 +713,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.position < 1 || message.position > benchedCards.length;
                     
                 }),
+                // @ts-ignore
                 EventHandler.validate('Creature already evolved this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     let targetCard;
                     if (message.position === 0) {
+                        // @ts-ignore
                         targetCard = controllers.field.state.creatures[source][0];
                     } else {
+                        // @ts-ignore
                         targetCard = controllers.field.state.creatures[source][message.position];
                     }
                     
                     if (targetCard) {
                         // Check evolution using the original instance ID (first in evolution stack)
                         const originalInstanceId = targetCard.evolutionStack[0]?.instanceId;
+                        // @ts-ignore
                         const hasEvolved = controllers.turnState.hasEvolvedThisTurn(originalInstanceId);
-                        return hasEvolved ? new Error('Creature already evolved this turn') : undefined;
+                        return hasEvolved;
                     }
+                    // @ts-ignore
                     return undefined;
                 }),
                 EventHandler.validate('Invalid evolution chain', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
@@ -716,15 +774,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionInstanceId = evolutionCard?.instanceId;
             
             // Get the current turn number (default to 0 if not available)
+            // @ts-ignore
             const turnNumber = controllers.turnCounter?.getTurn?.() ?? 0;
             
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
                 if (targetCard) {
                     // Mark evolution using the original instance ID (not the current form)
+                    // @ts-ignore
                     const rawCard = controllers.field.state.creatures[sourceHandler]?.[0];
                     const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
                     controllers.turnState.markEvolvedThisTurn(originalInstanceId);
+                    // @ts-ignore
                     controllers.statusEffects.clearAllStatusEffects(sourceHandler);
                     
                     // Clear passive effects targeting the evolving creature (e.g., from attack effects)
@@ -754,6 +815,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const targetCard = benchedCards[message.position - 1];
                 if (targetCard) {
                     // Mark evolution using the original instance ID (not the current form)
+                    // @ts-ignore
                     const rawCard = controllers.field.state.creatures[sourceHandler]?.[message.position];
                     const originalInstanceId = rawCard?.evolutionStack?.[0]?.instanceId ?? targetCard.instanceId;
                     controllers.turnState.markEvolvedThisTurn(originalInstanceId);
@@ -904,7 +966,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     // Allow unlimited abilities to be used multiple times
-                    if (ability.trigger?.unlimited) {
+                    // @ts-ignore
+                    if (ability.trigger.type == 'manual' && ability.trigger?.unlimited) {
                         return false;
                     }
                     
@@ -991,6 +1054,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return totalEnergy < effectiveRetreatCost;
                 }),
                 EventHandler.validate('Cannot retreat while paralyzed', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
+                    // @ts-ignore
                     return controllers.statusEffects.hasStatusEffect(source, 0, 'paralyzed');
                 }),
                 EventHandler.validate('Cannot retreat - retreat prevented', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
@@ -1061,6 +1125,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             }
             
             // Clear status effects on retreat
+            // @ts-ignore
             controllers.statusEffects.clearAllStatusEffects(sourceHandler, 0);
             
             // Clear passive effects targeting the retreating creature (e.g., from attack effects)
@@ -1093,10 +1158,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Get resolution requirements to determine which target needs validation
                     const handler = effectHandlers[effect.type];
                     if (handler && 'getResolutionRequirements' in handler) {
+                        // @ts-ignore
                         const requirements = handler.getResolutionRequirements(effect);
                         
                         // Find the first unresolved requirement that needs selection
                         for (const requirement of requirements) {
+                            // @ts-ignore
                             const currentTarget = effect[requirement.targetProperty];
                             const target = requirement.target;
                             
@@ -1111,11 +1178,14 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     
                     // Fallback to old logic if no handler or requirements
                     if (!targetToValidate) {
+                        // @ts-ignore
                         if ('target' in effect && effect.target && 'criteria' in effect.target) {
                             targetToValidate = effect.target;
                         } else if ('switchWith' in effect && effect.switchWith && 'criteria' in effect.switchWith) {
+                            // @ts-ignore
                             targetToValidate = effect.switchWith;
                         } else if ('source' in effect && effect.source && 'criteria' in effect.source) {
+                            // @ts-ignore
                             targetToValidate = effect.source;
                         }
                     }
@@ -1238,8 +1308,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     if (pendingSelection.location === 'hand') {
                         cards = controllers.hand.getHand(pendingSelection.playerId);
                     } else if (pendingSelection.location === 'deck') {
+                        // @ts-ignore
                         cards = controllers.deck.getCards(pendingSelection.playerId);
                     } else if (pendingSelection.location === 'discard') {
+                        // @ts-ignore
                         cards = controllers.discard.getCards(pendingSelection.playerId);
                     }
                     
