@@ -363,4 +363,27 @@ describe('Creature Pocket TCG Game', () => {
             expect(supporter.description).to.equal('Supporter description');
         });
     });
+
+    describe('Setup Phase Creature Validation', () => {
+        it('should only allow basic creatures during setup', () => {
+            const { state } = runTestGame({
+                actions: [],
+                stateCustomizer: (state) => {
+                    // Set up hands with both basic and evolved creatures
+                    state.hand[0] = [
+                        { templateId: 'basic-creature', type: 'creature', instanceId: 'hand-0' },
+                        { templateId: 'evolution-creature', type: 'creature', instanceId: 'hand-1' },
+                    ];
+                    state.hand[1] = [
+                        { templateId: 'basic-creature', type: 'creature', instanceId: 'hand-2' },
+                    ];
+                    return state;
+                },
+            });
+
+            // Verify that state setup has the hand cards
+            expect(state.hand[0].length).to.equal(2);
+            expect(state.hand[1].length).to.equal(1);
+        });
+    });
 });

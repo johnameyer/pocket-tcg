@@ -2,7 +2,7 @@ import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
 import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from './messages/response/index.js';
-import { AttackResultMessage, EvolutionMessage } from './messages/status/index.js';
+import { AttackResultMessage, EvolutionMessage, CardPlayedMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
 import { EffectContextFactory } from './effects/effect-context.js';
@@ -238,15 +238,28 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             }
             
             // @ts-ignore
+            const attackingCard = attackResult.attacker;
+            const targetCardResult = attackResult.target;
+            const attackerName = attackingCard ? controllers.cardRepository.getCreature(attackingCard.templateId).name : 'Unknown';
+            const targetName = targetCardResult ? controllers.cardRepository.getCreature(targetCardResult.templateId).name : 'Unknown';
+            
+            // Calculate remaining HP for target
+            let targetRemainingHp = 0;
+            if (targetCardResult) {
+                const targetData = controllers.cardRepository.getCreature(targetCardResult.templateId);
+                targetRemainingHp = Math.max(0, targetData.maxHp - targetCardResult.damageTaken);
+            }
+            
+            // Get base attack damage to determine if it naturally does 0 damage
+            const baseAttackDamage = typeof attack.damage === 'number' ? attack.damage : 0;
+            
             controllers.players.messageAll(new AttackResultMessage(
-                // @ts-ignore
-                attackResult.attacker.name,
+                attackerName,
                 attack.name,
                 attackResult.damage,
-                // @ts-ignore
-                attackResult.target.name,
-                // @ts-ignore
-                attackResult.target.hp,
+                targetName,
+                targetRemainingHp,
+                baseAttackDamage,
             ));
             
             controllers.turnState.setShouldEndTurn(true);
@@ -377,10 +390,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             if (message.cardType === 'creature') {
                 controllers.field.addToBench(sourceHandler, message.templateId, cardInstanceId);
                 const { name } = controllers.cardRepository.getCreature(message.templateId);
-                controllers.players.messageAll({
-                    type: 'card-played',
-                    components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
-                });
+                controllers.players.messageAll(new CardPlayedMessage(sourceHandler + 1, name, 'the bench'));
                 
                 // Trigger on-play effects for the played creature
                 const justPlayedCards = controllers.field.getCards(sourceHandler);
@@ -486,10 +496,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the supporter effects
                 EffectQueueProcessor.processQueue(controllers);
+                
+                // Send card played message after effects are resolved
+                controllers.players.messageAll(new CardPlayedMessage(sourceHandler + 1, supporterData.name));
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
                 const context = EffectContextFactory.createCardContext(sourceHandler, itemData.name, 'item');
+                
+                controllers.players.messageAll(new CardPlayedMessage(sourceHandler + 1, itemData.name));
                 
                 // Add target information if provided
                 if (message.targetPlayerId !== undefined) {
@@ -521,10 +536,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers.tools.attachTool(rawTargetCard.fieldInstanceId, message.templateId, toolInstanceId);
                     
                     const targetCard = controllers.field.getCards(targetPlayerId)[targetFieldIndex];
-                    controllers.players.messageAll({
-                        type: 'card-played',
-                        components: [ `Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!` ],
-                    });
+                    const targetCreatureName = controllers.cardRepository.getCreature(targetCard.templateId).name;
+                    controllers.players.messageAll(new CardPlayedMessage(sourceHandler + 1, toolData.name, targetCreatureName));
                     
                     // Register passive effects from tool
                     if (toolData.effects) {
@@ -565,10 +578,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Play the new stadium (this will automatically discard the old one if present)
                 controllers.stadium.playStadium(message.templateId, cardInstanceId!, sourceHandler, stadiumData.name);
                 
-                controllers.players.messageAll({
-                    type: 'card-played',
-                    components: [ `Player ${sourceHandler + 1} played ${stadiumData.name}!` ],
-                });
+                controllers.players.messageAll(new CardPlayedMessage(sourceHandler + 1, stadiumData.name));
                 
                 /*
                  * Register passive effects from stadium
@@ -644,6 +654,19 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Invalid active card', (controllers: Controllers, source: number, message: SetupCompleteResponseMessage) => {
                     const hand = controllers.hand.getHand(source);
                     return !hand.some(card => card.templateId === message.activeCardId && card.type === 'creature');
+                }),
+                EventHandler.validate('Can only play basic creatures during setup', (controllers: Controllers, source: number, message: SetupCompleteResponseMessage) => {
+                    const activeCard = controllers.cardRepository.getCreature(message.activeCardId);
+                    if (activeCard.previousStageName !== undefined) {
+                        return true;
+                    }
+                    for (const benchCardId of message.benchCardIds) {
+                        const benchCard = controllers.cardRepository.getCreature(benchCardId);
+                        if (benchCard.previousStageName !== undefined) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }),
                 EventHandler.validate('Invalid bench cards', (controllers: Controllers, source: number, message: SetupCompleteResponseMessage) => {
                     const hand = controllers.hand.getHand(source);

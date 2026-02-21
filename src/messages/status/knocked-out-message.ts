@@ -1,7 +1,10 @@
 import { Message, Presentable } from '@cards-ts/core';
 
-function generateMessage(player: string): Presentable[] {
-    return [ `${player}'s card was knocked out!` ];
+function generateMessage(cardName: string, playerNumber?: number): Presentable[] {
+    if (playerNumber !== undefined) {
+        return [ `Player ${playerNumber}'s ${cardName} was knocked out!` ];
+    }
+    return [ `${cardName} was knocked out!` ];
 }
 
 /**
@@ -12,9 +15,10 @@ export class KnockedOutMessage extends Message {
     public readonly type = 'knocked-out-message';
 
     /**
-     * @param player the player whose card was knocked out
+     * @param cardName the name of the card that was knocked out
+     * @param playerNumber optional player number (1-indexed)
      */
-    constructor(public readonly player: string) {
-        super(generateMessage(player));
+    constructor(public readonly cardName: string, public readonly playerNumber?: number) {
+        super(generateMessage(cardName, playerNumber));
     }
 }

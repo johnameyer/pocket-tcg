@@ -1,10 +1,11 @@
 import { sequence, loop, game, conditionalState, handleSingle } from '@cards-ts/state-machine';
 import { Controllers } from './controllers/controllers.js';
-import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage } from './messages/status/index.js';
+import { GameOverMessage, KnockedOutMessage, TurnSummaryMessage, DrawnCardsMessage } from './messages/status/index.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { CreatureData } from './repository/card-types.js';
 import { isPendingEnergySelection, isPendingCardSelection } from './effects/pending-selection-types.js';
 import { TriggerProcessor } from './effects/trigger-processor.js';
+import { getCardNames } from './utils/card-name-utils.js';
 
 // Helper function to calculate points awarded for knocking out a creature
 const calculateKnockoutPoints = (creatureData: CreatureData): number => {
@@ -98,7 +99,7 @@ const processKnockouts = {
                     EffectQueueProcessor.processQueue(controllers);
                     
                     const cardData = controllers.cardRepository.getCreature(targetCard.templateId);
-                    controllers.players.messageAll(new KnockedOutMessage(cardData.name));
+                    controllers.players.messageAll(new KnockedOutMessage(cardData.name, i + 1));
                     
                     // Get field instance ID for cleanup
                     const fieldInstanceId = controllers.field.getFieldInstanceId(i, 0);
@@ -150,7 +151,7 @@ const processKnockouts = {
                     
                     // Send knockout message
                     const cardData = controllers.cardRepository.getCreature(benchCard.templateId);
-                    controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
+                    controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`, i + 1));
                     
                     // Get field instance ID for cleanup (benchIndex + 1 because bench starts at position 1)
                     const fieldInstanceId = controllers.field.getFieldInstanceId(i, benchIndex + 1);
@@ -682,6 +683,13 @@ export const stateMachine = game<Controllers>(
         // Draw initial hands
         for (let i = 0; i < controllers.players.count; i++) {
             controllers.hand.drawInitialHand(i);
+        }
+        
+        // Message players about their drawn cards
+        for (let i = 0; i < controllers.players.count; i++) {
+            const hand = controllers.hand.getHand(i);
+            const cardNames = getCardNames(hand, controllers.cardRepository);
+            controllers.players.message(i, new DrawnCardsMessage(cardNames));
         }
         
         // Players will set up their cards during setup phase

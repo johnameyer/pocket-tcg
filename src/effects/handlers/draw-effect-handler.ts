@@ -4,6 +4,8 @@ import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue } from '../effect-utils.js';
 import { HandlerData } from '../../game-handler.js';
+import { DrawnCardsMessage } from '../../messages/status/drawn-cards-message.js';
+import { getCardNames } from '../../utils/card-name-utils.js';
 
 /**
  * Handler for draw effects that allow players to draw cards.
@@ -98,16 +100,26 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
         // Calculate the actual number of cards to draw (limited by deck size)
         const actualAmount = Math.min(amount, deckSize);
         
-        // Draw the cards
+        // Draw the cards and collect their names
+        const drawnCards = [];
         for (let i = 0; i < actualAmount; i++) {
-            controllers.hand.drawCard(context.sourcePlayer);
+            const card = controllers.hand.drawCard(context.sourcePlayer);
+            if (card) {
+                drawnCards.push(card);
+            }
         }
         
-        // Send a message about the cards drawn
+        // Send a message about the cards drawn (generic reason)
         controllers.players.messageAll({
             type: 'status',
             components: [ `${context.effectName} drew ${actualAmount} card${actualAmount !== 1 ? 's' : ''}!` ],
         });
+        
+        // Message the player about the specific cards drawn
+        if (drawnCards.length > 0) {
+            const cardNames = getCardNames(drawnCards, controllers.cardRepository);
+            controllers.players.message(context.sourcePlayer, new DrawnCardsMessage(cardNames));
+        }
         
         // If we couldn't draw all the requested cards, show a message
         if (actualAmount < amount) {

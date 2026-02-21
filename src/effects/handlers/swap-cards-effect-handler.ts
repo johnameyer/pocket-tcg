@@ -5,6 +5,8 @@ import { AbstractEffectHandler } from '../interfaces/effect-handler-interface.js
 import { getEffectValue } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
+import { DrawnCardsMessage } from '../../messages/status/drawn-cards-message.js';
+import { getCardNames } from '../../utils/card-name-utils.js';
 
 /**
  * Handler for swap cards effects that discard cards and draw new ones.
@@ -65,12 +67,16 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
         const cardsToDiscard = hand.slice(0, Math.min(discardAmount, hand.length));
         controllers.hand.removeCards(playerId, cardsToDiscard);
         
-        // Draw cards
+        // Draw cards and collect their names
+        const drawnCards = [];
         for (let i = 0; i < actualDrawAmount; i++) {
-            controllers.hand.drawCard(playerId);
+            const card = controllers.hand.drawCard(playerId);
+            if (card) {
+                drawnCards.push(card);
+            }
         }
         
-        // Message players
+        // Message players about the effect (generic reason)
         if (effect.maxDrawn !== undefined && drawAmount > effect.maxDrawn) {
             controllers.players.messageAll({
                 type: 'status',
@@ -81,6 +87,12 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
                 type: 'status',
                 components: [ `${context.effectName} causes you to discard ${cardsToDiscard.length} card(s) and draw ${actualDrawAmount} card(s)!` ],
             });
+        }
+        
+        // Message the player about the specific cards drawn
+        if (drawnCards.length > 0) {
+            const cardNames = getCardNames(drawnCards, controllers.cardRepository);
+            controllers.players.message(playerId, new DrawnCardsMessage(cardNames));
         }
     }
 }
