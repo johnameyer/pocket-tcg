@@ -86,12 +86,15 @@ const processKnockouts = {
                 // Send knockout message
                 const targetCard = controllers.field.getCardByPosition(i, 0);
                 if (targetCard) {
-                    // Trigger before-knockout effects
+                    // Trigger before-knockout effects, passing current attacker if available
+                    const currentAttacker = controllers.turnState.getCurrentAttacker();
                     TriggerProcessor.processBeforeKnockout(
                         controllers,
                         i,
                         targetCard.instanceId,
                         targetCard.templateId,
+                        currentAttacker?.instanceId,
+                        currentAttacker?.playerId,
                     );
                     
                     // Process any effects that were triggered before knockout
@@ -137,12 +140,15 @@ const processKnockouts = {
                 const { maxHp } = controllers.cardRepository.getCreature(benchCard.templateId);
                 
                 if (benchCard.damageTaken >= maxHp) {
-                    // Trigger before-knockout effects
+                    // Trigger before-knockout effects, passing current attacker if available
+                    const currentAttacker = controllers.turnState.getCurrentAttacker();
                     TriggerProcessor.processBeforeKnockout(
                         controllers,
                         i,
                         benchCard.instanceId,
                         benchCard.templateId,
+                        currentAttacker?.instanceId,
+                        currentAttacker?.playerId,
                     );
                     
                     // Process any effects that were triggered before knockout

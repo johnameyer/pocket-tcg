@@ -12,6 +12,26 @@ export type FixedFieldTarget = {
 };
 
 /**
+ * A target that refers to a named creature from the execution context.
+ * The `context` discriminant restricts which execution context this target is valid in,
+ * providing compile-time documentation and runtime validation.
+ *
+ * @example { type: 'contextual', context: 'attack', reference: 'defender' }
+ * // The creature being attacked (valid only in attack effects)
+ *
+ * @example { type: 'contextual', context: 'damaged', reference: 'attacker' }
+ * // The creature that dealt the damage (valid only in 'damaged' trigger effects)
+ *
+ * @example { type: 'contextual', context: 'energy-attachment', reference: 'trigger-target' }
+ * // The creature energy was attached to (valid only in 'energy-attachment' trigger effects)
+ */
+export type ContextualFieldTarget =
+    | { type: 'contextual'; context: 'attack'; reference: 'defender' }
+    | { type: 'contextual'; context: 'damaged'; reference: 'attacker' }
+    | { type: 'contextual'; context: 'before-knockout'; reference: 'attacker' }
+    | { type: 'contextual'; context: 'energy-attachment'; reference: 'trigger-target' };
+
+/**
  * Represents a target that has been resolved to a specific card.
  */
 export type ResolvedFieldTarget = {
@@ -52,7 +72,7 @@ export type AllMatchingFieldTarget = {
 /**
  * Union type for single targets (fixed, resolved, or choice-based).
  */
-export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget;
+export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget | ContextualFieldTarget;
 
 /**
  * Union type for multi-targets (choice-based or all-matching).

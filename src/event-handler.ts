@@ -161,36 +161,35 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             const attackResult = controllers.field.attack(sourceHandler, message.attackIndex, resolvedDamage);
             
+            // Track the attacker for contextual before-knockout triggers processed by state machine
+            controllers.turnState.setCurrentAttacker(playerCard.instanceId, sourceHandler);
+
             // Trigger when-damaged effects for tools (Rocky Helmet, Poison Barb, etc.)
             if (attackResult.damage > 0 && attackResult.target.instanceId) {
-                // Determine the player ID from the field
-                let targetPlayerId = -1;
-                for (let playerId = 0; playerId < 2; playerId++) {
-                    const fieldCards = controllers.field.getCards(playerId);
-                    if (fieldCards.some(card => card?.instanceId === attackResult.target.instanceId)) {
-                        targetPlayerId = playerId;
-                        break;
-                    }
-                }
+                TriggerProcessor.processWhenDamaged(
+                    controllers,
+                    targetId,
+                    attackResult.target.instanceId,
+                    attackResult.target.templateId,
+                    attackResult.damage,
+                    playerCard.instanceId,
+                    sourceHandler,
+                );
                 
-                if (targetPlayerId !== -1) {
-                    TriggerProcessor.processWhenDamaged(
-                        controllers,
-                        targetPlayerId,
-                        attackResult.target.instanceId,
-                        attackResult.target.templateId,
-                        attackResult.damage,
-                    );
-                    
-                    // Process any effects that were triggered by the damage
-                    EffectQueueProcessor.processQueue(controllers);
-                }
+                // Process any effects that were triggered by the damage
+                EffectQueueProcessor.processQueue(controllers);
             }
             
             // Process all non-damage boost attack effects AFTER the attack
             if (attack.effects) {
                 const effectName = `${playerCard.templateId}'s ${attack.name}`;
-                const context = EffectContextFactory.createAttackContext(sourceHandler, effectName, playerCard.instanceId);
+                const context = EffectContextFactory.createAttackContext(
+                    sourceHandler,
+                    effectName,
+                    playerCard.instanceId,
+                    targetCard.instanceId,
+                    targetId,
+                );
                 
                 // Apply all attack effects (no damage boost effects to filter)
                 if (attack.effects && attack.effects.length > 0) {
@@ -838,33 +837,14 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     components: [ `Player ${currentPlayer + 1} attached ${energyType} energy!` ],
                 });
                 
-                // Process energy-attachment triggers for all field cards (all players)
-                for (let playerId = 0; playerId < controllers.players.count; playerId++) {
-                    const fieldCards = controllers.field.getPlayedCards(playerId);
-                    for (let fieldPosition = 0; fieldPosition < fieldCards.length; fieldPosition++) {
-                        const card = fieldCards[fieldPosition];
-                        const cardData = controllers.cardRepository.getCreature(card.templateId);
-                        if (cardData.ability) {
-                            const ability = cardData.ability;
-                            if (ability.trigger?.type === 'energy-attachment' 
-                                && (!ability.trigger.energyType || ability.trigger.energyType === energyType)) {
-                                
-                                const context = EffectContextFactory.createAbilityContext(
-                                    playerId,
-                                    `${cardData.name}'s ${ability.name}`,
-                                    card.instanceId,
-                                    fieldPosition,
-                                );
-                                
-                                EffectApplier.applyEffects(
-                                    ability.effects,
-                                    controllers,
-                                    context,
-                                );
-                            }
-                        }
-                    }
-                }
+                // Process energy-attachment triggers for all field cards (all players),
+                // passing the trigger-target (the creature that just received energy).
+                TriggerProcessor.processEnergyAttachment(
+                    controllers,
+                    currentPlayer,
+                    fieldInstanceId,
+                    energyType,
+                );
                 
                 // Process any effects that were triggered by energy attachment
                 EffectQueueProcessor.processQueue(controllers);

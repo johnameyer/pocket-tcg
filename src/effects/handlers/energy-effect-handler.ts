@@ -144,8 +144,7 @@ export class EnergyEffectHandler extends AbstractEffectHandler<EnergyEffect> {
                 TriggerProcessor.processEnergyAttachment(
                     controllers,
                     playerId,
-                    targetCreature.instanceId,
-                    targetCreature.templateId,
+                    fieldInstanceId,
                     energyType,
                 );
             }

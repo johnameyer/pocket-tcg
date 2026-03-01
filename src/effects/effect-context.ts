@@ -8,10 +8,12 @@ type BaseEffectContext = {
     targetCreatureIndex?: number;
 };
 
-// Attack effect context - has attacker info
+// Attack effect context - has attacker and defender info
 export type AttackEffectContext = BaseEffectContext & {
     type: 'attack';
     attackerInstanceId: string;
+    defenderInstanceId: string;
+    defenderPlayerId: number;
     resolvedDamage?: number;
 };
 
@@ -28,16 +30,31 @@ export type CardEffectContext = BaseEffectContext & {
     cardType: 'supporter' | 'item';
 };
 
+/**
+ * Contextual data carried by trigger contexts.
+ * Which fields are populated depends on the triggerType:
+ * - 'damaged' / 'before-knockout': attackerInstanceId + attackerPlayerId
+ * - 'energy-attachment': energyType + triggerTargetInstanceId + triggerTargetPlayerId
+ */
+export type TriggerContextData = {
+    damage?: number;
+    energyType?: string;
+    /** Instance ID of the creature that caused the damage (for 'damaged'/'before-knockout' triggers) */
+    attackerInstanceId?: string;
+    /** Player ID of the attacking creature (for 'damaged'/'before-knockout' triggers) */
+    attackerPlayerId?: number;
+    /** Instance ID of the creature the event acted upon (for 'energy-attachment' triggers) */
+    triggerTargetInstanceId?: string;
+    /** Player ID of the trigger target creature (for 'energy-attachment' triggers) */
+    triggerTargetPlayerId?: number;
+};
+
 // Trigger effect context - for automatic triggers
 export type TriggerEffectContext = BaseEffectContext & {
     type: 'trigger';
     triggerType: TriggerType;
     creatureInstanceId: string;
-    triggerData?: {
-        damage?: number;
-        energyType?: string;
-        attackerPlayerId?: number;
-    };
+    triggerData?: TriggerContextData;
 };
 
 export type EffectContext =
@@ -52,6 +69,8 @@ export class EffectContextFactory {
         sourcePlayer: number,
         effectName: string,
         attackerInstanceId: string,
+        defenderInstanceId: string,
+        defenderPlayerId: number,
         resolvedDamage?: number,
     ): AttackEffectContext {
         return {
@@ -59,6 +78,8 @@ export class EffectContextFactory {
             sourcePlayer,
             effectName,
             attackerInstanceId,
+            defenderInstanceId,
+            defenderPlayerId,
             resolvedDamage,
         };
     }
@@ -96,11 +117,7 @@ export class EffectContextFactory {
         effectName: string,
         triggerType: TriggerType,
         creatureInstanceId: string,
-        triggerData?: {
-            damage?: number;
-            energyType?: string;
-            attackerPlayerId?: number;
-        },
+        triggerData?: TriggerContextData,
     ): TriggerEffectContext {
         return {
             type: 'trigger',
