@@ -72,8 +72,8 @@ describe('Switch Effect', () => {
     });
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 60,
@@ -81,8 +81,8 @@ describe('Switch Effect', () => {
                 weakness: 'fire',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
@@ -90,10 +90,10 @@ describe('Switch Effect', () => {
                 weakness: 'fire',
                 retreatCost: 2,
                 attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'colorless', amount: 2 }] }],
-            }],
-        ]),
-        supporters: new Map<string, SupporterData>([
-            [ 'switch-supporter', {
+            },
+        },
+        supporters: {
+            'switch-supporter': {
                 templateId: 'switch-supporter',
                 name: 'Switch Supporter',
                 effects: [{
@@ -101,8 +101,8 @@ describe('Switch Effect', () => {
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
                     switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
                 }],
-            }],
-            [ 'damage-switch-supporter', {
+            },
+            'damage-switch-supporter': {
                 templateId: 'damage-switch-supporter',
                 name: 'Damage Switch Supporter',
                 effects: [{
@@ -110,8 +110,8 @@ describe('Switch Effect', () => {
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
                     switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench', fieldCriteria: { hasDamage: true }}},
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     it('should force opponent to switch (basic operation)', () => {
@@ -159,8 +159,8 @@ describe('Switch Effect', () => {
 
     it('should preserve energy when switching', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'switch-supporter', {
+            supporters: {
+                'switch-supporter': {
                     templateId: 'switch-supporter',
                     name: 'Switch Supporter',
                     effects: [{
@@ -172,8 +172,8 @@ describe('Switch Effect', () => {
                             criteria: { player: 'opponent', location: 'field', position: 'bench' },
                         },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state, getExecutedCount } = runTestGame({

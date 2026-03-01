@@ -1,9 +1,9 @@
 import { CardRepository } from '../src/repository/card-repository.js';
 import { CreatureData, ItemData, SupporterData, ToolData, StadiumData } from '../src/repository/card-types.js';
 
-const mockCreatureData = new Map<string, CreatureData>();
+const mockCreatureData: Record<string, CreatureData> = {};
 
-mockCreatureData.set('basic-creature', {
+mockCreatureData['basic-creature'] = {
     templateId: 'basic-creature',
     name: 'Basic Creature',
     maxHp: 60,
@@ -11,9 +11,9 @@ mockCreatureData.set('basic-creature', {
     weakness: 'water',
     retreatCost: 1,
     attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-});
+};
 
-mockCreatureData.set('high-hp-creature', {
+mockCreatureData['high-hp-creature'] = {
     templateId: 'high-hp-creature',
     name: 'High HP Creature',
     maxHp: 180,
@@ -21,9 +21,9 @@ mockCreatureData.set('high-hp-creature', {
     weakness: 'psychic',
     retreatCost: 3,
     attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
-});
+};
 
-mockCreatureData.set('evolution-creature', {
+mockCreatureData['evolution-creature'] = {
     templateId: 'evolution-creature',
     name: 'Evolution Creature',
     maxHp: 120,
@@ -32,9 +32,9 @@ mockCreatureData.set('evolution-creature', {
     retreatCost: 2,
     previousStageName: 'Basic Creature',
     attacks: [{ name: 'Evolved Attack', damage: 50, energyRequirements: [{ type: 'fire', amount: 2 }] }],
-});
+};
 
-mockCreatureData.set('stage-2-creature', {
+mockCreatureData['stage-2-creature'] = {
     templateId: 'stage-2-creature',
     name: 'Stage 2 Creature',
     maxHp: 150,
@@ -43,9 +43,9 @@ mockCreatureData.set('stage-2-creature', {
     retreatCost: 3,
     previousStageName: 'Evolution Creature',
     attacks: [{ name: 'Final Attack', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }],
-});
+};
 
-mockCreatureData.set('tank-creature', {
+mockCreatureData['tank-creature'] = {
     templateId: 'tank-creature',
     name: 'Tank Creature',
     maxHp: 140,
@@ -53,9 +53,9 @@ mockCreatureData.set('tank-creature', {
     weakness: 'fighting',
     retreatCost: 3,
     attacks: [{ name: 'Body Slam', damage: 50, energyRequirements: [{ type: 'colorless', amount: 3 }] }],
-});
+};
 
-mockCreatureData.set('ex-creature', {
+mockCreatureData['ex-creature'] = {
     templateId: 'ex-creature',
     name: 'Ex Creature',
     maxHp: 120,
@@ -64,9 +64,9 @@ mockCreatureData.set('ex-creature', {
     retreatCost: 2,
     attributes: { ex: true },
     attacks: [{ name: 'Ex Attack', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }],
-});
+};
 
-mockCreatureData.set('mega-ex-creature', {
+mockCreatureData['mega-ex-creature'] = {
     templateId: 'mega-ex-creature',
     name: 'Mega Ex Creature',
     maxHp: 120,
@@ -75,10 +75,10 @@ mockCreatureData.set('mega-ex-creature', {
     retreatCost: 3,
     attributes: { ex: true, mega: true },
     attacks: [{ name: 'Mega Attack', damage: 60, energyRequirements: [{ type: 'lightning', amount: 3 }] }],
-});
+};
 
-const mockSupporterData = new Map<string, SupporterData>();
-mockSupporterData.set('basic-supporter', {
+const mockSupporterData: Record<string, SupporterData> = {};
+mockSupporterData['basic-supporter'] = {
     templateId: 'basic-supporter',
     name: 'Basic Supporter',
     effects: [{ 
@@ -87,67 +87,67 @@ mockSupporterData.set('basic-supporter', {
         target: { type: 'fixed', player: 'self', position: 'active' },
         operation: 'heal',
     }],
-});
+};
 
-mockSupporterData.set('draw-supporter', {
+mockSupporterData['draw-supporter'] = {
     templateId: 'draw-supporter',
     name: 'Draw Supporter',
     effects: [],
-});
+};
 
-mockSupporterData.set('coin-flip-supporter', {
+mockSupporterData['coin-flip-supporter'] = {
     templateId: 'coin-flip-supporter',
     name: 'Coin Flip Supporter',
     effects: [],
-});
+};
 
-const mockItemData = new Map<string, ItemData>();
-mockItemData.set('basic-item', {
+const mockItemData: Record<string, ItemData> = {};
+mockItemData['basic-item'] = {
     templateId: 'basic-item',
     name: 'Basic Item',
     effects: [{ type: 'hp', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' }],
-});
+};
 
-mockItemData.set('shuffle-item', {
+mockItemData['shuffle-item'] = {
     templateId: 'shuffle-item',
     name: 'Shuffle Item',
     effects: [],
-});
+};
 
-const mockToolData = new Map<string, ToolData>();
-mockToolData.set('basic-tool', {
+const mockToolData: Record<string, ToolData> = {};
+mockToolData['basic-tool'] = {
     templateId: 'basic-tool',
     name: 'Basic Tool',
     effects: [],
-});
+};
 
-mockToolData.set('power-enhancer', {
+mockToolData['power-enhancer'] = {
     templateId: 'power-enhancer',
     name: 'Power Enhancer',
     effects: [],
-});
+};
 
-mockToolData.set('leftovers', {
+mockToolData['leftovers'] = {
     templateId: 'leftovers',
     name: 'Leftovers',
     effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],
     trigger: { type: 'end-of-turn' },
-});
+};
 
-mockToolData.set('test-tool', {
+mockToolData['test-tool'] = {
     templateId: 'test-tool',
     name: 'Test Tool',
     effects: [],
-});
+};
 
-const mockStadiumData = new Map<string, StadiumData>();
-mockStadiumData.set('basic-stadium', {
+const mockStadiumData: Record<string, StadiumData> = {};
+mockStadiumData['basic-stadium'] = {
     templateId: 'basic-stadium',
     name: 'Basic Stadium',
     effects: [],
-});
+};
 
-mockStadiumData.set('hp-boost-stadium', {
+mockStadiumData['hp-boost-stadium'] = {
     templateId: 'hp-boost-stadium',
     name: 'HP Boost Stadium',
     effects: [{
@@ -156,9 +156,9 @@ mockStadiumData.set('hp-boost-stadium', {
         target: {},
         duration: { type: 'while-in-play' },
     }],
-});
+};
 
-mockStadiumData.set('retreat-cost-stadium', {
+mockStadiumData['retreat-cost-stadium'] = {
     templateId: 'retreat-cost-stadium',
     name: 'Retreat Cost Stadium',
     effects: [{
@@ -167,23 +167,23 @@ mockStadiumData.set('retreat-cost-stadium', {
         target: {},
         duration: { type: 'while-in-play' },
     }],
-});
+};
 
 export interface MockRepositoryExtensions {
-    creatures?: Map<string, CreatureData>;
-    supporters?: Map<string, SupporterData>;
-    items?: Map<string, ItemData>;
-    tools?: Map<string, ToolData>;
-    stadiums?: Map<string, StadiumData>;
+    creatures?: Record<string, CreatureData>;
+    supporters?: Record<string, SupporterData>;
+    items?: Record<string, ItemData>;
+    tools?: Record<string, ToolData>;
+    stadiums?: Record<string, StadiumData>;
 }
 
 export class MockCardRepository extends CardRepository {
     constructor(extensions: MockRepositoryExtensions = {}) {
-        const allCreatures = new Map([ ...Array.from(mockCreatureData), ...Array.from(extensions.creatures || new Map()) ]);
-        const allSupporters = new Map([ ...Array.from(mockSupporterData), ...Array.from(extensions.supporters || new Map()) ]);
-        const allItems = new Map([ ...Array.from(mockItemData), ...Array.from(extensions.items || new Map()) ]);
-        const allTools = new Map([ ...Array.from(mockToolData), ...Array.from(extensions.tools || new Map()) ]);
-        const allStadiums = new Map([ ...Array.from(mockStadiumData), ...Array.from(extensions.stadiums || new Map()) ]);
+        const allCreatures = { ...mockCreatureData, ...(extensions.creatures || {}) };
+        const allSupporters = { ...mockSupporterData, ...(extensions.supporters || {}) };
+        const allItems = { ...mockItemData, ...(extensions.items || {}) };
+        const allTools = { ...mockToolData, ...(extensions.tools || {}) };
+        const allStadiums = { ...mockStadiumData, ...(extensions.stadiums || {}) };
         
         super(allCreatures, allSupporters, allItems, allTools, allStadiums);
     }

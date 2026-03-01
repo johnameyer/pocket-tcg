@@ -8,8 +8,8 @@ import { MockCardRepository } from './mock-repository.js';
 describe('Weakness System', () => {
     // Create test-specific creatures for weakness testing
     const weaknessTestRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'fire-attacker', {
+        creatures: {
+            'fire-attacker': {
                 templateId: 'fire-attacker',
                 name: 'Fire Attacker',
                 maxHp: 80,
@@ -17,8 +17,8 @@ describe('Weakness System', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Flame Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'grass-defender', {
+            },
+            'grass-defender': {
                 templateId: 'grass-defender',
                 name: 'Grass Defender',
                 maxHp: 90,
@@ -26,8 +26,8 @@ describe('Weakness System', () => {
                 weakness: 'fire', // Weak to fire - should take +20 damage
                 retreatCost: 2,
                 attacks: [{ name: 'Leaf Attack', damage: 15, energyRequirements: [{ type: 'grass', amount: 1 }] }],
-            }],
-            [ 'water-defender', {
+            },
+            'water-defender': {
                 templateId: 'water-defender',
                 name: 'Water Defender',
                 maxHp: 85,
@@ -35,8 +35,8 @@ describe('Weakness System', () => {
                 weakness: 'lightning', // Not weak to fire - should take normal damage
                 retreatCost: 1,
                 attacks: [{ name: 'Water Gun', damage: 18, energyRequirements: [{ type: 'water', amount: 1 }] }],
-            }],
-            [ 'zero-damage-attacker', {
+            },
+            'zero-damage-attacker': {
                 templateId: 'zero-damage-attacker',
                 name: 'Zero Damage Attacker',
                 maxHp: 60,
@@ -44,8 +44,8 @@ describe('Weakness System', () => {
                 weakness: 'darkness',
                 retreatCost: 1,
                 attacks: [{ name: 'Status Move', damage: 0, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
-            }],
-            [ 'psychic-defender', {
+            },
+            'psychic-defender': {
                 templateId: 'psychic-defender',
                 name: 'Psychic Defender',
                 maxHp: 70,
@@ -53,8 +53,8 @@ describe('Weakness System', () => {
                 weakness: 'psychic', // Weak to psychic - but 0 damage + 20 should still be 0
                 retreatCost: 1,
                 attacks: [{ name: 'Punch', damage: 25, energyRequirements: [{ type: 'fighting', amount: 1 }] }],
-            }],
-        ]),
+            },
+        },
     });
 
     it('should deal +20 damage when attacking weakness', () => {

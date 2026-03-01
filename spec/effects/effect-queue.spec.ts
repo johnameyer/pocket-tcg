@@ -54,10 +54,10 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
     describe('Damage Effects Triggering Other Effects', () => {
         it('should trigger damage-triggered ability when damage effect is applied', () => {
             const repo = new MockCardRepository({
-                creatures: new Map([
-                    [ 'reactive', createDamageReactiveCreature('reactive', 'Reactive', 10) ],
-                ]),
-                supporters: new Map([[ 'dmg-sup', createDamageSupporter('dmg-sup', 20) ]]),
+                creatures: {
+                    'reactive': createDamageReactiveCreature('reactive', 'Reactive', 10) ,
+                },
+                supporters: { 'dmg-sup': createDamageSupporter('dmg-sup', 20) },
             });
 
             const { state } = runTestGame({
@@ -76,10 +76,10 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
 
         it('should handle cascading damage effects', () => {
             const repo = new MockCardRepository({
-                creatures: new Map([
-                    [ 'reactor', createDamageReactiveCreature('reactor', 'Reactor', 5) ],
-                ]),
-                supporters: new Map([[ 'dmg', createDamageSupporter('dmg', 20) ]]),
+                creatures: {
+                    'reactor': createDamageReactiveCreature('reactor', 'Reactor', 5) ,
+                },
+                supporters: { 'dmg': createDamageSupporter('dmg', 20) },
             });
 
             const { state } = runTestGame({
@@ -119,8 +119,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: new Map([[ 'energy-react', energyReactive ]]),
-                supporters: new Map([[ 'e-sup', createEnergySupporter('e-sup', 'fire') ]]),
+                creatures: { 'energy-react': energyReactive },
+                supporters: { 'e-sup': createEnergySupporter('e-sup', 'fire') },
             });
 
             const { state } = runTestGame({
@@ -152,8 +152,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: new Map([[ 'any-energy', anyEnergyReactive ]]),
-                supporters: new Map([[ 'w-sup', createEnergySupporter('w-sup', 'water') ]]),
+                creatures: { 'any-energy': anyEnergyReactive },
+                supporters: { 'w-sup': createEnergySupporter('w-sup', 'water') },
             });
 
             const { state } = runTestGame({
@@ -191,8 +191,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: new Map([[ 'multi', multiReactive ]]),
-                supporters: new Map([[ 'dmg', createDamageSupporter('dmg', 20) ]]),
+                creatures: { 'multi': multiReactive },
+                supporters: { 'dmg': createDamageSupporter('dmg', 20) },
             });
 
             const { state } = runTestGame({

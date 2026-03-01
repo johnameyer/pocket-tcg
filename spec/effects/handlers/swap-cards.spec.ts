@@ -90,8 +90,8 @@ describe('Swap Cards Effect', () => {
 
     it('should discard and draw equal amounts', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'swap-item', {
+            items: {
+                'swap-item': {
                     templateId: 'swap-item',
                     name: 'Swap Item',
                     effects: [{
@@ -100,8 +100,8 @@ describe('Swap Cards Effect', () => {
                         drawAmount: { type: 'constant', value: 2 },
                         
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -132,8 +132,8 @@ describe('Swap Cards Effect', () => {
 
     it('should respect maxDrawn cap', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'capped-swap-item', {
+            items: {
+                'capped-swap-item': {
                     templateId: 'capped-swap-item',
                     name: 'Capped Swap Item',
                     effects: [{
@@ -143,8 +143,8 @@ describe('Swap Cards Effect', () => {
                         maxDrawn: 2,
                         
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -175,8 +175,8 @@ describe('Swap Cards Effect', () => {
 
     it('should handle empty deck scenario (no draws)', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'swap-item', {
+            items: {
+                'swap-item': {
                     templateId: 'swap-item',
                     name: 'Swap Item',
                     effects: [{
@@ -185,8 +185,8 @@ describe('Swap Cards Effect', () => {
                         drawAmount: { type: 'constant', value: 3 },
                         
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({

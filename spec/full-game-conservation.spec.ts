@@ -16,8 +16,8 @@ import { runBotGame } from './helpers/test-helpers.js';
 describe('Full Game Conservation', () => {
     // Create a repository with a variety of interesting cards
     const gameRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-fire', {
+        creatures: {
+            'basic-fire': {
                 templateId: 'basic-fire',
                 name: 'Basic Fire',
                 maxHp: 70,
@@ -27,8 +27,8 @@ describe('Full Game Conservation', () => {
                 attacks: [
                     { name: 'Ember', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] },
                 ],
-            }],
-            [ 'evolved-fire', {
+            },
+            'evolved-fire': {
                 templateId: 'evolved-fire',
                 name: 'Evolved Fire',
                 maxHp: 120,
@@ -39,8 +39,8 @@ describe('Full Game Conservation', () => {
                 attacks: [
                     { name: 'Flame Burst', damage: 60, energyRequirements: [{ type: 'fire', amount: 2 }] },
                 ],
-            }],
-            [ 'basic-water', {
+            },
+            'basic-water': {
                 templateId: 'basic-water',
                 name: 'Basic Water',
                 maxHp: 60,
@@ -50,8 +50,8 @@ describe('Full Game Conservation', () => {
                 attacks: [
                     { name: 'Bubble', damage: 20, energyRequirements: [{ type: 'water', amount: 1 }] },
                 ],
-            }],
-            [ 'tank-creature', {
+            },
+            'tank-creature': {
                 templateId: 'tank-creature',
                 name: 'Tank',
                 maxHp: 140,
@@ -61,8 +61,8 @@ describe('Full Game Conservation', () => {
                 attacks: [
                     { name: 'Heavy Strike', damage: 50, energyRequirements: [{ type: 'fighting', amount: 2 }] },
                 ],
-            }],
-        ]),
+            },
+        },
     });
 
     /**

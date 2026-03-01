@@ -98,8 +98,8 @@ describe('Energy Effect', () => {
 
     it('should attach 1 fire energy (basic operation)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'energy-supporter', {
+            supporters: {
+                'energy-supporter': {
                     templateId: 'energy-supporter',
                     name: 'Energy Supporter',
                     effects: [{
@@ -108,8 +108,8 @@ describe('Energy Effect', () => {
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -127,8 +127,8 @@ describe('Energy Effect', () => {
 
     it('should discard energy instead of attach', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'discard-supporter', {
+            supporters: {
+                'discard-supporter': {
                     templateId: 'discard-supporter',
                     name: 'Discard Supporter',
                     effects: [{
@@ -140,8 +140,8 @@ describe('Energy Effect', () => {
                             count: 1,
                         },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -162,8 +162,8 @@ describe('Energy Effect', () => {
 
     it('should attach different energy types (water)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'water-supporter', {
+            supporters: {
+                'water-supporter': {
                     templateId: 'water-supporter',
                     name: 'Water Supporter',
                     effects: [{
@@ -172,8 +172,8 @@ describe('Energy Effect', () => {
                         amount: { type: 'constant', value: 1 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -191,8 +191,8 @@ describe('Energy Effect', () => {
 
     it('should attach different amounts (2 energy)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'multi-energy-supporter', {
+            supporters: {
+                'multi-energy-supporter': {
                     templateId: 'multi-energy-supporter',
                     name: 'Multi Energy Supporter',
                     effects: [{
@@ -201,8 +201,8 @@ describe('Energy Effect', () => {
                         amount: { type: 'constant', value: 2 },
                         target: { type: 'fixed', player: 'self', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -220,8 +220,8 @@ describe('Energy Effect', () => {
 
     it('should target different Pokemon (choice)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'choice-energy-supporter', {
+            supporters: {
+                'choice-energy-supporter': {
                     templateId: 'choice-energy-supporter',
                     name: 'Choice Energy Supporter',
                     effects: [{
@@ -233,8 +233,8 @@ describe('Energy Effect', () => {
                             player: 'self', position: 'active',
                         },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -254,8 +254,8 @@ describe('Energy Effect', () => {
 
     it('should cap discard at available energy', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'big-discard-supporter', {
+            supporters: {
+                'big-discard-supporter': {
                     templateId: 'big-discard-supporter',
                     name: 'Big Discard Supporter',
                     effects: [{
@@ -267,8 +267,8 @@ describe('Energy Effect', () => {
                             count: 5,
                         },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -290,8 +290,8 @@ describe('Energy Effect', () => {
     describe('Energy Discard Tracking', () => {
         it('should track discarded energy from discard effects', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map([
-                    [ 'energy-discard', {
+                supporters: {
+                    'energy-discard': {
                         templateId: 'energy-discard',
                         name: 'Energy Discard',
                         effects: [{
@@ -303,8 +303,8 @@ describe('Energy Effect', () => {
                                 count: 2,
                             },
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -327,8 +327,8 @@ describe('Energy Effect', () => {
 
         it('should track discarded energy when creature is knocked out', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map([
-                    [ 'attacker', {
+                creatures: {
+                    'attacker': {
                         templateId: 'attacker',
                         name: 'Attacker',
                         type: 'fire',
@@ -340,8 +340,8 @@ describe('Energy Effect', () => {
                             damage: 100,
                             energyRequirements: [],
                         }],
-                    }],
-                    [ 'defender', {
+                    },
+                    'defender': {
                         templateId: 'defender',
                         name: 'Defender',
                         type: 'water',
@@ -349,8 +349,8 @@ describe('Energy Effect', () => {
                         retreatCost: 1,
                         weakness: 'grass',
                         attacks: [],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({

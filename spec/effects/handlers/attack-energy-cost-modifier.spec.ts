@@ -32,8 +32,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
     const reduceItem = { templateId: 'reduce-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -41,8 +41,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 2 }] }],
-            }],
-            [ 'high-cost-creature', {
+            },
+            'high-cost-creature': {
                 templateId: 'high-cost-creature',
                 name: 'High Cost Creature',
                 maxHp: 180,
@@ -50,8 +50,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attacks: [{ name: 'Expensive Attack', damage: 60, energyRequirements: [{ type: 'water', amount: 4 }] }],
-            }],
-            [ 'single-cost-creature', {
+            },
+            'single-cost-creature': {
                 templateId: 'single-cost-creature',
                 name: 'Single Cost Creature',
                 maxHp: 60,
@@ -59,10 +59,10 @@ describe('Attack Energy Cost Modifier Effect', () => {
                 weakness: 'fire',
                 retreatCost: 1,
                 attacks: [{ name: 'Quick Attack', damage: 15, energyRequirements: [{ type: 'grass', amount: 1 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'reduce-item', {
+            },
+        },
+        items: {
+            'reduce-item': {
                 templateId: 'reduce-item',
                 name: 'Reduce Energy Item',
                 effects: [{
@@ -71,8 +71,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                     target: { player: 'self', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'increase-item', {
+            },
+            'increase-item': {
                 templateId: 'increase-item',
                 name: 'Increase Energy Item',
                 effects: [{
@@ -81,8 +81,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                     target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'reduce-by-two', {
+            },
+            'reduce-by-two': {
                 templateId: 'reduce-by-two',
                 name: 'Reduce Energy By Two',
                 effects: [{
@@ -91,8 +91,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                     target: { player: 'self', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'reduce-active', {
+            },
+            'reduce-active': {
                 templateId: 'reduce-active',
                 name: 'Reduce Active Energy',
                 effects: [{
@@ -101,8 +101,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                     target: { player: 'self', location: 'field', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const singleCostCreature = { templateId: 'single-cost-creature', type: 'creature' as const };
@@ -243,8 +243,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
     it('should expire at correct time based on duration', () => {
         // Create an item with until-end-of-turn for simpler testing
         const testRepoWithSimpleDuration = new MockCardRepository({
-            creatures: new Map<string, CreatureData>([
-                [ 'basic-creature', {
+            creatures: {
+                'basic-creature': {
                     templateId: 'basic-creature',
                     name: 'Basic Creature',
                     maxHp: 80,
@@ -252,8 +252,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                     weakness: 'water',
                     retreatCost: 1,
                     attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 2 }] }],
-                }],
-                [ 'high-cost-creature', {
+                },
+                'high-cost-creature': {
                     templateId: 'high-cost-creature',
                     name: 'High Cost Creature',
                     maxHp: 180,
@@ -261,10 +261,10 @@ describe('Attack Energy Cost Modifier Effect', () => {
                     weakness: 'grass',
                     retreatCost: 2,
                     attacks: [{ name: 'Expensive Attack', damage: 60, energyRequirements: [{ type: 'water', amount: 4 }] }],
-                }],
-            ]),
-            items: new Map<string, ItemData>([
-                [ 'reduce-item-eot', {
+                },
+            },
+            items: {
+                'reduce-item-eot': {
                     templateId: 'reduce-item-eot',
                     name: 'Reduce Energy Item EOT',
                     effects: [{
@@ -273,8 +273,8 @@ describe('Attack Energy Cost Modifier Effect', () => {
                         target: { player: 'self', location: 'field' },
                         duration: { type: 'until-end-of-turn' }, // Expires at start of NEXT turn
                     }],
-                }],
-            ]),
+                },
+            },
         });
         
         const { state, getExecutedCount } = runTestGame({

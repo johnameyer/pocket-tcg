@@ -6,6 +6,7 @@ import { AttackResponseMessage } from '../src/messages/response/attack-response-
 import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { StatusEffectType } from '../src/controllers/status-effect-controller.js';
 import { CardRepository } from '../src/repository/card-repository.js';
+import { CreatureData, SupporterData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { mockRepository } from './mock-repository.js';
@@ -325,8 +326,8 @@ describe('Creature Pocket TCG Game', () => {
     describe('Card Descriptions', () => {
         it('should accept optional descriptions on card types', () => {
             // Just verify the types accept descriptions - no runtime validation needed
-            const testCreatures = new Map();
-            testCreatures.set('test', {
+            const testCreatures: Record<string, CreatureData> = {};
+            testCreatures['test'] = {
                 templateId: 'test',
                 name: 'Test',
                 maxHp: 100,
@@ -344,17 +345,17 @@ describe('Creature Pocket TCG Game', () => {
                     trigger: { type: 'manual', unlimited: false },
                     effects: [],
                 },
-            });
+            };
 
-            const testSupporters = new Map();
-            testSupporters.set('test-supporter', {
+            const testSupporters: Record<string, SupporterData> = {};
+            testSupporters['test-supporter'] = {
                 templateId: 'test-supporter',
                 name: 'Test Supporter',
                 description: 'Supporter description',
                 effects: [],
-            });
+            };
 
-            const repo = new CardRepository(testCreatures, testSupporters, new Map(), new Map(), new Map());
+            const repo = new CardRepository(testCreatures, testSupporters, {}, {}, {});
             const creature = repo.getCreature('test');
             const supporter = repo.getSupporter('test-supporter');
 

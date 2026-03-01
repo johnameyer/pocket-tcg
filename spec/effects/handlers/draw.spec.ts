@@ -48,13 +48,13 @@ describe('Draw Effect', () => {
 
     it('should draw 2 cards (basic amount)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'draw-supporter', {
+            supporters: {
+                'draw-supporter': {
                     templateId: 'draw-supporter',
                     name: 'Draw Supporter',
                     effects: [{ type: 'draw', amount: { type: 'constant', value: 2 }}],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -72,13 +72,13 @@ describe('Draw Effect', () => {
 
     it('should draw different amounts (4 cards)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'big-draw', {
+            supporters: {
+                'big-draw': {
                     templateId: 'big-draw',
                     name: 'Big Draw',
                     effects: [{ type: 'draw', amount: { type: 'constant', value: 4 }}],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -95,13 +95,13 @@ describe('Draw Effect', () => {
 
     it('should draw limited by deck size', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'big-draw', {
+            supporters: {
+                'big-draw': {
                     templateId: 'big-draw',
                     name: 'Big Draw',
                     effects: [{ type: 'draw', amount: { type: 'constant', value: 5 }}],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -119,13 +119,13 @@ describe('Draw Effect', () => {
 
     it('should handle empty deck', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'draw-supporter', {
+            supporters: {
+                'draw-supporter': {
                     templateId: 'draw-supporter',
                     name: 'Draw Supporter',
                     effects: [{ type: 'draw', amount: { type: 'constant', value: 2 }}],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -142,16 +142,16 @@ describe('Draw Effect', () => {
 
     it('should draw based on context (hand size)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'context-draw', {
+            supporters: {
+                'context-draw': {
                     templateId: 'context-draw',
                     name: 'Context Draw',
                     effects: [{
                         type: 'draw',
                         amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({

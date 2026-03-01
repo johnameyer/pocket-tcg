@@ -1,50 +1,50 @@
 import { CreatureData, SupporterData, ItemData, ToolData, StadiumData } from './card-types.js';
 
 export class CardRepository {
-    private creatureNameMap: Map<string, CreatureData> = new Map();
+    private creatureNameMap: Record<string, CreatureData> = {};
 
-    private evolutionsOfMap: Map<string, string[]> = new Map();
+    private evolutionsOfMap: Record<string, string[]> = {};
 
-    private typeMap: Map<string, string[]> = new Map();
+    private typeMap: Record<string, string[]> = {};
     
     constructor(
-        private creatureData: Map<string, CreatureData> = new Map(),
-        private supporterData: Map<string, SupporterData> = new Map(),
-        private itemData: Map<string, ItemData> = new Map(),
-        private fieldCardToolData: Map<string, ToolData> = new Map(),
-        private stadiumData: Map<string, StadiumData> = new Map(),
+        private creatureData: Record<string, CreatureData> = {},
+        private supporterData: Record<string, SupporterData> = {},
+        private itemData: Record<string, ItemData> = {},
+        private fieldCardToolData: Record<string, ToolData> = {},
+        private stadiumData: Record<string, StadiumData> = {},
     ) {
         // Build name-to-creature map at instantiation time for efficient lookups
-        for (const creature of creatureData.values()) {
+        for (const creature of Object.values(creatureData)) {
             // Store first occurrence of each name (multiple creatures may share the same name)
-            if (!this.creatureNameMap.has(creature.name)) {
-                this.creatureNameMap.set(creature.name, creature);
+            if (!(creature.name in this.creatureNameMap)) {
+                this.creatureNameMap[creature.name] = creature;
             }
         }
         
         // Build reverse evolution map: creatureName -> [IDs that evolve from it]
-        for (const [ templateId, creature ] of creatureData) {
+        for (const [ templateId, creature ] of Object.entries(creatureData)) {
             if (creature.previousStageName) {
-                if (!this.evolutionsOfMap.has(creature.previousStageName)) {
-                    this.evolutionsOfMap.set(creature.previousStageName, []);
+                if (!(creature.previousStageName in this.evolutionsOfMap)) {
+                    this.evolutionsOfMap[creature.previousStageName] = [];
                 }
-                this.evolutionsOfMap.get(creature.previousStageName)!.push(templateId);
+                this.evolutionsOfMap[creature.previousStageName].push(templateId);
             }
         }
         
         // Build type map: creatureType -> [IDs of that type]
-        for (const [ templateId, creature ] of creatureData) {
+        for (const [ templateId, creature ] of Object.entries(creatureData)) {
             if (creature.type) {
-                if (!this.typeMap.has(creature.type)) {
-                    this.typeMap.set(creature.type, []);
+                if (!(creature.type in this.typeMap)) {
+                    this.typeMap[creature.type] = [];
                 }
-                this.typeMap.get(creature.type)!.push(templateId);
+                this.typeMap[creature.type].push(templateId);
             }
         }
     }
 
     public getCreature(templateId: string): CreatureData {
-        const fieldCard = this.creatureData.get(templateId);
+        const fieldCard = this.creatureData[templateId];
         if (!fieldCard) {
             throw new Error(`FieldCard not found: ${templateId}`);
         }
@@ -52,7 +52,7 @@ export class CardRepository {
     }
     
     public getAllCreatureIds(): string[] {
-        return Array.from(this.creatureData.keys());
+        return Object.keys(this.creatureData);
     }
     
     /**
@@ -68,7 +68,7 @@ export class CardRepository {
      * @throws Error if no creature with that name is found
      */
     public getCreatureByName(name: string): CreatureData {
-        const creature = this.creatureNameMap.get(name);
+        const creature = this.creatureNameMap[name];
         if (!creature) {
             throw new Error(`Creature not found with name: ${name}`);
         }
@@ -76,7 +76,7 @@ export class CardRepository {
     }
     
     public getSupporter(templateId: string): SupporterData {
-        const supporter = this.supporterData.get(templateId);
+        const supporter = this.supporterData[templateId];
         if (!supporter) {
             throw new Error(`Supporter not found: ${templateId}`);
         }
@@ -84,7 +84,7 @@ export class CardRepository {
     }
     
     public getItem(templateId: string): ItemData {
-        const item = this.itemData.get(templateId);
+        const item = this.itemData[templateId];
         if (!item) {
             throw new Error(`Item not found: ${templateId}`);
         }
@@ -92,7 +92,7 @@ export class CardRepository {
     }
     
     public getTool(templateId: string): ToolData {
-        const tool = this.fieldCardToolData.get(templateId);
+        const tool = this.fieldCardToolData[templateId];
         if (!tool) {
             throw new Error(`Tool not found: ${templateId}`);
         }
@@ -100,7 +100,7 @@ export class CardRepository {
     }
     
     public getStadium(templateId: string): StadiumData {
-        const stadium = this.stadiumData.get(templateId);
+        const stadium = this.stadiumData[templateId];
         if (!stadium) {
             throw new Error(`Stadium not found: ${templateId}`);
         }
@@ -108,19 +108,19 @@ export class CardRepository {
     }
     
     public getAllSupporterIds(): string[] {
-        return Array.from(this.supporterData.keys());
+        return Object.keys(this.supporterData);
     }
     
     public getAllItemIds(): string[] {
-        return Array.from(this.itemData.keys());
+        return Object.keys(this.itemData);
     }
     
     public getAllToolIds(): string[] {
-        return Array.from(this.fieldCardToolData.keys());
+        return Object.keys(this.fieldCardToolData);
     }
     
     public getAllStadiumIds(): string[] {
-        return Array.from(this.stadiumData.keys());
+        return Object.keys(this.stadiumData);
     }
     
     /**
@@ -202,7 +202,7 @@ export class CardRepository {
      * @returns Array of creature IDs that evolve from this creature
      */
     public getEvolutionsOf(creatureName: string): string[] {
-        return this.evolutionsOfMap.get(creatureName) || [];
+        return this.evolutionsOfMap[creatureName] || [];
     }
     
     /**
@@ -213,6 +213,6 @@ export class CardRepository {
      * @returns Array of creature IDs of that type
      */
     public getCreaturesOfType(type: string): string[] {
-        return this.typeMap.get(type) || [];
+        return this.typeMap[type] || [];
     }
 }

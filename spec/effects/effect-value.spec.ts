@@ -9,8 +9,8 @@ describe('Effect Value Calculation', () => {
     describe('Constant Values', () => {
         it('should use constant value (20)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'constant-20', {
+                supporters: {
+                    'constant-20': {
                         templateId: 'constant-20',
                         name: 'Constant 20',
                         effects: [{
@@ -19,8 +19,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -38,8 +38,8 @@ describe('Effect Value Calculation', () => {
 
         it('should use different constant values (50)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'constant-50', {
+                supporters: {
+                    'constant-50': {
                         templateId: 'constant-50',
                         name: 'Constant 50',
                         effects: [{
@@ -48,8 +48,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -69,8 +69,8 @@ describe('Effect Value Calculation', () => {
     describe('Player Context Resolved Values', () => {
         it('should resolve hand-size for self', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'hand-size-heal', {
+                supporters: {
+                    'hand-size-heal': {
                         templateId: 'hand-size-heal',
                         name: 'Hand Size Heal',
                         effects: [{
@@ -79,8 +79,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -103,8 +103,8 @@ describe('Effect Value Calculation', () => {
 
         it('should resolve hand-size for opponent', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opp-hand-heal', {
+                supporters: {
+                    'opp-hand-heal': {
                         templateId: 'opp-hand-heal',
                         name: 'Opponent Hand Heal',
                         effects: [{
@@ -113,8 +113,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -133,8 +133,8 @@ describe('Effect Value Calculation', () => {
 
         it('should resolve current-points', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'points-heal', {
+                supporters: {
+                    'points-heal': {
                         templateId: 'points-heal',
                         name: 'Points Heal',
                         effects: [{
@@ -143,8 +143,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -165,8 +165,8 @@ describe('Effect Value Calculation', () => {
 
         it('should resolve points-to-win', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'points-to-win-heal', {
+                supporters: {
+                    'points-to-win-heal': {
                         templateId: 'points-to-win-heal',
                         name: 'Points To Win Heal',
                         effects: [{
@@ -175,8 +175,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -199,8 +199,8 @@ describe('Effect Value Calculation', () => {
     describe('Multiplication Values', () => {
         it('should multiply by constant (10 x 2)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'multiply-heal', {
+                supporters: {
+                    'multiply-heal': {
                         templateId: 'multiply-heal',
                         name: 'Multiply Heal',
                         effects: [{
@@ -213,8 +213,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -232,8 +232,8 @@ describe('Effect Value Calculation', () => {
 
         it('should multiply by hand size (10 x hand size)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'hand-multiply', {
+                supporters: {
+                    'hand-multiply': {
                         templateId: 'hand-multiply',
                         name: 'Hand Multiply',
                         effects: [{
@@ -246,8 +246,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -271,8 +271,8 @@ describe('Effect Value Calculation', () => {
     describe('Addition Values', () => {
         it('should add multiple values (10 + 5)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'addition-heal', {
+                supporters: {
+                    'addition-heal': {
                         templateId: 'addition-heal',
                         name: 'Addition Heal',
                         effects: [{
@@ -287,8 +287,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -306,8 +306,8 @@ describe('Effect Value Calculation', () => {
 
         it('should add constant + context (20 + hand size)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'mixed-addition', {
+                supporters: {
+                    'mixed-addition': {
                         templateId: 'mixed-addition',
                         name: 'Mixed Addition',
                         effects: [{
@@ -322,8 +322,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -348,8 +348,8 @@ describe('Effect Value Calculation', () => {
     describe('Player Context Resolved Values', () => {
         it('should resolve opponent hand-size value', () => {
             const testRepository = new MockCardRepository({ 
-                supporters: new Map([
-                    [ 'opponent-hand-damage', {
+                supporters: {
+                    'opponent-hand-damage': {
                         templateId: 'opponent-hand-damage',
                         name: 'Opponent Hand Damage',
                         effects: [{
@@ -358,8 +358,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
                             operation: 'damage',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -383,8 +383,8 @@ describe('Effect Value Calculation', () => {
 
         it('should resolve points-to-win value', () => {
             const testRepository = new MockCardRepository({ 
-                supporters: new Map([
-                    [ 'points-heal', {
+                supporters: {
+                    'points-heal': {
                         templateId: 'points-heal',
                         name: 'Points Heal',
                         effects: [{
@@ -393,8 +393,8 @@ describe('Effect Value Calculation', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -418,8 +418,8 @@ describe('Effect Value Calculation', () => {
         describe('Field Count', () => {
             it('should count all creatures on field', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-all-field', {
+                    supporters: {
+                        'count-all-field': {
                             templateId: 'count-all-field',
                             name: 'Count All Field',
                             effects: [{
@@ -432,8 +432,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -453,8 +453,8 @@ describe('Effect Value Calculation', () => {
 
             it('should count only benched creatures', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-benched', {
+                    supporters: {
+                        'count-benched': {
                             templateId: 'count-benched',
                             name: 'Count Benched',
                             effects: [{
@@ -467,8 +467,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -488,8 +488,8 @@ describe('Effect Value Calculation', () => {
 
             it('should count own benched creatures only', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-own-bench', {
+                    supporters: {
+                        'count-own-bench': {
                             templateId: 'count-own-bench',
                             name: 'Count Own Bench',
                             effects: [{
@@ -502,8 +502,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -525,8 +525,8 @@ describe('Effect Value Calculation', () => {
         describe('Card Count', () => {
             it('should count cards in hand', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-hand', {
+                    supporters: {
+                        'count-hand': {
                             templateId: 'count-hand',
                             name: 'Count Hand',
                             effects: [{
@@ -540,8 +540,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -565,8 +565,8 @@ describe('Effect Value Calculation', () => {
 
             it('should count opponent hand', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-opp-hand', {
+                    supporters: {
+                        'count-opp-hand': {
                             templateId: 'count-opp-hand',
                             name: 'Count Opponent Hand',
                             effects: [{
@@ -580,8 +580,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -603,8 +603,8 @@ describe('Effect Value Calculation', () => {
         describe('Energy Count', () => {
             it('should count all energy on own creatures', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-energy', {
+                    supporters: {
+                        'count-energy': {
                             templateId: 'count-energy',
                             name: 'Count Energy',
                             effects: [{
@@ -617,8 +617,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -639,8 +639,8 @@ describe('Effect Value Calculation', () => {
 
             it('should count energy on active creature only', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-active-energy', {
+                    supporters: {
+                        'count-active-energy': {
                             templateId: 'count-active-energy',
                             name: 'Count Active Energy',
                             effects: [{
@@ -653,8 +653,8 @@ describe('Effect Value Calculation', () => {
                                 target: { type: 'fixed', player: 'self', position: 'active' },
                                 operation: 'heal',
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({
@@ -677,8 +677,8 @@ describe('Effect Value Calculation', () => {
         describe('Damage Count', () => {
             it('should count damage on active creature', () => {
                 const testRepository = new MockCardRepository({
-                    supporters: new Map<string, SupporterData>([
-                        [ 'count-damage', {
+                    supporters: {
+                        'count-damage': {
                             templateId: 'count-damage',
                             name: 'Count Damage',
                             effects: [{
@@ -689,8 +689,8 @@ describe('Effect Value Calculation', () => {
                                     fieldCriteria: { player: 'self', position: 'active' },
                                 },
                             }],
-                        }],
-                    ]),
+                        },
+                    },
                 });
 
                 const { state } = runTestGame({

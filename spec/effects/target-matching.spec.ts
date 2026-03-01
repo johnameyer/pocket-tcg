@@ -10,8 +10,8 @@ describe('Target Matching', () => {
     describe('Fixed Targets', () => {
         it('should target self-active', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'self-target', {
+                supporters: {
+                    'self-target': {
                         templateId: 'self-target',
                         name: 'Self Target',
                         effects: [{
@@ -20,8 +20,8 @@ describe('Target Matching', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -42,8 +42,8 @@ describe('Target Matching', () => {
 
         it('should target opponent-active', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opponent-target', {
+                supporters: {
+                    'opponent-target': {
                         templateId: 'opponent-target',
                         name: 'Opponent Target',
                         effects: [{
@@ -52,8 +52,8 @@ describe('Target Matching', () => {
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
                             operation: 'damage',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -74,8 +74,8 @@ describe('Target Matching', () => {
     describe('Single Choice Targets', () => {
         it('should require target selection', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'choice-target', {
+                supporters: {
+                    'choice-target': {
                         templateId: 'choice-target',
                         name: 'Choice Target',
                         effects: [{
@@ -88,8 +88,8 @@ describe('Target Matching', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -112,8 +112,8 @@ describe('Target Matching', () => {
 
         it('should respect chooser (opponent choice)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opponent-choice', {
+                supporters: {
+                    'opponent-choice': {
                         templateId: 'opponent-choice',
                         name: 'Opponent Choice',
                         effects: [{
@@ -126,8 +126,8 @@ describe('Target Matching', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -151,8 +151,8 @@ describe('Target Matching', () => {
     describe('All Matching Targets', () => {
         it('should target all creature in scope', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'all-target', {
+                supporters: {
+                    'all-target': {
                         templateId: 'all-target',
                         name: 'All Target',
                         effects: [{
@@ -164,8 +164,8 @@ describe('Target Matching', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -199,8 +199,8 @@ describe('Target Matching', () => {
 
         it('should filter by condition (damaged only)', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'damaged-only', {
+                supporters: {
+                    'damaged-only': {
                         templateId: 'damaged-only',
                         name: 'Damaged Only',
                         effects: [{
@@ -212,8 +212,8 @@ describe('Target Matching', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -249,8 +249,8 @@ describe('Target Matching', () => {
     describe('Scope Filtering', () => {
         it('should respect self-field scope', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'self-scope', {
+                supporters: {
+                    'self-scope': {
                         templateId: 'self-scope',
                         name: 'Self Scope',
                         effects: [{
@@ -262,8 +262,8 @@ describe('Target Matching', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -284,8 +284,8 @@ describe('Target Matching', () => {
 
         it('should respect opponent-field scope', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opponent-scope', {
+                supporters: {
+                    'opponent-scope': {
                         templateId: 'opponent-scope',
                         name: 'Opponent Scope',
                         effects: [{
@@ -297,8 +297,8 @@ describe('Target Matching', () => {
                             },
                             operation: 'damage',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({

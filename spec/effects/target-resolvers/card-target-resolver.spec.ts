@@ -72,8 +72,8 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
     describe('resolve with fixed target', () => {
         it('should search deck for cards', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'search-supporter', {
+                supporters: {
+                    'search-supporter': {
                         templateId: 'search-supporter',
                         name: 'Search Supporter',
                         effects: [{
@@ -82,8 +82,8 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                             amount: { type: 'constant', value: 1 },
                             destination: 'hand',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -101,8 +101,8 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
 
         it('should handle multiple card search', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'multi-search-supporter', {
+                supporters: {
+                    'multi-search-supporter': {
                         templateId: 'multi-search-supporter',
                         name: 'Multi Search Supporter',
                         effects: [{
@@ -111,8 +111,8 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                             amount: { type: 'constant', value: 2 },
                             destination: 'hand',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -130,8 +130,8 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
 
         it('should limit search to available cards', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'greedy-search', {
+                supporters: {
+                    'greedy-search': {
                         templateId: 'greedy-search',
                         name: 'Greedy Search',
                         effects: [{
@@ -140,8 +140,8 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                             amount: { type: 'constant', value: 10 },
                             destination: 'hand',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({

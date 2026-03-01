@@ -93,8 +93,8 @@ describe('HP Effect', () => {
 
     it('should heal 20 HP (basic operation)', () => {
         const testRepository = new MockCardRepository({
-            items: new Map<string, ItemData>([
-                [ 'heal-item', {
+            items: {
+                'heal-item': {
                     templateId: 'heal-item',
                     name: 'Heal Item',
                     effects: [{
@@ -103,8 +103,8 @@ describe('HP Effect', () => {
                         target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
                         operation: 'heal',
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -125,8 +125,8 @@ describe('HP Effect', () => {
 
     it('should deal damage instead of heal', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'damage-supporter', {
+            supporters: {
+                'damage-supporter': {
                     templateId: 'damage-supporter',
                     name: 'Damage Supporter',
                     effects: [{
@@ -135,8 +135,8 @@ describe('HP Effect', () => {
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
                         operation: 'damage',
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -154,8 +154,8 @@ describe('HP Effect', () => {
 
     it('should heal variable amounts (60 HP)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'big-heal', {
+            supporters: {
+                'big-heal': {
                     templateId: 'big-heal',
                     name: 'Big Heal',
                     effects: [{
@@ -164,8 +164,8 @@ describe('HP Effect', () => {
                         target: { type: 'fixed', player: 'self', position: 'active' },
                         operation: 'heal',
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -183,8 +183,8 @@ describe('HP Effect', () => {
 
     it('should target all matching creatures', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'mass-heal', {
+            supporters: {
+                'mass-heal': {
                     templateId: 'mass-heal',
                     name: 'Mass Heal',
                     effects: [{
@@ -196,8 +196,8 @@ describe('HP Effect', () => {
                         },
                         operation: 'heal',
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -217,8 +217,8 @@ describe('HP Effect', () => {
 
     it('should cap healing at current damage', () => {
         const testRepository = new MockCardRepository({
-            items: new Map<string, ItemData>([
-                [ 'small-heal', {
+            items: {
+                'small-heal': {
                     templateId: 'small-heal',
                     name: 'Small Heal',
                     effects: [{
@@ -227,8 +227,8 @@ describe('HP Effect', () => {
                         target: { type: 'fixed', player: 'self', position: 'active' },
                         operation: 'heal',
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({

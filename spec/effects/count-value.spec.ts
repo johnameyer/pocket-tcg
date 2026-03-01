@@ -9,8 +9,8 @@ describe('Count Effect Value', () => {
     describe('Field Count', () => {
         it('should count all creatures on field', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'field-count-heal', {
+                supporters: {
+                    'field-count-heal': {
                         templateId: 'field-count-heal',
                         name: 'Field Count Heal',
                         effects: [{
@@ -23,8 +23,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -44,8 +44,8 @@ describe('Count Effect Value', () => {
 
         it('should count own creatures only', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'own-field-count', {
+                supporters: {
+                    'own-field-count': {
                         templateId: 'own-field-count',
                         name: 'Own Field Count',
                         effects: [{
@@ -58,8 +58,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -78,8 +78,8 @@ describe('Count Effect Value', () => {
 
         it('should count opponent creatures only', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opp-field-count', {
+                supporters: {
+                    'opp-field-count': {
                         templateId: 'opp-field-count',
                         name: 'Opponent Field Count',
                         effects: [{
@@ -92,8 +92,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -112,8 +112,8 @@ describe('Count Effect Value', () => {
 
         it('should count only benched creatures', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'bench-count', {
+                supporters: {
+                    'bench-count': {
                         templateId: 'bench-count',
                         name: 'Bench Count',
                         effects: [{
@@ -126,8 +126,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -147,8 +147,8 @@ describe('Count Effect Value', () => {
 
         it('should count only own benched creatures', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'own-bench-count', {
+                supporters: {
+                    'own-bench-count': {
                         templateId: 'own-bench-count',
                         name: 'Own Bench Count',
                         effects: [{
@@ -161,8 +161,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -181,8 +181,8 @@ describe('Count Effect Value', () => {
 
         it('should count only active creatures', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'active-count', {
+                supporters: {
+                    'active-count': {
                         templateId: 'active-count',
                         name: 'Active Count',
                         effects: [{
@@ -195,8 +195,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -218,8 +218,8 @@ describe('Count Effect Value', () => {
     describe('Energy Count', () => {
         it('should count all energy on own creatures', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'energy-count-heal', {
+                supporters: {
+                    'energy-count-heal': {
                         templateId: 'energy-count-heal',
                         name: 'Energy Count Heal',
                         effects: [{
@@ -232,8 +232,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -254,8 +254,8 @@ describe('Count Effect Value', () => {
 
         it('should count energy on active creature only', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'active-energy-count', {
+                supporters: {
+                    'active-energy-count': {
                         templateId: 'active-energy-count',
                         name: 'Active Energy Count',
                         effects: [{
@@ -268,8 +268,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -290,8 +290,8 @@ describe('Count Effect Value', () => {
 
         it('should count specific energy types only', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'fire-energy-count', {
+                supporters: {
+                    'fire-energy-count': {
                         templateId: 'fire-energy-count',
                         name: 'Fire Energy Count',
                         effects: [{
@@ -305,8 +305,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -329,8 +329,8 @@ describe('Count Effect Value', () => {
     describe('Card Count', () => {
         it('should count cards in opponent hand', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opp-hand-count', {
+                supporters: {
+                    'opp-hand-count': {
                         templateId: 'opp-hand-count',
                         name: 'Opponent Hand Count',
                         effects: [{
@@ -344,8 +344,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
                             operation: 'damage',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -369,8 +369,8 @@ describe('Count Effect Value', () => {
 
         it('should count cards in own hand', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'own-hand-count', {
+                supporters: {
+                    'own-hand-count': {
                         templateId: 'own-hand-count',
                         name: 'Own Hand Count',
                         effects: [{
@@ -384,8 +384,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -408,8 +408,8 @@ describe('Count Effect Value', () => {
 
         it('should count cards in discard pile', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'discard-count', {
+                supporters: {
+                    'discard-count': {
                         templateId: 'discard-count',
                         name: 'Discard Count',
                         effects: [{
@@ -423,8 +423,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -453,8 +453,8 @@ describe('Count Effect Value', () => {
     describe('Damage Count', () => {
         it('should count damage on own active creature', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'damage-count-heal', {
+                supporters: {
+                    'damage-count-heal': {
                         templateId: 'damage-count-heal',
                         name: 'Damage Count Heal',
                         effects: [{
@@ -467,8 +467,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
                             operation: 'damage',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -489,8 +489,8 @@ describe('Count Effect Value', () => {
     describe('Combination with Multiplication', () => {
         it('should multiply count by constant', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'multiplied-bench-count', {
+                supporters: {
+                    'multiplied-bench-count': {
                         templateId: 'multiplied-bench-count',
                         name: 'Multiplied Bench Count',
                         effects: [{
@@ -507,8 +507,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -529,8 +529,8 @@ describe('Count Effect Value', () => {
     describe('Combination with Addition', () => {
         it('should add multiple counts together', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'combined-count', {
+                supporters: {
+                    'combined-count': {
                         templateId: 'combined-count',
                         name: 'Combined Count',
                         effects: [{
@@ -553,8 +553,8 @@ describe('Count Effect Value', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({

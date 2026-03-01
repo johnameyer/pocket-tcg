@@ -11,8 +11,8 @@ describe('HP Bonus Effect', () => {
     const hpTool = { templateId: 'hp-tool', type: 'tool' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -20,8 +20,8 @@ describe('HP Bonus Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'low-hp-creature', {
+            },
+            'low-hp-creature': {
                 templateId: 'low-hp-creature',
                 name: 'Low HP Creature',
                 maxHp: 50,
@@ -29,10 +29,10 @@ describe('HP Bonus Effect', () => {
                 weakness: 'fire',
                 retreatCost: 1,
                 attacks: [{ name: 'Weak Attack', damage: 60, energyRequirements: [{ type: 'grass', amount: 1 }] }],
-            }],
-        ]),
-        tools: new Map<string, ToolData>([
-            [ 'hp-tool', {
+            },
+        },
+        tools: {
+            'hp-tool': {
                 templateId: 'hp-tool',
                 name: 'HP Tool',
                 effects: [{
@@ -41,8 +41,8 @@ describe('HP Bonus Effect', () => {
                     target: { player: 'self', position: 'active' },
                     duration: { type: 'while-in-play' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const lowHpCreature = { templateId: 'low-hp-creature', type: 'creature' as const };

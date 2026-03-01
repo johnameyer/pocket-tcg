@@ -29,8 +29,8 @@ describe('Prevent Attack Effect', () => {
     const preventionItem = { templateId: 'prevention-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -38,8 +38,8 @@ describe('Prevent Attack Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 180,
@@ -47,10 +47,10 @@ describe('Prevent Attack Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'prevention-item', {
+            },
+        },
+        items: {
+            'prevention-item': {
                 templateId: 'prevention-item',
                 name: 'Prevention Item',
                 effects: [{
@@ -58,8 +58,8 @@ describe('Prevent Attack Effect', () => {
                     target: { player: 'opponent', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'self-prevention-item', {
+            },
+            'self-prevention-item': {
                 templateId: 'self-prevention-item',
                 name: 'Self Prevention Item',
                 effects: [{
@@ -67,8 +67,8 @@ describe('Prevent Attack Effect', () => {
                     target: { player: 'self', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'choice-prevention-item', {
+            },
+            'choice-prevention-item': {
                 templateId: 'choice-prevention-item',
                 name: 'Choice Prevention Item',
                 effects: [{
@@ -76,8 +76,8 @@ describe('Prevent Attack Effect', () => {
                     target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'all-prevention-item', {
+            },
+            'all-prevention-item': {
                 templateId: 'all-prevention-item',
                 name: 'All Prevention Item',
                 effects: [{
@@ -85,8 +85,8 @@ describe('Prevent Attack Effect', () => {
                     target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const selfPreventionItem = { templateId: 'self-prevention-item', type: 'item' as const };
@@ -301,8 +301,8 @@ describe('Prevent Attack Effect', () => {
 
     it('should prevent high damage attacks', () => {
         const testRepoHighDamage = new MockCardRepository({
-            creatures: new Map<string, CreatureData>([
-                [ 'basic-creature', {
+            creatures: {
+                'basic-creature': {
                     templateId: 'basic-creature',
                     name: 'Basic Creature',
                     maxHp: 80,
@@ -310,8 +310,8 @@ describe('Prevent Attack Effect', () => {
                     weakness: 'water',
                     retreatCost: 1,
                     attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-                }],
-                [ 'high-damage-creature', {
+                },
+                'high-damage-creature': {
                     templateId: 'high-damage-creature',
                     name: 'High Damage Creature',
                     maxHp: 180,
@@ -319,10 +319,10 @@ describe('Prevent Attack Effect', () => {
                     weakness: 'grass',
                     retreatCost: 3,
                     attacks: [{ name: 'Mega Attack', damage: 100, energyRequirements: [{ type: 'water', amount: 4 }] }],
-                }],
-            ]),
-            items: new Map<string, ItemData>([
-                [ 'prevention-item', {
+                },
+            },
+            items: {
+                'prevention-item': {
                     templateId: 'prevention-item',
                     name: 'Prevention Item',
                     effects: [{
@@ -330,8 +330,8 @@ describe('Prevent Attack Effect', () => {
                         target: { player: 'opponent', position: 'active' },
                         duration: { type: 'until-end-of-next-turn' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
 

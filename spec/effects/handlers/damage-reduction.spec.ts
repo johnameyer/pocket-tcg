@@ -7,8 +7,8 @@ import { CreatureData } from '../../../src/repository/card-types.js';
 
 describe('Damage Reduction Effect', () => {
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'defensive-creature', {
+        creatures: {
+            'defensive-creature': {
                 templateId: 'defensive-creature',
                 name: 'Defensive Creature',
                 maxHp: 100,
@@ -27,8 +27,8 @@ describe('Damage Reduction Effect', () => {
                         duration: { type: 'while-in-play' },
                     }],
                 },
-            }],
-            [ 'high-hp-defensive-creature', {
+            },
+            'high-hp-defensive-creature': {
                 templateId: 'high-hp-defensive-creature',
                 name: 'High HP Defensive Creature',
                 maxHp: 180,
@@ -47,8 +47,8 @@ describe('Damage Reduction Effect', () => {
                         duration: { type: 'while-in-play' },
                     }],
                 },
-            }],
-            [ 'variable-defense-creature', {
+            },
+            'variable-defense-creature': {
                 templateId: 'variable-defense-creature',
                 name: 'Variable Defense Creature',
                 maxHp: 90,
@@ -67,8 +67,8 @@ describe('Damage Reduction Effect', () => {
                         duration: { type: 'while-in-play' },
                     }],
                 },
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
@@ -87,8 +87,8 @@ describe('Damage Reduction Effect', () => {
                         energyRequirements: [{ type: 'fighting', amount: 4 }],
                     },
                 ],
-            }],
-        ]),
+            },
+        },
     });
 
     it('should reduce damage by 20 during opponent turn (basic operation)', () => {

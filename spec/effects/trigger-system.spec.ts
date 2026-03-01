@@ -14,18 +14,18 @@ describe('Trigger System', () => {
     describe('Tool Triggers', () => {
         it('should trigger healing tool only on owner turn', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'basic-creature', {
+                creatures: {
+                    'basic-creature': {
                         templateId: 'basic-creature',
                         name: 'Basic Creature',
                         maxHp: 80,
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                    }],
-                ]),
-                tools: new Map([
-                    [ 'healing-tool', {
+                    },
+                },
+                tools: {
+                    'healing-tool': {
                         templateId: 'healing-tool',
                         name: 'Healing Tool',
                         effects: [{ 
@@ -35,8 +35,8 @@ describe('Trigger System', () => {
                             operation: 'heal', 
                         }],
                         trigger: { type: 'end-of-turn', ownTurnOnly: true },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -54,18 +54,18 @@ describe('Trigger System', () => {
 
         it('should not trigger healing tool on opponent turn', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'basic-creature', {
+                creatures: {
+                    'basic-creature': {
                         templateId: 'basic-creature',
                         name: 'Basic Creature',
                         maxHp: 80,
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                    }],
-                ]),
-                tools: new Map([
-                    [ 'healing-tool', {
+                    },
+                },
+                tools: {
+                    'healing-tool': {
                         templateId: 'healing-tool',
                         name: 'Healing Tool',
                         effects: [{ 
@@ -75,8 +75,8 @@ describe('Trigger System', () => {
                             operation: 'heal', 
                         }],
                         trigger: { type: 'end-of-turn', ownTurnOnly: true },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -97,8 +97,8 @@ describe('Trigger System', () => {
     describe('Creature Ability Triggers', () => {
         it('should trigger end-of-turn ability', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'healing-creature', {
+                creatures: {
+                    'healing-creature': {
                         templateId: 'healing-creature',
                         name: 'Healing Creature',
                         maxHp: 80,
@@ -115,8 +115,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'end-of-turn' },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -133,8 +133,8 @@ describe('Trigger System', () => {
 
         it('should trigger when-damaged ability', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'damage-reactive-creature', {
+                creatures: {
+                    'damage-reactive-creature': {
                         templateId: 'damage-reactive-creature',
                         name: 'Damage Reactive Creature',
                         maxHp: 100,
@@ -151,16 +151,16 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'damaged' },
                         },
-                    }],
-                    [ 'basic-attacker', {
+                    },
+                    'basic-attacker': {
                         templateId: 'basic-attacker',
                         name: 'Basic Attacker',
                         maxHp: 80,
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Attack', damage: 30, energyRequirements: [] }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -177,8 +177,8 @@ describe('Trigger System', () => {
 
         it('should trigger manual ability when played', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'manual-heal-creature', {
+                creatures: {
+                    'manual-heal-creature': {
                         templateId: 'manual-heal-creature',
                         name: 'Manual Heal Creature',
                         maxHp: 80,
@@ -195,8 +195,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'manual', unlimited: true },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -216,8 +216,8 @@ describe('Trigger System', () => {
     describe('Trigger Timing', () => {
         it('should process multiple end-of-turn triggers', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'healing-creature', {
+                creatures: {
+                    'healing-creature': {
                         templateId: 'healing-creature',
                         name: 'Healing Creature',
                         maxHp: 100,
@@ -234,10 +234,10 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'end-of-turn' },
                         },
-                    }],
-                ]),
-                tools: new Map([
-                    [ 'healing-tool', {
+                    },
+                },
+                tools: {
+                    'healing-tool': {
                         templateId: 'healing-tool',
                         name: 'Healing Tool',
                         effects: [{ 
@@ -247,8 +247,8 @@ describe('Trigger System', () => {
                             operation: 'heal', 
                         }],
                         trigger: { type: 'end-of-turn', ownTurnOnly: true },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -266,18 +266,18 @@ describe('Trigger System', () => {
 
         it('should respect ownTurnOnly restriction', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'basic-creature', {
+                creatures: {
+                    'basic-creature': {
                         templateId: 'basic-creature',
                         name: 'Basic Creature',
                         maxHp: 80,
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
-                    }],
-                ]),
-                tools: new Map([
-                    [ 'owner-only-tool', {
+                    },
+                },
+                tools: {
+                    'owner-only-tool': {
                         templateId: 'owner-only-tool',
                         name: 'Owner Only Tool',
                         effects: [{ 
@@ -287,8 +287,8 @@ describe('Trigger System', () => {
                             operation: 'heal', 
                         }],
                         trigger: { type: 'end-of-turn', ownTurnOnly: true },
-                    }],
-                    [ 'any-turn-tool', {
+                    },
+                    'any-turn-tool': {
                         templateId: 'any-turn-tool',
                         name: 'Any Turn Tool',
                         effects: [{ 
@@ -298,8 +298,8 @@ describe('Trigger System', () => {
                             operation: 'heal', 
                         }],
                         trigger: { type: 'end-of-turn', ownTurnOnly: false },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -318,8 +318,8 @@ describe('Trigger System', () => {
 
         it('should handle unlimited manual triggers', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'unlimited-creature', {
+                creatures: {
+                    'unlimited-creature': {
                         templateId: 'unlimited-creature',
                         name: 'Unlimited Creature',
                         maxHp: 100,
@@ -336,8 +336,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'manual', unlimited: true },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -360,8 +360,8 @@ describe('Trigger System', () => {
     describe('Start of Turn Triggers', () => {
         it('should trigger start-of-turn ability on own turn', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'start-heal-creature', {
+                creatures: {
+                    'start-heal-creature': {
                         templateId: 'start-heal-creature',
                         name: 'Start Heal Creature',
                         maxHp: 100,
@@ -378,8 +378,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'start-of-turn', ownTurnOnly: true },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             // Player 0 ends turn, player 1's turn starts and should heal
@@ -399,8 +399,8 @@ describe('Trigger System', () => {
 
         it('should not trigger start-of-turn ability on opponent turn', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'start-heal-creature', {
+                creatures: {
+                    'start-heal-creature': {
                         templateId: 'start-heal-creature',
                         name: 'Start Heal Creature',
                         maxHp: 100,
@@ -417,8 +417,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'start-of-turn', ownTurnOnly: true },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -439,8 +439,8 @@ describe('Trigger System', () => {
     describe('On Play Triggers', () => {
         it('should trigger on-play ability when creature is played', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'on-play-heal-creature', {
+                creatures: {
+                    'on-play-heal-creature': {
                         templateId: 'on-play-heal-creature',
                         name: 'On Play Heal Creature',
                         maxHp: 80,
@@ -457,8 +457,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'on-play' },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -480,8 +480,8 @@ describe('Trigger System', () => {
 
         it('should trigger on-play ability when creature is evolved', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'evolution-heal-creature', {
+                creatures: {
+                    'evolution-heal-creature': {
                         templateId: 'evolution-heal-creature',
                         name: 'Evolution Heal Creature',
                         maxHp: 100,
@@ -499,8 +499,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'on-play' },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -519,8 +519,8 @@ describe('Trigger System', () => {
 
         it('should not trigger on-play ability for evolution when filterEvolution is true', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'evolution-no-trigger', {
+                creatures: {
+                    'evolution-no-trigger': {
                         templateId: 'evolution-no-trigger',
                         name: 'Evolution No Trigger',
                         maxHp: 100,
@@ -538,8 +538,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'on-play', filterEvolution: true },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -560,8 +560,8 @@ describe('Trigger System', () => {
     describe('Before Knockout Triggers', () => {
         it('should trigger before-knockout ability', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'last-stand-creature', {
+                creatures: {
+                    'last-stand-creature': {
                         templateId: 'last-stand-creature',
                         name: 'Last Stand Creature',
                         maxHp: 60,
@@ -578,16 +578,16 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'before-knockout' },
                         },
-                    }],
-                    [ 'basic-attacker', {
+                    },
+                    'basic-attacker': {
                         templateId: 'basic-attacker',
                         name: 'Basic Attacker',
                         maxHp: 100,
                         type: 'colorless',
                         retreatCost: 1,
                         attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [] }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -606,8 +606,8 @@ describe('Trigger System', () => {
     describe('On Checkup Triggers', () => {
         it('should trigger on-checkup ability on own turn', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'checkup-heal-creature', {
+                creatures: {
+                    'checkup-heal-creature': {
                         templateId: 'checkup-heal-creature',
                         name: 'Checkup Heal Creature',
                         maxHp: 80,
@@ -624,8 +624,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'on-checkup', ownTurnOnly: true },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -643,8 +643,8 @@ describe('Trigger System', () => {
 
         it('should trigger on-checkup ability for both players', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'checkup-heal-creature', {
+                creatures: {
+                    'checkup-heal-creature': {
                         templateId: 'checkup-heal-creature',
                         name: 'Checkup Heal Creature',
                         maxHp: 80,
@@ -661,8 +661,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'on-checkup' },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -684,8 +684,8 @@ describe('Trigger System', () => {
     describe('On Retreat Triggers', () => {
         it('should trigger on-retreat ability', () => {
             const testRepository = new MockCardRepository({
-                creatures: new Map<string, CreatureData>([
-                    [ 'retreat-heal-creature', {
+                creatures: {
+                    'retreat-heal-creature': {
                         templateId: 'retreat-heal-creature',
                         name: 'Retreat Heal Creature',
                         maxHp: 80,
@@ -702,8 +702,8 @@ describe('Trigger System', () => {
                             }],
                             trigger: { type: 'on-retreat' },
                         },
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({

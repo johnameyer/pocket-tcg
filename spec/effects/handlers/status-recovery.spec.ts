@@ -68,16 +68,16 @@ describe('Status Recovery Effect', () => {
 
     it('should remove all status conditions', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'full-heal-item', {
+            items: {
+                'full-heal-item': {
                     templateId: 'full-heal-item',
                     name: 'Full Heal',
                     effects: [{
                         type: 'status-recovery',
                         target: { type: 'fixed', player: 'self', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -99,8 +99,8 @@ describe('Status Recovery Effect', () => {
 
     it('should remove specific status conditions (poison only)', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'antidote-item', {
+            items: {
+                'antidote-item': {
                     templateId: 'antidote-item',
                     name: 'Antidote',
                     effects: [{
@@ -108,8 +108,8 @@ describe('Status Recovery Effect', () => {
                         target: { type: 'fixed', player: 'self', position: 'active' },
                         conditions: [ 'poison' ],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -132,8 +132,8 @@ describe('Status Recovery Effect', () => {
 
     it('should remove multiple specific status conditions', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'dual-cure-item', {
+            items: {
+                'dual-cure-item': {
                     templateId: 'dual-cure-item',
                     name: 'Dual Cure',
                     effects: [{
@@ -141,8 +141,8 @@ describe('Status Recovery Effect', () => {
                         target: { type: 'fixed', player: 'self', position: 'active' },
                         conditions: [ 'poison', 'burn' ],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -166,16 +166,16 @@ describe('Status Recovery Effect', () => {
 
     it('should cure opponent active creature', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'benevolent-heal-item', {
+            items: {
+                'benevolent-heal-item': {
                     templateId: 'benevolent-heal-item',
                     name: 'Benevolent Heal',
                     effects: [{
                         type: 'status-recovery',
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({

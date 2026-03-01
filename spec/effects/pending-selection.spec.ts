@@ -16,8 +16,8 @@ describe('Pending Target Selection', () => {
              * This is a framework limitation that needs resolution flow improvements.
              */
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'dual-target-supporter', {
+                supporters: {
+                    'dual-target-supporter': {
                         templateId: 'dual-target-supporter',
                         name: 'Dual Target Supporter',
                         effects: [{
@@ -30,8 +30,8 @@ describe('Pending Target Selection', () => {
                             },
                             target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state, getExecutedCount } = runTestGame({
@@ -60,8 +60,8 @@ describe('Pending Target Selection', () => {
     describe('Single Choice Selection', () => {
         it('should create pending selection for single-choice target', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'pending-heal', {
+                supporters: {
+                    'pending-heal': {
                         templateId: 'pending-heal',
                         name: 'Pending Heal',
                         effects: [{
@@ -74,8 +74,8 @@ describe('Pending Target Selection', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             // Test without target selection - should create pending state
@@ -98,8 +98,8 @@ describe('Pending Target Selection', () => {
 
         it('should resolve pending selection when target provided', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'resolve-heal', {
+                supporters: {
+                    'resolve-heal': {
                         templateId: 'resolve-heal',
                         name: 'Resolve Heal',
                         effects: [{
@@ -112,8 +112,8 @@ describe('Pending Target Selection', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -147,8 +147,8 @@ describe('Pending Target Selection', () => {
     describe('Opponent Choice Selection', () => {
         it('should handle opponent chooser', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'opponent-select', {
+                supporters: {
+                    'opponent-select': {
                         templateId: 'opponent-select',
                         name: 'Opponent Select',
                         effects: [{
@@ -161,8 +161,8 @@ describe('Pending Target Selection', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -195,8 +195,8 @@ describe('Pending Target Selection', () => {
     describe('Multiple Effects with Selection', () => {
         it('should handle multiple effects requiring selection', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'multi-select', {
+                supporters: {
+                    'multi-select': {
                         templateId: 'multi-select',
                         name: 'Multi Select',
                         effects: [
@@ -217,8 +217,8 @@ describe('Pending Target Selection', () => {
                                 operation: 'damage',
                             },
                         ],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -243,8 +243,8 @@ describe('Pending Target Selection', () => {
     describe('Invalid Target Selection', () => {
         it('should handle invalid target selection gracefully', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'invalid-target', {
+                supporters: {
+                    'invalid-target': {
                         templateId: 'invalid-target',
                         name: 'Invalid Target',
                         effects: [{
@@ -257,8 +257,8 @@ describe('Pending Target Selection', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -280,8 +280,8 @@ describe('Pending Target Selection', () => {
 
         it('should handle selection with no valid targets', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'no-targets', {
+                supporters: {
+                    'no-targets': {
                         templateId: 'no-targets',
                         name: 'No Targets',
                         effects: [{
@@ -294,8 +294,8 @@ describe('Pending Target Selection', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -316,8 +316,8 @@ describe('Pending Target Selection', () => {
     describe('Effect Name Tracking', () => {
         it('should track effect name in pending selection', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'named-effect', {
+                supporters: {
+                    'named-effect': {
                         templateId: 'named-effect',
                         name: 'Named Effect',
                         effects: [{
@@ -330,8 +330,8 @@ describe('Pending Target Selection', () => {
                             },
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -363,8 +363,8 @@ describe('Pending Target Selection', () => {
     describe('Multi-Target Field Selection', () => {
         it('should handle selecting multiple targets with array format', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'multi-heal-supporter', {
+                supporters: {
+                    'multi-heal-supporter': {
                         templateId: 'multi-heal-supporter',
                         name: 'Multi Heal Supporter',
                         effects: [{
@@ -373,8 +373,8 @@ describe('Pending Target Selection', () => {
                             target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state, getExecutedCount } = runTestGame({
@@ -399,8 +399,8 @@ describe('Pending Target Selection', () => {
 
         it('should support backward-compatible single target selection', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map<string, SupporterData>([
-                    [ 'heal-supporter', {
+                supporters: {
+                    'heal-supporter': {
                         templateId: 'heal-supporter',
                         name: 'Heal Supporter',
                         effects: [{
@@ -409,8 +409,8 @@ describe('Pending Target Selection', () => {
                             target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
                             operation: 'heal',
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({

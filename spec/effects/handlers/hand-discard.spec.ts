@@ -13,8 +13,8 @@ describe('Hand Discard Effect', () => {
     const discardSupporter = { templateId: 'discard-supporter', type: 'supporter' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -22,8 +22,8 @@ describe('Hand Discard Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
@@ -31,10 +31,10 @@ describe('Hand Discard Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-        ]),
-        supporters: new Map<string, SupporterData>([
-            [ 'discard-supporter', {
+            },
+        },
+        supporters: {
+            'discard-supporter': {
                 templateId: 'discard-supporter',
                 name: 'Discard Supporter',
                 effects: [{
@@ -42,8 +42,8 @@ describe('Hand Discard Effect', () => {
                     amount: { type: 'constant', value: 2 },
                     target: 'self',
                 }],
-            }],
-            [ 'opponent-discard-supporter', {
+            },
+            'opponent-discard-supporter': {
                 templateId: 'opponent-discard-supporter',
                 name: 'Opponent Discard Supporter',
                 effects: [{
@@ -51,8 +51,8 @@ describe('Hand Discard Effect', () => {
                     amount: { type: 'constant', value: 3 },
                     target: 'opponent',
                 }],
-            }],
-            [ 'both-discard-supporter', {
+            },
+            'both-discard-supporter': {
                 templateId: 'both-discard-supporter',
                 name: 'Both Discard Supporter',
                 effects: [{
@@ -60,8 +60,8 @@ describe('Hand Discard Effect', () => {
                     amount: { type: 'constant', value: 1 },
                     target: 'both',
                 }],
-            }],
-            [ 'shuffle-discard-supporter', {
+            },
+            'shuffle-discard-supporter': {
                 templateId: 'shuffle-discard-supporter',
                 name: 'Shuffle Discard Supporter',
                 effects: [{
@@ -70,8 +70,8 @@ describe('Hand Discard Effect', () => {
                     target: 'self',
                     shuffleIntoDeck: true,
                 }],
-            }],
-            [ 'variable-discard-supporter', {
+            },
+            'variable-discard-supporter': {
                 templateId: 'variable-discard-supporter',
                 name: 'Variable Discard Supporter',
                 effects: [{
@@ -79,20 +79,20 @@ describe('Hand Discard Effect', () => {
                     amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'opponent' },
                     target: 'opponent',
                 }],
-            }],
-            [ 'research-supporter', {
+            },
+            'research-supporter': {
                 templateId: 'research-supporter',
                 name: 'Research Supporter',
                 effects: [{ type: 'draw', amount: { type: 'constant', value: 2 }}],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'basic-item', {
+            },
+        },
+        items: {
+            'basic-item': {
                 templateId: 'basic-item',
                 name: 'Basic Item',
                 effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],
-            }],
-        ]),
+            },
+        },
     });
 
     const opponentDiscardSupporter = { templateId: 'opponent-discard-supporter', type: 'supporter' as const };

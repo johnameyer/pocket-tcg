@@ -34,8 +34,8 @@ describe('Prevent Playing Effect', () => {
     const tool = { templateId: 'tool', type: 'tool' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -43,8 +43,8 @@ describe('Prevent Playing Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 180,
@@ -52,10 +52,10 @@ describe('Prevent Playing Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'prevent-item', {
+            },
+        },
+        items: {
+            'prevent-item': {
                 templateId: 'prevent-item',
                 name: 'Prevent Item',
                 effects: [{
@@ -64,8 +64,8 @@ describe('Prevent Playing Effect', () => {
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'prevent-items-supporters', {
+            },
+            'prevent-items-supporters': {
                 templateId: 'prevent-items-supporters',
                 name: 'Prevent Items and Supporters',
                 effects: [{
@@ -74,8 +74,8 @@ describe('Prevent Playing Effect', () => {
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'prevent-creatures', {
+            },
+            'prevent-creatures': {
                 templateId: 'prevent-creatures',
                 name: 'Prevent Creatures',
                 effects: [{
@@ -84,8 +84,8 @@ describe('Prevent Playing Effect', () => {
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'prevent-tools', {
+            },
+            'prevent-tools': {
                 templateId: 'prevent-tools',
                 name: 'Prevent Tools',
                 effects: [{
@@ -94,8 +94,8 @@ describe('Prevent Playing Effect', () => {
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'prevent-all', {
+            },
+            'prevent-all': {
                 templateId: 'prevent-all',
                 name: 'Prevent All',
                 effects: [{
@@ -104,8 +104,8 @@ describe('Prevent Playing Effect', () => {
                     target: 'opponent',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'self-prevent-item', {
+            },
+            'self-prevent-item': {
                 templateId: 'self-prevent-item',
                 name: 'Self Prevent Item',
                 effects: [{
@@ -114,22 +114,22 @@ describe('Prevent Playing Effect', () => {
                     target: 'self',
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'normal-item', {
+            },
+            'normal-item': {
                 templateId: 'normal-item',
                 name: 'Normal Item',
                 effects: [{ type: 'draw', amount: { type: 'constant', value: 1 }}],
-            }],
-        ]),
-        supporters: new Map<string, SupporterData>([
-            [ 'supporter', {
+            },
+        },
+        supporters: {
+            'supporter': {
                 templateId: 'supporter',
                 name: 'Supporter',
                 effects: [{ type: 'draw', amount: { type: 'constant', value: 2 }}],
-            }],
-        ]),
-        tools: new Map<string, ToolData>([
-            [ 'tool', {
+            },
+        },
+        tools: {
+            'tool': {
                 templateId: 'tool',
                 name: 'Tool',
                 effects: [{ 
@@ -138,8 +138,8 @@ describe('Prevent Playing Effect', () => {
                     target: { player: 'self', location: 'field', position: 'active' },
                     duration: { type: 'while-in-play' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const preventItemsSupporters = { templateId: 'prevent-items-supporters', type: 'item' as const };

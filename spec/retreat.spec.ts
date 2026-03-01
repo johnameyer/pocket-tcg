@@ -252,8 +252,8 @@ describe('Creature Retreat System', () => {
 
         it('should accumulate discarded energy across multiple retreats in different turns', () => {
             const testRepository = new MockCardRepository({
-                supporters: new Map([
-                    [ 'energy-discard', {
+                supporters: {
+                    'energy-discard': {
                         templateId: 'energy-discard',
                         name: 'Energy Discard',
                         effects: [{
@@ -265,8 +265,8 @@ describe('Creature Retreat System', () => {
                                 count: 1,
                             },
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
@@ -292,18 +292,18 @@ describe('Creature Retreat System', () => {
     describe('Passive effects cleared on retreat', () => {
         it('should clear tool passive effects when creature retreats', () => {
             const testRepository = new MockCardRepository({
-                tools: new Map([
-                    [ 'retreat-reducer', {
+                tools: {
+                    'retreat-reducer': {
                         templateId: 'retreat-reducer',
                         name: 'Swift Legs',
                         effects: [{
                             type: 'retreat-cost-modification', operation: 'decrease',
                             amount: { type: 'constant', value: 1 },
-                            target: { type: 'fixed', player: 'self', position: 'active' },
+                            target: { player: 'self', position: 'active' },
                             duration: { type: 'while-in-play' },
                         }],
-                    }],
-                ]),
+                    },
+                },
             });
 
             const { state } = runTestGame({
