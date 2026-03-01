@@ -26,10 +26,10 @@ export type StatusCondition = 'sleep' | 'burn' | 'confusion' | 'paralysis' | 'po
  * @example { type: 'hp', amount: { type: 'constant', value: 30 }, target: { type: 'fixed', player: 'self', position: 'active' }, operation: 'heal' }
  * // Heal 30 HP from your active creature
  */
-export type HpEffect = {
+export type HpEffect<TRefs extends string = string> = {
     type: 'hp';
     amount: EffectValue;
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
     operation: 'heal' | 'damage';
 };
 
@@ -41,10 +41,10 @@ export type HpEffect = {
  * @example { type: 'status', condition: 'poison', target: { type: 'fixed', player: 'opponent', position: 'active' } }
  * // Apply poison to opponent's active creature
  */
-export type StatusEffect = {
+export type StatusEffect<TRefs extends string = string> = {
     type: 'status';
     condition: StatusCondition;
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
 };
 
 /**
@@ -68,11 +68,11 @@ export type DrawEffect = {
  * @example { type: 'energy-attach', energyType: 'fire', amount: { type: 'constant', value: 1 }, target: { type: 'fixed', player: 'self', position: 'active' } }
  * // Attach 1 fire energy to your active creature
  */
-export type EnergyAttachEffect = {
+export type EnergyAttachEffect<TRefs extends string = string> = {
     type: 'energy-attach';
     energyType: AttachableEnergyType;
     amount: EffectValue;
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
 };
 
 /**
@@ -146,10 +146,10 @@ export type HandDiscardEffect = {
  * @example { type: 'switch', target: { type: 'fixed', player: 'self', position: 'active' }, switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }} }
  * // Switch your active creature with a benched one
  */
-export type SwitchEffect = {
+export type SwitchEffect<TRefs extends string = string> = {
     type: 'switch';
-    target: FieldTarget;
-    switchWith: FieldTarget;
+    target: FieldTarget<TRefs>;
+    switchWith: FieldTarget<TRefs>;
 };
 
 /**
@@ -160,10 +160,10 @@ export type SwitchEffect = {
  * @example { type: 'energy-transfer', source: { type: 'field', fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }}, criteria: { energyTypes: ['fire', 'grass'] }, count: 1 }, target: { type: 'fixed', player: 'self', position: 'active' } }
  * // Transfer 1 fire or grass energy from a field creature to active creature
  */
-export type EnergyTransferEffect = {
+export type EnergyTransferEffect<TRefs extends string = string> = {
     type: 'energy-transfer';
     source: EnergyTarget;
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
 };
 
 /**
@@ -223,9 +223,9 @@ export type RetreatPreventionEffect = {
  * @example { type: 'evolution-acceleration', target: { type: 'fixed', player: 'self', position: 'active' }, skipStages: 1, restrictions: ['basic-creature-only'] }
  * // Your active basic creature can evolve skipping 1 stage
  */
-export type EvolutionAccelerationEffect = {
+export type EvolutionAccelerationEffect<TRefs extends string = string> = {
     type: 'evolution-acceleration';
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
     skipStages: number;
     restrictions?: string[];
 };
@@ -322,26 +322,30 @@ export type RetreatCostModificationEffect = {
 /**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
+ *
+ * The generic `TRefs` parameter propagates to all member types that accept a
+ * `FieldTarget`, constraining which contextual `reference` values are valid.
+ * Defaults to `string` (permissive) for framework/handler code.
  */
-export type ImmediateEffect =
-    | HpEffect
-    | StatusEffect
+export type ImmediateEffect<TRefs extends string = string> =
+    | HpEffect<TRefs>
+    | StatusEffect<TRefs>
     | DrawEffect
-    | EnergyAttachEffect
+    | EnergyAttachEffect<TRefs>
     | EnergyDiscardEffect
     | SearchEffect
     | ShuffleEffect
     | HandDiscardEffect
-    | SwitchEffect
-    | EnergyTransferEffect
+    | SwitchEffect<TRefs>
+    | EnergyTransferEffect<TRefs>
     | CoinFlipManipulationEffect
-    | EvolutionAccelerationEffect
+    | EvolutionAccelerationEffect<TRefs>
     | EndTurnEffect
-    | ToolDiscardEffect
-    | StatusRecoveryEffect
+    | ToolDiscardEffect<TRefs>
+    | StatusRecoveryEffect<TRefs>
     | SwapCardsEffect
-    | RemoveFieldCardEffect
-    | PullEvolutionEffect;
+    | RemoveFieldCardEffect<TRefs>
+    | PullEvolutionEffect<TRefs>;
 
 /**
  * Represents an effect that prevents playing specific card types.
@@ -410,9 +414,9 @@ export type AttackEnergyCostModifierEffect = {
  * @example { type: 'tool-discard', target: { type: 'fixed', player: 'opponent', position: 'active' } }
  * // Discard tool from opponent's active creature
  */
-export type ToolDiscardEffect = {
+export type ToolDiscardEffect<TRefs extends string = string> = {
     type: 'tool-discard';
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
 };
 
 /**
@@ -425,9 +429,9 @@ export type ToolDiscardEffect = {
  * @example { type: 'status-recovery', target: { type: 'fixed', player: 'self', position: 'active' }, conditions: ['poison', 'burn'] }
  * // Remove poison and burn from your active creature
  */
-export type StatusRecoveryEffect = {
+export type StatusRecoveryEffect<TRefs extends string = string> = {
     type: 'status-recovery';
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
     conditions?: StatusCondition[];
 };
 
@@ -479,9 +483,9 @@ export type SwapCardsEffect = {
  * @example { type: 'remove-field-card', target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }}, destination: 'discard' }
  * // Remove all opponent's field creatures to discard
  */
-export type RemoveFieldCardEffect = {
+export type RemoveFieldCardEffect<TRefs extends string = string> = {
     type: 'remove-field-card';
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
     destination: 'deck' | 'hand' | 'discard';
 };
 
@@ -494,9 +498,9 @@ export type RemoveFieldCardEffect = {
  * @example { type: 'pull-evolution', target: { type: 'fixed', player: 'self', position: 'active' }, evolutionCriteria: { cardType: 'creature', stage: 2 } }
  * // Pull a stage 2 evolution from deck and evolve your active creature
  */
-export type PullEvolutionEffect = {
+export type PullEvolutionEffect<TRefs extends string = string> = {
     type: 'pull-evolution';
-    target: FieldTarget;
+    target: FieldTarget<TRefs>;
     evolutionCriteria?: CardCriteria;
     skipRestrictions?: boolean;
 };
@@ -522,9 +526,19 @@ export type ModifierEffect =
 
 /**
  * Union type representing all possible effects that can be applied in the game.
- * This is used to define what an effect can do, from dealing damage to drawing cards.
+ *
+ * `TRefs extends string = string` — constrains which contextual `reference` values
+ * are valid in effects that use `FieldTarget<TRefs>`.  The default `string` is
+ * permissive (suitable for framework/handler code).  Card-definition containers
+ * pass a specific `TRefs` derived from `TriggerContextualRefs` to enforce
+ * compile-time correctness.
+ *
+ * Examples:
+ *  `Effect<never>`       — no contextual refs allowed (items, supporters, stadiums)
+ *  `Effect<'defender'>`  — only 'defender' ref (attack effects)
+ *  `Effect<'attacker'>`  — only 'attacker' ref (damaged / before-knockout triggers)
  */
-export type Effect = ImmediateEffect | ModifierEffect;
+export type Effect<TRefs extends string = string> = ImmediateEffect<TRefs> | ModifierEffect;
 
 /**
  * Represents an effect that requires target selection before it can be applied.

@@ -12,16 +12,16 @@ import { MockCardRepository } from '../mock-repository.js';
  * ContextualFieldTarget allows effects in triggers and attacks to reference
  * named creatures from the execution context:
  *
- *   { type: 'contextual', context: 'attack', reference: 'defender' }
+ *   { type: 'contextual', reference: 'defender' }
  *     - valid in attack effects; resolves to the creature being attacked
  *
- *   { type: 'contextual', context: 'damaged', reference: 'attacker' }
+ *   { type: 'contextual', reference: 'attacker' }
  *     - valid in 'damaged' trigger effects; resolves to the attacking creature
  *
- *   { type: 'contextual', context: 'before-knockout', reference: 'attacker' }
+ *   { type: 'contextual', reference: 'attacker' }
  *     - valid in 'before-knockout' trigger effects; resolves to the attacking creature
  *
- *   { type: 'contextual', context: 'energy-attachment', reference: 'trigger-target' }
+ *   { type: 'contextual', reference: 'trigger-target' }
  *     - valid in 'energy-attachment' trigger effects; resolves to the creature that received energy
  */
 describe('Contextual Field Targeting', () => {
@@ -42,7 +42,7 @@ describe('Contextual Field Targeting', () => {
                             effects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 10 },
-                                target: { type: 'contextual', context: 'attack', reference: 'defender' },
+                                target: { type: 'contextual', reference: 'defender' },
                                 operation: 'damage',
                             }],
                         }],
@@ -88,7 +88,7 @@ describe('Contextual Field Targeting', () => {
                             effects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 20 },
-                                target: { type: 'contextual', context: 'damaged', reference: 'attacker' },
+                                target: { type: 'contextual', reference: 'attacker' },
                                 operation: 'damage',
                             }],
                             trigger: { type: 'damaged' },
@@ -134,7 +134,7 @@ describe('Contextual Field Targeting', () => {
                             effects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 20 },
-                                target: { type: 'contextual', context: 'damaged', reference: 'attacker' },
+                                target: { type: 'contextual', reference: 'attacker' },
                                 operation: 'damage',
                             }],
                             trigger: { type: 'damaged' },
@@ -183,7 +183,7 @@ describe('Contextual Field Targeting', () => {
                             effects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 20 },
-                                target: { type: 'contextual', context: 'energy-attachment', reference: 'trigger-target' },
+                                target: { type: 'contextual', reference: 'trigger-target' },
                                 operation: 'damage',
                             }],
                             trigger: { type: 'energy-attachment' },
@@ -222,7 +222,7 @@ describe('Contextual Field Targeting', () => {
                             effects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 30 },
-                                target: { type: 'contextual', context: 'energy-attachment', reference: 'trigger-target' },
+                                target: { type: 'contextual', reference: 'trigger-target' },
                                 operation: 'damage',
                             }],
                             trigger: { type: 'energy-attachment' },
@@ -285,7 +285,7 @@ describe('Contextual Field Targeting', () => {
                         effects: [{
                             type: 'hp',
                             amount: { type: 'constant', value: 10 },
-                            target: { type: 'contextual', context: 'energy-attachment', reference: 'trigger-target' },
+                            target: { type: 'contextual', reference: 'trigger-target' },
                             operation: 'damage',
                         }],
                         trigger: { type: 'energy-attachment' },
@@ -329,7 +329,7 @@ describe('Contextual Field Targeting', () => {
                             effects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 30 },
-                                target: { type: 'contextual', context: 'before-knockout', reference: 'attacker' },
+                                target: { type: 'contextual', reference: 'attacker' },
                                 operation: 'damage',
                             }],
                             trigger: { type: 'before-knockout' },
