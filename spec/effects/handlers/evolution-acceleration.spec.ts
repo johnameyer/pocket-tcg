@@ -100,8 +100,8 @@ describe('Evolution Acceleration Effect', () => {
     const accelerationItem = { templateId: 'acceleration-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 60,
@@ -109,8 +109,8 @@ describe('Evolution Acceleration Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'stage1-creature', {
+            },
+            'stage1-creature': {
                 templateId: 'stage1-creature',
                 name: 'Stage 1 Creature',
                 maxHp: 90,
@@ -119,8 +119,8 @@ describe('Evolution Acceleration Effect', () => {
                 retreatCost: 2,
                 previousStageName: 'Basic Creature',
                 attacks: [{ name: 'Stage 1 Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }],
-            }],
-            [ 'stage2-creature', {
+            },
+            'stage2-creature': {
                 templateId: 'stage2-creature',
                 name: 'Stage 2 Creature',
                 maxHp: 140,
@@ -129,10 +129,10 @@ describe('Evolution Acceleration Effect', () => {
                 retreatCost: 3,
                 previousStageName: 'Stage 1 Creature',
                 attacks: [{ name: 'Stage 2 Attack', damage: 80, energyRequirements: [{ type: 'fire', amount: 3 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'acceleration-item', {
+            },
+        },
+        items: {
+            'acceleration-item': {
                 templateId: 'acceleration-item',
                 name: 'Acceleration Item',
                 effects: [{
@@ -141,8 +141,8 @@ describe('Evolution Acceleration Effect', () => {
                     skipStages: 1,
                     restrictions: [ 'basic-creature-only' ],
                 }],
-            }],
-            [ 'choice-acceleration-item', {
+            },
+            'choice-acceleration-item': {
                 templateId: 'choice-acceleration-item',
                 name: 'Choice Acceleration Item',
                 effects: [{
@@ -151,8 +151,8 @@ describe('Evolution Acceleration Effect', () => {
                     skipStages: 1,
                     restrictions: [],
                 }],
-            }],
-            [ 'double-acceleration-item', {
+            },
+            'double-acceleration-item': {
                 templateId: 'double-acceleration-item',
                 name: 'Double Acceleration Item',
                 effects: [{
@@ -161,8 +161,8 @@ describe('Evolution Acceleration Effect', () => {
                     skipStages: 2,
                     restrictions: [ 'basic-creature-only' ],
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const choiceAccelerationItem = { templateId: 'choice-acceleration-item', type: 'item' as const };

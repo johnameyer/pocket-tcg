@@ -49,8 +49,8 @@ describe('Shuffle Effect', () => {
 
     it('should shuffle opponent hand and draw 3 (basic operation)', () => {
         const testRepository = new MockCardRepository({
-            items: new Map<string, ItemData>([
-                [ 'shuffle-item', {
+            items: {
+                'shuffle-item': {
                     templateId: 'shuffle-item',
                     name: 'Shuffle Item',
                     effects: [{
@@ -59,8 +59,8 @@ describe('Shuffle Effect', () => {
                         shuffleHand: true,
                         drawAfter: { type: 'constant', value: 3 },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -79,13 +79,13 @@ describe('Shuffle Effect', () => {
 
     it('should shuffle different targets (self)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'self-shuffle', {
+            supporters: {
+                'self-shuffle': {
                     templateId: 'self-shuffle',
                     name: 'Self Shuffle',
                     effects: [{ type: 'shuffle', target: 'self', shuffleHand: true }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -102,8 +102,8 @@ describe('Shuffle Effect', () => {
 
     it('should shuffle both players', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'both-shuffle', {
+            supporters: {
+                'both-shuffle': {
                     templateId: 'both-shuffle',
                     name: 'Both Shuffle',
                     effects: [{
@@ -112,8 +112,8 @@ describe('Shuffle Effect', () => {
                         shuffleHand: true,
                         drawAfter: { type: 'constant', value: 1 },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -132,8 +132,8 @@ describe('Shuffle Effect', () => {
 
     it('should draw different amounts after shuffle (2 cards)', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'shuffle-draw', {
+            supporters: {
+                'shuffle-draw': {
                     templateId: 'shuffle-draw',
                     name: 'Shuffle Draw',
                     effects: [{
@@ -142,8 +142,8 @@ describe('Shuffle Effect', () => {
                         shuffleHand: true,
                         drawAfter: { type: 'constant', value: 2 },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -161,13 +161,13 @@ describe('Shuffle Effect', () => {
 
     it('should shuffle without drawing', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'pure-shuffle', {
+            supporters: {
+                'pure-shuffle': {
                     templateId: 'pure-shuffle',
                     name: 'Pure Shuffle',
                     effects: [{ type: 'shuffle', target: 'opponent', shuffleHand: true }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -186,8 +186,8 @@ describe('Shuffle Effect', () => {
 
     it('should handle empty deck after shuffle', () => {
         const testRepository = new MockCardRepository({
-            supporters: new Map<string, SupporterData>([
-                [ 'empty-shuffle', {
+            supporters: {
+                'empty-shuffle': {
                     templateId: 'empty-shuffle',
                     name: 'Empty Shuffle',
                     effects: [{
@@ -196,8 +196,8 @@ describe('Shuffle Effect', () => {
                         shuffleHand: true,
                         drawAfter: { type: 'constant', value: 2 },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -222,8 +222,8 @@ describe('Shuffle Effect', () => {
         const researchSupporter = { templateId: 'draw-supporter', type: 'supporter' as const };
 
         const testRepository = new MockCardRepository({
-            supporters: new Map([
-                [ 'shuffle-supporter', {
+            supporters: {
+                'shuffle-supporter': {
                     templateId: 'shuffle-supporter',
                     name: 'Shuffle Supporter',
                     effects: [{ 
@@ -232,18 +232,18 @@ describe('Shuffle Effect', () => {
                         shuffleHand: true,
                         drawAfter: { type: 'count', countType: 'card', player: 'self', location: 'hand' },
                     }],
-                }],
-                [ 'draw-supporter', {
+                },
+                'draw-supporter': {
                     templateId: 'draw-supporter', 
                     name: 'Draw Supporter',
                     effects: [{ 
                         type: 'draw', 
                         amount: { type: 'player-context-resolved', source: 'points-to-win', playerContext: 'opponent' },
                     }],
-                }],
-            ]),
-            items: new Map([
-                [ 'discard-item', {
+                },
+            },
+            items: {
+                'discard-item': {
                     templateId: 'discard-item',
                     name: 'Discard Item',
                     effects: [{ 
@@ -251,8 +251,8 @@ describe('Shuffle Effect', () => {
                         amount: { type: 'constant', value: 3 }, 
                         target: 'opponent', 
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const withShuffleTestState = (player0Hand: Array<{ templateId: string; type?: GameCard['type'] }>, player1Hand: Array<{ templateId: string; type?: GameCard['type'] }>) => StateBuilder.combine(

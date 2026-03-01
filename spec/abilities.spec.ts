@@ -6,8 +6,8 @@ import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 
 describe('Creature Abilities', () => {
-    const mockCreatureData = new Map<string, CreatureData>([
-        [ 'basic-attacker', {
+    const mockCreatureData: Record<string, CreatureData> = {
+        'basic-attacker': {
             templateId: 'basic-attacker',
             name: 'Basic Attacker',
             maxHp: 60,
@@ -15,8 +15,8 @@ describe('Creature Abilities', () => {
             weakness: 'water',
             retreatCost: 1,
             attacks: [{ name: 'Flame Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-        }],
-        [ 'defensive-creature', {
+        },
+        'defensive-creature': {
             templateId: 'defensive-creature',
             name: 'Defensive Creature',
             maxHp: 100,
@@ -35,8 +35,8 @@ describe('Creature Abilities', () => {
                     duration: { type: 'while-in-play' },
                 }],
             },
-        }],
-        [ 'hp-boost-creature', {
+        },
+        'hp-boost-creature': {
             templateId: 'hp-boost-creature',
             name: 'HP Boost Creature',
             maxHp: 80,
@@ -54,14 +54,14 @@ describe('Creature Abilities', () => {
                     duration: { type: 'while-in-play' },
                 }],
             },
-        }],
-    ]);
+        },
+    };
 
     const abilityTestRepository = new CardRepository(
         mockCreatureData,
-        new Map<string, SupporterData>(),
-        new Map<string, ItemData>(),
-        new Map<string, ToolData>(),
+        {},
+        {},
+        {},
     );
 
     describe('Passive ability effects - manually setup', () => {

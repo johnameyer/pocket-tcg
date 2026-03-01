@@ -77,8 +77,8 @@ describe('Search Effect', () => {
     const searchSupporter = { templateId: 'search-supporter', type: 'supporter' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -86,8 +86,8 @@ describe('Search Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'evolution-creature', {
+            },
+            'evolution-creature': {
                 templateId: 'evolution-creature',
                 name: 'Evolution Creature',
                 maxHp: 120,
@@ -96,10 +96,10 @@ describe('Search Effect', () => {
                 retreatCost: 2,
                 previousStageName: 'Basic Creature',
                 attacks: [{ name: 'Evolution Attack', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }],
-            }],
-        ]),
-        supporters: new Map<string, SupporterData>([
-            [ 'search-supporter', {
+            },
+        },
+        supporters: {
+            'search-supporter': {
                 templateId: 'search-supporter',
                 name: 'Search Supporter',
                 effects: [{
@@ -108,8 +108,8 @@ describe('Search Effect', () => {
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
-            }],
-            [ 'multi-search-supporter', {
+            },
+            'multi-search-supporter': {
                 templateId: 'multi-search-supporter',
                 name: 'Multi Search Supporter',
                 effects: [{
@@ -118,8 +118,8 @@ describe('Search Effect', () => {
                     amount: { type: 'constant', value: 2 },
                     destination: 'hand',
                 }],
-            }],
-            [ 'trainer-search-supporter', {
+            },
+            'trainer-search-supporter': {
                 templateId: 'trainer-search-supporter',
                 name: 'Trainer Search Supporter',
                 effects: [{
@@ -128,8 +128,8 @@ describe('Search Effect', () => {
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
-            }],
-            [ 'variable-search-supporter', {
+            },
+            'variable-search-supporter': {
                 templateId: 'variable-search-supporter',
                 name: 'Variable Search Supporter',
                 effects: [{
@@ -138,8 +138,8 @@ describe('Search Effect', () => {
                     amount: { type: 'player-context-resolved', source: 'hand-size', playerContext: 'self' },
                     destination: 'hand',
                 }],
-            }],
-            [ 'any-search-supporter', {
+            },
+            'any-search-supporter': {
                 templateId: 'any-search-supporter',
                 name: 'Any Search Supporter',
                 effects: [{
@@ -148,20 +148,20 @@ describe('Search Effect', () => {
                     amount: { type: 'constant', value: 1 },
                     destination: 'hand',
                 }],
-            }],
-            [ 'research-supporter', {
+            },
+            'research-supporter': {
                 templateId: 'research-supporter',
                 name: 'Research Supporter',
                 effects: [{ type: 'draw', amount: { type: 'constant', value: 2 }}],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'basic-item', {
+            },
+        },
+        items: {
+            'basic-item': {
                 templateId: 'basic-item',
                 name: 'Basic Item',
                 effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],
-            }],
-        ]),
+            },
+        },
     });
 
     const multiSearchSupporter = { templateId: 'multi-search-supporter', type: 'supporter' as const };

@@ -8,8 +8,8 @@ import { CreatureData, SupporterData } from '../../../src/repository/card-types.
 
 describe('Damage Boost Effect', () => {
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-attacker', {
+        creatures: {
+            'basic-attacker': {
                 templateId: 'basic-attacker',
                 name: 'Basic Attacker',
                 maxHp: 80,
@@ -21,10 +21,10 @@ describe('Damage Boost Effect', () => {
                     damage: 30,
                     energyRequirements: [{ type: 'fire', amount: 1 }],
                 }],
-            }],
-        ]),
-        supporters: new Map<string, SupporterData>([
-            [ 'damage-boost-supporter', {
+            },
+        },
+        supporters: {
+            'damage-boost-supporter': {
                 templateId: 'damage-boost-supporter',
                 name: 'Power Boost',
                 effects: [{
@@ -34,8 +34,8 @@ describe('Damage Boost Effect', () => {
                     target: { type: 'fixed', player: 'opponent', position: 'active' },
                     duration: { type: 'until-end-of-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     it('should boost attack damage after playing supporter', () => {

@@ -69,8 +69,8 @@ describe('Status Effect', () => {
 
     it('should apply poison status (basic condition)', () => {
         const testRepository = new MockCardRepository({
-            creatures: new Map([
-                [ 'poison-creature', {
+            creatures: {
+                'poison-creature': {
                     templateId: 'poison-creature',
                     name: 'Poison Creature',
                     maxHp: 80,
@@ -87,8 +87,8 @@ describe('Status Effect', () => {
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
                         }],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -108,8 +108,8 @@ describe('Status Effect', () => {
 
     it('should apply different conditions (burn)', () => {
         const testRepository = new MockCardRepository({
-            creatures: new Map([
-                [ 'burn-creature', {
+            creatures: {
+                'burn-creature': {
                     templateId: 'burn-creature',
                     name: 'Burn Creature',
                     maxHp: 90,
@@ -126,8 +126,8 @@ describe('Status Effect', () => {
                             target: { type: 'fixed', player: 'opponent', position: 'active' },
                         }],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -147,8 +147,8 @@ describe('Status Effect', () => {
 
     it('should target different creature (self-active)', () => {
         const testRepository = new MockCardRepository({
-            creatures: new Map([
-                [ 'self-status-creature', {
+            creatures: {
+                'self-status-creature': {
                     templateId: 'self-status-creature',
                     name: 'Self Status Creature',
                     maxHp: 100,
@@ -165,8 +165,8 @@ describe('Status Effect', () => {
                             target: { type: 'fixed', player: 'self', position: 'active' },
                         }],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -186,8 +186,8 @@ describe('Status Effect', () => {
 
     it('should replace conflicting status effects', () => {
         const testRepository = new MockCardRepository({
-            creatures: new Map([
-                [ 'multi-status-creature', {
+            creatures: {
+                'multi-status-creature': {
                     templateId: 'multi-status-creature',
                     name: 'Multi Status Creature',
                     maxHp: 100,
@@ -211,8 +211,8 @@ describe('Status Effect', () => {
                             },
                         ],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -233,8 +233,8 @@ describe('Status Effect', () => {
 
     it('should allow compatible status effects (poison + burn)', () => {
         const testRepository = new MockCardRepository({
-            creatures: new Map([
-                [ 'toxic-creature', {
+            creatures: {
+                'toxic-creature': {
                     templateId: 'toxic-creature',
                     name: 'Toxic Creature',
                     maxHp: 110,
@@ -258,8 +258,8 @@ describe('Status Effect', () => {
                             },
                         ],
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({

@@ -31,8 +31,8 @@ describe('Prevent Energy Attachment Effect', () => {
     const preventItem = { templateId: 'prevent-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -40,8 +40,8 @@ describe('Prevent Energy Attachment Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 180,
@@ -49,10 +49,10 @@ describe('Prevent Energy Attachment Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'prevent-item', {
+            },
+        },
+        items: {
+            'prevent-item': {
                 templateId: 'prevent-item',
                 name: 'Prevent Energy Item',
                 effects: [{
@@ -60,8 +60,8 @@ describe('Prevent Energy Attachment Effect', () => {
                     target: { player: 'opponent' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'self-prevent-item', {
+            },
+            'self-prevent-item': {
                 templateId: 'self-prevent-item',
                 name: 'Self Prevent Energy Item',
                 effects: [{
@@ -69,8 +69,8 @@ describe('Prevent Energy Attachment Effect', () => {
                     target: { player: 'self' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'both-prevent-item', {
+            },
+            'both-prevent-item': {
                 templateId: 'both-prevent-item',
                 name: 'Both Prevent Energy Item',
                 effects: [{
@@ -78,8 +78,8 @@ describe('Prevent Energy Attachment Effect', () => {
                     target: {},
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const selfPreventItem = { templateId: 'self-prevent-item', type: 'item' as const };
@@ -322,8 +322,8 @@ describe('Prevent Energy Attachment Effect', () => {
 
     it('should work with different energy types', () => {
         const testRepoMultiType = new MockCardRepository({
-            creatures: new Map<string, CreatureData>([
-                [ 'basic-creature', {
+            creatures: {
+                'basic-creature': {
                     templateId: 'basic-creature',
                     name: 'Basic Creature',
                     maxHp: 80,
@@ -331,8 +331,8 @@ describe('Prevent Energy Attachment Effect', () => {
                     weakness: 'water',
                     retreatCost: 1,
                     attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-                }],
-                [ 'electric-creature', {
+                },
+                'electric-creature': {
                     templateId: 'electric-creature',
                     name: 'Electric Creature',
                     maxHp: 70,
@@ -340,10 +340,10 @@ describe('Prevent Energy Attachment Effect', () => {
                     weakness: 'fighting',
                     retreatCost: 1,
                     attacks: [{ name: 'Thunder', damage: 25, energyRequirements: [{ type: 'lightning', amount: 2 }] }],
-                }],
-            ]),
-            items: new Map<string, ItemData>([
-                [ 'prevent-item', {
+                },
+            },
+            items: {
+                'prevent-item': {
                     templateId: 'prevent-item',
                     name: 'Prevent Energy Item',
                     effects: [{
@@ -351,8 +351,8 @@ describe('Prevent Energy Attachment Effect', () => {
                         target: { player: 'opponent' },
                         duration: { type: 'until-end-of-next-turn' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const electricCreature = { templateId: 'electric-creature', type: 'creature' as const };

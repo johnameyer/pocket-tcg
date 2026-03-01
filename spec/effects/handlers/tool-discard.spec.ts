@@ -70,16 +70,16 @@ describe('Tool Discard Effect', () => {
 
     it('should discard tool from opponent active creature', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'tool-discard-item', {
+            items: {
+                'tool-discard-item': {
                     templateId: 'tool-discard-item',
                     name: 'Tool Discard Item',
                     effects: [{
                         type: 'tool-discard',
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -107,16 +107,16 @@ describe('Tool Discard Effect', () => {
 
     it('should do nothing when target creature has no tool', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'tool-discard-item', {
+            items: {
+                'tool-discard-item': {
                     templateId: 'tool-discard-item',
                     name: 'Tool Discard Item',
                     effects: [{
                         type: 'tool-discard',
                         target: { type: 'fixed', player: 'opponent', position: 'active' },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({
@@ -135,8 +135,8 @@ describe('Tool Discard Effect', () => {
 
     it('should target creatures with tools using hasTool filter', () => {
         const testRepository = new MockCardRepository({
-            items: new Map([
-                [ 'tool-discard-filter-item', {
+            items: {
+                'tool-discard-filter-item': {
                     templateId: 'tool-discard-filter-item',
                     name: 'Tool Discard Filter Item',
                     effects: [{
@@ -150,8 +150,8 @@ describe('Tool Discard Effect', () => {
                             },
                         },
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         const { state } = runTestGame({

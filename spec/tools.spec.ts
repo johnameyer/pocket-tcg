@@ -8,8 +8,8 @@ import { runTestGame } from './helpers/test-helpers.js';
 import { mockRepository } from './mock-repository.js';
 
 describe('Creature Tools', () => {
-    const mockCreatureData = new Map<string, CreatureData>([
-        [ 'flame-sprite', {
+    const mockCreatureData: Record<string, CreatureData> = {
+        'flame-sprite': {
             templateId: 'flame-sprite',
             name: 'Flame Sprite',
             maxHp: 60,
@@ -17,8 +17,8 @@ describe('Creature Tools', () => {
             weakness: 'water',
             retreatCost: 1,
             attacks: [{ name: 'Ember', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-        }],
-        [ 'stone-wall', {
+        },
+        'stone-wall': {
             templateId: 'stone-wall',
             name: 'Stone Wall',
             maxHp: 100,
@@ -26,8 +26,8 @@ describe('Creature Tools', () => {
             weakness: 'grass',
             retreatCost: 3,
             attacks: [{ name: 'Rock Throw', damage: 30, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
-        }],
-        [ 'basic-creature', {
+        },
+        'basic-creature': {
             templateId: 'basic-creature',
             name: 'Basic Creature',
             maxHp: 60,
@@ -35,8 +35,8 @@ describe('Creature Tools', () => {
             weakness: 'water',
             retreatCost: 1,
             attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-        }],
-        [ 'high-hp-creature', {
+        },
+        'high-hp-creature': {
             templateId: 'high-hp-creature',
             name: 'High HP Creature',
             maxHp: 180,
@@ -44,25 +44,25 @@ describe('Creature Tools', () => {
             weakness: 'psychic',
             retreatCost: 3,
             attacks: [{ name: 'Strong Attack', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
-        }],
-    ]);
+        },
+    };
 
-    const mockSupporterData = new Map<string, SupporterData>();
-    const mockItemData = new Map<string, ItemData>();
+    const mockSupporterData: Record<string, SupporterData> = {};
+    const mockItemData: Record<string, ItemData> = {};
     
-    const mockToolData = new Map<string, ToolData>([
-        [ 'leftovers', {
+    const mockToolData: Record<string, ToolData> = {
+        'leftovers': {
             templateId: 'leftovers',
             name: 'Leftovers',
             effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],
             trigger: { type: 'end-of-turn' },
-        }],
-        [ 'power-enhancer', {
+        },
+        'power-enhancer': {
             templateId: 'power-enhancer',
             name: 'Power Enhancer',
             effects: [],
-        }],
-    ]);
+        },
+    };
 
     const toolTestRepository = new CardRepository(mockCreatureData, mockSupporterData, mockItemData, mockToolData);
 
@@ -167,9 +167,9 @@ describe('Creature Tools', () => {
 
     describe('Tool passive effects - manually played vs pre-setup', () => {
         // Add a tool with passive HP bonus effect to the test repository
-        const hpToolData = new Map<string, ToolData>([
-            ...Array.from(mockToolData.entries()),
-            [ 'hp-bonus-tool', {
+        const hpToolData: Record<string, ToolData> = {
+            ...mockToolData,
+            'hp-bonus-tool': {
                 templateId: 'hp-bonus-tool',
                 name: 'HP Bonus Tool',
                 effects: [{
@@ -178,8 +178,8 @@ describe('Creature Tools', () => {
                     target: { player: 'self', position: 'active' },
                     duration: { type: 'while-in-play' },
                 }],
-            }],
-        ]);
+            },
+        };
 
         const extendedToolRepository = new CardRepository(mockCreatureData, mockSupporterData, mockItemData, hpToolData);
 
@@ -250,9 +250,9 @@ describe('Creature Tools', () => {
     });
 
     describe('Tool passive effects cleared on knockout', () => {
-        const retreatToolData = new Map<string, ToolData>([
-            ...Array.from(mockToolData.entries()),
-            [ 'retreat-boost-tool', {
+        const retreatToolData: Record<string, ToolData> = {
+            ...mockToolData,
+            'retreat-boost-tool': {
                 templateId: 'retreat-boost-tool',
                 name: 'Retreat Boost Tool',
                 effects: [{
@@ -261,8 +261,8 @@ describe('Creature Tools', () => {
                     target: { player: 'self', position: 'active' },
                     duration: { type: 'while-in-play' },
                 }],
-            }],
-        ]);
+            },
+        };
 
         const retreatToolRepository = new CardRepository(mockCreatureData, mockSupporterData, mockItemData, retreatToolData);
 

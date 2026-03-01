@@ -1,0 +1,2 @@
+onlyBuiltDependencies:
+  - '@cards-ts/core'

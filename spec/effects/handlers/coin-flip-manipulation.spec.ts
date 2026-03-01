@@ -8,8 +8,8 @@ import { CreatureData, SupporterData } from '../../../src/repository/card-types.
 
 describe('Coin Flip Manipulation Effect', () => {
     const testRepository = new MockCardRepository({
-        supporters: new Map<string, SupporterData>([
-            [ 'coin-flip-supporter', { // Generic supporter name
+        supporters: {
+            'coin-flip-supporter': { // Generic supporter name
                 templateId: 'coin-flip-supporter',
                 name: 'Will Supporter',
                 effects: [{
@@ -17,10 +17,10 @@ describe('Coin Flip Manipulation Effect', () => {
                     guaranteeNextHeads: true,
                     duration: { type: 'until-end-of-turn' },
                 }],
-            }],
-        ]),
-        creatures: new Map<string, CreatureData>([
-            [ 'coin-flip-attacker', {
+            },
+        },
+        creatures: {
+            'coin-flip-attacker': {
                 templateId: 'coin-flip-attacker',
                 name: 'Coin Flip Attacker',
                 maxHp: 80,
@@ -32,8 +32,8 @@ describe('Coin Flip Manipulation Effect', () => {
                     damage: { type: 'coin-flip', headsValue: 50, tailsValue: 0 },
                     energyRequirements: [{ type: 'lightning', amount: 1 }],
                 }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
@@ -45,8 +45,8 @@ describe('Coin Flip Manipulation Effect', () => {
                     damage: 30,
                     energyRequirements: [{ type: 'colorless', amount: 2 }],
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const coinFlipSupporter = { templateId: 'coin-flip-supporter', type: 'supporter' as const };

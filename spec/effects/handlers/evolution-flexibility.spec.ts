@@ -57,8 +57,8 @@ describe('Evolution Flexibility Effect', () => {
     const flexibilityItem = { templateId: 'flexibility-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'flexible-basic', {
+        creatures: {
+            'flexible-basic': {
                 templateId: 'flexible-basic',
                 name: 'Flexible Basic',
                 maxHp: 60,
@@ -66,8 +66,8 @@ describe('Evolution Flexibility Effect', () => {
                 weakness: 'fighting',
                 retreatCost: 1,
                 attacks: [{ name: 'Tackle', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
-            }],
-            [ 'flexible-evolution-water', {
+            },
+            'flexible-evolution-water': {
                 templateId: 'flexible-evolution-water',
                 name: 'Flexible Evolution Water',
                 maxHp: 90,
@@ -76,8 +76,8 @@ describe('Evolution Flexibility Effect', () => {
                 retreatCost: 2,
                 previousStageName: 'Flexible Basic',
                 attacks: [{ name: 'Water Gun', damage: 40, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-            [ 'flexible-evolution-lightning', {
+            },
+            'flexible-evolution-lightning': {
                 templateId: 'flexible-evolution-lightning',
                 name: 'Flexible Evolution Lightning',
                 maxHp: 90,
@@ -86,8 +86,8 @@ describe('Evolution Flexibility Effect', () => {
                 retreatCost: 1,
                 previousStageName: 'Flexible Basic',
                 attacks: [{ name: 'Shock', damage: 40, energyRequirements: [{ type: 'lightning', amount: 2 }] }],
-            }],
-            [ 'flexible-evolution-fire', {
+            },
+            'flexible-evolution-fire': {
                 templateId: 'flexible-evolution-fire',
                 name: 'Flexible Evolution Fire',
                 maxHp: 90,
@@ -96,8 +96,8 @@ describe('Evolution Flexibility Effect', () => {
                 retreatCost: 1,
                 previousStageName: 'Flexible Basic',
                 attacks: [{ name: 'Flame', damage: 40, energyRequirements: [{ type: 'fire', amount: 2 }] }],
-            }],
-            [ 'basic-creature', {
+            },
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -105,10 +105,10 @@ describe('Evolution Flexibility Effect', () => {
                 weakness: 'fire',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'grass', amount: 1 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'flexibility-item', {
+            },
+        },
+        items: {
+            'flexibility-item': {
                 templateId: 'flexibility-item',
                 name: 'Flexibility Item',
                 effects: [{
@@ -117,8 +117,8 @@ describe('Evolution Flexibility Effect', () => {
                     baseForm: 'flexible-basic',
                     duration: { type: 'until-end-of-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };

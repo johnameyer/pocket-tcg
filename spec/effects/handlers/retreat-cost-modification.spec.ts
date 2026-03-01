@@ -46,8 +46,8 @@ describe('Retreat Cost Modification Effect', () => {
     const increaseItem = { templateId: 'increase-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'low-cost-creature', {
+        creatures: {
+            'low-cost-creature': {
                 templateId: 'low-cost-creature',
                 name: 'Low Cost Creature',
                 maxHp: 80,
@@ -55,8 +55,8 @@ describe('Retreat Cost Modification Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'high-cost-creature', {
+            },
+            'high-cost-creature': {
                 templateId: 'high-cost-creature',
                 name: 'High Cost Creature',
                 maxHp: 180,
@@ -64,8 +64,8 @@ describe('Retreat Cost Modification Effect', () => {
                 weakness: 'grass',
                 retreatCost: 3,
                 attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-            [ 'zero-cost-creature', {
+            },
+            'zero-cost-creature': {
                 templateId: 'zero-cost-creature',
                 name: 'Zero Cost Creature',
                 maxHp: 60,
@@ -73,10 +73,10 @@ describe('Retreat Cost Modification Effect', () => {
                 weakness: 'darkness',
                 retreatCost: 0,
                 attacks: [{ name: 'Psychic Attack', damage: 15, energyRequirements: [{ type: 'psychic', amount: 1 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'increase-item', {
+            },
+        },
+        items: {
+            'increase-item': {
                 templateId: 'increase-item',
                 name: 'Increase Retreat Item',
                 effects: [{
@@ -85,8 +85,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'increase-by-two', {
+            },
+            'increase-by-two': {
                 templateId: 'increase-by-two',
                 name: 'Increase Retreat By Two',
                 effects: [{
@@ -95,8 +95,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'opponent', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'increase-active', {
+            },
+            'increase-active': {
                 templateId: 'increase-active',
                 name: 'Increase Active Retreat',
                 effects: [{
@@ -105,8 +105,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'opponent', location: 'field', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'increase-bench', {
+            },
+            'increase-bench': {
                 templateId: 'increase-bench',
                 name: 'Increase Bench Retreat',
                 effects: [{
@@ -115,8 +115,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'opponent', location: 'field', position: 'bench' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'increase-self', {
+            },
+            'increase-self': {
                 templateId: 'increase-self',
                 name: 'Increase Self Retreat',
                 effects: [{
@@ -125,8 +125,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'self', location: 'field' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'reduce-item', {
+            },
+            'reduce-item': {
                 templateId: 'reduce-item',
                 name: 'Reduce Retreat Item',
                 effects: [{
@@ -135,8 +135,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'self', location: 'field' },
                     duration: { type: 'until-end-of-turn' },
                 }],
-            }],
-            [ 'reduce-active', {
+            },
+            'reduce-active': {
                 templateId: 'reduce-active',
                 name: 'Reduce Active Retreat',
                 effects: [{
@@ -145,8 +145,8 @@ describe('Retreat Cost Modification Effect', () => {
                     target: { player: 'self', location: 'field', position: 'active' },
                     duration: { type: 'until-end-of-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const zeroCostCreature = { templateId: 'zero-cost-creature', type: 'creature' as const };

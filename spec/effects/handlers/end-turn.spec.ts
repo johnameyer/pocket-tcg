@@ -11,8 +11,8 @@ describe('End Turn Effect', () => {
     const endTurnItem = { templateId: 'end-turn-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -20,8 +20,8 @@ describe('End Turn Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'end-turn-creature', {
+            },
+            'end-turn-creature': {
                 templateId: 'end-turn-creature',
                 name: 'End Turn Creature',
                 maxHp: 90,
@@ -34,15 +34,15 @@ describe('End Turn Effect', () => {
                     energyRequirements: [{ type: 'psychic', amount: 1 }],
                     effects: [{ type: 'end-turn' }],
                 }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'end-turn-item', {
+            },
+        },
+        items: {
+            'end-turn-item': {
                 templateId: 'end-turn-item',
                 name: 'End Turn Item',
                 effects: [{ type: 'end-turn' }],
-            }],
-        ]),
+            },
+        },
     });
 
     const endTurnCreature = { templateId: 'end-turn-creature', type: 'creature' as const };

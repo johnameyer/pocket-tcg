@@ -101,8 +101,8 @@ describe('Energy Transfer Effect', () => {
     const transferSupporter = { templateId: 'transfer-supporter', type: 'supporter' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -110,8 +110,8 @@ describe('Energy Transfer Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'high-hp-creature', {
+            },
+            'high-hp-creature': {
                 templateId: 'high-hp-creature',
                 name: 'High HP Creature',
                 maxHp: 140,
@@ -119,10 +119,10 @@ describe('Energy Transfer Effect', () => {
                 weakness: 'grass',
                 retreatCost: 2,
                 attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-        ]),
-        supporters: new Map<string, SupporterData>([
-            [ 'transfer-supporter', {
+            },
+        },
+        supporters: {
+            'transfer-supporter': {
                 templateId: 'transfer-supporter',
                 name: 'Transfer Supporter',
                 effects: [{
@@ -135,8 +135,8 @@ describe('Energy Transfer Effect', () => {
                     },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                 }],
-            }],
-            [ 'choice-transfer-supporter', {
+            },
+            'choice-transfer-supporter': {
                 templateId: 'choice-transfer-supporter',
                 name: 'Choice Transfer Supporter',
                 effects: [{
@@ -149,8 +149,8 @@ describe('Energy Transfer Effect', () => {
                     },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                 }],
-            }],
-            [ 'multi-transfer-supporter', {
+            },
+            'multi-transfer-supporter': {
                 templateId: 'multi-transfer-supporter',
                 name: 'Multi Transfer Supporter',
                 effects: [{
@@ -163,8 +163,8 @@ describe('Energy Transfer Effect', () => {
                     },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                 }],
-            }],
-            [ 'water-transfer-supporter', {
+            },
+            'water-transfer-supporter': {
                 templateId: 'water-transfer-supporter',
                 name: 'Water Transfer Supporter',
                 effects: [{
@@ -177,8 +177,8 @@ describe('Energy Transfer Effect', () => {
                     },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                 }],
-            }],
-            [ 'any-energy-transfer-supporter', {
+            },
+            'any-energy-transfer-supporter': {
                 templateId: 'any-energy-transfer-supporter',
                 name: 'Any Energy Transfer Supporter',
                 effects: [{
@@ -191,8 +191,8 @@ describe('Energy Transfer Effect', () => {
                     },
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const choiceTransferSupporter = { templateId: 'choice-transfer-supporter', type: 'supporter' as const };
@@ -343,8 +343,8 @@ describe('Energy Transfer Effect', () => {
 
     describe('Energy Target Features', () => {
         const allFireFromBenchRepository = new MockCardRepository({
-            creatures: new Map([
-                [ 'basic-creature', {
+            creatures: {
+                'basic-creature': {
                     templateId: 'basic-creature',
                     name: 'Basic Creature',
                     maxHp: 80,
@@ -352,8 +352,8 @@ describe('Energy Transfer Effect', () => {
                     weakness: 'water',
                     retreatCost: 1,
                     attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-                }],
-                [ 'bench-creature', {
+                },
+                'bench-creature': {
                     templateId: 'bench-creature',
                     name: 'Bench Creature',
                     maxHp: 60,
@@ -361,10 +361,10 @@ describe('Energy Transfer Effect', () => {
                     weakness: 'grass',
                     retreatCost: 1,
                     attacks: [],
-                }],
-            ]),
-            supporters: new Map([
-                [ 'move-all-fire-from-bench', {
+                },
+            },
+            supporters: {
+                'move-all-fire-from-bench': {
                     templateId: 'move-all-fire-from-bench',
                     name: 'Move All Fire From Bench',
                     effects: [{
@@ -377,8 +377,8 @@ describe('Energy Transfer Effect', () => {
                         },
                         target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     }],
-                }],
-                [ 'move-energy-from-bench-choice', {
+                },
+                'move-energy-from-bench-choice': {
                     templateId: 'move-energy-from-bench-choice',
                     name: 'Move Energy From Bench Choice',
                     effects: [{
@@ -391,8 +391,8 @@ describe('Energy Transfer Effect', () => {
                         },
                         target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     }],
-                }],
-                [ 'move-all-energy-from-bench', {
+                },
+                'move-all-energy-from-bench': {
                     templateId: 'move-all-energy-from-bench',
                     name: 'Move All Energy From Bench',
                     effects: [{
@@ -405,8 +405,8 @@ describe('Energy Transfer Effect', () => {
                         },
                         target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                     }],
-                }],
-            ]),
+                },
+            },
         });
 
         // These tests validate the new energy target system

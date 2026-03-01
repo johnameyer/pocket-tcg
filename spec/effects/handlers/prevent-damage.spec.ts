@@ -13,8 +13,8 @@ describe('Prevent Damage Effect', () => {
     const preventItem = { templateId: 'prevent-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
-        creatures: new Map<string, CreatureData>([
-            [ 'basic-creature', {
+        creatures: {
+            'basic-creature': {
                 templateId: 'basic-creature',
                 name: 'Basic Creature',
                 maxHp: 80,
@@ -22,8 +22,8 @@ describe('Prevent Damage Effect', () => {
                 weakness: 'water',
                 retreatCost: 1,
                 attacks: [{ name: 'Basic Attack', damage: 30, energyRequirements: [{ type: 'fire', amount: 1 }] }],
-            }],
-            [ 'ex-creature', {
+            },
+            'ex-creature': {
                 templateId: 'ex-creature',
                 name: 'Ex Creature',
                 maxHp: 180,
@@ -32,8 +32,8 @@ describe('Prevent Damage Effect', () => {
                 retreatCost: 2,
                 attributes: { ex: true },
                 attacks: [{ name: 'Ex Attack', damage: 60, energyRequirements: [{ type: 'water', amount: 2 }] }],
-            }],
-            [ 'mega-ex-creature', {
+            },
+            'mega-ex-creature': {
                 templateId: 'mega-ex-creature',
                 name: 'Mega Ex Creature',
                 maxHp: 220,
@@ -42,10 +42,10 @@ describe('Prevent Damage Effect', () => {
                 retreatCost: 3,
                 attributes: { ex: true, mega: true },
                 attacks: [{ name: 'Mega Attack', damage: 90, energyRequirements: [{ type: 'lightning', amount: 3 }] }],
-            }],
-        ]),
-        items: new Map<string, ItemData>([
-            [ 'prevent-item', {
+            },
+        },
+        items: {
+            'prevent-item': {
                 templateId: 'prevent-item',
                 name: 'Prevent Item',
                 effects: [{ 
@@ -54,8 +54,8 @@ describe('Prevent Damage Effect', () => {
                     damageSource: { player: 'opponent' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-            [ 'prevent-ex-item', {
+            },
+            'prevent-ex-item': {
                 templateId: 'prevent-ex-item',
                 name: 'Prevent Ex Item',
                 effects: [{
@@ -64,8 +64,8 @@ describe('Prevent Damage Effect', () => {
                     target: { player: 'opponent', position: 'active' },
                     duration: { type: 'until-end-of-next-turn' },
                 }],
-            }],
-        ]),
+            },
+        },
     });
 
     const preventExItem = { templateId: 'prevent-ex-item', type: 'item' as const };
