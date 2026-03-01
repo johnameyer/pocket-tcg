@@ -57,7 +57,7 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
                 creatures: {
                     'reactive': createDamageReactiveCreature('reactive', 'Reactive', 10) ,
                 },
-                supporters: {'dmg-sup': createDamageSupporter('dmg-sup', 20) },
+                supporters: { 'dmg-sup': createDamageSupporter('dmg-sup', 20) },
             });
 
             const { state } = runTestGame({
@@ -79,7 +79,7 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
                 creatures: {
                     'reactor': createDamageReactiveCreature('reactor', 'Reactor', 5) ,
                 },
-                supporters: {'dmg': createDamageSupporter('dmg', 20) },
+                supporters: { 'dmg': createDamageSupporter('dmg', 20) },
             });
 
             const { state } = runTestGame({
@@ -119,8 +119,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: {'energy-react': energyReactive },
-                supporters: {'e-sup': createEnergySupporter('e-sup', 'fire') },
+                creatures: { 'energy-react': energyReactive },
+                supporters: { 'e-sup': createEnergySupporter('e-sup', 'fire') },
             });
 
             const { state } = runTestGame({
@@ -152,8 +152,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: {'any-energy': anyEnergyReactive },
-                supporters: {'w-sup': createEnergySupporter('w-sup', 'water') },
+                creatures: { 'any-energy': anyEnergyReactive },
+                supporters: { 'w-sup': createEnergySupporter('w-sup', 'water') },
             });
 
             const { state } = runTestGame({
@@ -191,8 +191,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: {'multi': multiReactive },
-                supporters: {'dmg': createDamageSupporter('dmg', 20) },
+                creatures: { 'multi': multiReactive },
+                supporters: { 'dmg': createDamageSupporter('dmg', 20) },
             });
 
             const { state } = runTestGame({
