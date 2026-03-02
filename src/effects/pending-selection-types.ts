@@ -2,6 +2,8 @@ import { AttachableEnergyType } from '../repository/energy-types.js';
 import { Effect } from '../repository/effect-types.js';
 import { EffectContext } from './effect-context.js';
 import { GameCard } from '../controllers/card-types.js';
+import { TargetOption } from './target-resolvers/field-target-resolver.js';
+import { EnergyOption } from './target-resolvers/energy-target-resolver.js';
 
 /**
  * Represents the different types of selections that can be pending.
@@ -37,6 +39,8 @@ export type PendingFieldSelection = BasePendingSelection & {
     minTargets?: number;
     /** Maximum number of targets (defaults to count) */
     maxTargets?: number;
+    /** The field positions available for selection, pre-computed at selection creation time */
+    availableTargets: TargetOption[];
 };
 
 /**
@@ -44,11 +48,9 @@ export type PendingFieldSelection = BasePendingSelection & {
  */
 export type PendingEnergySelection = BasePendingSelection & {
     selectionType: 'energy';
-    /** The player who owns the energy */
+    /** The player who makes the selection (used by state machine for routing) */
     playerId: number;
-    /** The field position of the card with energy */
-    fieldPosition: number;
-    /** Number of energy to select */
+    /** Number of energy target creatures to select */
     count: number;
     /** Minimum number of energy (defaults to count) */
     minCount?: number;
@@ -56,6 +58,8 @@ export type PendingEnergySelection = BasePendingSelection & {
     maxCount?: number;
     /** Optional: restrict to specific energy types */
     allowedTypes?: AttachableEnergyType[];
+    /** The energy options available for selection, pre-computed at selection creation time */
+    availableEnergy: EnergyOption[];
 };
 
 /**

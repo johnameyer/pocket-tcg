@@ -4,14 +4,11 @@ import { GameHandler, HandlerData } from '../game-handler.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { SelectActiveCardResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from '../messages/response/index.js';
 import { SetupCompleteResponseMessage } from '../messages/response/index.js';
-import { Controllers } from '../controllers/controllers.js';
-import { FieldTargetResolver } from '../effects/target-resolvers/field-target-resolver.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { toFieldCard } from '../utils/field-card-utils.js';
 import { isPendingFieldSelection, isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, PendingFieldSelection, PendingEnergySelection, PendingCardSelection, PendingChoiceSelection } from '../effects/pending-selection-types.js';
-import { AttachableEnergyType } from '../repository/energy-types.js';
-import { FieldTarget, SingleChoiceFieldTarget } from '../repository/targets/field-target.js';
+import { SingleChoiceFieldTarget } from '../repository/targets/field-target.js';
 import * as helpers from './intermediary-handler-helpers.js';
 
 export class IntermediaryHandler extends GameHandler {
@@ -189,32 +186,14 @@ export class IntermediaryHandler extends GameHandler {
     }
     
     private async handleTargetSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectTargetResponseMessage | ResponseMessage>, pendingSelection: PendingFieldSelection): Promise<void> {
-        const { count = 1, minTargets, maxTargets } = pendingSelection;
-        const currentPlayer = handlerData.turn;
-        const context = pendingSelection.originalContext;
+        const { count = 1, minTargets, maxTargets, availableTargets } = pendingSelection;
         
-        // Get the target from the effect (if it has one)
-        const target = 'target' in pendingSelection.effect ? pendingSelection.effect.target : undefined;
-        
-        if (!target || typeof target === 'string') {
-            return;
-        }
-        
-        // Skip if target is FieldTargetCriteria (not resolvable during gameplay)
-        if (!('type' in target)) {
-            return;
-        }
-        
-        // Use TargetResolver with Controllers (converted from HandlerData)
-        const controllers = handlerData as unknown as Controllers;
-        const resolution = FieldTargetResolver.resolveTarget(target as FieldTarget, controllers, context);
-        
-        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+        if (availableTargets.length === 0) {
             return;
         }
         
         // Convert available targets to options for the form
-        const targetOptions = resolution.availableTargets.map((target, index) => ({
+        const targetOptions = availableTargets.map((target, index) => ({
             name: `${target.name} (${target.hp} HP) - ${target.position === 'active' ? 'Active' : 'Bench'}`,
             value: index,
         }));
@@ -222,7 +201,8 @@ export class IntermediaryHandler extends GameHandler {
         // Determine the appropriate message based on the effect type
         let effectMessage = count > 1 ? `Select ${count} target(s):` : 'Choose target for the effect:';
         if (pendingSelection.effect.type === 'switch') {
-            if ((target as SingleChoiceFieldTarget).type === 'single-choice' && (target as SingleChoiceFieldTarget).chooser === 'opponent') {
+            const target = 'target' in pendingSelection.effect ? pendingSelection.effect.target : undefined;
+            if (target && typeof target === 'object' && 'type' in target && (target as SingleChoiceFieldTarget).type === 'single-choice' && (target as SingleChoiceFieldTarget).chooser === 'opponent') {
                 effectMessage = 'Choose which of your FieldCard to switch in:';
             } else {
                 effectMessage = 'Choose which FieldCard to force into battle:';
@@ -238,7 +218,7 @@ export class IntermediaryHandler extends GameHandler {
             });
             
             const selectedIndex = (await received)[0] as number;
-            const selectedTarget = resolution.availableTargets[selectedIndex];
+            const selectedTarget = availableTargets[selectedIndex];
             responsesQueue.push(new SelectTargetResponseMessage([{
                 playerId: selectedTarget.playerId,
                 fieldIndex: selectedTarget.fieldIndex,
@@ -265,7 +245,7 @@ export class IntermediaryHandler extends GameHandler {
             
             const selectedIndices = (await received)[0] as number[];
             const targets = selectedIndices.map(index => {
-                const targetOption = resolution.availableTargets[index];
+                const targetOption = availableTargets[index];
                 return {
                     playerId: targetOption.playerId,
                     fieldIndex: targetOption.fieldIndex,
@@ -277,72 +257,58 @@ export class IntermediaryHandler extends GameHandler {
     }
     
     private async handleEnergySelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: PendingEnergySelection): Promise<void> {
-        const { playerId, fieldPosition, count, allowedTypes } = pendingSelection;
+        const { count, availableEnergy } = pendingSelection;
         
-        // Get the card with energy
-        const fieldCard = handlerData.field.creatures[playerId]?.[fieldPosition];
-        if (!fieldCard) {
+        if (availableEnergy.length === 0) {
             return;
         }
         
-        // Get attached energy
-        const energyData = handlerData.energy;
-        if (!energyData) {
-            return;
-        }
+        // Build one option per available creature (each EnergyOption is a creature with matching energy)
+        const energyOptions = availableEnergy.map((opt, index) => {
+            const energySummary = Object.entries(opt.availableEnergy)
+                .filter(([ , amount ]) => amount && amount > 0)
+                .map(([ type, amount ]) => `${amount}x ${type}`)
+                .join(', ');
+            return {
+                name: `${opt.displayName} (${energySummary})`,
+                value: index,
+            };
+        });
         
-        const fieldInstanceId = fieldCard.fieldInstanceId;
-        const attachedEnergy = energyData.attachedEnergyByInstance?.[fieldInstanceId] || {};
-        
-        // Create options for each energy type
-        const energyOptions: Array<{ name: string; value: AttachableEnergyType }> = [];
-        for (const [ energyType, amount ] of Object.entries(attachedEnergy)) {
-            if (typeof amount === 'number' && amount > 0) {
-                // energyType comes from EnergyDictionary keys, so it's guaranteed to be AttachableEnergyType
-                const typedEnergyType = energyType as AttachableEnergyType;
-                if (!allowedTypes || allowedTypes.includes(typedEnergyType)) {
-                    for (let i = 0; i < amount; i++) {
-                        energyOptions.push({
-                            name: `${energyType} energy`,
-                            value: typedEnergyType,
-                        });
-                    }
-                }
-            }
-        }
-        
-        if (energyOptions.length === 0) {
-            return;
-        }
-        
-        const prompt = pendingSelection.prompt || `Select ${count} energy to discard:`;
+        const prompt = pendingSelection.prompt || `Select ${count} creature${count !== 1 ? 's' : ''} to take energy from:`;
         
         if (count === 1) {
-            // Single selection
             const [ sent, received ] = this.intermediary.form({
                 type: 'list',
                 message: [ prompt ],
                 choices: energyOptions,
             });
             
-            const selected = (await received)[0] as AttachableEnergyType;
-            responsesQueue.push(new SelectEnergyResponseMessage([ selected ]));
+            const selectedIndex = (await received)[0] as number;
+            const selectedOpt = availableEnergy[selectedIndex];
+            responsesQueue.push(new SelectEnergyResponseMessage([{
+                playerId: selectedOpt.playerId,
+                fieldIndex: selectedOpt.fieldIndex,
+            }]));
         } else {
-            // Multiple selection
             const [ sent, received ] = this.intermediary.form({
                 type: 'checkbox',
                 message: [ prompt ],
                 choices: energyOptions,
-                validate: (selected: AttachableEnergyType[]) => {
+                validate: (selected: number[]) => {
                     if (selected.length !== count) {
-                        return `Must select exactly ${count} energy`;
+                        return `Must select exactly ${count} creature${count !== 1 ? 's' : ''}`;
                     }
                     return true;
                 },
             });
             
-            const selected = (await received)[0] as AttachableEnergyType[];
-            responsesQueue.push(new SelectEnergyResponseMessage(selected));
+            const selectedIndices = (await received)[0] as number[];
+            const selectedTargets = selectedIndices.map(index => ({
+                playerId: availableEnergy[index].playerId,
+                fieldIndex: availableEnergy[index].fieldIndex,
+            }));
+            responsesQueue.push(new SelectEnergyResponseMessage(selectedTargets));
         }
     }
     

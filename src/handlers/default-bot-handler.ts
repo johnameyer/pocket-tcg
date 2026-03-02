@@ -5,9 +5,6 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
-import { FieldTargetResolver } from '../effects/target-resolvers/field-target-resolver.js';
-import { Controllers } from '../controllers/controllers.js';
-import { FieldTarget } from '../repository/targets/field-target.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -163,35 +160,14 @@ export class DefaultBotHandler extends GameHandler {
             return;
         }
         
-        // Use TargetResolver to get valid targets compositionally
-        const { effect, originalContext } = pendingSelection;
-        const target = 'target' in effect ? effect.target : undefined;
-        
-        if (!target || typeof target === 'string') {
-            // No target selection needed or resolved already
-            return;
-        }
-        
-        /*
-         * Target should be a FieldTarget - do not handle FieldEnergyTarget here
-         * FieldEnergyTarget resolution is handled by EnergyTargetResolver automatically
-         */
-        
-        /*
-         * Convert handlerData to Controllers for TargetResolver
-         * HandlerData is structurally compatible with Controllers (it's a view of Controllers)
-         * This pattern is used throughout the codebase for handler methods
-         */
-        const controllers = handlerData as unknown as Controllers;
-        const resolution = FieldTargetResolver.resolveTarget(target as FieldTarget, controllers, originalContext);
-        
-        if (resolution.type !== 'requires-selection' || resolution.availableTargets.length === 0) {
+        const { availableTargets } = pendingSelection;
+        if (availableTargets.length === 0) {
             return;
         }
         
         // For bot: select first N available targets up to count
-        const targetCount = Math.min(pendingSelection.count || 1, resolution.availableTargets.length);
-        const selectedTargets = resolution.availableTargets.slice(0, targetCount).map(t => ({
+        const targetCount = Math.min(pendingSelection.count || 1, availableTargets.length);
+        const selectedTargets = availableTargets.slice(0, targetCount).map(t => ({
             playerId: t.playerId,
             fieldIndex: t.fieldIndex,
         }));
@@ -206,10 +182,12 @@ export class DefaultBotHandler extends GameHandler {
         }
         
         const count = pendingSelection.count || 1;
-        // Just select first energy type available (simplified bot logic)
-        responsesQueue.push(new SelectEnergyResponseMessage(
-            Array(count).fill('fire'), // Default to fire energy
-        ));
+        // Select the first N available energy options (creature-level)
+        const selectedTargets = pendingSelection.availableEnergy.slice(0, count).map(opt => ({
+            playerId: opt.playerId,
+            fieldIndex: opt.fieldIndex,
+        }));
+        responsesQueue.push(new SelectEnergyResponseMessage(selectedTargets));
     }
     
     handleSelectCard(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectCardResponseMessage>): void {
