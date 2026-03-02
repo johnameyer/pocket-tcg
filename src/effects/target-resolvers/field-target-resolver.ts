@@ -397,9 +397,24 @@ export class FieldTargetResolver {
             return creature ? validationFn(creature, handlerData) : false;
         }
 
-        // Contextual targets: treat as available if the context carries the referenced data
+        // Contextual targets: check if the context provides the referenced data
         if (target.type === 'contextual') {
-            return true; // Availability checked at resolution time
+            if (context.type === 'attack') {
+                return target.reference === 'defender' || target.reference === 'attacker';
+            }
+            if (context.type === 'trigger') {
+                if (target.reference === 'attacker') {
+                    return context.triggerType === 'damaged'
+                        || (context.triggerType === 'before-knockout' && context.attackerInstanceId !== undefined);
+                }
+                if (target.reference === 'defender') {
+                    return context.triggerType === 'on-attack'; 
+                }
+                if (target.reference === 'trigger-target') {
+                    return context.triggerType === 'energy-attachment'; 
+                }
+            }
+            return false;
         }
         
         return true; // Other target types don't need validation
@@ -449,9 +464,24 @@ export class FieldTargetResolver {
             return !!creature;
         }
 
-        // Contextual targets: treat as available (checked at resolution time)
+        // Contextual targets: check if the context provides the referenced data
         if (target.type === 'contextual') {
-            return true;
+            if (context.type === 'attack') {
+                return target.reference === 'defender' || target.reference === 'attacker';
+            }
+            if (context.type === 'trigger') {
+                if (target.reference === 'attacker') {
+                    return context.triggerType === 'damaged'
+                        || (context.triggerType === 'before-knockout' && context.attackerInstanceId !== undefined);
+                }
+                if (target.reference === 'defender') {
+                    return context.triggerType === 'on-attack'; 
+                }
+                if (target.reference === 'trigger-target') {
+                    return context.triggerType === 'energy-attachment'; 
+                }
+            }
+            return false;
         }
         
         return true;
@@ -614,11 +644,7 @@ export class FieldTargetResolver {
                     return { type: 'resolved', targets: [{ playerId: context.defenderPlayerId, fieldIndex }] };
                 }
                 if (context.type === 'trigger' && context.triggerType === 'on-attack') {
-                    const defenderInstanceId = context.triggerData?.defenderInstanceId;
-                    const defenderPlayerId = context.triggerData?.defenderPlayerId;
-                    if (!defenderInstanceId || defenderPlayerId === undefined) {
-                        return { type: 'no-valid-targets' };
-                    }
+                    const { defenderInstanceId, defenderPlayerId } = context;
                     const fieldCards = controllers.field.getCards(defenderPlayerId) ?? [];
                     const fieldIndex = fieldCards.findIndex(c => c?.instanceId === defenderInstanceId);
                     if (fieldIndex === -1) {
@@ -626,37 +652,42 @@ export class FieldTargetResolver {
                     }
                     return { type: 'resolved', targets: [{ playerId: defenderPlayerId, fieldIndex }] };
                 }
-                throw new Error(`Contextual target 'defender' is only valid in attack or 'on-attack' trigger context, got type='${context.type}'${context.type === 'trigger' ? ` triggerType='${context.triggerType}'` : ''}`);
+                throw new Error('Contextual target \'defender\' is only valid in attack or \'on-attack\' trigger context');
             }
             case 'attacker': {
-                if (context.type !== 'trigger' || (context.triggerType !== 'damaged' && context.triggerType !== 'before-knockout')) {
-                    throw new Error(`Contextual target 'attacker' is only valid in 'damaged' or 'before-knockout' trigger context, got type='${context.type}'${context.type === 'trigger' ? ` triggerType='${context.triggerType}'` : ''}`);
+                if (context.type === 'attack') {
+                    // Attacker is the source creature
+                    const attackerCards = controllers.field.getCards(context.sourcePlayer) ?? [];
+                    const fieldIndex = attackerCards.findIndex(c => c?.instanceId === context.attackerInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' }; 
+                    }
+                    return { type: 'resolved', targets: [{ playerId: context.sourcePlayer, fieldIndex }] };
                 }
-                const attackerInstanceId = context.triggerData?.attackerInstanceId;
-                const attackerPlayerId = context.triggerData?.attackerPlayerId;
-                if (!attackerInstanceId || attackerPlayerId === undefined) {
-                    return { type: 'no-valid-targets' };
+                if (context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')) {
+                    const attackerInstanceId = context.attackerInstanceId;
+                    const attackerPlayerId = context.attackerPlayerId;
+                    if (!attackerInstanceId || attackerPlayerId === undefined) {
+                        return { type: 'no-valid-targets' }; 
+                    }
+                    const attackerCards = controllers.field.getCards(attackerPlayerId) ?? [];
+                    const fieldIndex = attackerCards.findIndex(c => c?.instanceId === attackerInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' }; 
+                    }
+                    return { type: 'resolved', targets: [{ playerId: attackerPlayerId, fieldIndex }] };
                 }
-                const attackerCards = controllers.field.getCards(attackerPlayerId) ?? [];
-                const fieldIndex = attackerCards.findIndex(c => c?.instanceId === attackerInstanceId);
-                if (fieldIndex === -1) {
-                    return { type: 'no-valid-targets' };
-                }
-                return { type: 'resolved', targets: [{ playerId: attackerPlayerId, fieldIndex }] };
+                throw new Error('Contextual target \'attacker\' is only valid in attack or \'damaged\'/\'before-knockout\' trigger context');
             }
             case 'trigger-target': {
                 if (context.type !== 'trigger' || context.triggerType !== 'energy-attachment') {
-                    throw new Error(`Contextual target 'trigger-target' is only valid in 'energy-attachment' trigger context, got type='${context.type}'${context.type === 'trigger' ? ` triggerType='${context.triggerType}'` : ''}`);
+                    throw new Error('Contextual target \'trigger-target\' is only valid in \'energy-attachment\' trigger context');
                 }
-                const triggerTargetInstanceId = context.triggerData?.triggerTargetInstanceId;
-                const triggerTargetPlayerId = context.triggerData?.triggerTargetPlayerId;
-                if (!triggerTargetInstanceId || triggerTargetPlayerId === undefined) {
-                    return { type: 'no-valid-targets' };
-                }
+                const { triggerTargetInstanceId, triggerTargetPlayerId } = context;
                 const targetCards = controllers.field.getCards(triggerTargetPlayerId) ?? [];
                 const fieldIndex = targetCards.findIndex(c => c?.instanceId === triggerTargetInstanceId);
                 if (fieldIndex === -1) {
-                    return { type: 'no-valid-targets' };
+                    return { type: 'no-valid-targets' }; 
                 }
                 return { type: 'resolved', targets: [{ playerId: triggerTargetPlayerId, fieldIndex }] };
             }

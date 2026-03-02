@@ -160,9 +160,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             );
             
             const attackResult = controllers.field.attack(sourceHandler, message.attackIndex, resolvedDamage);
-            
-            // Track the attacker for contextual before-knockout triggers processed by state machine
-            controllers.turnState.setCurrentAttacker(playerCard.instanceId, sourceHandler);
 
             // Trigger on-attack effects for tools/abilities on the attacker (e.g. effects that reference the defender)
             TriggerProcessor.processOnAttack(
@@ -210,6 +207,24 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     
                     // Process any effects that were triggered by the attack effects
                     EffectQueueProcessor.processQueue(controllers);
+                }
+            }
+
+            // Process before-knockout triggers for any cards knocked out during this attack
+            for (let playerId = 0; playerId < controllers.players.count; playerId++) {
+                for (const card of controllers.field.getCards(playerId)) {
+                    const { maxHp } = controllers.cardRepository.getCreature(card.templateId);
+                    if (card.damageTaken >= maxHp) {
+                        TriggerProcessor.processBeforeKnockout(
+                            controllers,
+                            playerId,
+                            card.instanceId,
+                            card.templateId,
+                            playerCard.instanceId,
+                            sourceHandler,
+                        );
+                        EffectQueueProcessor.processQueue(controllers);
+                    }
                 }
             }
             

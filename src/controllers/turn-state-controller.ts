@@ -9,8 +9,6 @@ export type TurnStateData = {
     evolvedInstancesThisTurn: string[]; // Track evolved creatures by instance ID
     usedAbilitiesThisTurn: string[]; // Track ability usage by "instanceId-abilityName"
     pendingSelection?: PendingSelection;
-    /** The current attacker during an attack, for contextual before-knockout triggers */
-    currentAttacker?: { instanceId: string; playerId: number };
 };
 
 type TurnStateDependencies = {};
@@ -73,7 +71,6 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
         this.state.retreatedThisTurn = false;
         this.state.evolvedInstancesThisTurn = [];
         this.state.usedAbilitiesThisTurn = [];
-        this.state.currentAttacker = undefined;
     }
     
     public markEvolvedThisTurn(instanceId: string): void {
@@ -119,17 +116,5 @@ export class TurnStateController extends GlobalController<TurnStateData, TurnSta
     
     public clearPendingSelection(): void {
         this.state.pendingSelection = undefined;
-    }
-
-    public setCurrentAttacker(instanceId: string, playerId: number): void {
-        this.state.currentAttacker = { instanceId, playerId };
-    }
-
-    public getCurrentAttacker(): { instanceId: string; playerId: number } | undefined {
-        return this.state.currentAttacker;
-    }
-
-    public clearCurrentAttacker(): void {
-        this.state.currentAttacker = undefined;
     }
 }

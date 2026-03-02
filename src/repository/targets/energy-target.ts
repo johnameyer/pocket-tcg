@@ -15,10 +15,10 @@ export type EnergyCriteria = {
  * 
  * Will randomly select if not fully defined.
  */
-export type FieldEnergyTarget = {
+export type FieldEnergyTarget<TContextualRefs extends string = string> = {
     type: 'field';
     /** The field card to target energy on */
-    fieldTarget: FieldTarget;
+    fieldTarget: FieldTarget<TContextualRefs>;
     /** Criteria for which energy to target */
     criteria?: EnergyCriteria;
     /** Number of energy to target */
@@ -29,4 +29,4 @@ export type FieldEnergyTarget = {
  * Union type for all energy target types.
  * Currently only includes field-based energy targeting.
  */
-export type EnergyTarget = FieldEnergyTarget;
+export type EnergyTarget<TContextualRefs extends string = string> = FieldEnergyTarget<TContextualRefs>;

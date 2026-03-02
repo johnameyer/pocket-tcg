@@ -78,7 +78,7 @@ export type AllMatchingFieldTarget = {
 /**
  * Union type for single targets (fixed, resolved, or choice-based).
  * Uses the default `ContextualFieldTarget<string>` — permissive for framework use.
- * Prefer the generic `FieldTarget<TRefs>` when authoring card definitions.
+ * Prefer the generic `FieldTarget<TContextualRefs>` when authoring card definitions.
  */
 export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget | ContextualFieldTarget<string>;
 

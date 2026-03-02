@@ -86,20 +86,6 @@ const processKnockouts = {
                 // Send knockout message
                 const targetCard = controllers.field.getCardByPosition(i, 0);
                 if (targetCard) {
-                    // Trigger before-knockout effects, passing current attacker if available
-                    const currentAttacker = controllers.turnState.getCurrentAttacker();
-                    TriggerProcessor.processBeforeKnockout(
-                        controllers,
-                        i,
-                        targetCard.instanceId,
-                        targetCard.templateId,
-                        currentAttacker?.instanceId,
-                        currentAttacker?.playerId,
-                    );
-                    
-                    // Process any effects that were triggered before knockout
-                    EffectQueueProcessor.processQueue(controllers);
-                    
                     const cardData = controllers.cardRepository.getCreature(targetCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(cardData.name));
                     
@@ -140,20 +126,6 @@ const processKnockouts = {
                 const { maxHp } = controllers.cardRepository.getCreature(benchCard.templateId);
                 
                 if (benchCard.damageTaken >= maxHp) {
-                    // Trigger before-knockout effects, passing current attacker if available
-                    const currentAttacker = controllers.turnState.getCurrentAttacker();
-                    TriggerProcessor.processBeforeKnockout(
-                        controllers,
-                        i,
-                        benchCard.instanceId,
-                        benchCard.templateId,
-                        currentAttacker?.instanceId,
-                        currentAttacker?.playerId,
-                    );
-                    
-                    // Process any effects that were triggered before knockout
-                    EffectQueueProcessor.processQueue(controllers);
-                    
                     // Send knockout message
                     const cardData = controllers.cardRepository.getCreature(benchCard.templateId);
                     controllers.players.messageAll(new KnockedOutMessage(`${cardData.name} (bench)`));
@@ -631,6 +603,17 @@ const gameTurn = loop<Controllers>({
                 
                 // Process any effects that were triggered during the checkup phase
                 EffectQueueProcessor.processQueue(controllers);
+
+                // Process before-knockout triggers for cards knocked out by status effects
+                for (let playerId = 0; playerId < controllers.players.count; playerId++) {
+                    for (const card of controllers.field.getCards(playerId)) {
+                        const { maxHp } = controllers.cardRepository.getCreature(card.templateId);
+                        if (card.damageTaken >= maxHp) {
+                            TriggerProcessor.processBeforeKnockout(controllers, playerId, card.instanceId, card.templateId);
+                            EffectQueueProcessor.processQueue(controllers);
+                        }
+                    }
+                }
                 
                 // Clear persistent effects at end of turn (they last "during opponent's next turn")
             },

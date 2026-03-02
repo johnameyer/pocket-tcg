@@ -51,7 +51,8 @@ export type TriggerContextualRefs = {
 // ---------------------------------------------------------------------------
 // Helper: pair a single Trigger variant T with its correctly-typed effects
 // ---------------------------------------------------------------------------
-type _CreatureAbilityForTrigger<T extends Trigger> = {
+/** @internal Implementation detail for the CreatureAbility discriminated union */
+type CreatureAbilityForTrigger<T extends Trigger> = {
     name: string;
     description?: string;
     trigger: T;
@@ -66,25 +67,28 @@ type _CreatureAbilityForTrigger<T extends Trigger> = {
  * This is enforced at compile time via `TriggerContextualRefs`.
  */
 export type CreatureAbility = {
-    [K in Trigger['type']]: _CreatureAbilityForTrigger<Extract<Trigger, { type: K }>>
+    [K in Trigger['type']]: CreatureAbilityForTrigger<Extract<Trigger, { type: K }>>
 }[Trigger['type']];
 
 // ---------------------------------------------------------------------------
 // Tool data — discriminated union on trigger presence/type
 // ---------------------------------------------------------------------------
-type _ToolDataBase = {
+/** @internal Base fields shared by all ToolData variants */
+type ToolDataBase = {
     templateId: string;
     name: string;
     description?: string;
 };
 
-type _ToolDataNoTrigger = _ToolDataBase & {
+/** @internal ToolData variant without a trigger (passive modifier effects only) */
+type ToolDataNoTrigger = ToolDataBase & {
     /** Passive modifier effects — no contextual refs available */
     effects: Effect<never>[];
     trigger?: undefined;
 };
 
-type _ToolDataWithTrigger<T extends Trigger> = _ToolDataBase & {
+/** @internal ToolData variant with a trigger */
+type ToolDataWithTrigger<T extends Trigger> = ToolDataBase & {
     effects: Effect<TriggerContextualRefs[T['type']]>[];
     trigger: T;
 };
@@ -99,9 +103,10 @@ export type CreatureAttack = {
     energyRequirements: EnergyRequirement[];
     /**
      * Attack effects may reference the `'defender'` contextual target
-     * (the opposing active creature that is being attacked).
+     * (the opposing active creature that is being attacked), or the `'attacker'`
+     * contextual target (the creature performing the attack).
      */
-    effects?: Effect<'defender'>[];
+    effects?: Effect<'defender' | 'attacker'>[];
 };
 
 /**
@@ -164,8 +169,8 @@ export type ItemData = {
  *    refs are derived from `TriggerContextualRefs[trigger.type]`.
  */
 export type ToolData =
-    | _ToolDataNoTrigger
-    | { [K in Trigger['type']]: _ToolDataWithTrigger<Extract<Trigger, { type: K }>> }[Trigger['type']];
+    | ToolDataNoTrigger
+    | { [K in Trigger['type']]: ToolDataWithTrigger<Extract<Trigger, { type: K }>> }[Trigger['type']];
 
 /**
  * Represents a stadium card.

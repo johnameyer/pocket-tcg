@@ -31,36 +31,21 @@ export type CardEffectContext = BaseEffectContext & {
 };
 
 /**
- * Contextual data carried by trigger contexts.
- * Which fields are populated depends on the triggerType:
- * - 'damaged' / 'before-knockout': attackerInstanceId + attackerPlayerId
- * - 'energy-attachment': energyType + triggerTargetInstanceId + triggerTargetPlayerId
- * - 'on-attack': defenderInstanceId + defenderPlayerId
+ * Contextual data for trigger effects, discriminated on `triggerType`.
+ * Each variant carries only the data relevant to that trigger type.
  */
-export type TriggerContextData = {
-    damage?: number;
-    energyType?: string;
-    /** Instance ID of the creature that caused the damage (for 'damaged'/'before-knockout' triggers) */
-    attackerInstanceId?: string;
-    /** Player ID of the attacking creature (for 'damaged'/'before-knockout' triggers) */
-    attackerPlayerId?: number;
-    /** Instance ID of the creature the event acted upon (for 'energy-attachment' triggers) */
-    triggerTargetInstanceId?: string;
-    /** Player ID of the trigger target creature (for 'energy-attachment' triggers) */
-    triggerTargetPlayerId?: number;
-    /** Instance ID of the defending creature (for 'on-attack' triggers) */
-    defenderInstanceId?: string;
-    /** Player ID of the defending creature (for 'on-attack' triggers) */
-    defenderPlayerId?: number;
-};
+export type TriggerContextData =
+    | { triggerType: 'damaged'; damage: number; attackerInstanceId?: string; attackerPlayerId?: number }
+    | { triggerType: 'before-knockout'; attackerInstanceId?: string; attackerPlayerId?: number }
+    | { triggerType: 'on-attack'; defenderInstanceId: string; defenderPlayerId: number }
+    | { triggerType: 'energy-attachment'; energyType: string; triggerTargetInstanceId: string; triggerTargetPlayerId: number }
+    | { triggerType: Exclude<TriggerType, 'damaged' | 'before-knockout' | 'on-attack' | 'energy-attachment'> };
 
 // Trigger effect context - for automatic triggers
 export type TriggerEffectContext = BaseEffectContext & {
     type: 'trigger';
-    triggerType: TriggerType;
     creatureInstanceId: string;
-    triggerData?: TriggerContextData;
-};
+} & TriggerContextData;
 
 export type EffectContext =
     | AttackEffectContext 
@@ -120,17 +105,15 @@ export class EffectContextFactory {
     static createTriggerContext(
         sourcePlayer: number,
         effectName: string,
-        triggerType: TriggerType,
         creatureInstanceId: string,
-        triggerData?: TriggerContextData,
+        triggerData: TriggerContextData,
     ): TriggerEffectContext {
         return {
             type: 'trigger',
             sourcePlayer,
             effectName,
-            triggerType,
             creatureInstanceId,
-            triggerData,
+            ...triggerData,
         };
     }
 }
