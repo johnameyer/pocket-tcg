@@ -4,6 +4,7 @@ import { Effect } from '../../repository/effect-types.js';
 import { FieldTarget } from '../../repository/targets/field-target.js';
 import { EffectContext } from '../effect-context.js';
 import { CardRepository } from '../../repository/card-repository.js';
+import { GameCard } from '../../controllers/card-types.js';
 
 /**
  * Type for the effect handlers record.
@@ -63,6 +64,17 @@ export interface EffectHandler<T extends Effect> {
      * @returns True if the effect can be applied, false otherwise
      */
     canApply?(handlerData: HandlerData, effect: T, context: EffectContext, cardRepository: CardRepository): boolean;
+
+    /**
+     * Optional method to resume an effect after a card selection has been made.
+     * Implement this when the effect's apply() method creates a PendingCardSelection.
+     * 
+     * @param controllers Game controllers
+     * @param effect The effect being resumed
+     * @param selectedCards The cards selected by the player
+     * @param context Effect context
+     */
+    resumeWithCardSelection?(controllers: Controllers, effect: T, selectedCards: GameCard[], context: EffectContext): void;
 }
 
 /**

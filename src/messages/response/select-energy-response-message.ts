@@ -1,15 +1,17 @@
 import { Message } from '@cards-ts/core';
-import { AttachableEnergyType } from '../../repository/energy-types.js';
 
 /**
  * Response message for selecting energy to discard or move.
+ * The selection is expressed as the creatures whose energy should be used;
+ * the specific energy amounts are determined by the handler from the pending
+ * selection's availableEnergy list.
  */
 export class SelectEnergyResponseMessage extends Message {
     readonly type = 'select-energy-response';
 
     constructor(
-        public readonly selectedEnergy: Array<AttachableEnergyType>,
+        public readonly selectedTargets: Array<{ playerId: number; fieldIndex: number }>,
     ) {
-        super([ `Selected ${selectedEnergy.length} energy: ${selectedEnergy.join(', ')}` ]);
+        super([ `Selected energy from ${selectedTargets.length} creature${selectedTargets.length !== 1 ? 's' : ''}` ]);
     }
 }

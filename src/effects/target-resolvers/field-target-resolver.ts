@@ -755,7 +755,8 @@ export class FieldTargetResolver {
                     selectionType: 'field',
                     effect: effect,
                     originalContext: context,
-                    count: resolution.availableTargets?.length > 1 ? resolution.availableTargets.length : 1,
+                    count: 1,
+                    availableTargets: resolution.availableTargets,
                 });
                 return true;
             }
