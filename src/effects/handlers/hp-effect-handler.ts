@@ -52,10 +52,24 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
         if (targets.length === 0) {
             throw new Error(`${context.effectName} resolved to no valid targets`);
         }
-        
+
+        /*
+         * Aggregate hits per unique (playerId, fieldIndex) so that damage from
+         * repeated random picks is applied in a single call, ensuring on-damage
+         * triggers fire only once per creature.
+         */
+        const aggregated = new Map<string, { playerId: number; fieldIndex: number; hitCount: number }>();
         for (const target of targets) {
-            const { playerId, fieldIndex } = target;
-            
+            const key = `${target.playerId}:${target.fieldIndex}`;
+            const existing = aggregated.get(key);
+            if (existing) {
+                existing.hitCount++;
+            } else {
+                aggregated.set(key, { playerId: target.playerId, fieldIndex: target.fieldIndex, hitCount: 1 });
+            }
+        }
+        
+        for (const { playerId, fieldIndex, hitCount } of aggregated.values()) {
             // For healing effects, we can only target our own creature
             if (effect.operation === 'heal' && playerId !== context.sourcePlayer) {
                 controllers.players.messageAll({
@@ -76,10 +90,11 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
                 continue;
             }
         
+            const totalAmount = amount * hitCount;
             if (effect.operation === 'heal') {
-                this.applyHealing(controllers, targetCreature, playerId, fieldIndex, amount, context.effectName);
+                this.applyHealing(controllers, targetCreature, playerId, fieldIndex, totalAmount, context.effectName);
             } else {
-                this.applyDamage(controllers, targetCreature, playerId, fieldIndex, amount, context);
+                this.applyDamage(controllers, targetCreature, playerId, fieldIndex, totalAmount, context);
             }
         }
     }
@@ -233,14 +248,25 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             
             /*
              * Trigger when-damaged effects by calling TriggerProcessor
-             * which will push them to the queue for processing
+             * which will push them to the queue for processing.
+             * Pass attacker info from context when available so 'attacker' contextual refs resolve.
              */
+            const attackerInstanceId = context.type === 'attack' ? context.attackerInstanceId
+                : context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')
+                    ? context.attackerInstanceId
+                    : undefined;
+            const attackerPlayerId = context.type === 'attack' ? context.sourcePlayer
+                : context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')
+                    ? context.attackerPlayerId
+                    : undefined;
             TriggerProcessor.processWhenDamaged(
                 controllers,
                 playerId,
                 creature.instanceId,
                 creature.templateId,
                 damageDealt,
+                attackerInstanceId,
+                attackerPlayerId,
             );
         }
     }

@@ -10,6 +10,7 @@ import { FieldTargetResolver } from './field-target-resolver.js';
 
 /**
  * Represents a resolved energy target with specific energy selections from a field card.
+ * Kept for use by EnergyTransferEffectHandler which does its own resolution.
  */
 export type ResolvedEnergyTarget = {
     type: 'resolved';
@@ -23,10 +24,23 @@ export type ResolvedEnergyTarget = {
 };
 
 /**
+ * Represents energy selections spread across one or more field cards.
+ * The resolver always produces this type for EnergyDiscardEffect.
+ */
+export type ResolvedMultiEnergyTarget = {
+    type: 'resolved-multi';
+    targets: Array<{
+        playerId: number;
+        fieldIndex: number;
+        energy: Partial<Record<AttachableEnergyType, number>>;
+    }>;
+};
+
+/**
  * Result of energy target resolution.
  */
 export type EnergyTargetResolutionResult =
-    | ResolvedEnergyTarget
+    | ResolvedMultiEnergyTarget
     | { type: 'requires-selection', availableTargets: EnergyOption[] }
     | { type: 'no-valid-targets' };
 
@@ -117,9 +131,14 @@ export class EnergyTargetResolver {
                 return { type: 'no-valid-targets' };
             }
 
-            // If only one option, auto-resolve it
+            // If only one option, auto-resolve it as resolved-multi
             if (energyOptions.length === 1) {
-                return this.resolveEnergyOption(energyOptions[0], target.count);
+                const opt = energyOptions[0];
+                const selectedEnergy = this.selectEnergy(opt.availableEnergy, target.count);
+                return {
+                    type: 'resolved-multi',
+                    targets: [{ playerId: opt.playerId, fieldIndex: opt.fieldIndex, energy: selectedEnergy }],
+                };
             }
 
             return { type: 'requires-selection', availableTargets: energyOptions };
@@ -143,21 +162,27 @@ export class EnergyTargetResolver {
             }
 
             // Select energy up to the requested count
-            const selectedEnergy = this.selectEnergy(availableEnergy, target.count);
+            const selectedEnergy = target.random
+                ? this.selectEnergyRandomly(availableEnergy, target.count, controllers)
+                : this.selectEnergy(availableEnergy, target.count);
 
             return {
-                type: 'resolved',
-                location: 'field',
-                playerId: fieldTarget.playerId,
-                fieldIndex: fieldTarget.fieldIndex,
-                energy: selectedEnergy,
+                type: 'resolved-multi',
+                targets: [{
+                    playerId: fieldTarget.playerId,
+                    fieldIndex: fieldTarget.fieldIndex,
+                    energy: selectedEnergy,
+                }],
             };
         }
 
         // Handle all-matching targets
         if (fieldResolution.type === 'all-matching') {
+            if (target.random) {
+                return this.resolveAllMatchingRandomly(fieldResolution.targets, target, controllers);
+            }
             /*
-             * For all-matching, we need to gather energy from all matching creatures
+             * For all-matching without random, we need to gather energy from all matching creatures
              * This is complex - for now, we'll require selection
              */
             const energyOptions: EnergyOption[] = [];
@@ -263,25 +288,91 @@ export class EnergyTargetResolver {
     }
 
     /**
-     * Resolves a single energy option to a resolved target.
+     * Selects energy randomly from available energy up to the requested count.
+     * Each individual energy card is equally likely to be selected.
      * 
-     * @param option The energy option to resolve
-     * @param count The number of energy to select
-     * @returns Resolved energy target
+     * @param availableEnergy Available energy to select from
+     * @param count Maximum count to select
+     * @param controllers Game controllers for random selection
+     * @returns Selected energy
      */
-    private static resolveEnergyOption(
-        option: EnergyOption,
+    private static selectEnergyRandomly(
+        availableEnergy: Partial<Record<AttachableEnergyType, number>>,
         count: number,
-    ): ResolvedEnergyTarget {
-        const selectedEnergy = this.selectEnergy(option.availableEnergy, count);
+        controllers: Controllers,
+    ): Partial<Record<AttachableEnergyType, number>> {
+        // Build a flat list of individual energy cards
+        const pool: AttachableEnergyType[] = [];
+        for (const [ type, qty ] of Object.entries(availableEnergy) as [AttachableEnergyType, number][]) {
+            for (let i = 0; i < (qty || 0); i++) {
+                pool.push(type);
+            }
+        }
 
-        return {
-            type: 'resolved',
-            location: 'field',
-            playerId: option.playerId,
-            fieldIndex: option.fieldIndex,
-            energy: selectedEnergy,
-        };
+        const selected: Partial<Record<AttachableEnergyType, number>> = {};
+        const remaining = [...pool];
+        const picks = Math.min(count, remaining.length);
+
+        for (let i = 0; i < picks; i++) {
+            const idx = controllers.random.pickIndex(remaining.length);
+            const picked = remaining.splice(idx, 1)[0];
+            selected[picked] = (selected[picked] || 0) + 1;
+        }
+
+        return selected;
+    }
+
+    /**
+     * Resolves random energy selection across all matching creatures (all-matching + random).
+     * Picks `count` energy randomly from the combined pool of all creatures' energy.
+     */
+    private static resolveAllMatchingRandomly(
+        fieldTargets: Array<{ playerId: number; fieldIndex: number }>,
+        target: { count: number; criteria?: EnergyCriteria },
+        controllers: Controllers,
+    ): EnergyTargetResolutionResult {
+        // Build flat pool of (playerId, fieldIndex, energyType) entries
+        type EnergyCard = { playerId: number; fieldIndex: number; energyType: AttachableEnergyType };
+        const pool: EnergyCard[] = [];
+
+        for (const fieldTarget of fieldTargets) {
+            const creature = controllers.field.getRawCardByPosition(fieldTarget.playerId, fieldTarget.fieldIndex);
+            if (!creature) {
+                continue;
+            }
+            const instanceId = getCurrentInstanceId(creature);
+            const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(instanceId);
+            const availableEnergy = this.filterEnergyByCriteria(attachedEnergy, target.criteria);
+
+            for (const [ type, qty ] of Object.entries(availableEnergy) as [AttachableEnergyType, number][]) {
+                for (let i = 0; i < (qty || 0); i++) {
+                    pool.push({ playerId: fieldTarget.playerId, fieldIndex: fieldTarget.fieldIndex, energyType: type });
+                }
+            }
+        }
+
+        if (pool.length === 0) {
+            return { type: 'no-valid-targets' };
+        }
+
+        // Randomly pick `count` energy from the pool
+        const remaining = [...pool];
+        const picks = Math.min(target.count, remaining.length);
+        const perCreature = new Map<string, { playerId: number; fieldIndex: number; energy: Partial<Record<AttachableEnergyType, number>> }>();
+
+        for (let i = 0; i < picks; i++) {
+            const idx = controllers.random.pickIndex(remaining.length);
+            const picked = remaining.splice(idx, 1)[0];
+            const key = `${picked.playerId}:${picked.fieldIndex}`;
+            if (!perCreature.has(key)) {
+                perCreature.set(key, { playerId: picked.playerId, fieldIndex: picked.fieldIndex, energy: {} });
+            }
+            const entry = perCreature.get(key)!;
+            entry.energy[picked.energyType] = (entry.energy[picked.energyType] || 0) + 1;
+        }
+
+        const targets = Array.from(perCreature.values());
+        return { type: 'resolved-multi', targets };
     }
 
     /**

@@ -101,6 +101,11 @@ export class FieldTargetResolver {
             if (matchingTargets.length === 0) {
                 return { type: 'no-valid-targets' };
             }
+
+            // When random: true, pick `count` times at random (with replacement)
+            if (target.random) {
+                return this.resolveRandomPickTarget(criteria, target.count, matchingTargets, controllers);
+            }
             
             return { type: 'all-matching', targets: matchingTargets };
         }
@@ -694,6 +699,25 @@ export class FieldTargetResolver {
             default:
                 throw new Error(`Unknown contextual reference: '${target.reference}'`);
         }
+    }
+
+    /**
+     * Resolves a random-pick target by picking `count` times from `matchingTargets`.
+     * The same creature may be picked multiple times; HP effect handlers aggregate damage.
+     */
+    private static resolveRandomPickTarget(
+        criteria: FieldTargetCriteria,
+        count: number,
+        matchingTargets: Array<{ playerId: number; fieldIndex: number }>,
+        controllers: Controllers,
+    ): TargetResolutionResult {
+        const picks: Array<{ playerId: number; fieldIndex: number }> = [];
+        for (let i = 0; i < count; i++) {
+            const idx = controllers.random.pickIndex(matchingTargets.length);
+            picks.push(matchingTargets[idx]);
+        }
+
+        return { type: 'resolved', targets: picks };
     }
     
     /**

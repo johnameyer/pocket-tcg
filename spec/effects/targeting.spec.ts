@@ -4,6 +4,7 @@ import { StateBuilder } from '../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { UseAbilityResponseMessage } from '../../src/messages/response/use-ability-response-message.js';
+import { AttackResponseMessage } from '../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 
 describe('Effect Targeting', () => {
@@ -284,6 +285,188 @@ describe('Effect Targeting', () => {
             });
 
             expect(state.field.creatures[1][0].damageTaken).to.equal(20, 'Active creature should take damage');
+        });
+    });
+
+    describe('Random Targets', () => {
+        const randomTargetRepository = new MockCardRepository({
+            creatures: {
+                'random-attacker': {
+                    templateId: 'random-attacker',
+                    name: 'Random Attacker',
+                    maxHp: 100,
+                    type: 'fighting',
+                    weakness: 'psychic',
+                    retreatCost: 1,
+                    attacks: [
+                        {
+                            name: 'Scatter Shot',
+                            damage: 0,
+                            energyRequirements: [{ type: 'fighting', amount: 1 }],
+                            effects: [{
+                                type: 'hp',
+                                operation: 'damage',
+                                amount: { type: 'constant', value: 20 },
+                                target: {
+                                    type: 'all-matching',
+                                    random: true,
+                                    count: 3,
+                                    criteria: { player: 'opponent', location: 'field', position: 'bench' },
+                                },
+                            }],
+                        },
+                        {
+                            name: 'Triple Strike',
+                            damage: 0,
+                            energyRequirements: [{ type: 'fighting', amount: 1 }],
+                            effects: [{
+                                type: 'hp',
+                                operation: 'damage',
+                                amount: { type: 'constant', value: 10 },
+                                target: {
+                                    type: 'all-matching',
+                                    random: true,
+                                    count: 3,
+                                    criteria: { player: 'opponent', location: 'field' },
+                                },
+                            }],
+                        },
+                    ],
+                },
+                'benched-creature': {
+                    templateId: 'benched-creature',
+                    name: 'Benched Creature',
+                    maxHp: 80,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [{ name: 'Smack', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
+                },
+            },
+        });
+
+        it('should deal damage to bench creatures picked at random', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new AttackResponseMessage(0) ],
+                customRepository: randomTargetRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'random-attacker'),
+                    StateBuilder.withCreatures(1, 'benched-creature', [ 'benched-creature', 'benched-creature' ]),
+                    StateBuilder.withEnergy('random-attacker-0', { fighting: 1 }),
+                    // Available bench = [fieldIndex 1, fieldIndex 2], pool size=2
+                    // Picks: 0, 0, 1 → bench[0] ×2 (40 damage), bench[1] ×1 (20 damage)
+                    StateBuilder.withMockedRandomSelections([ 0, 0, 1 ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1);
+            expect(state.field.creatures[1][1].damageTaken).to.equal(40, 'bench[0] picked twice → 40 damage');
+            expect(state.field.creatures[1][2].damageTaken).to.equal(20, 'bench[1] picked once → 20 damage');
+        });
+
+        it('should aggregate hits on the same creature so its on-damage trigger fires once', () => {
+            const triggerRepository = new MockCardRepository({
+                creatures: {
+                    'trigger-attacker': {
+                        templateId: 'trigger-attacker',
+                        name: 'Trigger Attacker',
+                        maxHp: 100,
+                        type: 'fighting',
+                        weakness: 'psychic',
+                        retreatCost: 1,
+                        attacks: [{
+                            name: 'Random Hit',
+                            damage: 0,
+                            energyRequirements: [{ type: 'fighting', amount: 1 }],
+                            effects: [{
+                                type: 'hp',
+                                operation: 'damage',
+                                amount: { type: 'constant', value: 10 },
+                                target: {
+                                    type: 'all-matching',
+                                    random: true,
+                                    count: 3,
+                                    criteria: { player: 'opponent', location: 'field', position: 'bench' },
+                                },
+                            }],
+                        }],
+                    },
+                    'counter-creature': {
+                        templateId: 'counter-creature',
+                        name: 'Counter Creature',
+                        maxHp: 100,
+                        type: 'colorless',
+                        weakness: 'fighting',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Smack', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
+                        ability: {
+                            name: 'Counter Damage',
+                            trigger: { type: 'damaged' },
+                            effects: [{
+                                type: 'hp',
+                                operation: 'damage',
+                                amount: { type: 'constant', value: 10 },
+                                target: { type: 'contextual', reference: 'attacker' },
+                            }],
+                        },
+                    },
+                },
+            });
+
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new AttackResponseMessage(0) ],
+                customRepository: triggerRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'trigger-attacker'),
+                    // bench[0] = counter-creature with 'damaged' trigger
+                    StateBuilder.withCreatures(1, 'counter-creature', [ 'counter-creature' ]),
+                    StateBuilder.withEnergy('trigger-attacker-0', { fighting: 1 }),
+                    // All 3 picks → bench[0] (fieldIndex 1)
+                    StateBuilder.withMockedRandomSelections([ 0, 0, 0 ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1);
+            // bench[0] takes 30 damage (3 hits × 10) as one application
+            expect(state.field.creatures[1][1].damageTaken).to.equal(30, 'bench[0] takes 30 total damage');
+            // trigger fires exactly once → attacker takes 10
+            expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'trigger fires once');
+        });
+
+        it('should apply all hits to the only benched creature', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new AttackResponseMessage(0) ],
+                customRepository: randomTargetRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'random-attacker'),
+                    StateBuilder.withCreatures(1, 'benched-creature', [ 'benched-creature' ]),
+                    StateBuilder.withEnergy('random-attacker-0', { fighting: 1 }),
+                    StateBuilder.withMockedRandomSelections([ 0, 0, 0 ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1);
+            expect(state.field.creatures[1][1].damageTaken).to.equal(60, 'sole bench creature takes 60 (3×20) damage');
+        });
+
+        it('should spread random damage across active and benched creatures', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new AttackResponseMessage(1) ],
+                customRepository: randomTargetRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withTurn(1),
+                    StateBuilder.withCreatures(0, 'benched-creature', [ 'benched-creature' ]),
+                    StateBuilder.withCreatures(1, 'random-attacker'),
+                    StateBuilder.withEnergy('random-attacker-1', { fighting: 1 }),
+                    // Triple Strike; picks 0, 1, 0 → active ×2 (20 damage), bench[0] ×1 (10 damage)
+                    StateBuilder.withMockedRandomSelections([ 0, 1, 0 ]),
+                ),
+                playerPosition: 1,
+            });
+
+            expect(getExecutedCount()).to.equal(1);
+            expect(state.field.creatures[0][0].damageTaken).to.equal(20, 'active takes 20 damage');
+            expect(state.field.creatures[0][1].damageTaken).to.equal(10, 'bench[0] takes 10 damage');
         });
     });
 });

@@ -10,7 +10,7 @@ import { PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
-import { EnergyTargetResolver, ResolvedEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { EnergyTargetResolver, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
 
 export class EffectApplier {
     /**
@@ -88,7 +88,7 @@ export class EffectApplier {
         
         for (const requirement of requirements) {
             const target = requirement.target;
-            let resolvedTarget: ResolvedFieldTarget | ResolvedEnergyTarget | undefined;
+            let resolvedTarget: ResolvedFieldTarget | ResolvedMultiEnergyTarget | undefined;
             
             /*
              * Check if this is an EnergyTarget (has fieldTarget, count, and type='field') or FieldTarget
@@ -116,8 +116,8 @@ export class EffectApplier {
                     }
                     resolvedTarget = undefined;
                 } else {
-                    // Resolved
-                    resolvedTarget = resolution as ResolvedEnergyTarget;
+                    // Resolved (always ResolvedMultiEnergyTarget)
+                    resolvedTarget = resolution as ResolvedMultiEnergyTarget;
                 }
             } else {
                 /*

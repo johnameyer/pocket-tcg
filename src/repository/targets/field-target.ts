@@ -69,11 +69,19 @@ export type MultiChoiceFieldTarget = {
 
 /**
  * Represents a target that matches all creature meeting certain criteria.
+ *
+ * When `random: true` and `count` are provided, picks `count` times randomly
+ * (with replacement) instead of returning all matching creatures.  The same
+ * creature can be picked multiple times; HP effect handlers aggregate hits per
+ * creature so on-damage triggers fire only once.
  */
 export type AllMatchingFieldTarget = {
     type: 'all-matching';
     criteria: FieldTargetCriteria;
-};
+} & (
+    | { random?: false; count?: never }
+    | { random: true; count: number }
+);
 
 /**
  * Union type for single targets (fixed, resolved, or choice-based).

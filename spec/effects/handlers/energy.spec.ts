@@ -371,4 +371,95 @@ describe('Energy Effect', () => {
             expect(getTotalEnergy(discardedEnergy)).to.equal(3, 'Should discard all 3 energy from knocked out creature');
         });
     });
+
+    describe('Random Energy Discard', () => {
+        const randomEnergyRepository = new MockCardRepository({
+            creatures: {
+                'energy-holder': {
+                    templateId: 'energy-holder',
+                    name: 'Energy Holder',
+                    maxHp: 100,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [
+                        {
+                            name: 'Random Energy Discard',
+                            damage: 0,
+                            energyRequirements: [{ type: 'colorless', amount: 1 }],
+                            effects: [{
+                                type: 'energy-discard',
+                                energySource: {
+                                    type: 'field',
+                                    fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                                    count: 1,
+                                    random: true,
+                                },
+                            }],
+                        },
+                        {
+                            name: 'Random All Energy Discard',
+                            damage: 0,
+                            energyRequirements: [{ type: 'colorless', amount: 1 }],
+                            effects: [{
+                                type: 'energy-discard',
+                                energySource: {
+                                    type: 'field',
+                                    fieldTarget: {
+                                        type: 'all-matching',
+                                        criteria: { player: 'self', location: 'field' },
+                                    },
+                                    count: 2,
+                                    random: true,
+                                },
+                            }],
+                        },
+                    ],
+                },
+            },
+        });
+
+        it('should randomly discard one energy from a single creature', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new AttackResponseMessage(0) ],
+                customRepository: randomEnergyRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'energy-holder'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withEnergy('energy-holder-0', { fire: 2, water: 1 }),
+                    // Pool: [fire, fire, water]; pick index 0 → fire
+                    StateBuilder.withMockedRandomSelections([ 0 ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Attack executed');
+            const remaining = state.energy.attachedEnergyByInstance['energy-holder-0'];
+            expect(remaining.fire).to.equal(1, '1 fire discarded → 1 remaining');
+            expect(remaining.water).to.equal(1, 'water unchanged');
+        });
+
+        it('should randomly discard energy from across all own creatures', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new AttackResponseMessage(1) ],
+                customRepository: randomEnergyRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'energy-holder', [ 'energy-holder' ]),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    // active: 1 fire; bench[0]: 1 water
+                    StateBuilder.withEnergy('energy-holder-0', { fire: 1 }),
+                    StateBuilder.withEnergy('energy-holder-0-0', { water: 1 }),
+                    // Attack index 1 (Random All Energy Discard, count=2)
+                    // Pool: [fire from active, water from bench]
+                    // Pick index 0 → fire; remaining [water], pick index 0 → water
+                    StateBuilder.withMockedRandomSelections([ 0, 0 ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Attack executed');
+            const activeEnergy = state.energy.attachedEnergyByInstance['energy-holder-0'];
+            const benchEnergy = state.energy.attachedEnergyByInstance['energy-holder-0-0'];
+            expect(activeEnergy?.fire ?? 0).to.equal(0, 'fire discarded from active');
+            expect(benchEnergy?.water ?? 0).to.equal(0, 'water discarded from bench');
+        });
+    });
 });
