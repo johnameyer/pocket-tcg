@@ -387,15 +387,6 @@ export class EnergyTargetResolver {
         }
 
         const targets = Array.from(perCreature.values());
-        if (targets.length === 1) {
-            // Only one creature affected — return as a single ResolvedEnergyTarget
-            return {
-                type: 'resolved',
-                location: 'field',
-                ...targets[0],
-            };
-        }
-
         return { type: 'resolved-multi', targets };
     }
 
