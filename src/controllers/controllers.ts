@@ -13,6 +13,7 @@ import { SetupControllerProvider } from './setup-controller.js';
 import { EnergyControllerProvider } from './energy-controller.js';
 import { StatusEffectControllerProvider } from './status-effect-controller.js';
 import { CoinFlipControllerProvider } from './coinflip-controller.js';
+import { RandomControllerProvider } from './random-controller.js';
 import { ToolControllerProvider } from './tool-controller.js';
 import { DiscardControllerProvider } from './discard-controller.js';
 import { EffectControllerProvider } from './effect-controller.js';
@@ -34,6 +35,7 @@ export const buildProviders = (cardRepository: CardRepository) => {
         energy: new EnergyControllerProvider(),
         statusEffects: new StatusEffectControllerProvider(),
         coinFlip: new CoinFlipControllerProvider(),
+        random: new RandomControllerProvider(),
         tools: new ToolControllerProvider(),
         discard: new DiscardControllerProvider(),
         effects: new EffectControllerProvider(),

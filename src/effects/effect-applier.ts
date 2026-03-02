@@ -10,7 +10,7 @@ import { PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
-import { EnergyTargetResolver, ResolvedEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { EnergyTargetResolver, ResolvedEnergyTarget, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
 
 export class EffectApplier {
     /**
@@ -88,7 +88,7 @@ export class EffectApplier {
         
         for (const requirement of requirements) {
             const target = requirement.target;
-            let resolvedTarget: ResolvedFieldTarget | ResolvedEnergyTarget | undefined;
+            let resolvedTarget: ResolvedFieldTarget | ResolvedEnergyTarget | ResolvedMultiEnergyTarget | undefined;
             
             /*
              * Check if this is an EnergyTarget (has fieldTarget, count, and type='field') or FieldTarget
@@ -116,8 +116,8 @@ export class EffectApplier {
                     }
                     resolvedTarget = undefined;
                 } else {
-                    // Resolved
-                    resolvedTarget = resolution as ResolvedEnergyTarget;
+                    // Resolved (single or multi)
+                    resolvedTarget = resolution as ResolvedEnergyTarget | ResolvedMultiEnergyTarget;
                 }
             } else {
                 /*
@@ -132,7 +132,7 @@ export class EffectApplier {
                 if (!target) {
                     // No target specified
                     resolvedTarget = undefined;
-                } else if (target.type === 'all-matching' || target.type === 'multi-choice') {
+                } else if (target.type === 'all-matching' || target.type === 'multi-choice' || target.type === 'random-pick') {
                     // Multi-target: use resolveTarget and convert to array
                     const resolution = FieldTargetResolver.resolveTarget(target, controllers, context);
                     resolvedTarget = this.convertResolutionToResolvedTargets(resolution, context);

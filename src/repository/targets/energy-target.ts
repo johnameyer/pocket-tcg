@@ -23,6 +23,11 @@ export type FieldEnergyTarget<TContextualRefs extends string = string> = {
     criteria?: EnergyCriteria;
     /** Number of energy to target */
     count: number;
+    /**
+     * If true, select energy randomly from the pool rather than deterministically.
+     * For all-matching field targets, picks randomly across all creatures' energy.
+     */
+    random?: boolean;
 };
 
 /**

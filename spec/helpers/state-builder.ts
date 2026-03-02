@@ -81,6 +81,10 @@ export class StateBuilder {
                 mockedResults: [],
                 mockedResultIndex: 0,
             },
+            random: {
+                mockedSelections: [],
+                mockedSelectionIndex: 0,
+            },
             field: {
                 creatures: [
                     [{ fieldInstanceId: 'basic-creature-1', evolutionStack: [{ templateId: 'basic-creature', instanceId: 'basic-creature-1' }], damageTaken: 0, turnLastPlayed: 0 }],
@@ -330,6 +334,13 @@ export class StateBuilder {
         return (state: ControllerState<Controllers>) => {
             state.coinFlip.mockedResults = results;
             state.coinFlip.mockedResultIndex = 0;
+        };
+    }
+
+    static withMockedRandomSelections(indices: number[]) {
+        return (state: ControllerState<Controllers>) => {
+            state.random.mockedSelections = indices;
+            state.random.mockedSelectionIndex = 0;
         };
     }
 

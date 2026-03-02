@@ -58,6 +58,18 @@ export type SingleChoiceFieldTarget = {
 };
 
 /**
+ * Represents a target that is selected randomly from matching creatures.
+ * Picks `count` times from matching creatures; the same creature can be picked
+ * multiple times. When used with HP damage effects, damage is aggregated so
+ * triggers fire only once per creature.
+ */
+export type RandomPickFieldTarget = {
+    type: 'random-pick';
+    count: number;
+    criteria: FieldTargetCriteria;
+};
+
+/**
  * Represents a target that requires multiple choices from available options.
  */
 export type MultiChoiceFieldTarget = {
@@ -83,9 +95,9 @@ export type AllMatchingFieldTarget = {
 export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget | ContextualFieldTarget<string>;
 
 /**
- * Union type for multi-targets (choice-based or all-matching).
+ * Union type for multi-targets (choice-based, all-matching, or random-pick).
  */
-export type MultiFieldTarget = MultiChoiceFieldTarget | AllMatchingFieldTarget;
+export type MultiFieldTarget = MultiChoiceFieldTarget | AllMatchingFieldTarget | RandomPickFieldTarget;
 
 /**
  * Union type representing all possible field target specifications.
@@ -105,4 +117,5 @@ export type FieldTarget<TContextualRefs extends string = string> =
     | ResolvedFieldTarget
     | MultiChoiceFieldTarget
     | AllMatchingFieldTarget
+    | RandomPickFieldTarget
     | ([TContextualRefs] extends [never] ? never : ContextualFieldTarget<TContextualRefs>);

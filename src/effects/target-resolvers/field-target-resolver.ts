@@ -1,6 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { Effect } from '../../repository/effect-types.js';
-import { FieldTarget, FixedFieldTarget, FieldTargetCriteria, SingleFieldTarget, ResolvedFieldTarget, ContextualFieldTarget } from '../../repository/targets/field-target.js';
+import { FieldTarget, FixedFieldTarget, FieldTargetCriteria, SingleFieldTarget, ResolvedFieldTarget, ContextualFieldTarget, RandomPickFieldTarget } from '../../repository/targets/field-target.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldCard } from '../../controllers/field-controller.js';
@@ -70,6 +70,11 @@ export class FieldTargetResolver {
             return this.resolveContextualTarget(target, controllers, context);
         }
         
+        // Handle random-pick targets
+        if (target.type === 'random-pick') {
+            return this.resolveRandomPickTarget(target, controllers, context);
+        }
+
         // Handle all-matching targets
         if (target.type === 'all-matching') {
             const matchingTargets: { playerId: number, fieldIndex: number }[] = [];
@@ -362,7 +367,7 @@ export class FieldTargetResolver {
         validationFn: (creature: FieldCard, handlerData: HandlerData) => boolean,
     ): boolean {
         // Handle different target types
-        if (target.type === 'all-matching' || target.type === 'single-choice') {
+        if (target.type === 'all-matching' || target.type === 'single-choice' || target.type === 'random-pick') {
             const criteria = target.criteria;
             
             // Determine which players to check based on criteria
@@ -431,7 +436,7 @@ export class FieldTargetResolver {
     ): boolean {
         
         // For most targets, just check if there are any matching creature
-        if (target.type === 'all-matching' || target.type === 'single-choice') {
+        if (target.type === 'all-matching' || target.type === 'single-choice' || target.type === 'random-pick') {
             const criteria = target.criteria;
             
             // Determine which players to check based on criteria
@@ -694,6 +699,49 @@ export class FieldTargetResolver {
             default:
                 throw new Error(`Unknown contextual reference: '${target.reference}'`);
         }
+    }
+
+    /**
+     * Resolves a random-pick target by picking `count` times from matching creatures.
+     * The same creature may be picked multiple times; HP effect handlers aggregate damage.
+     */
+    private static resolveRandomPickTarget(
+        target: RandomPickFieldTarget,
+        controllers: Controllers,
+        context: EffectContext,
+    ): TargetResolutionResult {
+        const matchingTargets: Array<{ playerId: number; fieldIndex: number }> = [];
+        const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
+
+        const playerIds: number[] = [];
+        if (!target.criteria.player || target.criteria.player === 'self') {
+            playerIds.push(context.sourcePlayer);
+        }
+        if (!target.criteria.player || target.criteria.player === 'opponent') {
+            playerIds.push(1 - context.sourcePlayer);
+        }
+
+        for (const playerId of playerIds) {
+            const allCreatures = controllers.field.getCards(playerId) || [];
+            for (let fieldIndex = 0; fieldIndex < allCreatures.length; fieldIndex++) {
+                const creature = allCreatures[fieldIndex];
+                if (creature && FieldTargetResolver.creatureMatchesCriteria(creature, target.criteria, handlerData, controllers.cardRepository.cardRepository, fieldIndex)) {
+                    matchingTargets.push({ playerId, fieldIndex });
+                }
+            }
+        }
+
+        if (matchingTargets.length === 0) {
+            return { type: 'no-valid-targets' };
+        }
+
+        const picks: Array<{ playerId: number; fieldIndex: number }> = [];
+        for (let i = 0; i < target.count; i++) {
+            const idx = controllers.random.pickIndex(matchingTargets.length);
+            picks.push(matchingTargets[idx]);
+        }
+
+        return { type: 'resolved', targets: picks };
     }
     
     /**
