@@ -347,22 +347,14 @@ export class IntermediaryHandler extends GameHandler {
     }
     
     private async handleCardInHandSelection(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>, pendingSelection: PendingCardSelection): Promise<void> {
-        const { playerId, count, cardType } = pendingSelection;
-        const hand = handlerData.hand;
+        const { count, availableCards } = pendingSelection;
         
-        // Filter cards by type if specified
-        let eligibleCards = hand;
-        if (cardType) {
-            eligibleCards = hand.filter(card => card.type === cardType);
-        }
-        
-        if (eligibleCards.length === 0) {
+        if (availableCards.length === 0) {
             return;
         }
         
-        // Create options for each card
-        const cardOptions = eligibleCards.map((card, index) => {
-            const originalIndex = hand.indexOf(card);
+        // Create options for each available card using templateIds from the pending selection
+        const cardOptions = availableCards.map((card) => {
             let cardName = card.templateId;
             
             // Try to get the card name from repository
@@ -382,11 +374,11 @@ export class IntermediaryHandler extends GameHandler {
             
             return {
                 name: cardName,
-                value: originalIndex,
+                value: card.templateId,
             };
         });
         
-        const prompt = pendingSelection.prompt || `Select ${count} card(s) from hand:`;
+        const prompt = pendingSelection.prompt || `Select ${count} card(s):`;
         
         if (count === 1) {
             // Single selection
@@ -400,13 +392,19 @@ export class IntermediaryHandler extends GameHandler {
             responsesQueue.push(new SelectCardResponseMessage([ selected ]));
         } else {
             // Multiple selection
+            const minCount = pendingSelection.minCount ?? count;
+            const maxCount = pendingSelection.maxCount ?? count;
+            
             const [ sent, received ] = this.intermediary.form({
                 type: 'checkbox',
                 message: [ prompt ],
                 choices: cardOptions,
-                validate: (selected: number[]) => {
-                    if (selected.length !== count) {
-                        return `Must select exactly ${count} cards`;
+                validate: (selected: string[]) => {
+                    if (selected.length < minCount) {
+                        return `Must select at least ${minCount} card${minCount !== 1 ? 's' : ''}`;
+                    }
+                    if (selected.length > maxCount) {
+                        return `Cannot select more than ${maxCount} card${maxCount !== 1 ? 's' : ''}`;
                     }
                     return true;
                 },

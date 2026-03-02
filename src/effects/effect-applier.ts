@@ -6,11 +6,12 @@ import { EnergyTarget } from '../repository/targets/energy-target.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
-import { PendingFieldSelection } from './pending-selection-types.js';
+import { PendingCardSelection, PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { GameCard } from '../controllers/card-types.js';
 
 export class EffectApplier {
     /**
@@ -62,6 +63,11 @@ export class EffectApplier {
 
             // Apply effect directly - handlers are responsible for their own multi-target logic
             handler.apply(controllers, resolvedEffect, context);
+
+            // If the handler created a pending card selection, stop processing further effects
+            if (controllers.turnState.getPendingSelection()) {
+                return;
+            }
         }
     }
     
@@ -407,5 +413,41 @@ export class EffectApplier {
         }
         
         return false;
+    }
+
+    /**
+     * Resume an effect after a card selection has been made by the player.
+     * Dispatches to the appropriate handler's resumeWithCardSelection method.
+     * Template IDs are resolved to concrete card instances by consuming the first
+     * matching available card for each template ID (handles duplicate cards correctly).
+     * 
+     * @param controllers Game controllers
+     * @param pendingSelection The pending card selection
+     * @param selectedCardTemplateIds The template IDs of the cards selected by the player
+     */
+    static resumeEffectWithCardSelection(
+        controllers: Controllers,
+        pendingSelection: PendingCardSelection,
+        selectedCardTemplateIds: string[],
+    ): void {
+        const { effect, originalContext, availableCards } = pendingSelection;
+        const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
+
+        if (!handler?.resumeWithCardSelection) {
+            console.warn(`Handler for effect type '${effect.type}' does not support card selection resume`);
+            return;
+        }
+
+        // Resolve each template ID to a concrete card instance, consuming duplicates in order
+        const remaining = [ ...availableCards ];
+        const selectedCards = selectedCardTemplateIds.map(templateId => {
+            const idx = remaining.findIndex(card => card.templateId === templateId);
+            if (idx === -1) {
+                return undefined;
+            }
+            return remaining.splice(idx, 1)[0];
+        }).filter((card): card is GameCard => card !== undefined);
+
+        handler.resumeWithCardSelection(controllers, effect, selectedCards, originalContext);
     }
 }

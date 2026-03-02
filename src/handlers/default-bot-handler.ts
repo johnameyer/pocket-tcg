@@ -219,10 +219,9 @@ export class DefaultBotHandler extends GameHandler {
         }
         
         const cardCount = pendingSelection.count || 1;
-        // Get the actual cards from the specified location and extract their instance IDs
-        const hand = handlerData.hand;
-        const selectedInstanceIds = hand.slice(0, cardCount).map((card) => card.instanceId);
-        responsesQueue.push(new SelectCardResponseMessage(selectedInstanceIds));
+        // Select the first N available cards from the pending selection's available cards
+        const selectedTemplateIds = pendingSelection.availableCards.slice(0, cardCount).map((card) => card.templateId);
+        responsesQueue.push(new SelectCardResponseMessage(selectedTemplateIds));
     }
     
     handleSelectChoice(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<SelectChoiceResponseMessage>): void {

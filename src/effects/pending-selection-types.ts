@@ -1,6 +1,7 @@
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { Effect } from '../repository/effect-types.js';
 import { EffectContext } from './effect-context.js';
+import { GameCard } from '../controllers/card-types.js';
 
 /**
  * Represents the different types of selections that can be pending.
@@ -74,6 +75,8 @@ export type PendingCardSelection = BasePendingSelection & {
     maxCount?: number;
     /** Optional: filter by card type */
     cardType?: 'creature' | 'item' | 'supporter' | 'tool';
+    /** The cards available for selection, including their templateIds for display */
+    availableCards: GameCard[];
 };
 
 /**

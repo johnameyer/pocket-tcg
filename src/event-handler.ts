@@ -1235,31 +1235,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const expectedCount = pendingSelection.count || 1;
                     
                     // Validate count
-                    if (message.cardInstanceIds.length !== expectedCount) {
+                    if (message.cardTemplateIds.length !== expectedCount) {
                         return true; // Wrong number of cards selected
                     }
                     
-                    // Get the cards from the appropriate location
-                    let cards: GameCard[] = [];
-                    if (pendingSelection.location === 'hand') {
-                        cards = controllers.hand.getHand(pendingSelection.playerId);
-                    } else if (pendingSelection.location === 'deck') {
-                        cards = controllers.deck.getCards(pendingSelection.playerId);
-                    } else if (pendingSelection.location === 'discard') {
-                        cards = controllers.discard.getCards(pendingSelection.playerId);
-                    }
-                    
-                    // Validate instance IDs exist in the location
-                    for (const instanceId of message.cardInstanceIds) {
-                        if (!cards.find(card => card.instanceId === instanceId)) {
-                            return true; // Invalid instance ID
+                    // Validate every selected template ID exists in the available cards
+                    // (consume copies in order so duplicate template IDs are handled correctly)
+                    const remaining = [ ...pendingSelection.availableCards ];
+                    for (const templateId of message.cardTemplateIds) {
+                        const idx = remaining.findIndex(card => card.templateId === templateId);
+                        if (idx === -1) {
+                            return true; // Template ID not among available cards
                         }
+                        remaining.splice(idx, 1);
                     }
                     
                     // Validate card types if restricted
                     if (pendingSelection.cardType) {
-                        for (const instanceId of message.cardInstanceIds) {
-                            const card = cards.find(c => c.instanceId === instanceId);
+                        for (const templateId of message.cardTemplateIds) {
+                            const card = pendingSelection.availableCards.find(c => c.templateId === templateId);
                             if (!card || card.type !== pendingSelection.cardType) {
                                 return true; // Wrong card type
                             }
@@ -1282,12 +1276,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const pendingSelection = controllers.turnState.getPendingSelection();
             
             if (pendingSelection && isPendingCardSelection(pendingSelection)) {
-                /*
-                 * TODO: Implement resumeEffectWithCardSelection when effects need card selection
-                 * For now, clear the pending selection as card-selection-dependent effects are not yet implemented
-                 * The selected card instance IDs are available in message.cardInstanceIds
-                 */
                 controllers.turnState.clearPendingSelection();
+                EffectApplier.resumeEffectWithCardSelection(controllers, pendingSelection, message.cardTemplateIds);
             } else {
                 controllers.turnState.clearPendingSelection();
             }
