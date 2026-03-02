@@ -610,10 +610,10 @@ const gameTurn = loop<Controllers>({
                         const { maxHp } = controllers.cardRepository.getCreature(card.templateId);
                         if (card.damageTaken >= maxHp) {
                             TriggerProcessor.processBeforeKnockout(controllers, playerId, card.instanceId, card.templateId);
-                            EffectQueueProcessor.processQueue(controllers);
                         }
                     }
                 }
+                EffectQueueProcessor.processQueue(controllers);
                 
                 // Clear persistent effects at end of turn (they last "during opponent's next turn")
             },

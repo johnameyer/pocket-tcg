@@ -223,10 +223,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             playerCard.instanceId,
                             sourceHandler,
                         );
-                        EffectQueueProcessor.processQueue(controllers);
                     }
                 }
             }
+            EffectQueueProcessor.processQueue(controllers);
             
             controllers.players.messageAll(new AttackResultMessage(
                 attackResult.attacker.name,
