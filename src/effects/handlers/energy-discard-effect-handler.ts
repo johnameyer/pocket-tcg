@@ -3,7 +3,7 @@ import { EnergyDiscardEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { HandlerData } from '../../game-handler.js';
-import { ResolvedEnergyTarget, ResolvedMultiEnergyTarget } from '../target-resolvers/energy-target-resolver.js';
+import { ResolvedMultiEnergyTarget } from '../target-resolvers/energy-target-resolver.js';
 import { EnergyTarget } from '../../repository/targets/energy-target.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
 
@@ -44,39 +44,25 @@ export class EnergyDiscardEffectHandler extends AbstractEffectHandler<EnergyDisc
     
     /**
      * Apply a fully resolved energy discard effect.
-     * This is called after all targets have been resolved by EnergyTargetResolver.
+     * EnergyTargetResolver always resolves to ResolvedMultiEnergyTarget so we handle only that type.
      * 
      * @param controllers Game controllers
      * @param effect The energy discard effect to apply (with resolved energy source)
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: EnergyDiscardEffect, context: EffectContext): void {
-        // The energySource should now be resolved by the EnergyTargetResolver
-        const energySource = effect.energySource as ResolvedEnergyTarget | ResolvedMultiEnergyTarget | EnergyTarget;
-        
-        if (energySource.type === 'resolved-multi') {
-            // Multi-creature random energy discard
-            let totalDiscarded = 0;
-            for (const target of energySource.targets) {
-                totalDiscarded += this.discardEnergyFromTarget(controllers, target.playerId, target.fieldIndex, target.energy, context.effectName);
-            }
-            if (totalDiscarded === 0) {
-                controllers.players.messageAll({
-                    type: 'status',
-                    components: [ `${context.effectName} could not discard any energy` ],
-                });
-            }
-            return;
+        const energySource = effect.energySource as ResolvedMultiEnergyTarget | EnergyTarget;
+
+        if (energySource.type !== 'resolved-multi') {
+            throw new Error(`Expected resolved-multi energy source, got ${energySource?.type || 'undefined'}`);
         }
 
-        if (energySource.type !== 'resolved') {
-            throw new Error(`Expected resolved energy source, got ${energySource?.type || 'undefined'}`);
+        let totalDiscarded = 0;
+        for (const target of energySource.targets) {
+            totalDiscarded += this.discardEnergyFromTarget(controllers, target.playerId, target.fieldIndex, target.energy, context.effectName);
         }
-        
-        const { playerId, fieldIndex, energy } = energySource;
-        const discardedCount = this.discardEnergyFromTarget(controllers, playerId, fieldIndex, energy, context.effectName);
-        
-        if (discardedCount === 0) {
+
+        if (totalDiscarded === 0) {
             controllers.players.messageAll({
                 type: 'status',
                 components: [ `${context.effectName} could not discard any energy` ],

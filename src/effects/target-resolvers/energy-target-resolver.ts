@@ -10,6 +10,7 @@ import { FieldTargetResolver } from './field-target-resolver.js';
 
 /**
  * Represents a resolved energy target with specific energy selections from a field card.
+ * Kept for use by EnergyTransferEffectHandler which does its own resolution.
  */
 export type ResolvedEnergyTarget = {
     type: 'resolved';
@@ -23,7 +24,8 @@ export type ResolvedEnergyTarget = {
 };
 
 /**
- * Represents energy selections spread across multiple field cards (from random selection).
+ * Represents energy selections spread across one or more field cards.
+ * The resolver always produces this type for EnergyDiscardEffect.
  */
 export type ResolvedMultiEnergyTarget = {
     type: 'resolved-multi';
@@ -38,7 +40,6 @@ export type ResolvedMultiEnergyTarget = {
  * Result of energy target resolution.
  */
 export type EnergyTargetResolutionResult =
-    | ResolvedEnergyTarget
     | ResolvedMultiEnergyTarget
     | { type: 'requires-selection', availableTargets: EnergyOption[] }
     | { type: 'no-valid-targets' };
@@ -130,9 +131,14 @@ export class EnergyTargetResolver {
                 return { type: 'no-valid-targets' };
             }
 
-            // If only one option, auto-resolve it
+            // If only one option, auto-resolve it as resolved-multi
             if (energyOptions.length === 1) {
-                return this.resolveEnergyOption(energyOptions[0], target.count);
+                const opt = energyOptions[0];
+                const selectedEnergy = this.selectEnergy(opt.availableEnergy, target.count);
+                return {
+                    type: 'resolved-multi',
+                    targets: [{ playerId: opt.playerId, fieldIndex: opt.fieldIndex, energy: selectedEnergy }],
+                };
             }
 
             return { type: 'requires-selection', availableTargets: energyOptions };
@@ -161,11 +167,12 @@ export class EnergyTargetResolver {
                 : this.selectEnergy(availableEnergy, target.count);
 
             return {
-                type: 'resolved',
-                location: 'field',
-                playerId: fieldTarget.playerId,
-                fieldIndex: fieldTarget.fieldIndex,
-                energy: selectedEnergy,
+                type: 'resolved-multi',
+                targets: [{
+                    playerId: fieldTarget.playerId,
+                    fieldIndex: fieldTarget.fieldIndex,
+                    energy: selectedEnergy,
+                }],
             };
         }
 
@@ -278,28 +285,6 @@ export class EnergyTargetResolver {
         }
 
         return selected;
-    }
-
-    /**
-     * Resolves a single energy option to a resolved target.
-     * 
-     * @param option The energy option to resolve
-     * @param count The number of energy to select
-     * @returns Resolved energy target
-     */
-    private static resolveEnergyOption(
-        option: EnergyOption,
-        count: number,
-    ): ResolvedEnergyTarget {
-        const selectedEnergy = this.selectEnergy(option.availableEnergy, count);
-
-        return {
-            type: 'resolved',
-            location: 'field',
-            playerId: option.playerId,
-            fieldIndex: option.fieldIndex,
-            energy: selectedEnergy,
-        };
     }
 
     /**
