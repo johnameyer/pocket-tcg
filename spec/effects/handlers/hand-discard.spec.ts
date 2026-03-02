@@ -3,7 +3,6 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, SupporterData, ItemData } from '../../../src/repository/card-types.js';
 
 describe('Hand Discard Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };

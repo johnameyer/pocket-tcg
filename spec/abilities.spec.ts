@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
 import { CardRepository } from '../src/repository/card-repository.js';
-import { CreatureData, SupporterData, ItemData, ToolData } from '../src/repository/card-types.js';
+import { CreatureData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 

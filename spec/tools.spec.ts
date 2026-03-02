@@ -51,7 +51,7 @@ describe('Creature Tools', () => {
     const mockItemData: Record<string, ItemData> = {};
     
     const mockToolData: Record<string, ToolData> = {
-        'leftovers': {
+        leftovers: {
             templateId: 'leftovers',
             name: 'Leftovers',
             effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],

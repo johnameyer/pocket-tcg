@@ -4,7 +4,6 @@ import { AttackResponseMessage } from '../../../src/messages/response/attack-res
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 
 describe('End Turn Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };

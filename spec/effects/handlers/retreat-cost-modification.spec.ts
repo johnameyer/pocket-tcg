@@ -5,7 +5,6 @@ import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 import { RetreatCostModificationEffectHandler } from '../../../src/effects/handlers/retreat-cost-modification-effect-handler.js';
 import { RetreatCostModificationEffect } from '../../../src/repository/effect-types.js';

@@ -4,7 +4,6 @@ import { SelectTargetResponseMessage } from '../../../src/messages/response/sele
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, SupporterData } from '../../../src/repository/card-types.js';
 import { EnergyTransferEffectHandler } from '../../../src/effects/handlers/energy-transfer-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { EnergyTransferEffect } from '../../../src/repository/effect-types.js';

@@ -4,7 +4,6 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
 import { HpEffectHandler } from '../../../src/effects/handlers/hp-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
 import { HpEffect } from '../../../src/repository/effect-types.js';

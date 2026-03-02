@@ -4,7 +4,6 @@ import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, ItemData, SupporterData, ToolData } from '../../../src/repository/card-types.js';
 import { PreventPlayingEffectHandler } from '../../../src/effects/handlers/prevent-playing-effect-handler.js';
 import { PreventPlayingEffect } from '../../../src/repository/effect-types.js';
 
@@ -122,14 +121,14 @@ describe('Prevent Playing Effect', () => {
             },
         },
         supporters: {
-            'supporter': {
+            supporter: {
                 templateId: 'supporter',
                 name: 'Supporter',
                 effects: [{ type: 'draw', amount: { type: 'constant', value: 2 }}],
             },
         },
         tools: {
-            'tool': {
+            tool: {
                 templateId: 'tool',
                 name: 'Tool',
                 effects: [{ 

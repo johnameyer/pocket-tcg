@@ -5,7 +5,6 @@ import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 import { PreventAttackEffectHandler } from '../../../src/effects/handlers/prevent-attack-effect-handler.js';
 import { PreventAttackEffect } from '../../../src/repository/effect-types.js';
 

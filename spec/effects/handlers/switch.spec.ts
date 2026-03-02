@@ -4,7 +4,6 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, SupporterData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 import { SwitchEffectHandler } from '../../../src/effects/handlers/switch-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';

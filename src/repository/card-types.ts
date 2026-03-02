@@ -33,17 +33,17 @@ export type Trigger =
  * To add a new contextual reference, extend the relevant trigger entry here.
  */
 export type TriggerContextualRefs = {
-    'manual':            never;
-    'end-of-turn':       never;
-    'damaged':           'attacker';
-    'passive':           never;
+    manual: never;
+    'end-of-turn': never;
+    damaged: 'attacker';
+    passive: never;
     'energy-attachment': 'trigger-target';
-    'on-evolution':      never;
-    'start-of-turn':     never;
-    'on-play':           never;
-    'before-knockout':   'attacker';
-    'on-checkup':        never;
-    'on-retreat':        never;
+    'on-evolution': never;
+    'start-of-turn': never;
+    'on-play': never;
+    'before-knockout': 'attacker';
+    'on-checkup': never;
+    'on-retreat': never;
 };
 
 // ---------------------------------------------------------------------------

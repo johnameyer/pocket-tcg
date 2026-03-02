@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
-import { CreatureData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
 import { MockCardRepository } from './mock-repository.js';

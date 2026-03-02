@@ -3,7 +3,6 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { ItemData, SupporterData } from '../../../src/repository/card-types.js';
 import { GameCard } from '../../../src/controllers/card-types.js';
 import { ShuffleEffectHandler } from '../../../src/effects/handlers/shuffle-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';

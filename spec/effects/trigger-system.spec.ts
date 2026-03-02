@@ -8,7 +8,6 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { EvolveResponseMessage } from '../../src/messages/response/evolve-response-message.js';
 import { RetreatResponseMessage } from '../../src/messages/response/retreat-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
-import { CreatureData } from '../../src/repository/card-types.js';
 
 describe('Trigger System', () => {
     describe('Tool Triggers', () => {
