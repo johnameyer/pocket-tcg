@@ -328,7 +328,7 @@ describe('Energy Effect', () => {
         it('should track discarded energy when creature is knocked out', () => {
             const testRepository = new MockCardRepository({
                 creatures: {
-                    'attacker': {
+                    attacker: {
                         templateId: 'attacker',
                         name: 'Attacker',
                         type: 'fire',
@@ -341,7 +341,7 @@ describe('Energy Effect', () => {
                             energyRequirements: [],
                         }],
                     },
-                    'defender': {
+                    defender: {
                         templateId: 'defender',
                         name: 'Defender',
                         type: 'water',

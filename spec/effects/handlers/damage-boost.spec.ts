@@ -4,7 +4,6 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, SupporterData } from '../../../src/repository/card-types.js';
 
 describe('Damage Boost Effect', () => {
     const testRepository = new MockCardRepository({

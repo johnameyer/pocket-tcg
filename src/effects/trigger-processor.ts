@@ -11,6 +11,8 @@ export class TriggerProcessor {
         creatureInstanceId: string,
         creatureCardId: string,
         damageAmount: number,
+        attackerInstanceId?: string,
+        attackerPlayerId?: number,
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
@@ -19,14 +21,11 @@ export class TriggerProcessor {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
             
             if (toolData && toolData.effects && toolData.trigger?.type === 'damaged') {
-                const fieldCards = controllers.field.getCards(playerId);
-                const creaturePosition = fieldCards.findIndex(card => card?.instanceId === creatureInstanceId);
-                
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'damaged',
                     creatureInstanceId,
+                    { triggerType: 'damaged', damage: damageAmount, attackerInstanceId, attackerPlayerId },
                 );
 
                 // Push to queue instead of applying immediately
@@ -42,8 +41,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'damaged',
                     creatureInstanceId,
+                    { triggerType: 'damaged', damage: damageAmount, attackerInstanceId, attackerPlayerId },
                 );
                 
                 // Push to queue instead of applying immediately
@@ -54,47 +53,48 @@ export class TriggerProcessor {
 
     static processEnergyAttachment(
         controllers: Controllers,
-        playerId: number,
-        creatureInstanceId: string,
-        creatureCardId: string,
+        triggerTargetPlayerId: number,
+        triggerTargetInstanceId: string,
         energyType: string,
     ): void {
-        // Get the creature data
-        const creatureData = controllers.cardRepository.getCreature(creatureCardId);
-        
-        // Process tool triggers
-        const tool = controllers.tools.getAttachedTool(creatureInstanceId);
-        if (tool) {
-            const toolData = controllers.cardRepository.getTool(tool.templateId);
-            if (toolData && toolData.effects && toolData.trigger?.type === 'energy-attachment') {
-                // Check if the trigger is for a specific energy type
-                if (!toolData.trigger.energyType || toolData.trigger.energyType === energyType) {
-                    const toolContext = EffectContextFactory.createTriggerContext(
-                        playerId,
-                        toolData.name,
-                        'energy-attachment',
-                        creatureInstanceId,
-                        { energyType },
-                    );
-                    controllers.effects.pushPendingEffect(toolData.effects, toolContext);
+        // Fire triggers for ALL field cards on ALL players so that any creature/tool
+        // watching for energy attachment (including on the opponent) receives the event.
+        for (let playerId = 0; playerId < controllers.players.count; playerId++) {
+            const fieldCards = controllers.field.getCards(playerId);
+            for (let fieldIndex = 0; fieldIndex < fieldCards.length; fieldIndex++) {
+                const card = fieldCards[fieldIndex];
+                if (!card) {
+                    continue;
                 }
-            }
-        }
-        
-        // Process ability triggers
-        if (creatureData.ability) {
-            const ability = creatureData.ability;
-            if (ability.trigger?.type === 'energy-attachment' && ability.effects) {
-                // Check if the trigger is for a specific energy type
-                if (!ability.trigger.energyType || ability.trigger.energyType === energyType) {
-                    const abilityContext = EffectContextFactory.createTriggerContext(
-                        playerId,
-                        `${creatureData.name}'s ${ability.name}`,
-                        'energy-attachment',
-                        creatureInstanceId,
-                        { energyType },
-                    );
-                    controllers.effects.pushPendingEffect(ability.effects, abilityContext);
+
+                // Process tool triggers
+                const tool = controllers.tools.getAttachedTool(card.instanceId);
+                if (tool) {
+                    const toolData = controllers.cardRepository.getTool(tool.templateId);
+                    if (toolData?.effects && toolData.trigger?.type === 'energy-attachment'
+                        && (!toolData.trigger.energyType || toolData.trigger.energyType === energyType)) {
+                        const toolContext = EffectContextFactory.createTriggerContext(
+                            playerId,
+                            toolData.name,
+                            card.instanceId,
+                            { triggerType: 'energy-attachment', energyType, triggerTargetInstanceId, triggerTargetPlayerId },
+                        );
+                        controllers.effects.pushPendingEffect(toolData.effects, toolContext);
+                    }
+                }
+
+                // Process ability triggers
+                const cardData = controllers.cardRepository.getCreature(card.templateId);
+                if (cardData?.ability?.trigger?.type === 'energy-attachment' && cardData.ability.effects) {
+                    if (!cardData.ability.trigger.energyType || cardData.ability.trigger.energyType === energyType) {
+                        const abilityContext = EffectContextFactory.createTriggerContext(
+                            playerId,
+                            `${cardData.name}'s ${cardData.ability.name}`,
+                            card.instanceId,
+                            { triggerType: 'energy-attachment', energyType, triggerTargetInstanceId, triggerTargetPlayerId },
+                        );
+                        controllers.effects.pushPendingEffect(cardData.ability.effects, abilityContext);
+                    }
                 }
             }
         }
@@ -121,8 +121,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'end-of-turn',
                     creatureInstanceId,
+                    { triggerType: 'end-of-turn' },
                 );
 
                 // Push to queue instead of applying immediately
@@ -148,8 +148,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'end-of-turn',
                     creatureInstanceId,
+                    { triggerType: 'end-of-turn' },
                 );
                 
                 // Push to queue instead of applying immediately
@@ -179,8 +179,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'start-of-turn',
                     creatureInstanceId,
+                    { triggerType: 'start-of-turn' },
                 );
 
                 controllers.effects.pushPendingEffect(toolData.effects, context);
@@ -200,8 +200,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'start-of-turn',
                     creatureInstanceId,
+                    { triggerType: 'start-of-turn' },
                 );
                 
                 controllers.effects.pushPendingEffect(ability.effects, context);
@@ -229,8 +229,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'on-play',
                     creatureInstanceId,
+                    { triggerType: 'on-play' },
                 );
 
                 controllers.effects.pushPendingEffect(toolData.effects, context);
@@ -250,10 +250,49 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'on-play',
                     creatureInstanceId,
+                    { triggerType: 'on-play' },
                 );
                 
+                controllers.effects.pushPendingEffect(ability.effects, context);
+            }
+        }
+    }
+
+    static processOnAttack(
+        controllers: Controllers,
+        playerId: number,
+        creatureInstanceId: string,
+        creatureCardId: string,
+        defenderInstanceId: string,
+        defenderPlayerId: number,
+    ): void {
+        // Process tool triggers
+        const tool = controllers.tools.getAttachedTool(creatureInstanceId);
+        if (tool) {
+            const toolData = controllers.cardRepository.getTool(tool.templateId);
+            if (toolData && toolData.effects && toolData.trigger?.type === 'on-attack') {
+                const context = EffectContextFactory.createTriggerContext(
+                    playerId,
+                    toolData.name,
+                    creatureInstanceId,
+                    { triggerType: 'on-attack', defenderInstanceId, defenderPlayerId },
+                );
+                controllers.effects.pushPendingEffect(toolData.effects, context);
+            }
+        }
+
+        // Process ability triggers
+        const creatureData = controllers.cardRepository.getCreature(creatureCardId);
+        if (creatureData && creatureData.ability) {
+            const ability = creatureData.ability;
+            if (ability.trigger?.type === 'on-attack' && ability.effects) {
+                const context = EffectContextFactory.createTriggerContext(
+                    playerId,
+                    `${creatureData.name}'s ${ability.name}`,
+                    creatureInstanceId,
+                    { triggerType: 'on-attack', defenderInstanceId, defenderPlayerId },
+                );
                 controllers.effects.pushPendingEffect(ability.effects, context);
             }
         }
@@ -264,6 +303,8 @@ export class TriggerProcessor {
         playerId: number,
         creatureInstanceId: string,
         creatureCardId: string,
+        attackerInstanceId?: string,
+        attackerPlayerId?: number,
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
@@ -273,8 +314,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'before-knockout',
                     creatureInstanceId,
+                    { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId },
                 );
 
                 controllers.effects.pushPendingEffect(toolData.effects, context);
@@ -289,8 +330,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'before-knockout',
                     creatureInstanceId,
+                    { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId },
                 );
                 
                 controllers.effects.pushPendingEffect(ability.effects, context);
@@ -319,8 +360,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'on-checkup',
                     creatureInstanceId,
+                    { triggerType: 'on-checkup' },
                 );
 
                 controllers.effects.pushPendingEffect(toolData.effects, context);
@@ -340,8 +381,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'on-checkup',
                     creatureInstanceId,
+                    { triggerType: 'on-checkup' },
                 );
                 
                 controllers.effects.pushPendingEffect(ability.effects, context);
@@ -363,8 +404,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     toolData.name,
-                    'on-retreat',
                     creatureInstanceId,
+                    { triggerType: 'on-retreat' },
                 );
 
                 controllers.effects.pushPendingEffect(toolData.effects, context);
@@ -379,8 +420,8 @@ export class TriggerProcessor {
                 const context = EffectContextFactory.createTriggerContext(
                     playerId,
                     `${creatureData.name}'s ${ability.name}`,
-                    'on-retreat',
                     creatureInstanceId,
+                    { triggerType: 'on-retreat' },
                 );
                 
                 controllers.effects.pushPendingEffect(ability.effects, context);

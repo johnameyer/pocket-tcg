@@ -127,7 +127,7 @@ mockToolData['power-enhancer'] = {
     effects: [],
 };
 
-mockToolData['leftovers'] = {
+mockToolData.leftovers = {
     templateId: 'leftovers',
     name: 'Leftovers',
     effects: [{ type: 'hp', operation: 'heal', amount: { type: 'constant', value: 20 }, target: { type: 'fixed', player: 'self', position: 'active' }}],

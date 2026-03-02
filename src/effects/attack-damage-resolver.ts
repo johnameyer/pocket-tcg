@@ -57,10 +57,18 @@ export class AttackDamageResolver {
         const attack = creatureData.attacks[attackIndex];
         
         // Create context for damage calculation and boost validation
+        // The defender (targetId, index 0) is always the opponent's active creature
+        const targetId = (currentPlayer + 1) % controllers.players.count;
+        const targetCreatureForContext = controllers.field.getCardByPosition(targetId, 0);
+        if (!targetCreatureForContext) {
+            throw new Error(`No active creature found for player ${targetId} during attack`);
+        }
         const context = EffectContextFactory.createAttackContext(
             currentPlayer,
             `${creatureData.name}'s ${attack.name}`,
             playercreature.instanceId,
+            targetCreatureForContext.instanceId,
+            targetId,
         );
         
         // Calculate base damage
@@ -74,8 +82,7 @@ export class AttackDamageResolver {
         let totalDamage = baseDamage;
         
         // Apply weakness bonus (+20 damage if target is weak to attacker's type)
-        const targetId = (currentPlayer + 1) % controllers.players.count;
-        const targetcreature = controllers.field.getCardByPosition(targetId, 0);
+        const targetcreature = targetCreatureForContext;
         if (targetcreature && totalDamage > 0) {
             const attackerData = controllers.cardRepository.getCreature(playercreature.templateId);
             const targetData = controllers.cardRepository.getCreature(targetcreature.templateId);

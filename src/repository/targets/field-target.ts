@@ -12,6 +12,32 @@ export type FixedFieldTarget = {
 };
 
 /**
+ * A target that refers to a named creature from the execution context.
+ *
+ * The generic parameter `TRef` is constrained by the card definition container
+ * (e.g. `CreatureAbility`, `ToolData`, `CreatureAttack`) to only the references
+ * that are valid for that execution context, enforcing correctness at compile time.
+ *
+ * Valid reference values per context:
+ *  - `'defender'`       — attack effects (`CreatureAttack.effects`)
+ *  - `'attacker'`       — `damaged` / `before-knockout` trigger effects
+ *  - `'trigger-target'` — `energy-attachment` trigger effects
+ *
+ * @example { type: 'contextual', reference: 'defender' }
+ * // The creature being attacked (valid in CreatureAttack effects)
+ *
+ * @example { type: 'contextual', reference: 'attacker' }
+ * // The creature that dealt the damage (valid in 'damaged' trigger effects)
+ *
+ * @example { type: 'contextual', reference: 'trigger-target' }
+ * // The creature energy was attached to (valid in 'energy-attachment' trigger effects)
+ */
+export type ContextualFieldTarget<TRef extends string = string> = {
+    type: 'contextual';
+    reference: TRef;
+};
+
+/**
  * Represents a target that has been resolved to a specific card.
  */
 export type ResolvedFieldTarget = {
@@ -51,8 +77,10 @@ export type AllMatchingFieldTarget = {
 
 /**
  * Union type for single targets (fixed, resolved, or choice-based).
+ * Uses the default `ContextualFieldTarget<string>` — permissive for framework use.
+ * Prefer the generic `FieldTarget<TContextualRefs>` when authoring card definitions.
  */
-export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget;
+export type SingleFieldTarget = FixedFieldTarget | SingleChoiceFieldTarget | ResolvedFieldTarget | ContextualFieldTarget<string>;
 
 /**
  * Union type for multi-targets (choice-based or all-matching).
@@ -61,6 +89,20 @@ export type MultiFieldTarget = MultiChoiceFieldTarget | AllMatchingFieldTarget;
 
 /**
  * Union type representing all possible field target specifications.
- * Used to specify the target(s) of an effect on field cards.
+ *
+ * The generic parameter `TContextualRefs` constrains which contextual `reference`
+ * values are allowed.  When `TContextualRefs = never` no contextual targets are
+ * permitted.  When it is omitted the default `string` is used (permissive — the
+ * appropriate default for framework/handler code that resolves targets at runtime).
+ *
+ * Card-definition containers (`CreatureAbility`, `ToolData`, `CreatureAttack`)
+ * derive the correct `TContextualRefs` from their execution context via
+ * `TriggerContextualRefs`, providing compile-time enforcement.
  */
-export type FieldTarget = SingleFieldTarget | MultiFieldTarget;
+export type FieldTarget<TContextualRefs extends string = string> =
+    | FixedFieldTarget
+    | SingleChoiceFieldTarget
+    | ResolvedFieldTarget
+    | MultiChoiceFieldTarget
+    | AllMatchingFieldTarget
+    | ([TContextualRefs] extends [never] ? never : ContextualFieldTarget<TContextualRefs>);

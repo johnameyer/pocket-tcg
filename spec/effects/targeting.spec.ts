@@ -20,7 +20,7 @@ describe('Effect Targeting', () => {
                         operation: 'heal',
                     }],
                 },
-            } });
+            }});
 
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('self-heal-supporter', 'supporter') ],
@@ -47,7 +47,7 @@ describe('Effect Targeting', () => {
                         operation: 'damage',
                     }],
                 },
-            } });
+            }});
 
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('opponent-damage-supporter', 'supporter') ],
@@ -117,7 +117,7 @@ describe('Effect Targeting', () => {
                         operation: 'heal',
                     }],
                 },
-            } });
+            }});
 
             const { state } = runTestGame({
                 actions: [
@@ -153,7 +153,7 @@ describe('Effect Targeting', () => {
                         operation: 'heal',
                     }],
                 },
-            } });
+            }});
 
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('mass-heal-supporter', 'supporter') ],
@@ -202,7 +202,7 @@ describe('Effect Targeting', () => {
                         operation: 'heal',
                     }],
                 },
-            } });
+            }});
 
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('self-field-supporter', 'supporter') ],
@@ -237,7 +237,7 @@ describe('Effect Targeting', () => {
                         operation: 'damage',
                     }],
                 },
-            } });
+            }});
 
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('opponent-field-supporter', 'supporter') ],

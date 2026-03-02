@@ -4,7 +4,6 @@ import { EvolveResponseMessage } from '../../../src/messages/response/evolve-res
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { CreatureData, ItemData } from '../../../src/repository/card-types.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 import { EvolutionAccelerationEffectHandler } from '../../../src/effects/handlers/evolution-acceleration-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';

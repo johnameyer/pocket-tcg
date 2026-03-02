@@ -55,7 +55,7 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
         it('should trigger damage-triggered ability when damage effect is applied', () => {
             const repo = new MockCardRepository({
                 creatures: {
-                    'reactive': createDamageReactiveCreature('reactive', 'Reactive', 10) ,
+                    reactive: createDamageReactiveCreature('reactive', 'Reactive', 10),
                 },
                 supporters: { 'dmg-sup': createDamageSupporter('dmg-sup', 20) },
             });
@@ -77,9 +77,9 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
         it('should handle cascading damage effects', () => {
             const repo = new MockCardRepository({
                 creatures: {
-                    'reactor': createDamageReactiveCreature('reactor', 'Reactor', 5) ,
+                    reactor: createDamageReactiveCreature('reactor', 'Reactor', 5),
                 },
-                supporters: { 'dmg': createDamageSupporter('dmg', 20) },
+                supporters: { dmg: createDamageSupporter('dmg', 20) },
             });
 
             const { state } = runTestGame({
@@ -191,8 +191,8 @@ describe('Effect Queue - Effects Triggering Other Effects', () => {
             };
 
             const repo = new MockCardRepository({
-                creatures: { 'multi': multiReactive },
-                supporters: { 'dmg': createDamageSupporter('dmg', 20) },
+                creatures: { multi: multiReactive },
+                supporters: { dmg: createDamageSupporter('dmg', 20) },
             });
 
             const { state } = runTestGame({

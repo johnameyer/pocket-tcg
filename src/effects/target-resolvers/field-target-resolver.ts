@@ -1,6 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { Effect } from '../../repository/effect-types.js';
-import { FieldTarget, FixedFieldTarget, FieldTargetCriteria, SingleFieldTarget, ResolvedFieldTarget } from '../../repository/targets/field-target.js';
+import { FieldTarget, FixedFieldTarget, FieldTargetCriteria, SingleFieldTarget, ResolvedFieldTarget, ContextualFieldTarget } from '../../repository/targets/field-target.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldCard } from '../../controllers/field-controller.js';
@@ -63,6 +63,11 @@ export class FieldTargetResolver {
         // If no target, can't resolve
         if (!target) {
             return { type: 'no-valid-targets' };
+        }
+
+        // Handle contextual targets
+        if (target.type === 'contextual') {
+            return this.resolveContextualTarget(target, controllers, context);
         }
         
         // Handle all-matching targets
@@ -391,6 +396,26 @@ export class FieldTargetResolver {
             const creature = this.getFixedTargetCreature(target, handlerData, context);
             return creature ? validationFn(creature, handlerData) : false;
         }
+
+        // Contextual targets: check if the context provides the referenced data
+        if (target.type === 'contextual') {
+            if (context.type === 'attack') {
+                return target.reference === 'defender' || target.reference === 'attacker';
+            }
+            if (context.type === 'trigger') {
+                if (target.reference === 'attacker') {
+                    return context.triggerType === 'damaged'
+                        || (context.triggerType === 'before-knockout' && context.attackerInstanceId !== undefined);
+                }
+                if (target.reference === 'defender') {
+                    return context.triggerType === 'on-attack'; 
+                }
+                if (target.reference === 'trigger-target') {
+                    return context.triggerType === 'energy-attachment'; 
+                }
+            }
+            return false;
+        }
         
         return true; // Other target types don't need validation
     }
@@ -437,6 +462,26 @@ export class FieldTargetResolver {
         if (target.type === 'fixed') {
             const creature = this.getFixedTargetCreature(target, handlerData, context);
             return !!creature;
+        }
+
+        // Contextual targets: check if the context provides the referenced data
+        if (target.type === 'contextual') {
+            if (context.type === 'attack') {
+                return target.reference === 'defender' || target.reference === 'attacker';
+            }
+            if (context.type === 'trigger') {
+                if (target.reference === 'attacker') {
+                    return context.triggerType === 'damaged'
+                        || (context.triggerType === 'before-knockout' && context.attackerInstanceId !== undefined);
+                }
+                if (target.reference === 'defender') {
+                    return context.triggerType === 'on-attack'; 
+                }
+                if (target.reference === 'trigger-target') {
+                    return context.triggerType === 'energy-attachment'; 
+                }
+            }
+            return false;
         }
         
         return true;
@@ -560,8 +605,8 @@ export class FieldTargetResolver {
             return false; 
         }
         
-        // If fixed target, no selection needed
-        if (target.type === 'fixed') {
+        // Contextual and fixed targets never require user selection
+        if (target.type === 'fixed' || target.type === 'contextual') {
             return false;
         }
         
@@ -572,6 +617,83 @@ export class FieldTargetResolver {
         
         // For all choice targets, selection is needed
         return target.type === 'single-choice' || target.type === 'multi-choice';
+    }
+
+    /**
+     * Resolves a contextual target by looking up the named creature from the execution context.
+     * Validates that the execution context matches the expected context type.
+     *
+     * @param target The contextual target to resolve
+     * @param controllers Game controllers
+     * @param context Effect context
+     * @returns A TargetResolutionResult
+     */
+    private static resolveContextualTarget(
+        target: ContextualFieldTarget<string>,
+        controllers: Controllers,
+        context: EffectContext,
+    ): TargetResolutionResult {
+        switch (target.reference) {
+            case 'defender': {
+                if (context.type === 'attack') {
+                    const fieldCards = controllers.field.getCards(context.defenderPlayerId) ?? [];
+                    const fieldIndex = fieldCards.findIndex(c => c?.instanceId === context.defenderInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' };
+                    }
+                    return { type: 'resolved', targets: [{ playerId: context.defenderPlayerId, fieldIndex }] };
+                }
+                if (context.type === 'trigger' && context.triggerType === 'on-attack') {
+                    const { defenderInstanceId, defenderPlayerId } = context;
+                    const fieldCards = controllers.field.getCards(defenderPlayerId) ?? [];
+                    const fieldIndex = fieldCards.findIndex(c => c?.instanceId === defenderInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' };
+                    }
+                    return { type: 'resolved', targets: [{ playerId: defenderPlayerId, fieldIndex }] };
+                }
+                throw new Error('Contextual target \'defender\' is only valid in attack or \'on-attack\' trigger context');
+            }
+            case 'attacker': {
+                if (context.type === 'attack') {
+                    // Attacker is the source creature
+                    const attackerCards = controllers.field.getCards(context.sourcePlayer) ?? [];
+                    const fieldIndex = attackerCards.findIndex(c => c?.instanceId === context.attackerInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' }; 
+                    }
+                    return { type: 'resolved', targets: [{ playerId: context.sourcePlayer, fieldIndex }] };
+                }
+                if (context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')) {
+                    const attackerInstanceId = context.attackerInstanceId;
+                    const attackerPlayerId = context.attackerPlayerId;
+                    if (!attackerInstanceId || attackerPlayerId === undefined) {
+                        return { type: 'no-valid-targets' }; 
+                    }
+                    const attackerCards = controllers.field.getCards(attackerPlayerId) ?? [];
+                    const fieldIndex = attackerCards.findIndex(c => c?.instanceId === attackerInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' }; 
+                    }
+                    return { type: 'resolved', targets: [{ playerId: attackerPlayerId, fieldIndex }] };
+                }
+                throw new Error('Contextual target \'attacker\' is only valid in attack or \'damaged\'/\'before-knockout\' trigger context');
+            }
+            case 'trigger-target': {
+                if (context.type !== 'trigger' || context.triggerType !== 'energy-attachment') {
+                    throw new Error('Contextual target \'trigger-target\' is only valid in \'energy-attachment\' trigger context');
+                }
+                const { triggerTargetInstanceId, triggerTargetPlayerId } = context;
+                const targetCards = controllers.field.getCards(triggerTargetPlayerId) ?? [];
+                const fieldIndex = targetCards.findIndex(c => c?.instanceId === triggerTargetInstanceId);
+                if (fieldIndex === -1) {
+                    return { type: 'no-valid-targets' }; 
+                }
+                return { type: 'resolved', targets: [{ playerId: triggerTargetPlayerId, fieldIndex }] };
+            }
+            default:
+                throw new Error(`Unknown contextual reference: '${target.reference}'`);
+        }
     }
     
     /**

@@ -327,7 +327,7 @@ describe('Creature Pocket TCG Game', () => {
         it('should accept optional descriptions on card types', () => {
             // Just verify the types accept descriptions - no runtime validation needed
             const testCreatures: Record<string, CreatureData> = {};
-            testCreatures['test'] = {
+            testCreatures.test = {
                 templateId: 'test',
                 name: 'Test',
                 maxHp: 100,

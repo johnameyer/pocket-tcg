@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { ControllerState } from '@cards-ts/core';
-import { CreatureData } from '../src/repository/card-types.js';
 import { Controllers } from '../src/controllers/controllers.js';
 import { MockCardRepository } from './mock-repository.js';
 import { runBotGame } from './helpers/test-helpers.js';

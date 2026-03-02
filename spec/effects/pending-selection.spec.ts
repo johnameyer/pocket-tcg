@@ -4,7 +4,6 @@ import { StateBuilder } from '../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
-import { SupporterData } from '../../src/repository/card-types.js';
 import { EnergyState } from '../../src/controllers/energy-controller.js';
 
 describe('Pending Target Selection', () => {
