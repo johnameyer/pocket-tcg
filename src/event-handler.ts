@@ -164,6 +164,19 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Track the attacker for contextual before-knockout triggers processed by state machine
             controllers.turnState.setCurrentAttacker(playerCard.instanceId, sourceHandler);
 
+            // Trigger on-attack effects for tools/abilities on the attacker (e.g. effects that reference the defender)
+            TriggerProcessor.processOnAttack(
+                controllers,
+                sourceHandler,
+                playerCard.instanceId,
+                playerCard.templateId,
+                targetCard.instanceId,
+                targetId,
+            );
+
+            // Process any on-attack triggered effects before the damage-triggered ones
+            EffectQueueProcessor.processQueue(controllers);
+
             // Trigger when-damaged effects for tools (Rocky Helmet, Poison Barb, etc.)
             if (attackResult.damage > 0 && attackResult.target.instanceId) {
                 TriggerProcessor.processWhenDamaged(

@@ -605,15 +605,28 @@ export class FieldTargetResolver {
     ): TargetResolutionResult {
         switch (target.reference) {
             case 'defender': {
-                if (context.type !== 'attack') {
-                    throw new Error(`Contextual target 'defender' is only valid in attack context, got '${context.type}'`);
+                if (context.type === 'attack') {
+                    const fieldCards = controllers.field.getCards(context.defenderPlayerId) ?? [];
+                    const fieldIndex = fieldCards.findIndex(c => c?.instanceId === context.defenderInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' };
+                    }
+                    return { type: 'resolved', targets: [{ playerId: context.defenderPlayerId, fieldIndex }] };
                 }
-                const fieldCards = controllers.field.getCards(context.defenderPlayerId) ?? [];
-                const fieldIndex = fieldCards.findIndex(c => c?.instanceId === context.defenderInstanceId);
-                if (fieldIndex === -1) {
-                    return { type: 'no-valid-targets' };
+                if (context.type === 'trigger' && context.triggerType === 'on-attack') {
+                    const defenderInstanceId = context.triggerData?.defenderInstanceId;
+                    const defenderPlayerId = context.triggerData?.defenderPlayerId;
+                    if (!defenderInstanceId || defenderPlayerId === undefined) {
+                        return { type: 'no-valid-targets' };
+                    }
+                    const fieldCards = controllers.field.getCards(defenderPlayerId) ?? [];
+                    const fieldIndex = fieldCards.findIndex(c => c?.instanceId === defenderInstanceId);
+                    if (fieldIndex === -1) {
+                        return { type: 'no-valid-targets' };
+                    }
+                    return { type: 'resolved', targets: [{ playerId: defenderPlayerId, fieldIndex }] };
                 }
-                return { type: 'resolved', targets: [{ playerId: context.defenderPlayerId, fieldIndex }] };
+                throw new Error(`Contextual target 'defender' is only valid in attack or 'on-attack' trigger context, got type='${context.type}'${context.type === 'trigger' ? ` triggerType='${context.triggerType}'` : ''}`);
             }
             case 'attacker': {
                 if (context.type !== 'trigger' || (context.triggerType !== 'damaged' && context.triggerType !== 'before-knockout')) {

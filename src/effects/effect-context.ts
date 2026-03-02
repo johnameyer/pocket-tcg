@@ -35,6 +35,7 @@ export type CardEffectContext = BaseEffectContext & {
  * Which fields are populated depends on the triggerType:
  * - 'damaged' / 'before-knockout': attackerInstanceId + attackerPlayerId
  * - 'energy-attachment': energyType + triggerTargetInstanceId + triggerTargetPlayerId
+ * - 'on-attack': defenderInstanceId + defenderPlayerId
  */
 export type TriggerContextData = {
     damage?: number;
@@ -47,6 +48,10 @@ export type TriggerContextData = {
     triggerTargetInstanceId?: string;
     /** Player ID of the trigger target creature (for 'energy-attachment' triggers) */
     triggerTargetPlayerId?: number;
+    /** Instance ID of the defending creature (for 'on-attack' triggers) */
+    defenderInstanceId?: string;
+    /** Player ID of the defending creature (for 'on-attack' triggers) */
+    defenderPlayerId?: number;
 };
 
 // Trigger effect context - for automatic triggers

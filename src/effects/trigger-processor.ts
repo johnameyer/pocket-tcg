@@ -267,6 +267,49 @@ export class TriggerProcessor {
         }
     }
 
+    static processOnAttack(
+        controllers: Controllers,
+        playerId: number,
+        creatureInstanceId: string,
+        creatureCardId: string,
+        defenderInstanceId: string,
+        defenderPlayerId: number,
+    ): void {
+        const triggerData = { defenderInstanceId, defenderPlayerId };
+
+        // Process tool triggers
+        const tool = controllers.tools.getAttachedTool(creatureInstanceId);
+        if (tool) {
+            const toolData = controllers.cardRepository.getTool(tool.templateId);
+            if (toolData && toolData.effects && toolData.trigger?.type === 'on-attack') {
+                const context = EffectContextFactory.createTriggerContext(
+                    playerId,
+                    toolData.name,
+                    'on-attack',
+                    creatureInstanceId,
+                    triggerData,
+                );
+                controllers.effects.pushPendingEffect(toolData.effects, context);
+            }
+        }
+
+        // Process ability triggers
+        const creatureData = controllers.cardRepository.getCreature(creatureCardId);
+        if (creatureData && creatureData.ability) {
+            const ability = creatureData.ability;
+            if (ability.trigger?.type === 'on-attack' && ability.effects) {
+                const context = EffectContextFactory.createTriggerContext(
+                    playerId,
+                    `${creatureData.name}'s ${ability.name}`,
+                    'on-attack',
+                    creatureInstanceId,
+                    triggerData,
+                );
+                controllers.effects.pushPendingEffect(ability.effects, context);
+            }
+        }
+    }
+
     static processBeforeKnockout(
         controllers: Controllers,
         playerId: number,

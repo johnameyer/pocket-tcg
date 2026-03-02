@@ -20,7 +20,8 @@ export type Trigger =
     | { type: 'on-play', filterEvolution?: boolean }
     | { type: 'before-knockout' }
     | { type: 'on-checkup', ownTurnOnly?: boolean }
-    | { type: 'on-retreat' };
+    | { type: 'on-retreat' }
+    | { type: 'on-attack' };
 
 /**
  * Maps each trigger type to the contextual `reference` values that are valid in
@@ -44,6 +45,7 @@ export type TriggerContextualRefs = {
     'before-knockout': 'attacker';
     'on-checkup': never;
     'on-retreat': never;
+    'on-attack': 'defender';
 };
 
 // ---------------------------------------------------------------------------
