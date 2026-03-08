@@ -58,6 +58,25 @@ export type ConditionalValue = {
 };
 
 /**
+ * The set of comparison operators used in ComparisonValue.
+ */
+export type ComparisonOperator = '>' | '<' | '>=' | '<=' | '==';
+
+/**
+ * Represents a value that depends on comparing two resolved values using an operator.
+ * @example { type: 'comparison', left: { type: 'count', countType: 'energy', fieldCriteria: { player: 'self', position: 'active' } }, operator: '>', right: { type: 'constant', value: 5 }, trueValue: { type: 'constant', value: 30 }, falseValue: { type: 'constant', value: 0 } }
+ * @example { type: 'comparison', left: { type: 'count', countType: 'field', criteria: { player: 'self' } }, operator: '<', right: { type: 'count', countType: 'field', criteria: { player: 'opponent' } }, trueValue: { type: 'constant', value: 30 }, falseValue: { type: 'constant', value: 0 } }
+ */
+export type ComparisonValue = {
+    type: 'comparison';
+    left: EffectValue;
+    operator: ComparisonOperator;
+    right: EffectValue;
+    trueValue: EffectValue;
+    falseValue: EffectValue;
+};
+
+/**
  * Represents counting field cards matching criteria.
  * @example { type: 'count', countType: 'field', criteria: { position: 'bench' } } // Count benched creatures
  * @example { type: 'count', countType: 'field', criteria: { player: 'self', position: 'bench' } } // Count own benched
@@ -112,4 +131,4 @@ export type CountValue = FieldCountValue | EnergyCountValue | CardCountValue | D
  * Union type representing all possible effect values.
  * Used to define dynamic values in effects that can be resolved at runtime.
  */
-export type EffectValue = ConstantValue | PlayerContextResolvedValue | MultiplicationValue | CoinFlipValue | AdditionValue | ConditionalValue | CountValue;
+export type EffectValue = ConstantValue | PlayerContextResolvedValue | MultiplicationValue | CoinFlipValue | AdditionValue | ConditionalValue | ComparisonValue | CountValue;

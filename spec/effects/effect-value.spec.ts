@@ -708,4 +708,168 @@ describe('Effect Value Calculation', () => {
             });
         });
     });
+
+    describe('Comparison Values', () => {
+        it('should do 30 more damage if energy attached is greater than 5', () => {
+            const testRepository = new MockCardRepository({
+                supporters: {
+                    'comparison-energy-gt': {
+                        templateId: 'comparison-energy-gt',
+                        name: 'Comparison Energy GT',
+                        effects: [{
+                            type: 'hp',
+                            amount: {
+                                type: 'comparison',
+                                left: {
+                                    type: 'count',
+                                    countType: 'energy',
+                                    fieldCriteria: { player: 'self', position: 'active' },
+                                },
+                                operator: '>',
+                                right: { type: 'constant', value: 5 },
+                                trueValue: { type: 'constant', value: 30 },
+                                falseValue: { type: 'constant', value: 0 },
+                            },
+                            target: { type: 'fixed', player: 'self', position: 'active' },
+                            operation: 'heal',
+                        }],
+                    },
+                },
+            });
+
+            const { state: stateTrue } = runTestGame({
+                actions: [ new PlayCardResponseMessage('comparison-energy-gt', 'supporter') ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'comparison-energy-gt', type: 'supporter' }]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 6 }),
+                    StateBuilder.withDamage('basic-creature-0', 40),
+                ),
+            });
+
+            // 6 energy > 5, should heal 30
+            expect(stateTrue.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal 30 when energy > 5');
+
+            const { state: stateFalse } = runTestGame({
+                actions: [ new PlayCardResponseMessage('comparison-energy-gt', 'supporter') ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'comparison-energy-gt', type: 'supporter' }]),
+                    StateBuilder.withEnergy('basic-creature-0', { fire: 3 }),
+                    StateBuilder.withDamage('basic-creature-0', 40),
+                ),
+            });
+
+            // 3 energy is not > 5, should heal 0
+            expect(stateFalse.field.creatures[0][0].damageTaken).to.equal(40, 'Should heal 0 when energy is not > 5');
+        });
+
+        it('should heal 30 if you have fewer creatures in play than your opponent', () => {
+            const testRepository = new MockCardRepository({
+                supporters: {
+                    'comparison-fewer-creatures': {
+                        templateId: 'comparison-fewer-creatures',
+                        name: 'Comparison Fewer Creatures',
+                        effects: [{
+                            type: 'hp',
+                            amount: {
+                                type: 'comparison',
+                                left: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: { player: 'self' },
+                                },
+                                operator: '<',
+                                right: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: { player: 'opponent' },
+                                },
+                                trueValue: { type: 'constant', value: 30 },
+                                falseValue: { type: 'constant', value: 0 },
+                            },
+                            target: { type: 'fixed', player: 'self', position: 'active' },
+                            operation: 'heal',
+                        }],
+                    },
+                },
+            });
+
+            const { state: stateTrue } = runTestGame({
+                actions: [ new PlayCardResponseMessage('comparison-fewer-creatures', 'supporter') ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature', [ 'basic-creature', 'basic-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'comparison-fewer-creatures', type: 'supporter' }]),
+                    StateBuilder.withDamage('basic-creature-0', 40),
+                ),
+            });
+
+            // Self has 1 creature, opponent has 3 → 1 < 3, should heal 30
+            expect(stateTrue.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal 30 when self has fewer creatures');
+
+            const { state: stateFalse } = runTestGame({
+                actions: [ new PlayCardResponseMessage('comparison-fewer-creatures', 'supporter') ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'basic-creature' ]),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'comparison-fewer-creatures', type: 'supporter' }]),
+                    StateBuilder.withDamage('basic-creature-0', 40),
+                ),
+            });
+
+            // Self has 3 creatures, opponent has 1 → 3 is not < 1, should heal 0
+            expect(stateFalse.field.creatures[0][0].damageTaken).to.equal(40, 'Should heal 0 when self has more creatures');
+        });
+
+        it('should support equality comparison', () => {
+            const testRepository = new MockCardRepository({
+                supporters: {
+                    'comparison-equal': {
+                        templateId: 'comparison-equal',
+                        name: 'Comparison Equal',
+                        effects: [{
+                            type: 'hp',
+                            amount: {
+                                type: 'comparison',
+                                left: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: { player: 'self' },
+                                },
+                                operator: '==',
+                                right: {
+                                    type: 'count',
+                                    countType: 'field',
+                                    criteria: { player: 'opponent' },
+                                },
+                                trueValue: { type: 'constant', value: 20 },
+                                falseValue: { type: 'constant', value: 0 },
+                            },
+                            target: { type: 'fixed', player: 'self', position: 'active' },
+                            operation: 'heal',
+                        }],
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [ new PlayCardResponseMessage('comparison-equal', 'supporter') ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature' ]),
+                    StateBuilder.withCreatures(1, 'basic-creature', [ 'basic-creature' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'comparison-equal', type: 'supporter' }]),
+                    StateBuilder.withDamage('basic-creature-0', 30),
+                ),
+            });
+
+            // Both have 2 creatures → 2 == 2, should heal 20
+            expect(state.field.creatures[0][0].damageTaken).to.equal(10, 'Should heal 20 when counts are equal');
+        });
+    });
 });

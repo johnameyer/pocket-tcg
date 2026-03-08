@@ -140,6 +140,24 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
         return conditionMet 
             ? getEffectValue(effectValue.trueValue, controllers, context) 
             : getEffectValue(effectValue.falseValue, controllers, context);
+    } else if (effectValue.type === 'comparison') {
+        const leftValue = getEffectValue(effectValue.left, controllers, context);
+        const rightValue = getEffectValue(effectValue.right, controllers, context);
+        let conditionMet: boolean;
+        switch (effectValue.operator) {
+            case '>': conditionMet = leftValue > rightValue; break;
+            case '<': conditionMet = leftValue < rightValue; break;
+            case '>=': conditionMet = leftValue >= rightValue; break;
+            case '<=': conditionMet = leftValue <= rightValue; break;
+            case '==': conditionMet = leftValue === rightValue; break;
+            default: {
+                const exhaustiveCheck: never = effectValue.operator;
+                throw new Error(`Unknown comparison operator: ${exhaustiveCheck}`);
+            }
+        }
+        return conditionMet
+            ? getEffectValue(effectValue.trueValue, controllers, context)
+            : getEffectValue(effectValue.falseValue, controllers, context);
     } else if (effectValue.type === 'count') {
         return getCountValue(effectValue, controllers, context);
     }
