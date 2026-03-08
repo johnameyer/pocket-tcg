@@ -36,7 +36,7 @@ export class PassiveEffectHandler extends AbstractEffectHandler<RegisterPassiveE
 
         controllers.players.messageAll({
             type: 'status',
-            components: [ `${context.effectName} passive effect is now active!` ],
+            components: [ `${context.effectName} is now active!` ],
         });
     }
 }
