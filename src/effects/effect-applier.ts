@@ -62,6 +62,11 @@ export class EffectApplier {
 
             // Apply effect directly - handlers are responsible for their own multi-target logic
             handler.apply(controllers, resolvedEffect, context);
+
+            // Stop processing further effects if a pending selection was set up by the handler
+            if (controllers.turnState.getPendingSelection()) {
+                return;
+            }
         }
     }
     

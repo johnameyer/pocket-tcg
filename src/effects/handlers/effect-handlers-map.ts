@@ -29,6 +29,8 @@ import { statusPreventionEffectHandler } from './status-prevention-effect-handle
 import { swapCardsEffectHandler } from './swap-cards-effect-handler.js';
 import { removeFieldCardEffectHandler } from './remove-field-card-effect-handler.js';
 import { pullEvolutionEffectHandler } from './pull-evolution-effect-handler.js';
+import { coinFlipDelegationEffectHandler } from './coin-flip-delegation-effect-handler.js';
+import { choiceDelegationEffectHandler } from './choice-delegation-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -61,4 +63,6 @@ export const effectHandlers: EffectHandlerMap = {
     'swap-cards': swapCardsEffectHandler,
     'remove-field-card': removeFieldCardEffectHandler,
     'pull-evolution': pullEvolutionEffectHandler,
+    'coin-flip-delegation': coinFlipDelegationEffectHandler,
+    'choice-delegation': choiceDelegationEffectHandler,
 };

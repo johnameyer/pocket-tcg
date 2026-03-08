@@ -320,6 +320,42 @@ export type RetreatCostModificationEffect = {
 };
 
 /**
+ * Represents an effect that flips one or more coins and applies different effects based on the result.
+ * @property {string} type - Always 'coin-flip-delegation' to identify this effect type
+ * @property {number} flipCount - Number of coins to flip (must be >= 1)
+ * @property {number} minHeads - Minimum number of heads required to apply headsEffects (must be >= 1)
+ * @property {Effect[]} headsEffects - Effects to apply when heads count >= minHeads
+ * @property {Effect[]} tailsEffects - Effects to apply when heads count < minHeads (may be empty)
+ * @example { type: 'coin-flip-delegation', flipCount: 1, minHeads: 1, headsEffects: [{ type: 'hp', ... }], tailsEffects: [] }
+ * // Flip 1 coin: apply damage on heads, do nothing on tails
+ * @example { type: 'coin-flip-delegation', flipCount: 3, minHeads: 2, headsEffects: [{ type: 'hp', ... }], tailsEffects: [{ type: 'status', ... }] }
+ * // Flip 3 coins: apply damage if 2+ are heads, otherwise apply status
+ */
+export type CoinFlipDelegationEffect<TContextualRefs extends string = string> = {
+    type: 'coin-flip-delegation';
+    flipCount: number;
+    minHeads: number;
+    headsEffects: Effect<TContextualRefs>[];
+    tailsEffects: Effect<TContextualRefs>[];
+};
+
+/**
+ * Represents an effect that lets the player choose from multiple named options, each with different effects.
+ * The player selects one option and its effects are applied.
+ * @property {string} type - Always 'choice-delegation' to identify this effect type
+ * @property {Array<{name: string, effects: Effect[]}>} options - The available choices
+ * @example { type: 'choice-delegation', options: [{ name: 'Draw 3', effects: [{ type: 'draw', amount: { type: 'constant', value: 3 } }] }, { name: 'Heal 30', effects: [{ type: 'hp', ... }] }] }
+ * // Player chooses to either draw 3 cards or heal 30 HP
+ */
+export type ChoiceDelegationEffect<TContextualRefs extends string = string> = {
+    type: 'choice-delegation';
+    options: Array<{
+        name: string;
+        effects: Effect<TContextualRefs>[];
+    }>;
+};
+
+/**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
  *
@@ -345,7 +381,9 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | StatusRecoveryEffect<TContextualRefs>
     | SwapCardsEffect
     | RemoveFieldCardEffect<TContextualRefs>
-    | PullEvolutionEffect<TContextualRefs>;
+    | PullEvolutionEffect<TContextualRefs>
+    | CoinFlipDelegationEffect<TContextualRefs>
+    | ChoiceDelegationEffect<TContextualRefs>;
 
 /**
  * Represents an effect that prevents playing specific card types.

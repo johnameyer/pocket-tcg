@@ -1341,12 +1341,17 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const pendingSelection = controllers.turnState.getPendingSelection();
             
             if (pendingSelection && isPendingChoiceSelection(pendingSelection)) {
-                /*
-                 * TODO: Implement resumeEffectWithChoiceSelection when effects need choice selection
-                 * For now, clear the pending selection as choice-dependent effects are not yet implemented
-                 * The selected choice values are available in message.choiceValues
-                 */
+                const { effect, originalContext } = pendingSelection;
                 controllers.turnState.clearPendingSelection();
+
+                if (effect.type === 'choice-delegation') {
+                    const selectedValue = message.choiceValues[0];
+                    const selectedOption = effect.options.find(o => o.name === selectedValue);
+                    if (selectedOption && selectedOption.effects.length > 0) {
+                        controllers.effects.pushPendingEffect(selectedOption.effects, originalContext);
+                        EffectQueueProcessor.processQueue(controllers);
+                    }
+                }
             } else {
                 controllers.turnState.clearPendingSelection();
             }
