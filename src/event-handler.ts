@@ -1344,12 +1344,14 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const { effect, originalContext } = pendingSelection;
                 controllers.turnState.clearPendingSelection();
 
-                if (effect.type === 'choice-delegation') {
+                if (effect.type === 'choice-delegation' && message.choiceValues.length > 0) {
                     const selectedValue = message.choiceValues[0];
                     const selectedOption = effect.options.find(o => o.name === selectedValue);
                     if (selectedOption && selectedOption.effects.length > 0) {
                         controllers.effects.pushPendingEffect(selectedOption.effects, originalContext);
                         EffectQueueProcessor.processQueue(controllers);
+                    } else if (!selectedOption) {
+                        console.warn(`Choice delegation: no option found matching selected value '${selectedValue}'`);
                     }
                 }
             } else {

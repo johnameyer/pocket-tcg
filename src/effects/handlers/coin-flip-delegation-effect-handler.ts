@@ -26,7 +26,7 @@ export class CoinFlipDelegationEffectHandler extends AbstractEffectHandler<CoinF
             }
         }
 
-        const flipSummary = results.map(r => r ? 'heads' : 'tails').join(', ');
+        const flipSummary = results.map(result => result ? 'heads' : 'tails').join(', ');
         const conditionMet = headsCount >= minHeads;
 
         if (flipCount === 1) {

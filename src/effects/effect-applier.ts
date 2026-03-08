@@ -63,7 +63,12 @@ export class EffectApplier {
             // Apply effect directly - handlers are responsible for their own multi-target logic
             handler.apply(controllers, resolvedEffect, context);
 
-            // Stop processing further effects if a pending selection was set up by the handler
+            /*
+             * Stop processing further effects if a pending selection was set up by the handler.
+             * Some effects (e.g. choice-delegation) require player input before subsequent effects
+             * can be applied. The state machine's pending selection loop will resume execution
+             * after the player responds.
+             */
             if (controllers.turnState.getPendingSelection()) {
                 return;
             }
