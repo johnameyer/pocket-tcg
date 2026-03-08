@@ -320,23 +320,23 @@ export type RetreatCostModificationEffect = {
 };
 
 /**
- * Represents an effect that flips one or more coins and applies different effects based on the result.
- * @property {string} type - Always 'coin-flip-delegation' to identify this effect type
- * @property {number} flipCount - Number of coins to flip (must be >= 1)
- * @property {number} minHeads - Minimum number of heads required to apply headsEffects (must be >= 1)
- * @property {Effect[]} headsEffects - Effects to apply when heads count >= minHeads
- * @property {Effect[]} tailsEffects - Effects to apply when heads count < minHeads (may be empty)
- * @example { type: 'coin-flip-delegation', flipCount: 1, minHeads: 1, headsEffects: [{ type: 'hp', ... }], tailsEffects: [] }
+ * Represents an effect that evaluates any EffectValue as a condition (non-zero = true) and applies
+ * one set of effects when the condition is met, and another set when it is not.
+ * This enables branching on coin flips, energy counts, comparisons, or any other EffectValue.
+ * @property {string} type - Always 'conditional-delegation' to identify this effect type
+ * @property {EffectValue} condition - A value evaluated at runtime; non-zero means "condition met"
+ * @property {Effect[]} trueEffects - Effects to apply when the condition evaluates to non-zero
+ * @property {Effect[]} falseEffects - Effects to apply when the condition evaluates to zero (may be empty)
+ * @example { type: 'conditional-delegation', condition: { type: 'coin-flip', headsValue: 1, tailsValue: 0 }, trueEffects: [{ type: 'hp', ... }], falseEffects: [] }
  * // Flip 1 coin: apply damage on heads, do nothing on tails
- * @example { type: 'coin-flip-delegation', flipCount: 3, minHeads: 2, headsEffects: [{ type: 'hp', ... }], tailsEffects: [{ type: 'status', ... }] }
+ * @example { type: 'conditional-delegation', condition: { type: 'comparison', left: { type: 'coin-flip', headsValue: 1, tailsValue: 0, flipCount: 3 }, operator: '>=', right: { type: 'constant', value: 2 }, trueValue: { type: 'constant', value: 1 }, falseValue: { type: 'constant', value: 0 } }, trueEffects: [{ type: 'hp', ... }], falseEffects: [{ type: 'status', ... }] }
  * // Flip 3 coins: apply damage if 2+ are heads, otherwise apply status
  */
-export type CoinFlipDelegationEffect<TContextualRefs extends string = string> = {
-    type: 'coin-flip-delegation';
-    flipCount: number;
-    minHeads: number;
-    headsEffects: Effect<TContextualRefs>[];
-    tailsEffects: Effect<TContextualRefs>[];
+export type ConditionalDelegationEffect<TContextualRefs extends string = string> = {
+    type: 'conditional-delegation';
+    condition: EffectValue;
+    trueEffects: Effect<TContextualRefs>[];
+    falseEffects: Effect<TContextualRefs>[];
 };
 
 /**
@@ -382,7 +382,7 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | SwapCardsEffect
     | RemoveFieldCardEffect<TContextualRefs>
     | PullEvolutionEffect<TContextualRefs>
-    | CoinFlipDelegationEffect<TContextualRefs>
+    | ConditionalDelegationEffect<TContextualRefs>
     | ChoiceDelegationEffect<TContextualRefs>;
 
 /**

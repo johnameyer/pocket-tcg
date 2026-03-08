@@ -5,8 +5,8 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 
-describe('Coin Flip Delegation Effect', () => {
-    describe('single coin flip (flipCount: 1, minHeads: 1)', () => {
+describe('Conditional Delegation Effect', () => {
+    describe('single coin flip condition', () => {
         const testRepository = new MockCardRepository({
             creatures: {
                 'flip-attacker': {
@@ -20,23 +20,22 @@ describe('Coin Flip Delegation Effect', () => {
                         damage: 0,
                         energyRequirements: [{ type: 'fire', amount: 1 }],
                         effects: [{
-                            type: 'coin-flip-delegation',
-                            flipCount: 1,
-                            minHeads: 1,
-                            headsEffects: [{
+                            type: 'conditional-delegation',
+                            condition: { type: 'coin-flip', headsValue: 1, tailsValue: 0 },
+                            trueEffects: [{
                                 type: 'hp',
                                 amount: { type: 'constant', value: 40 },
                                 target: { type: 'fixed', player: 'opponent', position: 'active' },
                                 operation: 'damage',
                             }],
-                            tailsEffects: [],
+                            falseEffects: [],
                         }],
                     }],
                 },
             },
         });
 
-        it('should apply headsEffects on heads', () => {
+        it('should apply trueEffects when condition is non-zero (heads)', () => {
             const { state } = runTestGame({
                 actions: [ new AttackResponseMessage(0) ],
                 customRepository: testRepository,
@@ -51,7 +50,7 @@ describe('Coin Flip Delegation Effect', () => {
             expect(state.field.creatures[1][0].damageTaken).to.equal(40, 'Should deal 40 damage on heads');
         });
 
-        it('should apply tailsEffects (nothing) on tails', () => {
+        it('should apply falseEffects (nothing) when condition is zero (tails)', () => {
             const { state } = runTestGame({
                 actions: [ new AttackResponseMessage(0) ],
                 customRepository: testRepository,
@@ -67,21 +66,20 @@ describe('Coin Flip Delegation Effect', () => {
         });
     });
 
-    describe('tails effects applied on tails', () => {
+    describe('condition with both trueEffects and falseEffects', () => {
         const testRepository = new MockCardRepository({
             supporters: {
                 'delegating-supporter': {
                     templateId: 'delegating-supporter',
                     name: 'Chance Supporter',
                     effects: [{
-                        type: 'coin-flip-delegation',
-                        flipCount: 1,
-                        minHeads: 1,
-                        headsEffects: [{
+                        type: 'conditional-delegation',
+                        condition: { type: 'coin-flip', headsValue: 1, tailsValue: 0 },
+                        trueEffects: [{
                             type: 'draw',
                             amount: { type: 'constant', value: 3 },
                         }],
-                        tailsEffects: [{
+                        falseEffects: [{
                             type: 'draw',
                             amount: { type: 'constant', value: 1 },
                         }],
@@ -90,7 +88,7 @@ describe('Coin Flip Delegation Effect', () => {
             },
         });
 
-        it('should apply headsEffects on heads', () => {
+        it('should apply trueEffects on heads', () => {
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('delegating-supporter', 'supporter') ],
                 customRepository: testRepository,
@@ -105,7 +103,7 @@ describe('Coin Flip Delegation Effect', () => {
             expect(state.hand[0].length).to.equal(3, 'Should draw 3 cards on heads');
         });
 
-        it('should apply tailsEffects on tails', () => {
+        it('should apply falseEffects on tails', () => {
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('delegating-supporter', 'supporter') ],
                 customRepository: testRepository,
@@ -121,21 +119,28 @@ describe('Coin Flip Delegation Effect', () => {
         });
     });
 
-    describe('multiple coin flips (flipCount: 3, minHeads: 2)', () => {
+    describe('multi-coin condition (3 flips, at least 2 heads)', () => {
+        // Uses ComparisonValue to check if the sum of 3 coin flips (each heads=1, tails=0) is >= 2
         const testRepository = new MockCardRepository({
             supporters: {
                 'multi-flip-supporter': {
                     templateId: 'multi-flip-supporter',
                     name: 'Triple Flip Supporter',
                     effects: [{
-                        type: 'coin-flip-delegation',
-                        flipCount: 3,
-                        minHeads: 2,
-                        headsEffects: [{
+                        type: 'conditional-delegation',
+                        condition: {
+                            type: 'comparison',
+                            left: { type: 'coin-flip', headsValue: 1, tailsValue: 0, flipCount: 3 },
+                            operator: '>=' as const,
+                            right: { type: 'constant', value: 2 },
+                            trueValue: { type: 'constant', value: 1 },
+                            falseValue: { type: 'constant', value: 0 },
+                        },
+                        trueEffects: [{
                             type: 'draw',
                             amount: { type: 'constant', value: 3 },
                         }],
-                        tailsEffects: [{
+                        falseEffects: [{
                             type: 'draw',
                             amount: { type: 'constant', value: 1 },
                         }],
@@ -144,7 +149,7 @@ describe('Coin Flip Delegation Effect', () => {
             },
         });
 
-        it('should apply headsEffects when 2 of 3 flips are heads', () => {
+        it('should apply trueEffects when 2 of 3 flips are heads', () => {
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('multi-flip-supporter', 'supporter') ],
                 customRepository: testRepository,
@@ -159,7 +164,7 @@ describe('Coin Flip Delegation Effect', () => {
             expect(state.hand[0].length).to.equal(3, 'Should draw 3 cards when 2 of 3 heads');
         });
 
-        it('should apply tailsEffects when fewer than 2 of 3 flips are heads', () => {
+        it('should apply falseEffects when fewer than 2 of 3 flips are heads', () => {
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('multi-flip-supporter', 'supporter') ],
                 customRepository: testRepository,
@@ -174,7 +179,7 @@ describe('Coin Flip Delegation Effect', () => {
             expect(state.hand[0].length).to.equal(1, 'Should draw 1 card when fewer than 2 heads');
         });
 
-        it('should apply headsEffects when all 3 flips are heads', () => {
+        it('should apply trueEffects when all 3 flips are heads', () => {
             const { state } = runTestGame({
                 actions: [ new PlayCardResponseMessage('multi-flip-supporter', 'supporter') ],
                 customRepository: testRepository,
@@ -187,6 +192,40 @@ describe('Coin Flip Delegation Effect', () => {
             });
 
             expect(state.hand[0].length).to.equal(3, 'Should draw 3 cards when all 3 heads');
+        });
+    });
+
+    describe('non-coin-flip condition (constant value)', () => {
+        const testRepository = new MockCardRepository({
+            supporters: {
+                'always-true-supporter': {
+                    templateId: 'always-true-supporter',
+                    name: 'Always True',
+                    effects: [{
+                        type: 'conditional-delegation',
+                        condition: { type: 'constant', value: 1 },
+                        trueEffects: [{
+                            type: 'draw',
+                            amount: { type: 'constant', value: 2 },
+                        }],
+                        falseEffects: [],
+                    }],
+                },
+            },
+        });
+
+        it('should apply trueEffects when condition is a non-zero constant', () => {
+            const { state } = runTestGame({
+                actions: [ new PlayCardResponseMessage('always-true-supporter', 'supporter') ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'always-true-supporter', type: 'supporter' }]),
+                    StateBuilder.withDeck(0, Array(5).fill({ templateId: 'basic-creature', type: 'creature' })),
+                ),
+            });
+
+            expect(state.hand[0].length).to.equal(2, 'Should draw 2 cards when condition is always 1');
         });
     });
 });
