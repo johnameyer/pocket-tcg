@@ -131,8 +131,13 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
         const multiplierValue = getEffectValue(effectValue.multiplier, controllers, context);
         return baseValue * multiplierValue;
     } else if (effectValue.type === 'coin-flip') {
-        const isHeads = controllers.coinFlip.performCoinFlip();
-        return isHeads ? effectValue.headsValue : effectValue.tailsValue;
+        const flipCount = effectValue.flipCount ?? 1;
+        let total = 0;
+        for (let i = 0; i < flipCount; i++) {
+            const isHeads = controllers.coinFlip.performCoinFlip();
+            total += isHeads ? effectValue.headsValue : effectValue.tailsValue;
+        }
+        return total;
     } else if (effectValue.type === 'addition') {
         return effectValue.values.reduce((sum: number, value: EffectValue) => sum + getEffectValue(value, controllers, context), 0);
     } else if (effectValue.type === 'conditional') {
