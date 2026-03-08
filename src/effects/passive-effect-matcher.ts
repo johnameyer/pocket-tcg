@@ -1,6 +1,6 @@
 import { Controllers } from '../controllers/controllers.js';
 import { PassiveEffect } from '../controllers/effect-controller.js';
-import { RetreatPreventionEffect, PreventDamageEffect } from '../repository/effect-types.js';
+import { PreventDamageEffect } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 
@@ -27,17 +27,30 @@ export class PassiveEffectMatcher {
             return false;
         }
         
-        const retreatEffect = effect.effect as RetreatPreventionEffect;
+        const retreatEffect = effect.effect;
         
-        // Check if this effect applies to the specified creature
-        if (retreatEffect.target.type === 'resolved') {
-            for (const target of retreatEffect.target.targets) {
-                if (target.playerId === playerId && target.fieldIndex === fieldIndex) {
-                    return true;
-                }
+        // Check player criteria
+        if (retreatEffect.target.player) {
+            const targetPlayer = retreatEffect.target.player === 'self'
+                ? effect.sourcePlayer
+                : (effect.sourcePlayer + 1) % 2;
+            if (targetPlayer !== playerId) {
+                return false;
             }
         }
-        return false;
+        
+        // Check position criteria
+        if (retreatEffect.target.position) {
+            const isActive = fieldIndex === 0;
+            if (retreatEffect.target.position === 'active' && !isActive) {
+                return false;
+            }
+            if (retreatEffect.target.position === 'bench' && isActive) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /**

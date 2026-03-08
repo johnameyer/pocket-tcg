@@ -55,27 +55,36 @@ describe('Prevent Energy Attachment Effect', () => {
                 templateId: 'prevent-item',
                 name: 'Prevent Energy Item',
                 effects: [{
-                    type: 'prevent-energy-attachment',
-                    target: { player: 'opponent' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-energy-attachment',
+                        target: { player: 'opponent' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'self-prevent-item': {
                 templateId: 'self-prevent-item',
                 name: 'Self Prevent Energy Item',
                 effects: [{
-                    type: 'prevent-energy-attachment',
-                    target: { player: 'self' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-energy-attachment',
+                        target: { player: 'self' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'both-prevent-item': {
                 templateId: 'both-prevent-item',
                 name: 'Both Prevent Energy Item',
                 effects: [{
-                    type: 'prevent-energy-attachment',
-                    target: {},
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-energy-attachment',
+                        target: {},
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
         },
@@ -346,9 +355,12 @@ describe('Prevent Energy Attachment Effect', () => {
                     templateId: 'prevent-item',
                     name: 'Prevent Energy Item',
                     effects: [{
-                        type: 'prevent-energy-attachment',
-                        target: { player: 'opponent' },
-                        duration: { type: 'until-end-of-next-turn' },
+                        type: 'passive',
+                        modifier: {
+                            type: 'prevent-energy-attachment',
+                            target: { player: 'opponent' },
+                            duration: { type: 'until-end-of-next-turn' },
+                        },
                     }],
                 },
             },

@@ -111,10 +111,13 @@ describe('Evolution Flexibility Effect', () => {
                 templateId: 'flexibility-item',
                 name: 'Flexibility Item',
                 effects: [{
-                    type: 'evolution-flexibility',
-                    target: 'flexible-evolution-water',
-                    baseForm: 'flexible-basic',
-                    duration: { type: 'until-end-of-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'evolution-flexibility',
+                        target: 'flexible-evolution-water',
+                        baseForm: 'flexible-basic',
+                        duration: { type: 'until-end-of-turn' },
+                    },
                 }],
             },
         },

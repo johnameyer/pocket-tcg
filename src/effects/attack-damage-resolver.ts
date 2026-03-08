@@ -105,8 +105,8 @@ export class AttackDamageResolver {
         // Apply damage boosts from attack effects (with condition checking)
         if (attack.effects) {
             for (const effect of attack.effects) {
-                if (effect.type === 'damage-boost') {
-                    const boostAmount = getEffectValue(effect.amount, controllers, context);
+                if (effect.type === 'passive' && effect.modifier.type === 'damage-boost') {
+                    const boostAmount = getEffectValue(effect.modifier.amount, controllers, context);
                     totalDamage += boostAmount;
                 }
             }
@@ -232,17 +232,13 @@ export class AttackDamageResolver {
         }
         
         // Check if the target matches the target criteria
-        // The target property specifies which opponent creatures receive the boosted damage
-        if (typeof boost.target === 'object' && 'criteria' in boost.target) {
-            // For all-matching targets, check against the criteria
-            const targetCriteria = boost.target.criteria;
-            if (targetCriteria?.fieldCriteria && !FieldTargetCriteriaFilter.matchesFieldCriteria(
-                targetCriteria.fieldCriteria,
-                targetcreature,
-                controllers.cardRepository.cardRepository,
-            )) {
-                return false;
-            }
+        const targetCriteria = boost.target;
+        if (targetCriteria?.fieldCriteria && !FieldTargetCriteriaFilter.matchesFieldCriteria(
+            targetCriteria.fieldCriteria,
+            targetcreature,
+            controllers.cardRepository.cardRepository,
+        )) {
+            return false;
         }
         
         /*

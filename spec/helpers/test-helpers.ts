@@ -6,7 +6,6 @@ import { GameSetup } from '../../src/game-setup.js';
 import { Controllers } from '../../src/controllers/controllers.js';
 import { mockRepository, MockCardRepository } from '../mock-repository.js';
 import { CardRepository } from '../../src/repository/card-repository.js';
-import { ModifierEffect } from '../../src/repository/effect-types.js';
 import { StateBuilder } from './state-builder.js';
 
 type ActionHandler = (handlerData: HandlerData, responses: HandlerResponsesQueue<ResponseMessage>) => void;
@@ -125,17 +124,14 @@ export function initializePassiveEffectsForTestState(
                 if (creatureData.ability && creatureData.ability.trigger.type === 'passive') {
                     // Register passive effects from the ability
                     for (const effect of creatureData.ability.effects) {
-                        // Check if this is a modifier effect that should be registered as passive
-                        if ('duration' in effect && effect.duration) {
-                            const modifierEffect = effect as ModifierEffect;
-                            
+                        if (effect.type === 'passive') {
                             // Create the passive effect entry
                             const passiveEffect = {
                                 id: `${state.effects.nextEffectId++}`,
                                 sourcePlayer: playerId,
                                 effectName: `${creatureData.name}'s ${creatureData.ability.name}`,
-                                effect: modifierEffect,
-                                duration: modifierEffect.duration,
+                                effect: effect.modifier,
+                                duration: effect.modifier.duration,
                                 createdTurn: state.turnCounter.turnNumber,
                                 cardInstanceId: currentForm.instanceId, // Track which card instance this is tied to
                             };
@@ -164,17 +160,14 @@ export function initializePassiveEffectsForTestState(
             
             if (toolData.effects) {
                 for (const effect of toolData.effects) {
-                    // Check if this is a modifier effect that should be registered as passive
-                    if ('duration' in effect && effect.duration) {
-                        const modifierEffect = effect as ModifierEffect;
-                        
+                    if (effect.type === 'passive') {
                         // Create the passive effect entry
                         const passiveEffect = {
                             id: `${state.effects.nextEffectId++}`,
                             sourcePlayer: 0, // We need to determine which player owns this creature
                             effectName: `${toolData.name}`,
-                            effect: modifierEffect,
-                            duration: modifierEffect.duration,
+                            effect: effect.modifier,
+                            duration: effect.modifier.duration,
                             createdTurn: state.turnCounter.turnNumber,
                             toolInstanceId: tool.instanceId, // Track which tool instance this is tied to
                             cardInstanceId: creatureInstanceId, // Track which card the tool is attached to
@@ -217,17 +210,14 @@ export function initializePassiveEffectsForTestState(
             
             if (stadiumData.effects) {
                 for (const effect of stadiumData.effects) {
-                    // Check if this is a modifier effect that should be registered as passive
-                    if ('duration' in effect && effect.duration) {
-                        const modifierEffect = effect as ModifierEffect;
-                        
+                    if (effect.type === 'passive') {
                         // Create the passive effect entry
                         const passiveEffect = {
                             id: `${state.effects.nextEffectId++}`,
                             sourcePlayer: stadium.owner,
                             effectName: `${stadiumData.name}`,
-                            effect: modifierEffect,
-                            duration: modifierEffect.duration,
+                            effect: effect.modifier,
+                            duration: effect.modifier.duration,
                             createdTurn: state.turnCounter.turnNumber,
                             cardInstanceId: stadium.instanceId, // Track which stadium instance this is tied to
                         };

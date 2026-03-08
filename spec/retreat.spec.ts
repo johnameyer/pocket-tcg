@@ -297,10 +297,13 @@ describe('Creature Retreat System', () => {
                         templateId: 'retreat-reducer',
                         name: 'Swift Legs',
                         effects: [{
-                            type: 'retreat-cost-modification', operation: 'decrease',
-                            amount: { type: 'constant', value: 1 },
-                            target: { player: 'self', position: 'active' },
-                            duration: { type: 'while-in-play' },
+                            type: 'passive',
+                            modifier: {
+                                type: 'retreat-cost-modification', operation: 'decrease',
+                                amount: { type: 'constant', value: 1 },
+                                target: { player: 'self', position: 'active' },
+                                duration: { type: 'while-in-play' },
+                            },
                         }],
                     },
                 },

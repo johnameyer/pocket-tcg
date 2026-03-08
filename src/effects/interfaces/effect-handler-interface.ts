@@ -1,6 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { HandlerData } from '../../game-handler.js';
-import { Effect } from '../../repository/effect-types.js';
+import { Effect, ModifierEffect } from '../../repository/effect-types.js';
 import { FieldTarget } from '../../repository/targets/field-target.js';
 import { EffectContext } from '../effect-context.js';
 import { CardRepository } from '../../repository/card-repository.js';
@@ -33,7 +33,7 @@ export interface ResolutionRequirement {
  * Each handler is responsible for a specific effect type and encapsulates
  * all logic related to that effect type.
  */
-export interface EffectHandler<T extends Effect> {
+export interface EffectHandler<T extends Effect | ModifierEffect> {
     /**
      * Get the resolution requirements for an effect.
      * This defines what targets need to be resolved before the effect can be applied.
@@ -69,7 +69,7 @@ export interface EffectHandler<T extends Effect> {
  * Abstract base class for effect handlers.
  * Provides common functionality for all handlers.
  */
-export abstract class AbstractEffectHandler<T extends Effect> implements EffectHandler<T> {
+export abstract class AbstractEffectHandler<T extends Effect | ModifierEffect> implements EffectHandler<T> {
     abstract getResolutionRequirements(effect: T): ResolutionRequirement[];
     abstract apply(controllers: Controllers, effect: T, context: EffectContext): void;
     
