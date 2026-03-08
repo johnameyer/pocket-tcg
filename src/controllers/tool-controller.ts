@@ -98,9 +98,10 @@ export class ToolController extends GlobalController<ToolState, ToolDependencies
         
         // Calculate HP bonus from tool effects
         for (const effect of toolData.effects) {
-            if (effect.type === 'hp-bonus') {
-                if (effect.amount.type === 'constant') {
-                    hpBonus += effect.amount.value;
+            if (effect.type === 'passive' && effect.modifier.type === 'hp-bonus') {
+                const modifier = effect.modifier;
+                if (modifier.amount.type === 'constant') {
+                    hpBonus += modifier.amount.value;
                 }
                 // TODO: Add support for other amount types if needed
             }

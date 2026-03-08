@@ -203,14 +203,14 @@ export type DamageReductionEffect<TContextualRefs extends string = string> = {
 /**
  * Represents an effect that prevents retreat from a creature.
  * @property {string} type - Always 'retreat-prevention' to identify this effect type
- * @property {FieldTarget} target - The creature that cannot retreat
+ * @property {FieldTargetCriteria} target - Criteria for which creatures cannot retreat (evaluated passively)
  * @property {string} duration - How long the creature cannot retreat
- * @example { type: 'retreat-prevention', target: { type: 'fixed', player: 'opponent', position: 'active' }, duration: 'until-damage-taken' }
- * // Opponent's active creature cannot retreat until it takes damage
+ * @example { type: 'retreat-prevention', target: { player: 'opponent', position: 'active' }, duration: 'until-end-of-turn' }
+ * // Opponent's active creature cannot retreat until end of turn
  */
-export type RetreatPreventionEffect<TContextualRefs extends string = string> = {
+export type RetreatPreventionEffect = {
     type: 'retreat-prevention';
-    target: FieldTarget<TContextualRefs>;
+    target: FieldTargetCriteria;
     duration: Duration;
 };
 
@@ -281,7 +281,7 @@ export type DamageBoostEffect<TContextualRefs extends string = string> = {
     type: 'damage-boost';
     amount: EffectValue;
     damageSource: FieldTargetCriteria;
-    target: FieldTarget<TContextualRefs>;
+    target: FieldTargetCriteria;
     duration: Duration;
 };
 
@@ -551,7 +551,7 @@ export type PullEvolutionEffect<TContextualRefs extends string = string> = {
 export type ModifierEffect<TContextualRefs extends string = string> =
     | PreventDamageEffect
     | DamageReductionEffect<TContextualRefs>
-    | RetreatPreventionEffect<TContextualRefs>
+    | RetreatPreventionEffect
     | EvolutionFlexibilityEffect
     | DamageBoostEffect<TContextualRefs>
     | HpBonusEffect
@@ -561,6 +561,19 @@ export type ModifierEffect<TContextualRefs extends string = string> =
     | PreventEnergyAttachmentEffect
     | AttackEnergyCostModifierEffect
     | StatusPreventionEffect;
+
+/**
+ * Represents an effect that registers a passive modifier effect.
+ * A single wrapper type for all passive/modifier effects that persist over time.
+ * @property {string} type - Always 'passive' to identify this effect type
+ * @property {ModifierEffect} modifier - The underlying modifier effect to register
+ * @example { type: 'passive', modifier: { type: 'damage-reduction', amount: { type: 'constant', value: 20 }, damageSource: { player: 'opponent' }, target: { type: 'fixed', player: 'self', position: 'active' }, duration: { type: 'while-in-play' } } }
+ * // Register a passive damage reduction of 20 while in play
+ */
+export type RegisterPassiveEffect<TContextualRefs extends string = string> = {
+    type: 'passive';
+    modifier: ModifierEffect<TContextualRefs>;
+};
 
 /**
  * Union type representing all possible effects that can be applied in the game.
@@ -576,7 +589,7 @@ export type ModifierEffect<TContextualRefs extends string = string> =
  *  `Effect<'defender'>`  — only 'defender' ref (attack effects)
  *  `Effect<'attacker'>`  — only 'attacker' ref (damaged / before-knockout triggers)
  */
-export type Effect<TContextualRefs extends string = string> = ImmediateEffect<TContextualRefs> | ModifierEffect<TContextualRefs>;
+export type Effect<TContextualRefs extends string = string> = ImmediateEffect<TContextualRefs> | RegisterPassiveEffect<TContextualRefs>;
 
 /**
  * Represents an effect that requires target selection before it can be applied.

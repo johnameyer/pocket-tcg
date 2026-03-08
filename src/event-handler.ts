@@ -383,13 +383,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const creatureData = controllers.cardRepository.getCreature(message.templateId);
                 if (creatureData.ability && creatureData.ability.trigger?.type === 'passive' && creatureData.ability.effects) {
                     for (const effect of creatureData.ability.effects) {
-                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
-                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                            || effect.type === 'retreat-prevention'
-                            || effect.type === 'prevent-playing'
-                            || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
-                            || effect.type === 'attack-energy-cost-modifier') {
+                        if (effect.type === 'passive') {
                             // Get the field card instance ID for while-in-play duration
                             const benchCards = controllers.field.getCards(sourceHandler);
                             const justPlayedCard = benchCards.find(c => c?.templateId === message.templateId);
@@ -397,8 +391,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                                 controllers.effects.registerPassiveEffect(
                                     sourceHandler,
                                     `${creatureData.name}'s ${creatureData.ability.name}`,
-                                    effect,
-                                    effect.duration,
+                                    effect.modifier,
+                                    effect.modifier.duration,
                                     controllers.turnCounter.getTurnNumber(),
                                     justPlayedCard.instanceId,
                                 );
@@ -424,18 +418,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Register passive effects from supporter
                 if (supporterData.effects) {
                     for (const effect of supporterData.effects) {
-                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
-                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                            || effect.type === 'retreat-prevention'
-                            || effect.type === 'prevent-playing'
-                            || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
-                            || effect.type === 'attack-energy-cost-modifier') {
+                        if (effect.type === 'passive') {
                             controllers.effects.registerPassiveEffect(
                                 sourceHandler,
                                 supporterData.name,
-                                effect,
-                                effect.duration,
+                                effect.modifier,
+                                effect.modifier.duration,
                                 controllers.turnCounter.getTurnNumber(),
                                 cardInstanceId,
                             );
@@ -443,16 +431,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                 }
                 
-                // Apply instant effects (non-modifier effects)
+                // Apply instant effects (non-passive effects)
                 if (supporterData.effects) {
-                    const instantEffects = supporterData.effects.filter(effect => !(effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
-                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                            || effect.type === 'retreat-prevention'
-                            || effect.type === 'prevent-playing'
-                            || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
-                            || effect.type === 'attack-energy-cost-modifier'),
-                    );
+                    const instantEffects = supporterData.effects.filter(effect => effect.type !== 'passive');
                     if (instantEffects.length > 0) {
                         EffectApplier.applyEffects(instantEffects, controllers, context);
                     }
@@ -501,18 +482,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Register passive effects from tool
                     if (toolData.effects) {
                         for (const effect of toolData.effects) {
-                            if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                                || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
-                                || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                                || effect.type === 'retreat-prevention'
-                                || effect.type === 'prevent-playing'
-                                || effect.type === 'prevent-attack' || effect.type === 'prevent-energy-attachment'
-                                || effect.type === 'attack-energy-cost-modifier') {
+                            if (effect.type === 'passive') {
                                 controllers.effects.registerPassiveEffect(
                                     targetPlayerId,
                                     toolData.name,
-                                    effect,
-                                    effect.duration,
+                                    effect.modifier,
+                                    effect.modifier.duration,
                                     controllers.turnCounter.getTurnNumber(),
                                     rawTargetCard.fieldInstanceId,
                                     toolInstanceId,
@@ -542,21 +517,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     components: [ `Player ${sourceHandler + 1} played ${stadiumData.name}!` ],
                 });
                 
-                /*
-                 * Register passive effects from stadium
-                 * TODO: We shouldn't need to explicitly specify all effect types here (or for tools/supporters above)
-                 */
+                // Register passive effects from stadium
                 if (stadiumData.effects) {
                     for (const effect of stadiumData.effects) {
-                        if (effect.type === 'damage-boost' || effect.type === 'damage-reduction' 
-                            || effect.type === 'prevent-damage' || effect.type === 'retreat-cost-modification'
-                            || effect.type === 'hp-bonus' || effect.type === 'evolution-flexibility'
-                            || effect.type === 'retreat-prevention') {
+                        if (effect.type === 'passive') {
                             controllers.effects.registerPassiveEffect(
                                 sourceHandler,
                                 stadiumData.name,
-                                effect,
-                                effect.duration,
+                                effect.modifier,
+                                effect.modifier.duration,
                                 controllers.turnCounter.getTurnNumber(),
                                 cardInstanceId,
                             );
