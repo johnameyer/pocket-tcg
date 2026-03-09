@@ -2,7 +2,7 @@
 import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
-import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from './messages/response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage, DiscardFossilResponseMessage } from './messages/response/index.js';
 import { AttackResultMessage, EvolutionMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
@@ -274,7 +274,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }),
                 EventHandler.validate('Bench is full', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     const benchSize = controllers.field.getCards(source).slice(1).length;
-                    return message.cardType === 'creature' && benchSize >= 3;
+                    return (message.cardType === 'creature' || message.cardType === 'fossil') && benchSize >= 3;
                 }),
                 EventHandler.validate('Cannot attach tool when creature already has one', (controllers: Controllers, source: number, message: PlayCardResponseMessage) => {
                     if (message.cardType !== 'tool') {
@@ -343,7 +343,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // For supporters and items, play and discard in one operation
                     playedCard = controllers.hand.playCardAndDiscard(sourceHandler, cardIndex);
                 } else {
-                    // For creatures and tools, just play (they go to field/attached)
+                    // For creatures, fossils, and tools, just play (they go to field/attached)
                     playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
                 }
                 cardInstanceId = playedCard?.instanceId;
@@ -477,6 +477,14 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the item effects
                 EffectQueueProcessor.processQueue(controllers);
+            } else if (message.cardType === 'fossil') {
+                // Fossils are trainer item cards played to the bench as if they were basic creatures
+                controllers.field.addToBench(sourceHandler, message.templateId, cardInstanceId);
+                const { name } = controllers.cardRepository.getCreature(message.templateId);
+                controllers.players.messageAll({
+                    type: 'card-played',
+                    components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
+                });
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
                 const toolData = controllers.cardRepository.getTool(message.templateId);
@@ -999,6 +1007,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 EventHandler.validate('Cannot retreat while paralyzed', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     return controllers.statusEffects.hasStatusEffect(source, 0, 'paralyzed');
                 }),
+                EventHandler.validate('Cannot retreat - fossil cannot retreat', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
+                    const activeCard = controllers.field.getCardByPosition(source, 0);
+                    if (!activeCard) {
+                        return false;
+                    }
+                    return controllers.cardRepository.isFossil(activeCard.templateId);
+                }),
                 EventHandler.validate('Cannot retreat - retreat prevented', (controllers: Controllers, source: number, message: RetreatResponseMessage) => {
                     const activeCard = controllers.field.getCardByPosition(source, 0);
                     if (!activeCard) {
@@ -1078,6 +1093,61 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Mark that retreat has been used this turn
             controllers.turnState.setRetreatedThisTurn(true);
             
+        },
+    },
+    'discard-fossil-response': {
+        canRespond: EventHandler.isTurn('turn'),
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Invalid bench index for fossil discard', (controllers: Controllers, source: number, message: DiscardFossilResponseMessage) => {
+                    const benchCards = controllers.field.getCards(source).slice(1);
+                    return message.benchIndex < 0 || message.benchIndex >= benchCards.length;
+                }),
+                EventHandler.validate('Card at bench position is not a fossil', (controllers: Controllers, source: number, message: DiscardFossilResponseMessage) => {
+                    const benchCards = controllers.field.getCards(source).slice(1);
+                    const card = benchCards[message.benchIndex];
+                    if (!card) {
+                        return true;
+                    }
+                    return !controllers.cardRepository.isFossil(card.templateId);
+                }),
+            ],
+            fallback: (controllers: Controllers, source: number, message: DiscardFossilResponseMessage) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
+                return undefined as any;
+            },
+        },
+        merge: (controllers: Controllers, sourceHandler: number, message: DiscardFossilResponseMessage) => {
+            controllers.waiting.removePosition(sourceHandler);
+
+            const benchPosition = message.benchIndex + 1; // bench starts at position 1
+            const fieldInstanceId = controllers.field.getFieldInstanceId(sourceHandler, benchPosition);
+            if (fieldInstanceId) {
+                // Clean up energy attached to the discarded fossil
+                controllers.energy.removeAllEnergyFromInstance(sourceHandler, fieldInstanceId);
+
+                // Clean up passive effects from the fossil
+                controllers.effects.clearEffectsForInstance(fieldInstanceId);
+
+                // Clean up tools attached to the fossil
+                const attachedTool = controllers.tools.getAttachedTool(fieldInstanceId);
+                if (attachedTool) {
+                    controllers.effects.clearEffectsForTool(attachedTool.instanceId, fieldInstanceId);
+                }
+                controllers.tools.detachTool(fieldInstanceId);
+            }
+
+            const benchCard = controllers.field.getCards(sourceHandler).slice(1)[message.benchIndex];
+            // Remove the bench fossil without awarding points to the opponent
+            controllers.field.removeBenchCard(sourceHandler, message.benchIndex);
+
+            if (benchCard) {
+                const { name } = controllers.cardRepository.getCreature(benchCard.templateId);
+                controllers.players.messageAll({
+                    type: 'card-played',
+                    components: [ `Player ${sourceHandler + 1} discarded ${name} from the bench.` ],
+                });
+            }
         },
     },
     'select-target-response': {

@@ -5,7 +5,7 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { ActionValidator } from '../effects/action-validator.js';
-import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage } from '../messages/response/index.js';
+import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, DiscardFossilResponseMessage } from '../messages/response/index.js';
 import { GameCard } from '../controllers/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
@@ -246,6 +246,17 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
                 cardDescription = ` - ${toolData.description}`;
             } else if (toolData.effects && toolData.effects.length > 0) {
                 cardDescription = ` - ${toolData.effects[0].type}`;
+            }
+        } else if (card.type === 'fossil') {
+            const fossilData = cardRepository.getCard(card.templateId);
+            if (fossilData.type !== 'fossil') {
+                throw new Error(`Fossil not found: ${card.templateId}`);
+            }
+            cardName = fossilData.data.name;
+
+            // Check if card can be played using ActionValidator
+            if (!ActionValidator.canPlayCard(handlerData, cardRepository, card.templateId, currentPlayer)) {
+                cardDescription = ' (Bench is full!)';
             }
         } else if (card.type === 'stadium') {
             const stadiumData = cardRepository.getStadium(card.templateId);
@@ -580,6 +591,42 @@ export async function handleRetreat(cardRepository: CardRepository, intermediary
 }
 
 /**
+ * Handles the voluntary discard of a bench fossil.
+ */
+export async function handleDiscardFossil(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
+    const currentPlayer = handlerData.turn;
+    const benchFieldCards = handlerData.field.creatures[currentPlayer].slice(1).map(toFieldCard);
+
+    // Build options for fossil bench cards only
+    const fossilOptions = benchFieldCards
+        .map((fieldCard: FieldCard, index: number) => {
+            if (!cardRepository.isFossil(fieldCard.templateId)) {
+                return null;
+            }
+            const data = cardRepository.getCreature(fieldCard.templateId);
+            return { name: `${data.name} (${Math.max(0, data.maxHp - fieldCard.damageTaken)} HP)`, value: index };
+        })
+        .filter((opt): opt is { name: string; value: number } => opt !== null);
+
+    fossilOptions.push({ name: 'Back', value: -1 });
+
+    const [ , received ] = intermediary.form({
+        type: 'list',
+        message: [ 'Choose a bench fossil to discard:' ],
+        choices: fossilOptions,
+    });
+
+    const benchIndex = (await received)[0] as number;
+
+    if (benchIndex === -1) {
+        await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
+        return;
+    }
+
+    responsesQueue.push(new DiscardFossilResponseMessage(benchIndex));
+}
+
+/**
  * Handles the ability action.
  * 
  * @param intermediary The intermediary
@@ -666,6 +713,14 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
     if (ActionValidator.canRetreat(handlerData, cardRepository, currentPlayer)) {
         actionOptions.push({ name: 'Retreat', value: 'retreat' });
     }
+
+    // Check if there are any bench fossils that can be voluntarily discarded
+    const hasBenchFossil = handlerData.field.creatures[currentPlayer].slice(1)
+        .map(toFieldCard)
+        .some((fieldCard: FieldCard) => cardRepository.isFossil(fieldCard.templateId));
+    if (hasBenchFossil) {
+        actionOptions.push({ name: 'Discard bench fossil', value: 'discardFossil' });
+    }
     
     actionOptions.push({ name: 'End turn', value: 'endTurn' });
     
@@ -688,6 +743,8 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
         await handleAttachEnergy(cardRepository, intermediary, handlerData, responsesQueue);
     } else if (actionType === 'retreat') {
         await handleRetreat(cardRepository, intermediary, handlerData, responsesQueue);
+    } else if (actionType === 'discardFossil') {
+        await handleDiscardFossil(cardRepository, intermediary, handlerData, responsesQueue);
     } else if (actionType.startsWith('ability-')) {
         await handleAbility(cardRepository, intermediary, handlerData, responsesQueue, actionType);
     } else if (actionType === 'endTurn') {

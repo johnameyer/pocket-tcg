@@ -1,5 +1,5 @@
 import { CardRepository } from '../src/repository/card-repository.js';
-import { CreatureData, ItemData, SupporterData, ToolData, StadiumData } from '../src/repository/card-types.js';
+import { CreatureData, FossilData, ItemData, SupporterData, ToolData, StadiumData } from '../src/repository/card-types.js';
 
 const mockCreatureData: Record<string, CreatureData> = {};
 
@@ -175,6 +175,7 @@ export interface MockRepositoryExtensions {
     items?: Record<string, ItemData>;
     tools?: Record<string, ToolData>;
     stadiums?: Record<string, StadiumData>;
+    fossils?: Record<string, FossilData>;
 }
 
 export class MockCardRepository extends CardRepository {
@@ -184,8 +185,9 @@ export class MockCardRepository extends CardRepository {
         const allItems = { ...mockItemData, ...(extensions.items || {}) };
         const allTools = { ...mockToolData, ...(extensions.tools || {}) };
         const allStadiums = { ...mockStadiumData, ...(extensions.stadiums || {}) };
+        const allFossils = { ...(extensions.fossils || {}) };
         
-        super(allCreatures, allSupporters, allItems, allTools, allStadiums);
+        super(allCreatures, allSupporters, allItems, allTools, allStadiums, allFossils);
     }
 }
 

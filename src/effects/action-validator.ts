@@ -69,6 +69,11 @@ export class ActionValidator {
         if (benchedCreatures.length === 0) {
             return false; 
         }
+
+        // Fossils cannot retreat
+        if (cardRepository.isFossil(getCurrentTemplateId(activeCreature))) {
+            return false;
+        }
         
         /*
          * No retreat prevention system currently implemented
@@ -136,6 +141,8 @@ export class ActionValidator {
         switch (card.type) {
             case 'creature':
                 return this.canPlayCreatureCard(handlerData, cardRepository, cardId, playerId);
+            case 'fossil':
+                return this.canPlayFossilCard(handlerData, cardId, playerId);
             case 'item':
                 return this.canPlayItemCard(handlerData, cardRepository, cardId, playerId);
             case 'supporter':
@@ -157,6 +164,14 @@ export class ActionValidator {
             return false; 
         }
         
+        const benchSize = handlerData.field.creatures[playerId].length - 1;
+        return benchSize < 3;
+    }
+
+    /**
+     * Checks if a fossil card can be played to the bench.
+     */
+    private static canPlayFossilCard(handlerData: HandlerData, cardId: string, playerId: number): boolean {
         const benchSize = handlerData.field.creatures[playerId].length - 1;
         return benchSize < 3;
     }

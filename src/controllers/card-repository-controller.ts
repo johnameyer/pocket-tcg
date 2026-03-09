@@ -71,6 +71,14 @@ export class CardRepositoryController extends GlobalController<CardRepositorySta
         return this.repository.getCard(id);
     }
 
+    isFossil(templateId: string) {
+        return this.repository.isFossil(templateId);
+    }
+
+    getAllFossilIds() {
+        return this.repository.getAllFossilIds();
+    }
+
     /**
      * Validates that every creature's previousStageName (evolvesFrom) exists in the repository.
      * Throws an error if any creature references a non-existent previous stage.
