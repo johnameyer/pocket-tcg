@@ -136,6 +136,24 @@ export type CreatureData = {
         mega?: boolean;
         ultraBeast?: boolean;
     };
+    /**
+     * When true, this card is a fossil trainer item that was played to the field.
+     * Fossils cannot retreat, can be evolved, can be knocked out (giving 1 prize point),
+     * and can be voluntarily discarded by the player at any time.
+     */
+    fossil?: true;
+};
+
+/**
+ * Represents a fossil trainer item card.
+ * Fossils are item cards held in hand but placed on the field as if they were basic creatures.
+ * They have HP, can be knocked out (giving opponent 1 prize), can be evolved, but cannot retreat.
+ * They can be voluntarily discarded from the field by the player at any time.
+ */
+export type FossilData = {
+    templateId: string;
+    name: string;
+    maxHp: number;
 };
 
 /**
@@ -186,7 +204,7 @@ export type StadiumData = {
 /**
  * Union type for all card data types.
  */
-export type CardData = CreatureData | SupporterData | ItemData | ToolData | StadiumData;
+export type CardData = CreatureData | SupporterData | ItemData | ToolData | StadiumData | FossilData;
 
 /**
  * Represents a single form in an evolution chain.

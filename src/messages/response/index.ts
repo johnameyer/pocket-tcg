@@ -11,3 +11,4 @@ export * from './retreat-response-message.js';
 export * from './select-energy-response-message.js';
 export * from './select-card-response-message.js';
 export * from './select-choice-response-message.js';
+export * from './discard-fossil-response-message.js';

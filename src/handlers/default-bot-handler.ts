@@ -1,6 +1,6 @@
 import { HandlerResponsesQueue } from '@cards-ts/core';
 import { GameHandler, HandlerData } from '../game-handler.js';
-import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from '../messages/response/index.js';
+import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, SelectTargetResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage, DiscardFossilResponseMessage } from '../messages/response/index.js';
 import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
@@ -31,6 +31,16 @@ export class DefaultBotHandler extends GameHandler {
             const cardIndex = hand.findIndex(card => card.type === 'creature');
             const card = hand[cardIndex];
             responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'creature'));
+            return;
+        }
+
+        // Try to play a fossil card to the bench if possible (fossils count toward bench size)
+        const fossilCards = hand.filter(card => card.type === 'fossil');
+
+        if (fossilCards.length > 0 && benchSize < 4) {
+            const cardIndex = hand.findIndex(card => card.type === 'fossil');
+            const card = hand[cardIndex];
+            responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'fossil'));
             return;
         }
         

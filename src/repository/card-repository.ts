@@ -1,4 +1,4 @@
-import { CreatureData, SupporterData, ItemData, ToolData, StadiumData } from './card-types.js';
+import { CreatureData, SupporterData, ItemData, ToolData, StadiumData, FossilData } from './card-types.js';
 
 export class CardRepository {
     private creatureNameMap: Record<string, CreatureData> = {};
@@ -6,6 +6,8 @@ export class CardRepository {
     private evolutionsOfMap: Record<string, string[]> = {};
 
     private typeMap: Record<string, string[]> = {};
+
+    private fossilTemplateIds: Set<string> = new Set();
     
     constructor(
         private creatureData: Record<string, CreatureData> = {},
@@ -13,9 +15,24 @@ export class CardRepository {
         private itemData: Record<string, ItemData> = {},
         private fieldCardToolData: Record<string, ToolData> = {},
         private stadiumData: Record<string, StadiumData> = {},
+        fossilData: Record<string, FossilData> = {},
     ) {
-        // Build name-to-creature map at instantiation time for efficient lookups
-        for (const creature of Object.values(creatureData)) {
+        // Register fossils as creature entries so field operations work seamlessly
+        for (const [ templateId, fossil ] of Object.entries(fossilData)) {
+            this.fossilTemplateIds.add(templateId);
+            this.creatureData[templateId] = {
+                templateId: fossil.templateId,
+                name: fossil.name,
+                maxHp: fossil.maxHp,
+                type: 'fossil',
+                retreatCost: 0, // Prevented via isFossil() check; 0 here avoids false energy checks
+                attacks: [],
+                fossil: true,
+            };
+        }
+        // Build name-to-creature map at instantiation time for efficient lookups.
+        // Use this.creatureData (which includes fossils) so getCreatureByName works for all field cards.
+        for (const creature of Object.values(this.creatureData)) {
             // Store first occurrence of each name (multiple creatures may share the same name)
             if (!(creature.name in this.creatureNameMap)) {
                 this.creatureNameMap[creature.name] = creature;
@@ -23,7 +40,7 @@ export class CardRepository {
         }
         
         // Build reverse evolution map: creatureName -> [IDs that evolve from it]
-        for (const [ templateId, creature ] of Object.entries(creatureData)) {
+        for (const [ templateId, creature ] of Object.entries(this.creatureData)) {
             if (creature.previousStageName) {
                 if (!(creature.previousStageName in this.evolutionsOfMap)) {
                     this.evolutionsOfMap[creature.previousStageName] = [];
@@ -33,7 +50,7 @@ export class CardRepository {
         }
         
         // Build type map: creatureType -> [IDs of that type]
-        for (const [ templateId, creature ] of Object.entries(creatureData)) {
+        for (const [ templateId, creature ] of Object.entries(this.creatureData)) {
             if (creature.type) {
                 if (!(creature.type in this.typeMap)) {
                     this.typeMap[creature.type] = [];
@@ -122,6 +139,18 @@ export class CardRepository {
     public getAllStadiumIds(): string[] {
         return Object.keys(this.stadiumData);
     }
+
+    public getAllFossilIds(): string[] {
+        return Array.from(this.fossilTemplateIds);
+    }
+
+    /**
+     * Returns true if the given templateId is a fossil card.
+     * Fossils are trainer item cards that can be placed on the field.
+     */
+    public isFossil(templateId: string): boolean {
+        return this.fossilTemplateIds.has(templateId);
+    }
     
     /**
      * Gets a card by ID, trying all card types.
@@ -135,7 +164,19 @@ export class CardRepository {
         | { data: SupporterData; type: 'supporter' }
         | { data: ItemData; type: 'item' }
         | { data: ToolData; type: 'tool' }
-        | { data: StadiumData; type: 'stadium' } {
+        | { data: StadiumData; type: 'stadium' }
+        | { data: FossilData; type: 'fossil' } {
+        // Check fossils first so they are returned as 'fossil' type rather than 'creature'
+        if (this.fossilTemplateIds.has(id)) {
+            const creatureEntry = this.creatureData[id];
+            // FossilData fields are a strict subset of CreatureData registered fields
+            const fossilData: FossilData = {
+                templateId: creatureEntry.templateId,
+                name: creatureEntry.name,
+                maxHp: creatureEntry.maxHp,
+            };
+            return { data: fossilData, type: 'fossil' };
+        }
         try {
             return { data: this.getCreature(id), type: 'creature' };
         } catch (e) {
