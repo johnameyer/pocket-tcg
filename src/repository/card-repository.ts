@@ -25,7 +25,8 @@ export class CardRepository {
                 name: fossil.name,
                 maxHp: fossil.maxHp,
                 type: 'fossil',
-                retreatCost: 0, // Prevented via isFossil() check; 0 here avoids false energy checks
+                retreatCost: 0, // Safe default: retreat validation in action-validator.ts and event-handler.ts
+                                // explicitly calls isFossil() and blocks retreat before energy is evaluated.
                 attacks: [],
                 fossil: true,
             };
