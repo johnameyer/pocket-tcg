@@ -3,7 +3,7 @@ import { EventHandler, buildEventHandler } from '@cards-ts/core';
 import { Controllers } from './controllers/controllers.js';
 import { ResponseMessage } from './messages/response-message.js';
 import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveResponseMessage, AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, SelectTargetResponseMessage, RetreatResponseMessage, SelectEnergyResponseMessage, SelectCardResponseMessage, SelectChoiceResponseMessage } from './messages/response/index.js';
-import { AttackResultMessage, EvolutionMessage } from './messages/status/index.js';
+import { AttackResultMessage, EvolutionMessage, CreaturePlayedMessage, ItemPlayedMessage, SupporterPlayedMessage, ToolPlayedMessage, StadiumPlayedMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
 import { EffectContextFactory } from './effects/effect-context.js';
@@ -349,10 +349,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             if (message.cardType === 'creature') {
                 controllers.field.addToBench(sourceHandler, message.templateId, cardInstanceId);
                 const { name } = controllers.cardRepository.getCreature(message.templateId);
-                controllers.players.messageAll({
-                    type: 'card-played',
-                    components: [ `Player ${sourceHandler + 1} played ${name} to the bench!` ],
-                });
+                controllers.players.messageAll(new CreaturePlayedMessage(
+                    sourceHandler,
+                    `Player ${sourceHandler + 1}`,
+                    message.templateId,
+                    name,
+                ));
                 
                 // Trigger on-play effects for the played creature
                 const justPlayedCards = controllers.field.getCards(sourceHandler);
@@ -391,6 +393,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Apply supporter effects
                 const supporterData = controllers.cardRepository.getSupporter(message.templateId);
+                controllers.players.messageAll(new SupporterPlayedMessage(
+                    sourceHandler,
+                    `Player ${sourceHandler + 1}`,
+                    message.templateId,
+                    supporterData.name,
+                ));
                 const context = EffectContextFactory.createCardContext(sourceHandler, supporterData.name, 'supporter');
                 
                 // Add target information if provided
@@ -414,6 +422,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
+                controllers.players.messageAll(new ItemPlayedMessage(
+                    sourceHandler,
+                    `Player ${sourceHandler + 1}`,
+                    message.templateId,
+                    itemData.name,
+                ));
                 const context = EffectContextFactory.createCardContext(sourceHandler, itemData.name, 'item');
                 
                 // Add target information if provided
@@ -444,10 +458,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers.tools.attachTool(rawTargetCard.fieldInstanceId, message.templateId, toolInstanceId);
                     
                     const targetCard = controllers.field.getCards(targetPlayerId)[targetFieldIndex];
-                    controllers.players.messageAll({
-                        type: 'card-played',
-                        components: [ `Player ${sourceHandler + 1} attached ${toolData.name} to ${targetCard.templateId}!` ],
-                    });
+                    controllers.players.messageAll(new ToolPlayedMessage(
+                        sourceHandler,
+                        `Player ${sourceHandler + 1}`,
+                        message.templateId,
+                        toolData.name,
+                        targetPlayerId,
+                        targetFieldIndex,
+                        targetCard.templateId,
+                    ));
                     
                     // Apply tool effects through the effect handler
                     // Use targetPlayerId as sourcePlayer so 'self'/'opponent' targets resolve correctly
@@ -475,10 +494,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Play the new stadium (this will automatically discard the old one if present)
                 controllers.stadium.playStadium(message.templateId, cardInstanceId!, sourceHandler, stadiumData.name);
                 
-                controllers.players.messageAll({
-                    type: 'card-played',
-                    components: [ `Player ${sourceHandler + 1} played ${stadiumData.name}!` ],
-                });
+                controllers.players.messageAll(new StadiumPlayedMessage(
+                    sourceHandler,
+                    `Player ${sourceHandler + 1}`,
+                    message.templateId,
+                    stadiumData.name,
+                ));
                 
                 // Apply stadium effects through the effect handler
                 if (stadiumData.effects) {

@@ -47,7 +47,7 @@ export type EnergyTargetResolutionResult =
 /**
  * Represents an energy selection option for the player.
  */
-export interface EnergyOption {
+export type EnergyOption = {
     /** Field position of the energy */
     playerId: number;
     fieldIndex: number;
@@ -55,7 +55,7 @@ export interface EnergyOption {
     availableEnergy: Partial<Record<AttachableEnergyType, number>>;
     /** Display name for the option */
     displayName: string;
-}
+};
 
 /**
  * Centralized class for handling energy target resolution.

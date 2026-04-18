@@ -23,13 +23,13 @@ export type TargetResolutionResult =
 /**
  * Represents a target option for user selection.
  */
-export interface TargetOption {
+export type TargetOption = {
     playerId: number;
     fieldIndex: number;
     name: string;
     hp: number;
     position: 'active' | 'bench';
-}
+};
 
 /**
  * Result of single target resolution, excluding multi-target results.

@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
+import { SelectCardResponseMessage } from '../../../src/messages/response/select-card-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { GameCard } from '../../../src/controllers/card-types.js';
 import { ShuffleEffectHandler } from '../../../src/effects/handlers/shuffle-effect-handler.js';
@@ -282,14 +283,18 @@ describe('Shuffle Effect', () => {
 
         it('should execute discard item and opponent draws 3 cards', () => {
             const { state, getExecutedCount } = runTestGame({
-                actions: [ new PlayCardResponseMessage('discard-item', 'item') ],
+                actions: [
+                    new PlayCardResponseMessage('discard-item', 'item'),
+                    // Player 1 selects 3 of their 5 cards to discard
+                    new SelectCardResponseMessage([ 'basic-creature', 'draw-supporter', 'basic-item' ]),
+                ],
                 customRepository: testRepository,
                 stateCustomizer: withShuffleTestState([ discardItem ], [
                     basicCreature, researchSupporter, healingItem, highHpCreature, highHpCreature,
                 ]),
             });
             
-            expect(getExecutedCount()).to.equal(1, 'Should have executed discard item');
+            expect(getExecutedCount()).to.equal(2, 'Should have executed discard item and card selection');
             expect(state.hand[1].length).to.equal(2, 'Opponent should have 2 cards after discarding 3');
         });
     });
