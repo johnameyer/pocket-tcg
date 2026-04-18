@@ -310,7 +310,7 @@ export class EnergyTargetResolver {
         }
 
         const selected: Partial<Record<AttachableEnergyType, number>> = {};
-        const remaining = [...pool];
+        const remaining = [ ...pool ];
         const picks = Math.min(count, remaining.length);
 
         for (let i = 0; i < picks; i++) {
@@ -356,7 +356,7 @@ export class EnergyTargetResolver {
         }
 
         // Randomly pick `count` energy from the pool
-        const remaining = [...pool];
+        const remaining = [ ...pool ];
         const picks = Math.min(target.count, remaining.length);
         const perCreature = new Map<string, { playerId: number; fieldIndex: number; energy: Partial<Record<AttachableEnergyType, number>> }>();
 
@@ -365,7 +365,7 @@ export class EnergyTargetResolver {
             const picked = remaining.splice(idx, 1)[0];
             const key = `${picked.playerId}:${picked.fieldIndex}`;
             if (!perCreature.has(key)) {
-                perCreature.set(key, { playerId: picked.playerId, fieldIndex: picked.fieldIndex, energy: {} });
+                perCreature.set(key, { playerId: picked.playerId, fieldIndex: picked.fieldIndex, energy: {}});
             }
             const entry = perCreature.get(key)!;
             entry.energy[picked.energyType] = (entry.energy[picked.energyType] || 0) + 1;

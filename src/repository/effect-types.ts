@@ -320,6 +320,42 @@ export type RetreatCostModificationEffect = {
 };
 
 /**
+ * Represents an effect that evaluates any EffectValue as a condition (non-zero = true) and applies
+ * one set of effects when the condition is met, and another set when it is not.
+ * This enables branching on coin flips, energy counts, comparisons, or any other EffectValue.
+ * @property {string} type - Always 'conditional-delegation' to identify this effect type
+ * @property {EffectValue} condition - A value evaluated at runtime; non-zero means "condition met"
+ * @property {Effect[]} trueEffects - Effects to apply when the condition evaluates to non-zero
+ * @property {Effect[]} falseEffects - Effects to apply when the condition evaluates to zero (may be empty)
+ * @example { type: 'conditional-delegation', condition: { type: 'coin-flip', headsValue: 1, tailsValue: 0 }, trueEffects: [{ type: 'hp', ... }], falseEffects: [] }
+ * // Flip 1 coin: apply damage on heads, do nothing on tails
+ * @example { type: 'conditional-delegation', condition: { type: 'comparison', left: { type: 'coin-flip', headsValue: 1, tailsValue: 0, flipCount: 3 }, operator: '>=', right: { type: 'constant', value: 2 }, trueValue: { type: 'constant', value: 1 }, falseValue: { type: 'constant', value: 0 } }, trueEffects: [{ type: 'hp', ... }], falseEffects: [{ type: 'status', ... }] }
+ * // Flip 3 coins: apply damage if 2+ are heads, otherwise apply status
+ */
+export type ConditionalDelegationEffect<TContextualRefs extends string = string> = {
+    type: 'conditional-delegation';
+    condition: EffectValue;
+    trueEffects: Effect<TContextualRefs>[];
+    falseEffects: Effect<TContextualRefs>[];
+};
+
+/**
+ * Represents an effect that lets the player choose from multiple named options, each with different effects.
+ * The player selects one option and its effects are applied.
+ * @property {string} type - Always 'choice-delegation' to identify this effect type
+ * @property {Array<{name: string, effects: Effect[]}>} options - The available choices
+ * @example { type: 'choice-delegation', options: [{ name: 'Draw 3', effects: [{ type: 'draw', amount: { type: 'constant', value: 3 } }] }, { name: 'Heal 30', effects: [{ type: 'hp', ... }] }] }
+ * // Player chooses to either draw 3 cards or heal 30 HP
+ */
+export type ChoiceDelegationEffect<TContextualRefs extends string = string> = {
+    type: 'choice-delegation';
+    options: Array<{
+        name: string;
+        effects: Effect<TContextualRefs>[];
+    }>;
+};
+
+/**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
  *
@@ -345,7 +381,9 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | StatusRecoveryEffect<TContextualRefs>
     | SwapCardsEffect
     | RemoveFieldCardEffect<TContextualRefs>
-    | PullEvolutionEffect<TContextualRefs>;
+    | PullEvolutionEffect<TContextualRefs>
+    | ConditionalDelegationEffect<TContextualRefs>
+    | ChoiceDelegationEffect<TContextualRefs>;
 
 /**
  * Represents an effect that prevents playing specific card types.
