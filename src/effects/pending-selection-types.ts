@@ -1,7 +1,7 @@
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { Effect } from '../repository/effect-types.js';
-import { EffectContext } from './effect-context.js';
 import { GameCard } from '../controllers/card-types.js';
+import { EffectContext } from './effect-context.js';
 import { TargetOption } from './target-resolvers/field-target-resolver.js';
 import { EnergyOption } from './target-resolvers/energy-target-resolver.js';
 
