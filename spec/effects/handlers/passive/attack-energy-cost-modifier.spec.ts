@@ -1,31 +1,12 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { AttackEnergyCostModifierEffectHandler } from '../../../src/effects/handlers/attack-energy-cost-modifier-effect-handler.js';
-import { AttackEnergyCostModifierEffect } from '../../../src/repository/effect-types.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Attack Energy Cost Modifier Effect', () => {
-    describe('getResolutionRequirements', () => {
-        const handler = new AttackEnergyCostModifierEffectHandler();
-
-        it('should return empty array (no resolution needed)', () => {
-            const effect: AttackEnergyCostModifierEffect = {
-                type: 'attack-energy-cost-modifier',
-                amount: { type: 'constant', value: -1 },
-                target: { player: 'self', location: 'field' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.be.an('array').that.is.empty;
-        });
-    });
-
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const highCostCreature = { templateId: 'high-cost-creature', type: 'creature' as const };
     const reduceItem = { templateId: 'reduce-item', type: 'item' as const };

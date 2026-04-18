@@ -1,30 +1,12 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { PreventAttackEffectHandler } from '../../../src/effects/handlers/prevent-attack-effect-handler.js';
-import { PreventAttackEffect } from '../../../src/repository/effect-types.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Prevent Attack Effect', () => {
-    describe('getResolutionRequirements', () => {
-        const handler = new PreventAttackEffectHandler();
-
-        it('should return empty resolution requirements (no target resolution needed)', () => {
-            const effect: PreventAttackEffect = {
-                type: 'prevent-attack',
-                target: { player: 'opponent', position: 'active' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.have.lengthOf(0);
-        });
-    });
-
     const preventionItem = { templateId: 'prevention-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({

@@ -1,54 +1,12 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { EvolveResponseMessage } from '../../../src/messages/response/evolve-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
-import { EvolutionFlexibilityEffectHandler } from '../../../src/effects/handlers/evolution-flexibility-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { EvolutionFlexibilityEffect } from '../../../src/repository/effect-types.js';
-import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { EvolveResponseMessage } from '../../../../src/messages/response/evolve-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
+import { getCurrentTemplateId } from '../../../../src/utils/field-card-utils.js';
 
 describe('Evolution Flexibility Effect', () => {
-    describe('canApply', () => {
-        const handler = new EvolutionFlexibilityEffectHandler();
-
-        it('should always return true (evolution flexibility effects can always be applied)', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'flexible-basic', []),
-            );
-
-            const effect: EvolutionFlexibilityEffect = {
-                type: 'evolution-flexibility',
-                target: 'flexible-evolution-water',
-                baseForm: 'flexible-basic',
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
-            const result = handler.canApply(handlerData, effect, context);
-            
-            expect(result).to.be.true;
-        });
-
-        it('should return true even when no creatures exist', () => {
-            const handlerData = HandlerDataBuilder.default();
-
-            const effect: EvolutionFlexibilityEffect = {
-                type: 'evolution-flexibility',
-                target: 'flexible-evolution-water',
-                baseForm: 'flexible-basic',
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Flexibility', 'item');
-            const result = handler.canApply(handlerData, effect, context);
-            
-            expect(result).to.be.true;
-        });
-    });
-
     const flexibleBasic = { templateId: 'flexible-basic', type: 'creature' as const };
     const flexibleEvolutionWater = { templateId: 'flexible-evolution-water', type: 'creature' as const };
     const flexibleEvolutionLightning = { templateId: 'flexible-evolution-lightning', type: 'creature' as const };

@@ -6,6 +6,10 @@ type BaseEffectContext = {
     effectName: string;
     targetPlayerId?: number;
     targetCreatureIndex?: number;
+    /** Optional instance ID of the card that owns this effect, used for passive effect cleanup */
+    sourceInstanceId?: string;
+    /** Optional instance ID of the tool that owns this effect, used for tool passive effect cleanup */
+    sourceToolInstanceId?: string;
 };
 
 // Attack effect context - has attacker and defender info
@@ -24,10 +28,10 @@ export type AbilityEffectContext = BaseEffectContext & {
     fieldPosition: number; // 0 = active, 1+ = bench
 };
 
-// Card effect context - for trainer cards
+// Card effect context - for trainer cards (supporter, item) and played cards (tool, stadium)
 export type CardEffectContext = BaseEffectContext & {
     type: 'trainer';
-    cardType: 'supporter' | 'item';
+    cardType: 'supporter' | 'item' | 'tool' | 'stadium';
 };
 
 /**
@@ -92,7 +96,7 @@ export class EffectContextFactory {
     static createCardContext(
         sourcePlayer: number,
         effectName: string,
-        cardType: 'supporter' | 'item',
+        cardType: 'supporter' | 'item' | 'tool' | 'stadium',
     ): CardEffectContext {
         return {
             type: 'trainer',

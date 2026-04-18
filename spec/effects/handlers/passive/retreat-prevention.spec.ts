@@ -1,11 +1,11 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { RetreatResponseMessage } from '../../../src/messages/response/retreat-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { RetreatResponseMessage } from '../../../../src/messages/response/retreat-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
+import { getCurrentTemplateId } from '../../../../src/utils/field-card-utils.js';
 
 describe('Retreat Prevention Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };

@@ -32,6 +32,8 @@ export class PassiveEffectHandler extends AbstractEffectHandler<RegisterPassiveE
             effect.modifier,
             effect.modifier.duration,
             controllers.turnCounter.getTurnNumber(),
+            context.sourceInstanceId,
+            context.sourceToolInstanceId,
         );
 
         controllers.players.messageAll({

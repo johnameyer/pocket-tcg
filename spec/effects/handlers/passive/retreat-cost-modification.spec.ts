@@ -1,45 +1,13 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { RetreatResponseMessage } from '../../../src/messages/response/retreat-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
-import { RetreatCostModificationEffectHandler } from '../../../src/effects/handlers/retreat-cost-modification-effect-handler.js';
-import { RetreatCostModificationEffect } from '../../../src/repository/effect-types.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { RetreatResponseMessage } from '../../../../src/messages/response/retreat-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
+import { getCurrentTemplateId } from '../../../../src/utils/field-card-utils.js';
 
 describe('Retreat Cost Modification Effect', () => {
-    describe('getResolutionRequirements', () => {
-        const handler = new RetreatCostModificationEffectHandler();
-
-        it('should return empty array for increase (no resolution needed)', () => {
-            const effect: RetreatCostModificationEffect = {
-                type: 'retreat-cost-modification', operation: 'increase',
-                amount: { type: 'constant', value: 1 },
-                target: { player: 'opponent', location: 'field' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.be.an('array').that.is.empty;
-        });
-
-        it('should return empty array for reduction (no resolution needed)', () => {
-            const effect: RetreatCostModificationEffect = {
-                type: 'retreat-cost-modification', operation: 'decrease',
-                amount: { type: 'constant', value: 1 },
-                target: { player: 'self', location: 'field' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.be.an('array').that.is.empty;
-        });
-    });
-
     const lowCostCreature = { templateId: 'low-cost-creature', type: 'creature' as const };
     const highCostCreature = { templateId: 'high-cost-creature', type: 'creature' as const };
     const increaseItem = { templateId: 'increase-item', type: 'item' as const };
