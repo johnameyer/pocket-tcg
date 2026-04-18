@@ -2,7 +2,26 @@ name: ci
 on: [push]
 
 jobs:
-  ci:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: true
+          version: latest
+
+      - name: Node 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+
+      - name: Lint
+        run: pnpm lint --no-fix
+
+  build-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,9 +40,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
-        
-      - name: Lint
-        run: pnpm lint --no-fix
 
       - name: Build
         run: pnpm prepack

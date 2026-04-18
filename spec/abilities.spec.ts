@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
+import { PassiveEffect } from '../src/controllers/effect-controller.js';
 import { CardRepository } from '../src/repository/card-repository.js';
 import { CreatureData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
 import { runTestGame } from './helpers/test-helpers.js';
-import { PassiveEffect } from '../src/controllers/effect-controller.js';
 
 describe('Creature Abilities', () => {
     const mockCreatureData: Record<string, CreatureData> = {
