@@ -5,13 +5,13 @@ import { ResolvedFieldTarget } from '../repository/targets/field-target.js';
 import { EnergyTarget } from '../repository/targets/energy-target.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
-import { GameCard } from '../controllers/card-types.js';
 import { EffectContext } from './effect-context.js';
 import { PendingCardSelection, PendingEnergySelection, PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver, EnergyOption, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { GameCard } from '../controllers/card-types.js';
 
 export class EffectApplier {
     /**
