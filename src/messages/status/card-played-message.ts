@@ -14,7 +14,6 @@ export type CardPlayedDetails =
         targetPlayerId: number;
         targetFieldPosition: number;
         targetCardTemplateId: string;
-        targetCardName: string;
     }
     | {
         placement: 'stadium';
@@ -28,7 +27,7 @@ function generateMessage(playerName: string, cardName: string, details: CardPlay
         return [ `${playerName} played ${cardName}.` ];
     }
     if (details.placement === 'tool-attachment') {
-        return [ `${playerName} attached ${cardName} to ${details.targetCardName}!` ];
+        return [ `${playerName} attached ${cardName} to ${details.targetCardTemplateId}!` ];
     }
     return [ `${playerName} played ${cardName}!` ];
 }

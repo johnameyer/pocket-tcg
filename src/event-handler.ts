@@ -470,7 +470,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers.tools.attachTool(rawTargetCard.fieldInstanceId, message.templateId, toolInstanceId);
                     
                     const targetCard = controllers.field.getCards(targetPlayerId)[targetFieldIndex];
-                    const targetCardData = controllers.cardRepository.getCreature(targetCard.templateId);
                     controllers.players.messageAll(new CardPlayedMessage(
                         sourceHandler,
                         `Player ${sourceHandler + 1}`,
@@ -482,7 +481,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             targetPlayerId,
                             targetFieldPosition: targetFieldIndex,
                             targetCardTemplateId: targetCard.templateId,
-                            targetCardName: targetCardData.name,
                         },
                     ));
                     
