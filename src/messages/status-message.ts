@@ -1,3 +1,3 @@
-import { GameOverMessage, KnockedOutMessage, AttackResultMessage, EvolutionMessage, CardPlayedMessage } from './status/index.js';
+import { GameOverMessage, KnockedOutMessage, AttackResultMessage, EvolutionMessage, CreaturePlayedMessage, ItemPlayedMessage, SupporterPlayedMessage, ToolPlayedMessage, StadiumPlayedMessage } from './status/index.js';
 
-export type StatusMessage = GameOverMessage | KnockedOutMessage | AttackResultMessage | EvolutionMessage | CardPlayedMessage;
+export type StatusMessage = GameOverMessage | KnockedOutMessage | AttackResultMessage | EvolutionMessage | CreaturePlayedMessage | ItemPlayedMessage | SupporterPlayedMessage | ToolPlayedMessage | StadiumPlayedMessage;
