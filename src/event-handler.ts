@@ -12,10 +12,7 @@ import { AttachableEnergyType } from './controllers/energy-controller.js';
 import { AttackDamageResolver } from './effects/attack-damage-resolver.js';
 import { ActionValidator } from './effects/action-validator.js';
 import { ControllerUtils } from './utils/controller-utils.js';
-import { FieldTargetResolver } from './effects/target-resolvers/field-target-resolver.js';
-import { effectHandlers } from './effects/handlers/effect-handlers-map.js';
 import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
-import { FieldTarget } from './repository/targets/field-target.js';
 import { getCurrentTemplateId } from './utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from './effects/pending-selection-types.js';
 import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
@@ -1086,58 +1083,21 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             validators: [
                 EventHandler.validate('Invalid target selection', (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
                     const pendingSelection = controllers.turnState.getPendingSelection();
-                    if (!pendingSelection) {
-                        return true; // No pending selection - validation fails (return true)
+                    if (!pendingSelection || !isPendingFieldSelection(pendingSelection)) {
+                        return true; // No pending field selection - validation fails
                     }
                     
-                    // Validate the target selection using TargetResolver
-                    const { effect, originalContext } = pendingSelection;
-                    
-                    // Find the target that requires validation based on resolution order
-                    let targetToValidate: FieldTarget | undefined = undefined;
-                    
-                    // Get resolution requirements to determine which target needs validation
-                    const handler = effectHandlers[effect.type];
-                    if (handler && 'getResolutionRequirements' in handler) {
-                        const requirements = handler.getResolutionRequirements(effect);
-                        
-                        // Find the first unresolved requirement that needs selection
-                        for (const requirement of requirements) {
-                            const currentTarget = effect[requirement.targetProperty];
-                            const target = requirement.target;
-                            
-                            if (target && typeof target === 'object' 
-                                && (target.type === 'single-choice' || target.type === 'multi-choice')
-                                && (!currentTarget || currentTarget.type !== 'resolved')) {
-                                targetToValidate = target;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Fallback to old logic if no handler or requirements
-                    if (!targetToValidate) {
-                        if ('target' in effect && effect.target && 'criteria' in effect.target) {
-                            targetToValidate = effect.target;
-                        } else if ('switchWith' in effect && effect.switchWith && 'criteria' in effect.switchWith) {
-                            targetToValidate = effect.switchWith;
-                        } else if ('source' in effect && effect.source && 'criteria' in effect.source) {
-                            targetToValidate = effect.source;
-                        }
-                    }
-                    
-                    if (targetToValidate) {
-                        const isValidTarget = FieldTargetResolver.validateTargetSelection(
-                            targetToValidate,
-                            message.targetPlayerId,
-                            message.targetCreatureIndex,
-                            controllers,
-                            originalContext,
+                    // Validate every selected target is in the pre-computed available targets list
+                    for (const target of message.targets) {
+                        const found = pendingSelection.availableTargets.find(
+                            opt => opt.playerId === target.playerId && opt.fieldIndex === target.fieldIndex,
                         );
-                        return !isValidTarget; // Return true when validation FAILS (EventHandler convention)
+                        if (!found) {
+                            return true; // Selected target not in available options
+                        }
                     }
                     
-                    return false; // No target to validate, so it's valid (return false)
+                    return false; // Valid selection
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
@@ -1179,19 +1139,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         return true; // No pending energy selection - validation fails
                     }
                     
-                    const expectedCount = pendingSelection.count || 1;
-                    
                     // Validate count
-                    if (message.selectedEnergy.length !== expectedCount) {
-                        return true; // Wrong number of energy selected
+                    if (message.selectedTargets.length !== pendingSelection.count) {
+                        return true; // Wrong number of creatures selected
                     }
                     
-                    // Validate energy types if restricted
-                    if (pendingSelection.allowedTypes && pendingSelection.allowedTypes.length > 0) {
-                        for (const energy of message.selectedEnergy) {
-                            if (!pendingSelection.allowedTypes.includes(energy)) {
-                                return true; // Invalid energy type
-                            }
+                    // Validate every selected target is in the available energy list
+                    for (const sel of message.selectedTargets) {
+                        const found = pendingSelection.availableEnergy.find(
+                            opt => opt.playerId === sel.playerId && opt.fieldIndex === sel.fieldIndex,
+                        );
+                        if (!found) {
+                            return true; // Selected creature is not in the available options
                         }
                     }
                     
@@ -1211,12 +1170,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const pendingSelection = controllers.turnState.getPendingSelection();
             
             if (pendingSelection && isPendingEnergySelection(pendingSelection)) {
-                /*
-                 * TODO: Implement resumeEffectWithEnergySelection when effects need energy selection
-                 * For now, clear the pending selection as energy-dependent effects are not yet implemented
-                 * The selected energy is available in message.selectedEnergy
-                 */
                 controllers.turnState.clearPendingSelection();
+                EffectApplier.resumeEffectWithEnergySelection(controllers, pendingSelection, message.selectedTargets);
             } else {
                 controllers.turnState.clearPendingSelection();
             }
@@ -1235,31 +1190,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const expectedCount = pendingSelection.count || 1;
                     
                     // Validate count
-                    if (message.cardInstanceIds.length !== expectedCount) {
+                    if (message.cardTemplateIds.length !== expectedCount) {
                         return true; // Wrong number of cards selected
                     }
                     
-                    // Get the cards from the appropriate location
-                    let cards: GameCard[] = [];
-                    if (pendingSelection.location === 'hand') {
-                        cards = controllers.hand.getHand(pendingSelection.playerId);
-                    } else if (pendingSelection.location === 'deck') {
-                        cards = controllers.deck.getCards(pendingSelection.playerId);
-                    } else if (pendingSelection.location === 'discard') {
-                        cards = controllers.discard.getCards(pendingSelection.playerId);
-                    }
-                    
-                    // Validate instance IDs exist in the location
-                    for (const instanceId of message.cardInstanceIds) {
-                        if (!cards.find(card => card.instanceId === instanceId)) {
-                            return true; // Invalid instance ID
+                    // Validate every selected template ID exists in the available cards
+                    // (consume copies in order so duplicate template IDs are handled correctly)
+                    const remaining = [ ...pendingSelection.availableCards ];
+                    for (const templateId of message.cardTemplateIds) {
+                        const idx = remaining.findIndex(card => card.templateId === templateId);
+                        if (idx === -1) {
+                            return true; // Template ID not among available cards
                         }
+                        remaining.splice(idx, 1);
                     }
                     
                     // Validate card types if restricted
                     if (pendingSelection.cardType) {
-                        for (const instanceId of message.cardInstanceIds) {
-                            const card = cards.find(c => c.instanceId === instanceId);
+                        for (const templateId of message.cardTemplateIds) {
+                            const card = pendingSelection.availableCards.find(c => c.templateId === templateId);
                             if (!card || card.type !== pendingSelection.cardType) {
                                 return true; // Wrong card type
                             }
@@ -1282,12 +1231,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const pendingSelection = controllers.turnState.getPendingSelection();
             
             if (pendingSelection && isPendingCardSelection(pendingSelection)) {
-                /*
-                 * TODO: Implement resumeEffectWithCardSelection when effects need card selection
-                 * For now, clear the pending selection as card-selection-dependent effects are not yet implemented
-                 * The selected card instance IDs are available in message.cardInstanceIds
-                 */
                 controllers.turnState.clearPendingSelection();
+                EffectApplier.resumeEffectWithCardSelection(controllers, pendingSelection, message.cardTemplateIds);
             } else {
                 controllers.turnState.clearPendingSelection();
             }

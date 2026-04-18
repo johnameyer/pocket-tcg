@@ -6,11 +6,12 @@ import { EnergyTarget } from '../repository/targets/energy-target.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EffectContext } from './effect-context.js';
-import { PendingFieldSelection } from './pending-selection-types.js';
+import { PendingCardSelection, PendingEnergySelection, PendingFieldSelection } from './pending-selection-types.js';
 import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
-import { EnergyTargetResolver, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { EnergyTargetResolver, EnergyOption, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { GameCard } from '../controllers/card-types.js';
 
 export class EffectApplier {
     /**
@@ -116,7 +117,16 @@ export class EffectApplier {
                 const resolution = EnergyTargetResolver.resolveTarget(energyTarget, controllers, context);
                 
                 if (resolution.type === 'requires-selection') {
-                    // Pending selection - not yet implemented
+                    // Prompt the player to choose which creature(s) to take energy from
+                    const pendingEnergySelection: PendingEnergySelection = {
+                        selectionType: 'energy',
+                        effect,
+                        originalContext: context,
+                        playerId: context.sourcePlayer,
+                        count: 1,
+                        availableEnergy: resolution.availableTargets,
+                    };
+                    controllers.turnState.setPendingSelection(pendingEnergySelection);
                     return null;
                 }
                 
@@ -330,14 +340,20 @@ export class EffectApplier {
                 && (target.type === 'single-choice' || target.type === 'multi-choice')
                 && (!currentTarget || currentTarget.type !== 'resolved')) {
                 /*
-                 * There's still another target that needs selection
-                 * Set up pending selection for the next target
+                 * There's still another target that needs selection.
+                 * Compute available targets for the next pending selection so handlers
+                 * don't have to re-run resolution themselves.
                  */
+                const nextResolution = FieldTargetResolver.resolveTarget(target, controllers, originalContext);
+                const nextAvailableTargets = nextResolution.type === 'requires-selection'
+                    ? nextResolution.availableTargets
+                    : [];
                 const pendingSelection: PendingFieldSelection = {
                     selectionType: 'field',
                     effect: resolvedEffect,
                     originalContext,
-                    count: 1, // Single target selection by default
+                    count: 1,
+                    availableTargets: nextAvailableTargets,
                 };
                 controllers.turnState.setPendingSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up
@@ -417,5 +433,99 @@ export class EffectApplier {
         }
         
         return false;
+    }
+
+    /**
+     * Resume an effect after a card selection has been made by the player.
+     * Dispatches to the appropriate handler's resumeWithCardSelection method.
+     * Template IDs are resolved to concrete card instances by consuming the first
+     * matching available card for each template ID (handles duplicate cards correctly).
+     * 
+     * @param controllers Game controllers
+     * @param pendingSelection The pending card selection
+     * @param selectedCardTemplateIds The template IDs of the cards selected by the player
+     */
+    static resumeEffectWithCardSelection(
+        controllers: Controllers,
+        pendingSelection: PendingCardSelection,
+        selectedCardTemplateIds: string[],
+    ): void {
+        const { effect, originalContext, availableCards } = pendingSelection;
+        const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
+
+        if (!handler?.resumeWithCardSelection) {
+            console.warn(`Handler for effect type '${effect.type}' does not support card selection resume`);
+            return;
+        }
+
+        // Resolve each template ID to a concrete card instance, consuming duplicates in order
+        const remaining = [ ...availableCards ];
+        const selectedCards = selectedCardTemplateIds.map(templateId => {
+            const idx = remaining.findIndex(card => card.templateId === templateId);
+            if (idx === -1) {
+                return undefined;
+            }
+            return remaining.splice(idx, 1)[0];
+        }).filter((card): card is GameCard => card !== undefined);
+
+        handler.resumeWithCardSelection(controllers, effect, selectedCards, originalContext);
+    }
+
+    /**
+     * Resume an effect after an energy selection has been made by the player.
+     * Resolves the selected EnergyOptions into a ResolvedMultiEnergyTarget and
+     * re-runs the effect with the resolved energy.
+     * 
+     * @param controllers Game controllers
+     * @param pendingSelection The pending energy selection
+     * @param selectedTargets The creatures selected by the player (playerId + fieldIndex)
+     */
+    static resumeEffectWithEnergySelection(
+        controllers: Controllers,
+        pendingSelection: PendingEnergySelection,
+        selectedTargets: Array<{ playerId: number; fieldIndex: number }>,
+    ): void {
+        const { effect, originalContext, availableEnergy } = pendingSelection;
+        const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
+
+        if (!handler) {
+            console.warn(`No handler found for effect type: ${effect.type}`);
+            return;
+        }
+
+        // Build ResolvedMultiEnergyTarget from the selected EnergyOptions
+        const resolvedTargets = selectedTargets
+            .map(sel => availableEnergy.find(opt => opt.playerId === sel.playerId && opt.fieldIndex === sel.fieldIndex))
+            .filter((opt): opt is EnergyOption => opt !== undefined)
+            .map(opt => ({
+                playerId: opt.playerId,
+                fieldIndex: opt.fieldIndex,
+                energy: opt.availableEnergy,
+            }));
+
+        const resolvedEnergy: ResolvedMultiEnergyTarget = {
+            type: 'resolved-multi',
+            targets: resolvedTargets,
+        };
+
+        // Find the EnergyTarget property name and replace with resolved value
+        const requirements = handler.getResolutionRequirements(effect);
+        /*
+         * TODO: Replace deep copy hack with proper effect cloning mechanism
+         * Deep copy the effect to avoid modifying the original
+         */
+        let resolvedEffect = JSON.parse(JSON.stringify(effect));
+        for (const requirement of requirements) {
+            const target = requirement.target;
+            if (target && typeof target === 'object' && 'fieldTarget' in target && 'count' in target) {
+                resolvedEffect = {
+                    ...resolvedEffect,
+                    [requirement.targetProperty]: resolvedEnergy,
+                };
+                break;
+            }
+        }
+
+        handler.apply(controllers, resolvedEffect, originalContext);
     }
 }

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
+import { SelectCardResponseMessage } from '../../../src/messages/response/select-card-response-message.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
@@ -101,7 +102,11 @@ describe('Hand Discard Effect', () => {
 
     it('should discard 2 cards from self hand (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [ new PlayCardResponseMessage('discard-supporter', 'supporter') ],
+            actions: [
+                new PlayCardResponseMessage('discard-supporter', 'supporter'),
+                // Player 0 selects 2 cards to discard (by template ID)
+                new SelectCardResponseMessage([ 'basic-creature', 'high-hp-creature' ]),
+            ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -109,13 +114,17 @@ describe('Hand Discard Effect', () => {
             ),
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed discard supporter');
+        expect(getExecutedCount()).to.equal(2, 'Should have executed discard supporter and card selection');
         expect(state.hand[0].length).to.equal(2, 'Player 0 should have 2 cards remaining (5 - 1 played - 2 discarded)');
     });
 
     it('should discard from different targets (opponent)', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [ new PlayCardResponseMessage('opponent-discard-supporter', 'supporter') ],
+            actions: [
+                new PlayCardResponseMessage('opponent-discard-supporter', 'supporter'),
+                // Opponent selects 3 cards to discard (by template ID)
+                new SelectCardResponseMessage([ 'basic-creature', 'high-hp-creature', 'basic-item' ]),
+            ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -124,7 +133,7 @@ describe('Hand Discard Effect', () => {
             ),
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed opponent discard supporter');
+        expect(getExecutedCount()).to.equal(2, 'Should have executed opponent discard supporter and card selection');
         expect(state.hand[0].length).to.equal(0, 'Player 0 should have no cards (played supporter)');
         expect(state.hand[1].length).to.equal(2, 'Player 1 should have 2 cards remaining (5 - 3 discarded)');
     });
@@ -163,7 +172,11 @@ describe('Hand Discard Effect', () => {
 
     it('should shuffle discarded cards into deck when specified', () => {
         const { state, getExecutedCount } = runTestGame({
-            actions: [ new PlayCardResponseMessage('shuffle-discard-supporter', 'supporter') ],
+            actions: [
+                new PlayCardResponseMessage('shuffle-discard-supporter', 'supporter'),
+                // Player 0 selects 2 cards to shuffle back into the deck (by template ID)
+                new SelectCardResponseMessage([ 'basic-creature', 'high-hp-creature' ]),
+            ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature'),
@@ -172,7 +185,7 @@ describe('Hand Discard Effect', () => {
             ),
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed shuffle discard supporter');
+        expect(getExecutedCount()).to.equal(2, 'Should have executed shuffle discard supporter and card selection');
         expect(state.hand[0].length).to.equal(1, 'Player 0 should have 1 card remaining (4 - 1 played - 2 discarded)');
         expect(state.deck[0].length).to.equal(3, 'Player 0 deck should have 3 cards (1 original + 2 shuffled in)');
     });
