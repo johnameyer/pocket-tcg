@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Prevent Damage Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
@@ -48,20 +48,26 @@ describe('Prevent Damage Effect', () => {
                 templateId: 'prevent-item',
                 name: 'Prevent Item',
                 effects: [{ 
-                    type: 'prevent-damage',
-                    target: { player: 'opponent', position: 'active' },
-                    damageSource: { player: 'opponent' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-damage',
+                        target: { player: 'opponent', position: 'active' },
+                        damageSource: { player: 'opponent' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'prevent-ex-item': {
                 templateId: 'prevent-ex-item',
                 name: 'Prevent Ex Item',
                 effects: [{
-                    type: 'prevent-damage',
-                    damageSource: { player: 'opponent', fieldCriteria: { cardCriteria: { attributes: { ex: true }}}},
-                    target: { player: 'opponent', position: 'active' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-damage',
+                        damageSource: { player: 'opponent', fieldCriteria: { cardCriteria: { attributes: { ex: true }}}},
+                        target: { player: 'opponent', position: 'active' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
         },

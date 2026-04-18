@@ -1,30 +1,11 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { PreventPlayingEffectHandler } from '../../../src/effects/handlers/prevent-playing-effect-handler.js';
-import { PreventPlayingEffect } from '../../../src/repository/effect-types.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Prevent Playing Effect', () => {
-    describe('getResolutionRequirements', () => {
-        const handler = new PreventPlayingEffectHandler();
-
-        it('should return empty array (no resolution needed)', () => {
-            const effect: PreventPlayingEffect = {
-                type: 'prevent-playing',
-                cardTypes: [ 'item' ],
-                target: 'opponent',
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.be.an('array').that.is.empty;
-        });
-    });
-
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
     const preventItem = { templateId: 'prevent-item', type: 'item' as const };
@@ -58,60 +39,78 @@ describe('Prevent Playing Effect', () => {
                 templateId: 'prevent-item',
                 name: 'Prevent Item',
                 effects: [{
-                    type: 'prevent-playing',
-                    cardTypes: [ 'item' ],
-                    target: 'opponent',
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-playing',
+                        cardTypes: [ 'item' ],
+                        target: 'opponent',
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'prevent-items-supporters': {
                 templateId: 'prevent-items-supporters',
                 name: 'Prevent Items and Supporters',
                 effects: [{
-                    type: 'prevent-playing',
-                    cardTypes: [ 'item', 'supporter' ],
-                    target: 'opponent',
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-playing',
+                        cardTypes: [ 'item', 'supporter' ],
+                        target: 'opponent',
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'prevent-creatures': {
                 templateId: 'prevent-creatures',
                 name: 'Prevent Creatures',
                 effects: [{
-                    type: 'prevent-playing',
-                    cardTypes: [ 'creature' ],
-                    target: 'opponent',
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-playing',
+                        cardTypes: [ 'creature' ],
+                        target: 'opponent',
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'prevent-tools': {
                 templateId: 'prevent-tools',
                 name: 'Prevent Tools',
                 effects: [{
-                    type: 'prevent-playing',
-                    cardTypes: [ 'tool' ],
-                    target: 'opponent',
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-playing',
+                        cardTypes: [ 'tool' ],
+                        target: 'opponent',
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'prevent-all': {
                 templateId: 'prevent-all',
                 name: 'Prevent All',
                 effects: [{
-                    type: 'prevent-playing',
-                    cardTypes: [ 'creature', 'item', 'supporter', 'tool' ],
-                    target: 'opponent',
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-playing',
+                        cardTypes: [ 'creature', 'item', 'supporter', 'tool' ],
+                        target: 'opponent',
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'self-prevent-item': {
                 templateId: 'self-prevent-item',
                 name: 'Self Prevent Item',
                 effects: [{
-                    type: 'prevent-playing',
-                    cardTypes: [ 'supporter' ],
-                    target: 'self',
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-playing',
+                        cardTypes: [ 'supporter' ],
+                        target: 'self',
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'normal-item': {
@@ -132,10 +131,13 @@ describe('Prevent Playing Effect', () => {
                 templateId: 'tool',
                 name: 'Tool',
                 effects: [{ 
-                    type: 'hp-bonus', 
-                    amount: { type: 'constant', value: 10 },
-                    target: { player: 'self', location: 'field', position: 'active' },
-                    duration: { type: 'while-in-play' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'hp-bonus', 
+                        amount: { type: 'constant', value: 10 },
+                        target: { player: 'self', location: 'field', position: 'active' },
+                        duration: { type: 'while-in-play' },
+                    },
                 }],
             },
         },

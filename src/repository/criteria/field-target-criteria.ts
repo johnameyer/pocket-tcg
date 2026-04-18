@@ -20,12 +20,19 @@ export type FieldCriteria = {
 /**
  * Represents criteria for targeting specific field cards or creatures.
  * Combines field location/position with creature criteria for flexible targeting.
+ *
+ * When used in **passive** `FieldTargetCriteria` (e.g. inside a `ModifierEffect`),
+ * `player: 'self'` refers to the `sourcePlayer` of the `PassiveEffect` — the entity
+ * that *owns* the passive effect, not the player who originally played the card.
+ * This distinction matters for tools played on an opponent's creature or effects
+ * registered via triggered abilities.
  * 
  * @example { player: 'opponent', location: 'field', position: 'active' } // Opponent's active creature
  * @example { player: 'self', location: 'field', fieldCriteria: { hasDamage: true } } // Own damaged creatures
  * @example { location: 'field', fieldCriteria: { cardCriteria: { stage: 0 } } } // Any basic creatures on field
  */
 export type FieldTargetCriteria = {
+    /** Player to match: resolved against `PassiveEffect.sourcePlayer` for passive effects */
     player?: 'self' | 'opponent';
     position?: 'active' | 'bench';
     location?: 'field' | 'hand' | 'deck';

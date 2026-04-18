@@ -1,30 +1,12 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { AttachEnergyResponseMessage } from '../../../src/messages/response/attach-energy-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { PreventEnergyAttachmentEffectHandler } from '../../../src/effects/handlers/prevent-energy-attachment-effect-handler.js';
-import { PreventEnergyAttachmentEffect } from '../../../src/repository/effect-types.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { AttachEnergyResponseMessage } from '../../../../src/messages/response/attach-energy-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Prevent Energy Attachment Effect', () => {
-    describe('getResolutionRequirements', () => {
-        const handler = new PreventEnergyAttachmentEffectHandler();
-
-        it('should return empty array (no resolution needed)', () => {
-            const effect: PreventEnergyAttachmentEffect = {
-                type: 'prevent-energy-attachment',
-                target: { player: 'opponent' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.be.an('array').that.is.empty;
-        });
-    });
-
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
     const preventItem = { templateId: 'prevent-item', type: 'item' as const };
@@ -55,27 +37,36 @@ describe('Prevent Energy Attachment Effect', () => {
                 templateId: 'prevent-item',
                 name: 'Prevent Energy Item',
                 effects: [{
-                    type: 'prevent-energy-attachment',
-                    target: { player: 'opponent' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-energy-attachment',
+                        target: { player: 'opponent' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'self-prevent-item': {
                 templateId: 'self-prevent-item',
                 name: 'Self Prevent Energy Item',
                 effects: [{
-                    type: 'prevent-energy-attachment',
-                    target: { player: 'self' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-energy-attachment',
+                        target: { player: 'self' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'both-prevent-item': {
                 templateId: 'both-prevent-item',
                 name: 'Both Prevent Energy Item',
                 effects: [{
-                    type: 'prevent-energy-attachment',
-                    target: {},
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-energy-attachment',
+                        target: {},
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
         },
@@ -346,9 +337,12 @@ describe('Prevent Energy Attachment Effect', () => {
                     templateId: 'prevent-item',
                     name: 'Prevent Energy Item',
                     effects: [{
-                        type: 'prevent-energy-attachment',
-                        target: { player: 'opponent' },
-                        duration: { type: 'until-end-of-next-turn' },
+                        type: 'passive',
+                        modifier: {
+                            type: 'prevent-energy-attachment',
+                            target: { player: 'opponent' },
+                            duration: { type: 'until-end-of-next-turn' },
+                        },
                     }],
                 },
             },

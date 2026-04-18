@@ -1,75 +1,13 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { RetreatResponseMessage } from '../../../src/messages/response/retreat-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
-import { RetreatPreventionEffectHandler } from '../../../src/effects/handlers/retreat-prevention-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { RetreatPreventionEffect } from '../../../src/repository/effect-types.js';
-import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { RetreatResponseMessage } from '../../../../src/messages/response/retreat-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
+import { getCurrentTemplateId } from '../../../../src/utils/field-card-utils.js';
 
 describe('Retreat Prevention Effect', () => {
-    describe('canApply', () => {
-        const handler = new RetreatPreventionEffectHandler();
-        const mockRepository = new MockCardRepository();
-
-        it('should return true when target exists', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
-            );
-
-            const effect: RetreatPreventionEffect = {
-                type: 'retreat-prevention',
-                target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.true;
-        });
-
-        it('should return false when target does not exist (target resolution failure)', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-            );
-
-            const effect: RetreatPreventionEffect = {
-                type: 'retreat-prevention',
-                target: { type: 'fixed', player: 'opponent', position: 'active' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.false;
-        });
-
-        it('should return false when targeting bench with no bench creatures (target resolution failure)', () => {
-            const handlerData = HandlerDataBuilder.default(
-                HandlerDataBuilder.withCreatures(0, 'basic-creature', []),
-                HandlerDataBuilder.withCreatures(1, 'basic-creature', []),
-            );
-
-            const effect: RetreatPreventionEffect = {
-                type: 'retreat-prevention',
-                target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const context = EffectContextFactory.createCardContext(0, 'Test Prevention', 'item');
-            const result = handler.canApply(handlerData, effect, context, mockRepository);
-            
-            expect(result).to.be.false;
-        });
-    });
-
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
     const highHpCreature = { templateId: 'high-hp-creature', type: 'creature' as const };
     const preventionItem = { templateId: 'prevention-item', type: 'item' as const };
@@ -100,36 +38,48 @@ describe('Retreat Prevention Effect', () => {
                 templateId: 'prevention-item',
                 name: 'Prevention Item',
                 effects: [{
-                    type: 'retreat-prevention',
-                    target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'retreat-prevention',
+                        target: { player: 'opponent', position: 'active' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'self-prevention-item': {
                 templateId: 'self-prevention-item',
                 name: 'Self Prevention Item',
                 effects: [{
-                    type: 'retreat-prevention',
-                    target: { type: 'fixed', player: 'self', position: 'active' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'retreat-prevention',
+                        target: { player: 'self', position: 'active' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'choice-prevention-item': {
                 templateId: 'choice-prevention-item',
                 name: 'Choice Prevention Item',
                 effects: [{
-                    type: 'retreat-prevention',
-                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field' }},
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'retreat-prevention',
+                        target: { player: 'opponent', location: 'field' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'all-prevention-item': {
                 templateId: 'all-prevention-item',
                 name: 'All Prevention Item',
                 effects: [{
-                    type: 'retreat-prevention',
-                    target: { type: 'all-matching', criteria: { player: 'opponent', location: 'field' }},
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'retreat-prevention',
+                        target: { player: 'opponent', location: 'field' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
         },

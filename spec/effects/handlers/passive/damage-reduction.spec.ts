@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Damage Reduction Effect', () => {
     const testRepository = new MockCardRepository({
@@ -19,11 +19,14 @@ describe('Damage Reduction Effect', () => {
                     name: 'Steel Armor',
                     trigger: { type: 'passive' },
                     effects: [{
-                        type: 'damage-reduction',
-                        amount: { type: 'constant', value: 20 },
-                        damageSource: { player: 'opponent' },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        duration: { type: 'while-in-play' },
+                        type: 'passive',
+                        modifier: {
+                            type: 'damage-reduction',
+                            amount: { type: 'constant', value: 20 },
+                            damageSource: { player: 'opponent' },
+                            target: { player: 'self', position: 'active' },
+                            duration: { type: 'while-in-play' },
+                        },
                     }],
                 },
             },
@@ -39,11 +42,14 @@ describe('Damage Reduction Effect', () => {
                     name: 'Reinforced Armor',
                     trigger: { type: 'passive' },
                     effects: [{
-                        type: 'damage-reduction',
-                        amount: { type: 'constant', value: 20 },
-                        damageSource: { player: 'opponent' },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        duration: { type: 'while-in-play' },
+                        type: 'passive',
+                        modifier: {
+                            type: 'damage-reduction',
+                            amount: { type: 'constant', value: 20 },
+                            damageSource: { player: 'opponent' },
+                            target: { player: 'self', position: 'active' },
+                            duration: { type: 'while-in-play' },
+                        },
                     }],
                 },
             },
@@ -59,11 +65,14 @@ describe('Damage Reduction Effect', () => {
                     name: 'Adaptive Defense',
                     trigger: { type: 'passive' },
                     effects: [{
-                        type: 'damage-reduction',
-                        amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
-                        damageSource: { player: 'opponent' },
-                        target: { type: 'fixed', player: 'self', position: 'active' },
-                        duration: { type: 'while-in-play' },
+                        type: 'passive',
+                        modifier: {
+                            type: 'damage-reduction',
+                            amount: { type: 'player-context-resolved', source: 'current-points', playerContext: 'self' },
+                            damageSource: { player: 'opponent' },
+                            target: { player: 'self', position: 'active' },
+                            duration: { type: 'while-in-play' },
+                        },
                     }],
                 },
             },

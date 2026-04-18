@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('HP Bonus Effect', () => {
     const basicCreature = { templateId: 'basic-creature', type: 'creature' as const };
@@ -35,10 +35,13 @@ describe('HP Bonus Effect', () => {
                 templateId: 'hp-tool',
                 name: 'HP Tool',
                 effects: [{
-                    type: 'hp-bonus',
-                    amount: { type: 'constant', value: 30 },
-                    target: { player: 'self', position: 'active' },
-                    duration: { type: 'while-in-play' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'hp-bonus',
+                        amount: { type: 'constant', value: 30 },
+                        target: { player: 'self', position: 'active' },
+                        duration: { type: 'while-in-play' },
+                    },
                 }],
             },
         },

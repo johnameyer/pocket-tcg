@@ -25,7 +25,16 @@ export type PassiveEffect = {
     id: string;
     
     /**
-     * The player who activated this effect.
+     * The player who *owns* this effect — the player from whose perspective
+     * `'self'` and `'opponent'` are resolved in the effect's `FieldTargetCriteria`.
+     *
+     * For creature abilities: the player who has the creature on their field.
+     * For tools: the player whose creature the tool is attached to (not necessarily
+     *   the player who played the tool card).
+     * For supporters/stadiums: the player who played the card.
+     *
+     * This is intentionally separate from "who played the card" to allow correct
+     * targeting even when a card is played on an opponent's side.
      */
     sourcePlayer: number;
     

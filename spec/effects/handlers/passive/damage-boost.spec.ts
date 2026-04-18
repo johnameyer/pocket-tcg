@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Damage Boost Effect', () => {
     const testRepository = new MockCardRepository({
@@ -27,11 +27,14 @@ describe('Damage Boost Effect', () => {
                 templateId: 'damage-boost-supporter',
                 name: 'Power Boost',
                 effects: [{
-                    type: 'damage-boost',
-                    amount: { type: 'constant', value: 20 },
-                    damageSource: { player: 'self', position: 'active' },
-                    target: { type: 'fixed', player: 'opponent', position: 'active' },
-                    duration: { type: 'until-end-of-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'damage-boost',
+                        amount: { type: 'constant', value: 20 },
+                        damageSource: { player: 'self', position: 'active' },
+                        target: { player: 'opponent', position: 'active' },
+                        duration: { type: 'until-end-of-turn' },
+                    },
                 }],
             },
         },

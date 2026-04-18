@@ -151,10 +151,13 @@ mockStadiumData['hp-boost-stadium'] = {
     templateId: 'hp-boost-stadium',
     name: 'HP Boost Stadium',
     effects: [{
-        type: 'hp-bonus',
-        amount: { type: 'constant', value: 20 },
-        target: {},
-        duration: { type: 'while-in-play' },
+        type: 'passive',
+        modifier: {
+            type: 'hp-bonus',
+            amount: { type: 'constant', value: 20 },
+            target: {},
+            duration: { type: 'while-in-play' },
+        },
     }],
 };
 
@@ -162,10 +165,13 @@ mockStadiumData['retreat-cost-stadium'] = {
     templateId: 'retreat-cost-stadium',
     name: 'Retreat Cost Stadium',
     effects: [{
-        type: 'retreat-cost-modification', operation: 'decrease',
-        amount: { type: 'constant', value: 1 },
-        target: {},
-        duration: { type: 'while-in-play' },
+        type: 'passive',
+        modifier: {
+            type: 'retreat-cost-modification', operation: 'decrease',
+            amount: { type: 'constant', value: 1 },
+            target: {},
+            duration: { type: 'while-in-play' },
+        },
     }],
 };
 

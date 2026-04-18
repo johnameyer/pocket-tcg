@@ -1,30 +1,12 @@
 import { expect } from 'chai';
-import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
-import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
-import { EndTurnResponseMessage } from '../../../src/messages/response/end-turn-response-message.js';
-import { StateBuilder } from '../../helpers/state-builder.js';
-import { runTestGame } from '../../helpers/test-helpers.js';
-import { MockCardRepository } from '../../mock-repository.js';
-import { PreventAttackEffectHandler } from '../../../src/effects/handlers/prevent-attack-effect-handler.js';
-import { PreventAttackEffect } from '../../../src/repository/effect-types.js';
+import { PlayCardResponseMessage } from '../../../../src/messages/response/play-card-response-message.js';
+import { AttackResponseMessage } from '../../../../src/messages/response/attack-response-message.js';
+import { EndTurnResponseMessage } from '../../../../src/messages/response/end-turn-response-message.js';
+import { StateBuilder } from '../../../helpers/state-builder.js';
+import { runTestGame } from '../../../helpers/test-helpers.js';
+import { MockCardRepository } from '../../../mock-repository.js';
 
 describe('Prevent Attack Effect', () => {
-    describe('getResolutionRequirements', () => {
-        const handler = new PreventAttackEffectHandler();
-
-        it('should return empty resolution requirements (no target resolution needed)', () => {
-            const effect: PreventAttackEffect = {
-                type: 'prevent-attack',
-                target: { player: 'opponent', position: 'active' },
-                duration: { type: 'until-end-of-turn' },
-            };
-
-            const result = handler.getResolutionRequirements(effect);
-            
-            expect(result).to.have.lengthOf(0);
-        });
-    });
-
     const preventionItem = { templateId: 'prevention-item', type: 'item' as const };
 
     const testRepository = new MockCardRepository({
@@ -53,36 +35,48 @@ describe('Prevent Attack Effect', () => {
                 templateId: 'prevention-item',
                 name: 'Prevention Item',
                 effects: [{
-                    type: 'prevent-attack',
-                    target: { player: 'opponent', position: 'active' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-attack',
+                        target: { player: 'opponent', position: 'active' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'self-prevention-item': {
                 templateId: 'self-prevention-item',
                 name: 'Self Prevention Item',
                 effects: [{
-                    type: 'prevent-attack',
-                    target: { player: 'self', position: 'active' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-attack',
+                        target: { player: 'self', position: 'active' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'choice-prevention-item': {
                 templateId: 'choice-prevention-item',
                 name: 'Choice Prevention Item',
                 effects: [{
-                    type: 'prevent-attack',
-                    target: { player: 'opponent', location: 'field' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-attack',
+                        target: { player: 'opponent', location: 'field' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
             'all-prevention-item': {
                 templateId: 'all-prevention-item',
                 name: 'All Prevention Item',
                 effects: [{
-                    type: 'prevent-attack',
-                    target: { player: 'opponent', location: 'field' },
-                    duration: { type: 'until-end-of-next-turn' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'prevent-attack',
+                        target: { player: 'opponent', location: 'field' },
+                        duration: { type: 'until-end-of-next-turn' },
+                    },
                 }],
             },
         },
@@ -325,9 +319,12 @@ describe('Prevent Attack Effect', () => {
                     templateId: 'prevention-item',
                     name: 'Prevention Item',
                     effects: [{
-                        type: 'prevent-attack',
-                        target: { player: 'opponent', position: 'active' },
-                        duration: { type: 'until-end-of-next-turn' },
+                        type: 'passive',
+                        modifier: {
+                            type: 'prevent-attack',
+                            target: { player: 'opponent', position: 'active' },
+                            duration: { type: 'until-end-of-next-turn' },
+                        },
                     }],
                 },
             },

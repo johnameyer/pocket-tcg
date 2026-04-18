@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { AttackResponseMessage } from '../src/messages/response/attack-response-message.js';
+import { PassiveEffect } from '../src/controllers/effect-controller.js';
 import { CardRepository } from '../src/repository/card-repository.js';
 import { CreatureData } from '../src/repository/card-types.js';
 import { StateBuilder } from './helpers/state-builder.js';
@@ -28,11 +29,14 @@ describe('Creature Abilities', () => {
                 name: 'Armor',
                 trigger: { type: 'passive' },
                 effects: [{
-                    type: 'damage-reduction',
-                    amount: { type: 'constant', value: 10 },
-                    damageSource: { player: 'opponent' },
-                    target: { type: 'fixed', player: 'self', position: 'active' },
-                    duration: { type: 'while-in-play' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'damage-reduction',
+                        amount: { type: 'constant', value: 10 },
+                        damageSource: { player: 'opponent' },
+                        target: { player: 'self', position: 'active' },
+                        duration: { type: 'while-in-play' },
+                    },
                 }],
             },
         },
@@ -48,10 +52,13 @@ describe('Creature Abilities', () => {
                 name: 'Vitality',
                 trigger: { type: 'passive' },
                 effects: [{
-                    type: 'hp-bonus',
-                    amount: { type: 'constant', value: 20 },
-                    target: { player: 'self', position: 'active' },
-                    duration: { type: 'while-in-play' },
+                    type: 'passive',
+                    modifier: {
+                        type: 'hp-bonus',
+                        amount: { type: 'constant', value: 20 },
+                        target: { player: 'self', position: 'active' },
+                        duration: { type: 'while-in-play' },
+                    },
                 }],
             },
         },
@@ -101,7 +108,7 @@ describe('Creature Abilities', () => {
 
             expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
             // HP boost creature should have passive effect registered
-            const hpBonusEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'hp-bonus');
+            const hpBonusEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'hp-bonus');
             expect(hpBonusEffects).to.have.lengthOf(1, 'Should have 1 HP bonus effect');
             
             // Creature should take damage and still be alive
@@ -126,8 +133,8 @@ describe('Creature Abilities', () => {
             expect(state.effects.activePassiveEffects.length).to.be.greaterThan(0, 'Should have registered passive effects');
             
             // Find effects by type
-            const damageReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'damage-reduction');
-            const hpBonusEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'hp-bonus');
+            const damageReductionEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'damage-reduction');
+            const hpBonusEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'hp-bonus');
             
             expect(damageReductionEffects).to.have.lengthOf(1, 'Should have 1 damage reduction effect');
             expect(hpBonusEffects).to.have.lengthOf(1, 'Should have 1 HP bonus effect');
@@ -154,11 +161,11 @@ describe('Creature Abilities', () => {
             const defensiveCreature = state.field.creatures[1][0];
             if (defensiveCreature && defensiveCreature.damageTaken < 100) {
                 // Not knocked out yet, check that effect is still active
-                const damageReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'damage-reduction');
+                const damageReductionEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'damage-reduction');
                 expect(damageReductionEffects.length).to.be.greaterThan(0, 'Effect should still be active if creature is alive');
             } else {
                 // Knocked out - should have no damage reduction effects
-                const damageReductionEffects = state.effects.activePassiveEffects.filter(e => e.effect.type === 'damage-reduction');
+                const damageReductionEffects = state.effects.activePassiveEffects.filter((e: PassiveEffect) => e.effect.type === 'damage-reduction');
                 expect(damageReductionEffects).to.have.lengthOf(0, 'Damage reduction effect should be cleared after knockout');
             }
         });
