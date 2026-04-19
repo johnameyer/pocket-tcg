@@ -1,4 +1,5 @@
 import { AttachableEnergyType } from '../energy-types.js';
+import { StatusCondition } from '../effect-types.js';
 import { CreatureCardCriteria } from './card-criteria.js';
 
 /**
@@ -9,12 +10,14 @@ import { CreatureCardCriteria } from './card-criteria.js';
  * @example { cardCriteria: { isType: 'water' }, hasEnergy: { water: 2 } } // Water types with 2+ water energy
  * @example { hasDamage: true } // Any creature with damage
  * @example { hasTool: true } // Any creature with a tool attached
+ * @example { hasStatusCondition: ['sleep'] } // Any creature that is asleep
  */
 export type FieldCriteria = {
     cardCriteria?: CreatureCardCriteria;
     hasDamage?: boolean;
     hasEnergy?: Partial<Record<AttachableEnergyType, number>>;
     hasTool?: boolean;
+    hasStatusCondition?: StatusCondition[];
 };
 
 /**
@@ -38,4 +41,3 @@ export type FieldTargetCriteria = {
     location?: 'field' | 'hand' | 'deck';
     fieldCriteria?: FieldCriteria;
 };
-

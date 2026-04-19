@@ -3,6 +3,7 @@ import { FieldTargetCriteriaFilter } from '../../../src/effects/filters/field-ta
 import { MockCardRepository } from '../../mock-repository.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 import { FieldCard } from '../../../src/controllers/field-controller.js';
+import { StatusEffectType } from '../../../src/controllers/status-effect-controller.js';
 
 describe('FieldTargetCriteriaFilter', () => {
     describe('filter', () => {
@@ -179,6 +180,117 @@ describe('FieldTargetCriteriaFilter', () => {
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
                 { fieldCriteria: { hasTool: true }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(0);
+        });
+
+        it('should filter by hasStatusCondition - active creature with sleep matches', () => {
+            const cardRepository = new MockCardRepository();
+
+            const active = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const bench = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ active, bench ];
+
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withStatusEffects(0, [{ type: StatusEffectType.ASLEEP, appliedTurn: 1 }]),
+            );
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasStatusCondition: [ 'sleep' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(0);
+        });
+
+        it('should filter by hasStatusCondition - benched creatures never match', () => {
+            const cardRepository = new MockCardRepository();
+
+            const active = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const bench1 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const bench2 = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ active, bench1, bench2 ];
+
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withStatusEffects(0, [{ type: StatusEffectType.ASLEEP, appliedTurn: 1 }]),
+            );
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasStatusCondition: [ 'sleep' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(0);
+        });
+
+        it('should filter by hasStatusCondition - no match when creature has no status condition', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+
+            const active = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const bench = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ active, bench ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasStatusCondition: [ 'sleep' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(0);
+        });
+
+        it('should filter by hasStatusCondition - matches any of the provided conditions', () => {
+            const cardRepository = new MockCardRepository();
+
+            const active = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const bench = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ active, bench ];
+
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withStatusEffects(0, [{ type: StatusEffectType.POISONED, appliedTurn: 1 }]),
+            );
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasStatusCondition: [ 'sleep', 'poison' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(0);
+        });
+
+        it('should filter by hasStatusCondition - no match when condition differs', () => {
+            const cardRepository = new MockCardRepository();
+
+            const active = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const bench = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ active, bench ];
+
+            const handlerData = HandlerDataBuilder.default(
+                HandlerDataBuilder.withStatusEffects(0, [{ type: StatusEffectType.POISONED, appliedTurn: 1 }]),
+            );
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasStatusCondition: [ 'sleep' ] }},
                 handlerData,
                 cardRepository,
                 0,
@@ -391,4 +503,3 @@ describe('FieldTargetCriteriaFilter', () => {
         });
     });
 });
-
