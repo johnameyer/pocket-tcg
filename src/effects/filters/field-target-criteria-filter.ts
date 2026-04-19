@@ -54,7 +54,7 @@ export class FieldTargetCriteriaFilter {
                 continue;
             }
 
-            if (!criteria || this.matchesCriteria(card, criteria, handlerData, cardRepository, fieldIndex)) {
+            if (!criteria || this.matchesCriteria(card, criteria, handlerData, cardRepository, playerId, fieldIndex)) {
                 result.push({ card, fieldIndex });
             }
         }
@@ -77,6 +77,7 @@ export class FieldTargetCriteriaFilter {
         criteria: FieldTargetCriteria,
         handlerData: HandlerData,
         cardRepository: CardRepository,
+        playerId: number,
         fieldIndex: number,
     ): boolean {
         // Check position criteria
@@ -95,6 +96,8 @@ export class FieldTargetCriteriaFilter {
                 cardRepository,
                 handlerData.energy?.attachedEnergyByInstance,
                 handlerData.tools?.attachedTools,
+                handlerData.statusEffects?.activeStatusEffects[playerId],
+                fieldIndex,
             )) {
                 return false;
             }
@@ -121,8 +124,10 @@ export class FieldTargetCriteriaFilter {
         cardRepository: CardRepository,
         attachedEnergy?: { [instanceId: string]: Record<AttachableEnergyType, number> },
         attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string }},
+        activeStatusEffects?: { type: string }[],
+        fieldIndex?: number,
     ): boolean {
-        return this.evaluateFieldCriteria(criteria, card, cardRepository, attachedEnergy, attachedTools);
+        return this.evaluateFieldCriteria(criteria, card, cardRepository, attachedEnergy, attachedTools, activeStatusEffects, fieldIndex);
     }
 
     /**
@@ -142,6 +147,8 @@ export class FieldTargetCriteriaFilter {
         cardRepository: CardRepository,
         attachedEnergy?: { [instanceId: string]: Record<AttachableEnergyType, number> },
         attachedTools?: { [instanceId: string]: { templateId: string; instanceId: string }},
+        activeStatusEffects?: { type: string }[],
+        fieldIndex?: number,
     ): boolean {
         // Evaluate card criteria if present - delegate to CardCriteriaFilter
         if (criteria.cardCriteria) {
@@ -185,6 +192,22 @@ export class FieldTargetCriteriaFilter {
             const fieldInstanceId = getFieldInstanceId(card);
             const hasTool = attachedTools[fieldInstanceId] !== undefined;
             if (!hasTool) {
+                return false;
+            }
+        }
+
+        // Check hasStatusCondition
+        if (criteria.hasStatusCondition !== undefined && criteria.hasStatusCondition.length > 0) {
+            // Status conditions only apply to the active creature (fieldIndex 0)
+            if (fieldIndex !== 0) {
+                return false;
+            }
+            if (!activeStatusEffects || activeStatusEffects.length === 0) {
+                return false;
+            }
+            const hasAny = criteria.hasStatusCondition.some(condition => activeStatusEffects.some(effect => effect.type === condition),
+            );
+            if (!hasAny) {
                 return false;
             }
         }
