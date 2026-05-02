@@ -4,6 +4,8 @@ on: [push]
 jobs:
   lint:
     runs-on: ubuntu-latest
+    env:
+      PNPM_STORE_PATH: ~/.pnpm-store
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +27,8 @@ jobs:
 
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      PNPM_STORE_PATH: ~/.pnpm-store
     strategy:
       matrix:
         node-version: [20.x]
