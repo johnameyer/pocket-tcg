@@ -392,7 +392,22 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         if (!this.state.creatures[playerId]) {
             this.state.creatures[playerId] = [];
         }
-        
+
+        // Clean up the existing active creature before replacing it
+        const existingActive = this.state.creatures[playerId][0];
+        if (existingActive) {
+            const existingInstanceId = getFieldInstanceId(existingActive);
+            if (existingInstanceId) {
+                this.controllers.energy.removeAllEnergyFromInstance(playerId, existingInstanceId);
+                this.controllers.effects.clearEffectsForInstance(existingInstanceId);
+                const attachedTool = this.controllers.tools.getAttachedTool(existingInstanceId);
+                if (attachedTool) {
+                    this.controllers.effects.clearEffectsForTool(attachedTool.instanceId, existingInstanceId);
+                }
+                this.controllers.tools.detachTool(existingInstanceId);
+            }
+        }
+
         // Use provided instanceId or generate a new one
         const cardInstanceId = instanceId ?? `${templateId}-${Date.now()}-${Math.random()}`;
         
