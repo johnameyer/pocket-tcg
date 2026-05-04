@@ -43,7 +43,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         
         // For deck searches, check if deck has cards
         if (location === 'deck') {
-            const deckSize = handlerData.deck;
+            const deckSize = handlerData.deck.sizes[context.sourcePlayer];
             return deckSize > 0;
         }
         

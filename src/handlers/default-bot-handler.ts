@@ -18,7 +18,7 @@ export class DefaultBotHandler extends GameHandler {
         const currentPlayer = handlerData.turn;
         
         // Get the player's hand
-        const hand = handlerData.hand;
+        const hand = handlerData.hand.hand;
         
         // First try to play a creature card to the bench if possible
         const creatureCards = hand.filter(card => card.type === 'creature');
@@ -130,9 +130,7 @@ export class DefaultBotHandler extends GameHandler {
     }
     
     handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
-        const hand = handlerData.hand;
-        
-        // Find all creature cards in hand
+        const hand = handlerData.hand.hand;
         const creatureCards = hand.filter(card => card.type === 'creature');
         
         if (creatureCards.length > 0) {

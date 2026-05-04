@@ -40,8 +40,8 @@ export class HandlerDataBuilder {
          * This is a partial representation - only includes properties needed for canApply tests
          */
         const data = {
-            deck: 0,
-            hand: [],
+            deck: { sizes: [ 0, 0 ] },
+            hand: { hand: [], sizes: [ 0, 0 ] },
             field: { creatures: [[], []] },
             turnCounter: { turnNumber: 2 },
             turnState: { 
@@ -97,7 +97,7 @@ export class HandlerDataBuilder {
      */
     static withDeck(size: number): HandlerDataCustomizer {
         return (data: HandlerData) => {
-            data.deck = size;
+            data.deck = { sizes: [ size, size ] };
         };
     }
 
@@ -107,11 +107,12 @@ export class HandlerDataBuilder {
      */
     static withHand(cards: Array<{ templateId: string, type?: GameCard['type'] }>): HandlerDataCustomizer {
         return (data: HandlerData) => {
-            data.hand = cards.map((card, index) => ({
+            const hand = cards.map((card, index) => ({
                 instanceId: `${card.templateId}-hand-${index}`,
                 templateId: card.templateId,
-                type: card.type || 'creature',
+                type: card.type || 'creature' as GameCard['type'],
             }));
+            data.hand = { hand, sizes: [ hand.length, 0 ] };
         };
     }
 

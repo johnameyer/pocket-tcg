@@ -160,7 +160,7 @@ export async function handlePlayCard(cardRepository: CardRepository, intermediar
     const currentPlayer = handlerData.turn;
     
     // Get the player's hand
-    const hand = handlerData.hand;
+    const hand = handlerData.hand.hand;
     
     if (!hand || hand.length === 0) {
         await intermediary.form({ type: 'print', message: [ 'Your hand is empty. Wait for your next turn to draw a card.' ] });
@@ -710,7 +710,7 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
  * @param playerId The player ID
  */
 export async function showPlayerStatus(cardRepository: CardRepository, intermediary: Intermediary, handlerData: HandlerData, playerId: number): Promise<void> {
-    const hand = handlerData.hand;
+    const hand = handlerData.hand.hand;
     const activeFieldCard = toFieldCard(handlerData.field.creatures[playerId][0]); // Position 0 is active
     const benchedFieldCards = handlerData.field.creatures[playerId].slice(1).map(toFieldCard); // Positions 1+ are benched
     const supporterPlayed = handlerData.turnState.supporterPlayedThisTurn;

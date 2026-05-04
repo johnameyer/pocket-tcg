@@ -22,7 +22,7 @@ export class DrawEffectHandler extends AbstractEffectHandler<DrawEffect> {
         const playerId = context.sourcePlayer;
         
         // Get the deck size from handler data
-        const deckSize = handlerData.deck;
+        const deckSize = handlerData.deck.sizes[playerId];
         
         /*
          * If the deck is completely empty, don't allow playing draw effects that require drawing

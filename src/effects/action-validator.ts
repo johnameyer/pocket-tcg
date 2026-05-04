@@ -124,7 +124,7 @@ export class ActionValidator {
      * Checks if a card can be played.
      */
     static canPlayCard(handlerData: HandlerData, cardRepository: CardRepository, cardId: string, playerId: number): boolean {
-        const hand = handlerData.hand;
+        const hand = handlerData.hand.hand;
         const cardIndex = hand.findIndex(card => card.templateId === cardId);
         
         if (cardIndex === -1) {

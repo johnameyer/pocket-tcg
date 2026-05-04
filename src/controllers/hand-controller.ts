@@ -27,7 +27,12 @@ export class HandControllerProvider implements GenericControllerProvider<GameCar
     }
 }
 
-export class HandController extends AbstractController<GameCard[][], HandDependencies, GameCard[]> {
+export type HandHandlerData = {
+    hand: GameCard[];
+    sizes: number[];
+};
+
+export class HandController extends AbstractController<GameCard[][], HandDependencies, HandHandlerData> {
     initialize(playerCount: number): void {
         this.state = new Array(playerCount).fill(undefined)
             .map(() => []);
@@ -143,8 +148,11 @@ export class HandController extends AbstractController<GameCard[][], HandDepende
     }
     
     // Required by AbstractController
-    getFor(position: number): GameCard[] {
-        return this.getHand(position);
+    getFor(position: number): HandHandlerData {
+        return {
+            hand: this.getHand(position),
+            sizes: this.state.map(h => h.length),
+        };
     }
     
     // Remove specific cards from hand and discard them
