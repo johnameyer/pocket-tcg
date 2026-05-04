@@ -24,11 +24,15 @@ export class DeckControllerProvider implements GenericControllerProvider<GameCar
     }
 }
 
+export type DeckHandlerData = {
+    sizes: number[];
+};
+
 /*
  * TODO: Handler should know what cards are remaining but not in order - need to make this clear to handlers
  * This is important for maintaining game integrity while providing necessary information
  */
-export class DeckController extends AbstractController<GameCard[][], DeckDependencies, number> {
+export class DeckController extends AbstractController<GameCard[][], DeckDependencies, DeckHandlerData> {
     private playerCount: number = 0;
 
     private nextCardInstanceId: number = 1;
@@ -128,10 +132,12 @@ export class DeckController extends AbstractController<GameCard[][], DeckDepende
     
     /*
      * Required by AbstractController
-     * Return only the deck size, not the full deck data
+     * Return deck sizes for all players (public knowledge), not the actual cards.
      */
-    getFor(position: number): number {
-        return this.getDeckSize(position);
+    getFor(_position: number): DeckHandlerData {
+        return {
+            sizes: this.state.map(d => d.length),
+        };
     }
     
     // Required by AbstractController

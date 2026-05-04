@@ -75,7 +75,7 @@ export class IntermediaryHandler extends GameHandler {
     
     async handleSetup(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): Promise<void> {
         const currentPlayer = handlerData.turn;
-        const hand = handlerData.hand;
+        const hand = handlerData.hand.hand;
         
         await this.intermediary.form({
             type: 'print',

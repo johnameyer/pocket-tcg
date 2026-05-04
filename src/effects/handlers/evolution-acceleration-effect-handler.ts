@@ -54,7 +54,7 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             }
             
             // Check if there's a valid Stage 2 evolution in hand
-            const hand = handlerData.hand;
+            const hand = handlerData.hand.hand;
             const targetCreatureData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
             const hasValidEvolution = hand.some(card => {
                 if (card.type !== 'creature') {

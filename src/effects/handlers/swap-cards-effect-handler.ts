@@ -33,8 +33,8 @@ export class SwapCardsEffectHandler extends AbstractEffectHandler<SwapCardsEffec
      */
     canApply(handlerData: HandlerData, effect: SwapCardsEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // Check if player has cards in hand to discard OR cards in deck to draw
-        const hasCardsToDiscard = handlerData.hand.length > 0;
-        const hasCardsToDraw = handlerData.deck > 0;
+        const hasCardsToDiscard = handlerData.hand.hand.length > 0;
+        const hasCardsToDraw = handlerData.deck.sizes[context.sourcePlayer] > 0;
         
         // Effect can be applied if either discarding or drawing would happen
         return hasCardsToDiscard || hasCardsToDraw;
