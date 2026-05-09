@@ -233,7 +233,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 attackResult.target.hp,
             ));
             
-            controllers.turnState.setShouldEndTurn(true);
+            // Only end the turn if there's no pending selection waiting to be resolved.
+            // If a pending selection was set by the attack effects, the action loop will
+            // re-check after this turn's ACTION and route into handlePendingSelections.
+            // The select-*-response handler will then call setShouldEndTurn after resolving.
+            if (!controllers.turnState.getPendingSelection()) {
+                controllers.turnState.setShouldEndTurn(true);
+            }
         },
     },
     'play-card-response': {
@@ -1049,7 +1055,12 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             ],
             fallback: (controllers: Controllers, source: number, message: SelectTargetResponseMessage) => {
                 controllers.waiting.removePosition(source);
+                const pendingSelection = controllers.turnState.getPendingSelection();
                 controllers.turnState.clearPendingSelection(); // Clear pending selection on validation failure
+                // If the selection was triggered by an attack, end the turn on failure too
+                if (pendingSelection?.originalContext?.type === 'attack') {
+                    controllers.turnState.setShouldEndTurn(true);
+                }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
                 return undefined as any;
             },
@@ -1060,6 +1071,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const pendingSelection = controllers.turnState.getPendingSelection();
             
             if (pendingSelection && isPendingFieldSelection(pendingSelection)) {
+                const shouldEndTurnAfter = pendingSelection.originalContext?.type === 'attack';
                 const hasNewPendingSelection = EffectApplier.resumeEffectWithSelection(
                     controllers,
                     pendingSelection,
@@ -1070,6 +1082,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 // Only clear pending selection if we didn't set up a new one
                 if (!hasNewPendingSelection) {
                     controllers.turnState.clearPendingSelection();
+                    // If triggered by an attack, end the turn now that selection is resolved
+                    if (shouldEndTurnAfter) {
+                        controllers.turnState.setShouldEndTurn(true);
+                    }
                 }
             } else {
                 controllers.turnState.clearPendingSelection();
