@@ -399,12 +399,29 @@ const handlePlayerActions = loop<Controllers>({
             handler: 'action',
             position: (controllers: Controllers) => controllers.turn.get(),
         }),
-        // Handle any pending selections after the action
-        conditionalState({
-            id: 'checkPendingSelections',
-            condition: hasPendingSelection,
-            truthy: handlePendingSelections,
-        }),
+        // Handle any pending selections after the action.
+        // NOTE: This is intentionally written as an inline state machine rather than using
+        // conditionalState(), to add a no-op `run` on the CHECK state. Without it, simplify()
+        // would mergeUp CHECK_CHECKPENDINGSELECTIONS into the preceding ACTION_ACTION state,
+        // causing hasPendingSelection() to be evaluated *before* the player responds (i.e. before
+        // the attack handler's merge() has set the pending selection). The no-op run prevents that
+        // merge, so the check runs as a separate step after resume() — when pending selection is
+        // already set.
+        {
+            name: 'CHECKPENDINGSELECTIONS',
+            start: 'CHECK_CHECKPENDINGSELECTIONS',
+            states: {
+                CHECK_CHECKPENDINGSELECTIONS: {
+                    run: () => {},
+                    transitions: [{ condition: hasPendingSelection, state: 'IF_CHECKPENDINGSELECTIONS' }],
+                    defaultTransition: 'IF_NOT_CHECKPENDINGSELECTIONS',
+                },
+                IF_CHECKPENDINGSELECTIONS: {
+                    run: handlePendingSelections,
+                },
+                IF_NOT_CHECKPENDINGSELECTIONS: {},
+            },
+        },
         // Check for knockouts after each action
         conditionalState({
             id: 'checkKnockouts',
