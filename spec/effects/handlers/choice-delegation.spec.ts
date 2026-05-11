@@ -145,7 +145,8 @@ describe('Choice Delegation Effect', () => {
                 ),
             });
 
-            expect(state.field.creatures[1][0].damageTaken).to.equal(0, 'Should deal no damage');
+            // Poison ticks at end of turn (checkupPhase), so 10 damage is expected
+            expect(state.field.creatures[1][0].damageTaken).to.equal(10, 'Should deal only poison tick damage, not attack damage');
             expect(state.statusEffects.activeStatusEffects[1]).to.have.length(1, 'Should apply a status');
             expect(state.statusEffects.activeStatusEffects[1][0].type).to.equal('poison', 'Should apply poison');
         });

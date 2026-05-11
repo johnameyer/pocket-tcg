@@ -5,6 +5,7 @@
   "author": "John Meyer",
   "homepage": "https://github.com/johnameyer/pocket-tcg#readme",
   "license": "MIT",
+  "packageManager": "pnpm@10.30.0",
   "type": "module",
   "main": "dist/index.js",
   "directories": {
