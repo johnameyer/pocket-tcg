@@ -58,6 +58,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
                     selectionType: 'card',
                     effect,
                     originalContext: context,
+                    continuationEffects: context.selectionContinuationEffects,
                     playerId,
                     location: 'hand',
                     count: actualDiscardAmount,

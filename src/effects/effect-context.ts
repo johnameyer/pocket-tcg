@@ -1,4 +1,4 @@
-import { TriggerType } from '../repository/effect-types.js';
+import { TriggerType, Effect } from '../repository/effect-types.js';
 
 // Base context shared by all effect call sites
 type BaseEffectContext = {
@@ -6,6 +6,8 @@ type BaseEffectContext = {
     effectName: string;
     targetPlayerId?: number;
     targetCreatureIndex?: number;
+    /** Optional effects to resume after a wrapped choice/selection chain completes */
+    selectionContinuationEffects?: Effect[];
     /** Optional instance ID of the card that owns this effect, used for passive effect cleanup */
     sourceInstanceId?: string;
     /** Optional instance ID of the tool that owns this effect, used for tool passive effect cleanup */

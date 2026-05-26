@@ -1060,6 +1060,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const pendingSelection = controllers.turnState.getPendingSelection();
             
             if (pendingSelection && isPendingFieldSelection(pendingSelection)) {
+                controllers.turnState.clearPendingSelection();
                 const hasNewPendingSelection = EffectApplier.resumeEffectWithSelection(
                     controllers,
                     pendingSelection,
@@ -1240,8 +1241,15 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const selectedValue = message.choiceValues[0];
                     const selectedOption = effect.options.find(o => o.name === selectedValue);
                     if (selectedOption && selectedOption.effects.length > 0) {
-                        controllers.effects.pushPendingEffect(selectedOption.effects, originalContext);
+                        const selectionContext = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
+                            ? { ...originalContext, selectionContinuationEffects: pendingSelection.continuationEffects }
+                            : originalContext;
+                        controllers.effects.pushPendingEffect(selectedOption.effects, selectionContext);
                         EffectQueueProcessor.processQueue(controllers);
+                        if (!controllers.turnState.getPendingSelection() && pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0) {
+                            controllers.effects.pushPendingEffect(pendingSelection.continuationEffects, originalContext);
+                            EffectQueueProcessor.processQueue(controllers);
+                        }
                     } else if (!selectedOption) {
                         console.warn(`Choice delegation: no option found matching selected value '${selectedValue}'`);
                     }

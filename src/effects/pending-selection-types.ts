@@ -24,6 +24,8 @@ export type BasePendingSelection = {
     effect: Effect;
     /** The original context in which the effect was triggered */
     originalContext: EffectContext;
+    /** Effects that should resume after the current selection chain resolves */
+    continuationEffects?: Effect[];
     /** A human-readable prompt for the selection */
     prompt?: string;
 };

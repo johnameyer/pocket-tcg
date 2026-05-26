@@ -755,6 +755,7 @@ export class FieldTargetResolver {
                     selectionType: 'field',
                     effect: effect,
                     originalContext: context,
+                    continuationEffects: context.selectionContinuationEffects,
                     count: 1,
                     availableTargets: resolution.availableTargets,
                 });
