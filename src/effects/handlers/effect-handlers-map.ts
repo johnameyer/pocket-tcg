@@ -20,6 +20,7 @@ import { pullEvolutionEffectHandler } from './pull-evolution-effect-handler.js';
 import { conditionalDelegationEffectHandler } from './conditional-delegation-effect-handler.js';
 import { choiceDelegationEffectHandler } from './choice-delegation-effect-handler.js';
 import { passiveEffectHandler } from './passive-effect-handler.js';
+import { futureEffectHandler } from './future-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -42,5 +43,6 @@ export const effectHandlers: EffectHandlerMap = {
     'pull-evolution': pullEvolutionEffectHandler,
     'conditional-delegation': conditionalDelegationEffectHandler,
     'choice-delegation': choiceDelegationEffectHandler,
+    future: futureEffectHandler,
     passive: passiveEffectHandler,
 };

@@ -105,6 +105,7 @@ export class StateBuilder {
             effects: {
                 immediatelyPendingEffects: [],
                 activePassiveEffects: [],
+                scheduledFutureEffects: [],
                 nextEffectId: 0,
             },
             cardRepository: {},
