@@ -5,6 +5,7 @@ import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { CreatureData } from './repository/card-types.js';
 import { isPendingEnergySelection, isPendingCardSelection } from './effects/pending-selection-types.js';
 import { TriggerProcessor } from './effects/trigger-processor.js';
+import { StatusEffectController } from './controllers/status-effect-controller.js';
 
 // Helper function to calculate points awarded for knocking out a creature
 const calculateKnockoutPoints = (creatureData: CreatureData): number => {
@@ -597,19 +598,46 @@ const gameTurn = loop<Controllers>({
                         const activeCard = controllers.field.getCardByPosition(playerId, 0);
                         if (activeCard) {
                             if (damageResult.poisonDamage > 0) {
+                                controllers.statusEffects.recordKnockoutCondition(playerId, StatusEffectController.KNOCKOUT_CONDITION_MAP.status);
                                 const actualDamage = controllers.field.applyDamage(playerId, damageResult.poisonDamage);
                                 controllers.players.messageAll({
                                     type: 'status-effect-damage',
                                     components: [ `Player ${playerId + 1}'s card takes ${damageResult.poisonDamage} poison damage!` ],
                                 });
+                                if (controllers.field.isKnockedOut(playerId)) {
+                                    TriggerProcessor.processBeforeKnockout(
+                                        controllers,
+                                        playerId,
+                                        activeCard.instanceId,
+                                        activeCard.templateId,
+                                        undefined,
+                                        undefined,
+                                        controllers.statusEffects.consumeKnockoutCondition(playerId) ?? StatusEffectController.KNOCKOUT_CONDITION_MAP.status,
+                                    );
+                                }
                             }
                         
-                            if (damageResult.burnDamage > 0) {
+                            if (damageResult.burnDamage > 0 && !controllers.field.isKnockedOut(playerId)) {
+                                controllers.statusEffects.recordKnockoutCondition(playerId, StatusEffectController.KNOCKOUT_CONDITION_MAP.status);
                                 const actualDamage = controllers.field.applyDamage(playerId, damageResult.burnDamage);
                                 controllers.players.messageAll({
                                     type: 'status-effect-damage', 
                                     components: [ `Player ${playerId + 1}'s card takes ${damageResult.burnDamage} burn damage!` ],
                                 });
+                                if (controllers.field.isKnockedOut(playerId)) {
+                                    TriggerProcessor.processBeforeKnockout(
+                                        controllers,
+                                        playerId,
+                                        activeCard.instanceId,
+                                        activeCard.templateId,
+                                        undefined,
+                                        undefined,
+                                        controllers.statusEffects.consumeKnockoutCondition(playerId) ?? StatusEffectController.KNOCKOUT_CONDITION_MAP.status,
+                                    );
+                                }
+                            }
+                            if (!controllers.field.isKnockedOut(playerId)) {
+                                controllers.statusEffects.clearKnockoutCondition(playerId);
                             }
                         }
                     } catch (error) {
@@ -626,15 +654,6 @@ const gameTurn = loop<Controllers>({
                 // Process any effects that were triggered during the checkup phase
                 EffectQueueProcessor.processQueue(controllers);
 
-                // Process before-knockout triggers for cards knocked out by status effects
-                for (let playerId = 0; playerId < controllers.players.count; playerId++) {
-                    for (const card of controllers.field.getCards(playerId)) {
-                        const { maxHp } = controllers.cardRepository.getCreature(card.templateId);
-                        if (card.damageTaken >= maxHp) {
-                            TriggerProcessor.processBeforeKnockout(controllers, playerId, card.instanceId, card.templateId);
-                        }
-                    }
-                }
                 EffectQueueProcessor.processQueue(controllers);
                 
                 // Clear persistent effects at end of turn (they last "during opponent's next turn")

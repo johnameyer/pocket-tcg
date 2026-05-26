@@ -1,4 +1,5 @@
 import { Controllers } from '../controllers/controllers.js';
+import { KnockoutCondition } from '../repository/card-types.js';
 import { EffectContextFactory } from './effect-context.js';
 
 /**
@@ -305,20 +306,23 @@ export class TriggerProcessor {
         creatureCardId: string,
         attackerInstanceId?: string,
         attackerPlayerId?: number,
+        knockoutCondition: KnockoutCondition = 'effect-damage',
     ): void {
         // Process tool triggers
         const tool = controllers.tools.getAttachedTool(creatureInstanceId);
         if (tool) {
             const toolData = controllers.cardRepository.getTool(tool.templateId);
             if (toolData && toolData.effects && toolData.trigger?.type === 'before-knockout') {
-                const context = EffectContextFactory.createTriggerContext(
-                    playerId,
-                    toolData.name,
-                    creatureInstanceId,
-                    { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId },
-                );
+                if (!toolData.trigger.knockoutConditions || toolData.trigger.knockoutConditions.includes(knockoutCondition)) {
+                    const context = EffectContextFactory.createTriggerContext(
+                        playerId,
+                        toolData.name,
+                        creatureInstanceId,
+                        { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId, knockoutCondition },
+                    );
 
-                controllers.effects.pushPendingEffect(toolData.effects, context);
+                    controllers.effects.pushPendingEffect(toolData.effects, context);
+                }
             }
         }
         
@@ -327,14 +331,16 @@ export class TriggerProcessor {
         if (creatureData && creatureData.ability) {
             const ability = creatureData.ability;
             if (ability.trigger?.type === 'before-knockout' && ability.effects) {
-                const context = EffectContextFactory.createTriggerContext(
-                    playerId,
-                    `${creatureData.name}'s ${ability.name}`,
-                    creatureInstanceId,
-                    { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId },
-                );
-                
-                controllers.effects.pushPendingEffect(ability.effects, context);
+                if (!ability.trigger.knockoutConditions || ability.trigger.knockoutConditions.includes(knockoutCondition)) {
+                    const context = EffectContextFactory.createTriggerContext(
+                        playerId,
+                        `${creatureData.name}'s ${ability.name}`,
+                        creatureInstanceId,
+                        { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId, knockoutCondition },
+                    );
+
+                    controllers.effects.pushPendingEffect(ability.effects, context);
+                }
             }
         }
     }
