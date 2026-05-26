@@ -2,6 +2,7 @@ import { GenericControllerProvider, GenericHandlerController, GlobalController, 
 import { ResponseMessage } from '../messages/response-message.js';
 import { GameHandlerParams } from '../game-handler-params.js';
 import { StatusCondition } from '../repository/effect-types.js';
+import { KnockoutCondition } from '../repository/card-types.js';
 
 import { TurnCounterController } from './turn-counter-controller.js';
 import { CoinFlipController } from './coinflip-controller.js';
@@ -24,6 +25,7 @@ export type StatusEffectState = {
      * Status effects for active FieldCard [playerId] - array of StatusEffect arrays
      */
     activeStatusEffects: StatusEffect[][];
+    knockoutConditions: Array<KnockoutCondition | undefined>;
 };
 
 type StatusEffectDependencies = { 
@@ -41,6 +43,7 @@ export class StatusEffectControllerProvider implements GenericControllerProvider
         return {
             activeStatusEffects: new Array(controllers.players.count).fill(null)
                 .map(() => [] as StatusEffect[]),
+            knockoutConditions: new Array(controllers.players.count).fill(undefined),
         };
     }
     
@@ -93,6 +96,27 @@ export class StatusEffectController extends GlobalController<StatusEffectState, 
             throw new Error(`Unknown status condition: ${condition}`);
         }
         return type;
+    }
+
+    public static readonly KNOCKOUT_CONDITION_MAP = {
+        attack: 'attack-damage',
+        status: 'status-damage',
+        effect: 'effect-damage',
+        self: 'self-damage',
+    } as const;
+
+    public recordKnockoutCondition(playerId: number, condition: KnockoutCondition): void {
+        this.state.knockoutConditions[playerId] = condition;
+    }
+
+    public consumeKnockoutCondition(playerId: number): KnockoutCondition | undefined {
+        const condition = this.state.knockoutConditions[playerId];
+        this.state.knockoutConditions[playerId] = undefined;
+        return condition;
+    }
+
+    public clearKnockoutCondition(playerId: number): void {
+        this.state.knockoutConditions[playerId] = undefined;
     }
     
     // Apply status effect from StatusCondition

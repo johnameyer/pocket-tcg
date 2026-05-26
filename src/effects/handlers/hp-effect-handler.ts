@@ -11,6 +11,7 @@ import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 import { toFieldCard } from '../../utils/field-card-utils.js';
 import { TriggerProcessor } from '../trigger-processor.js';
+import { StatusEffectController } from '../../controllers/status-effect-controller.js';
 
 /**
  * Handler for HP effects (healing and damage).
@@ -240,6 +241,9 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
             // Get the creature data - will throw an error if not found
             const creatureData = controllers.cardRepository.getCreature(creature.templateId);
             const creatureName = customName || creatureData.name;
+            const isKnockedOut = creature.damageTaken + damageDealt >= creatureData.maxHp;
+
+            controllers.statusEffects.recordKnockoutCondition(playerId, StatusEffectController.KNOCKOUT_CONDITION_MAP.effect);
             
             controllers.players.messageAll({
                 type: 'status',
@@ -268,6 +272,10 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
                 attackerInstanceId,
                 attackerPlayerId,
             );
+
+            if (!isKnockedOut) {
+                controllers.statusEffects.clearKnockoutCondition(playerId);
+            }
         }
     }
     

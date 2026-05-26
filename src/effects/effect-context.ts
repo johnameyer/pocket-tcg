@@ -1,4 +1,5 @@
 import { TriggerType, Effect } from '../repository/effect-types.js';
+import { KnockoutCondition } from '../repository/card-types.js';
 
 // Base context shared by all effect call sites
 type BaseEffectContext = {
@@ -42,7 +43,7 @@ export type CardEffectContext = BaseEffectContext & {
  */
 export type TriggerContextData =
     | { triggerType: 'damaged'; damage: number; attackerInstanceId?: string; attackerPlayerId?: number }
-    | { triggerType: 'before-knockout'; attackerInstanceId?: string; attackerPlayerId?: number }
+    | { triggerType: 'before-knockout'; attackerInstanceId?: string; attackerPlayerId?: number; knockoutCondition: KnockoutCondition }
     | { triggerType: 'on-attack'; defenderInstanceId: string; defenderPlayerId: number }
     | { triggerType: 'energy-attachment'; energyType: string; triggerTargetInstanceId: string; triggerTargetPlayerId: number }
     | { triggerType: Exclude<TriggerType, 'damaged' | 'before-knockout' | 'on-attack' | 'energy-attachment'> };

@@ -7,6 +7,11 @@ import { EffectValue } from './effect-value-types.js';
 export type OperationType = 'heal' | 'damage' | 'attach' | 'discard';
 
 /**
+ * Indicates why a creature was knocked out.
+ */
+export type KnockoutCondition = 'attack-damage' | 'status-damage' | 'effect-damage' | 'self-damage';
+
+/**
  * Represents a trigger condition that determines when an effect should activate.
  */
 export type Trigger =
@@ -18,7 +23,7 @@ export type Trigger =
     | { type: 'on-evolution' }
     | { type: 'start-of-turn', ownTurnOnly?: boolean }
     | { type: 'on-play', filterEvolution?: boolean }
-    | { type: 'before-knockout' }
+    | { type: 'before-knockout', knockoutConditions?: KnockoutCondition[] }
     | { type: 'on-checkup', ownTurnOnly?: boolean }
     | { type: 'on-retreat' }
     | { type: 'on-attack' };

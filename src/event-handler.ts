@@ -17,6 +17,7 @@ import { getCurrentTemplateId } from './utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from './effects/pending-selection-types.js';
 import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
 import { matchesPlayerTarget } from './utils/player-target-utils.js';
+import { StatusEffectController } from './controllers/status-effect-controller.js';
 
 /**
  * FALLBACK HANDLING NOTES:
@@ -134,6 +135,18 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     type: 'status',
                     components: [ `${playerCard.templateId} is confused and hurt itself in its confusion!` ],
                 });
+                if (controllers.field.isKnockedOut(sourceHandler)) {
+                    TriggerProcessor.processBeforeKnockout(
+                        controllers,
+                        sourceHandler,
+                        playerCard.instanceId,
+                        playerCard.templateId,
+                        undefined,
+                        undefined,
+                        StatusEffectController.KNOCKOUT_CONDITION_MAP.self,
+                    );
+                    EffectQueueProcessor.processQueue(controllers);
+                }
                 controllers.turnState.setShouldEndTurn(true);
                 return;
             }
@@ -173,6 +186,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
 
             // Trigger when-damaged effects for tools (Rocky Helmet, Poison Barb, etc.)
             if (attackResult.damage > 0 && attackResult.target.instanceId) {
+                controllers.statusEffects.recordKnockoutCondition(targetId, StatusEffectController.KNOCKOUT_CONDITION_MAP.attack);
                 TriggerProcessor.processWhenDamaged(
                     controllers,
                     targetId,
@@ -219,9 +233,13 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             card.templateId,
                             playerCard.instanceId,
                             sourceHandler,
+                            controllers.statusEffects.consumeKnockoutCondition(playerId) ?? StatusEffectController.KNOCKOUT_CONDITION_MAP.attack,
                         );
                     }
                 }
+            }
+            if (!controllers.field.isKnockedOut(targetId)) {
+                controllers.statusEffects.clearKnockoutCondition(targetId);
             }
             EffectQueueProcessor.processQueue(controllers);
             

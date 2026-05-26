@@ -8,6 +8,7 @@ import { PlayCardResponseMessage } from '../../src/messages/response/play-card-r
 import { EvolveResponseMessage } from '../../src/messages/response/evolve-response-message.js';
 import { RetreatResponseMessage } from '../../src/messages/response/retreat-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
+import { StatusEffectType } from '../../src/controllers/status-effect-controller.js';
 
 describe('Trigger System', () => {
     describe('Tool Triggers', () => {
@@ -575,7 +576,7 @@ describe('Trigger System', () => {
                                 target: { type: 'fixed', player: 'opponent', position: 'active' },
                                 operation: 'damage',
                             }],
-                            trigger: { type: 'before-knockout' },
+                            trigger: { type: 'before-knockout', knockoutConditions: [ 'attack-damage' ] },
                         },
                     },
                     'basic-attacker': {
@@ -599,6 +600,54 @@ describe('Trigger System', () => {
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(30, 'Should deal 30 damage before knockout');
+        });
+
+        it('should not trigger before-knockout ability on status damage when filtered to attack damage', () => {
+            const testRepository = new MockCardRepository({
+                creatures: {
+                    'last-stand-creature': {
+                        templateId: 'last-stand-creature',
+                        name: 'Last Stand Creature',
+                        maxHp: 60,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
+                        ability: {
+                            name: 'Last Stand',
+                            effects: [{
+                                type: 'hp',
+                                amount: { type: 'constant', value: 30 },
+                                target: { type: 'fixed', player: 'opponent', position: 'active' },
+                                operation: 'damage',
+                            }],
+                            trigger: { type: 'before-knockout', knockoutConditions: [ 'attack-damage' ] },
+                        },
+                    },
+                    'basic-attacker': {
+                        templateId: 'basic-attacker',
+                        name: 'Basic Attacker',
+                        maxHp: 100,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Strong Attack', damage: 10, energyRequirements: [] }],
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [ new EndTurnResponseMessage() ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-attacker'),
+                    StateBuilder.withCreatures(1, 'last-stand-creature'),
+                    (state) => {
+                        state.statusEffects.activeStatusEffects[1] = [{ type: StatusEffectType.POISONED, appliedTurn: 0 }];
+                        state.field.creatures[1][0].damageTaken = 50;
+                    },
+                ),
+            });
+
+            expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'Should not deal damage from a filtered before-knockout trigger');
         });
     });
 

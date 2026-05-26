@@ -75,6 +75,7 @@ export class StateBuilder {
             },
             statusEffects: {
                 activeStatusEffects: [[], []], // No status effects for either player
+                knockoutConditions: [ undefined, undefined ],
             },
             coinFlip: {
                 nextFlipGuaranteedHeads: false,

@@ -68,6 +68,7 @@ export class HandlerDataBuilder {
             },
             statusEffects: {
                 activeStatusEffects: [[], []],
+                knockoutConditions: [ undefined, undefined ],
             },
         };
         
