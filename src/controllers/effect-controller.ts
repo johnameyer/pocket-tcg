@@ -2,6 +2,7 @@ import { GlobalController, GenericControllerProvider } from '@cards-ts/core';
 import { Effect, ModifierEffect } from '../repository/effect-types.js';
 import { EffectContext } from '../effects/effect-context.js';
 import { Duration } from '../repository/duration-types.js';
+import type { Controllers } from './controllers.js';
 
 /**
  * Represents a pending effect that needs to be applied.
@@ -84,11 +85,28 @@ export type EffectState = {
      * Effects are added when activated and removed when they expire.
      */
     activePassiveEffects: PassiveEffect[];
+
+    /**
+     * Delayed effects waiting for a matching phase and turn.
+     */
+    scheduledDelayedEffects: ScheduledDelayedEffect[];
     
     /**
      * Counter for generating unique effect IDs.
      */
     nextEffectId: number;
+};
+
+export type ScheduledDelayedEffect = {
+    id: string;
+    sourcePlayer: number;
+    effectName: string;
+    effects: Effect[];
+    context: EffectContext;
+    createdTurn: number;
+    dueTurn: number;
+    targetPlayer: 'self' | 'opponent';
+    phase: 'start-of-turn' | 'end-of-turn';
 };
 
 type EffectControllerDependencies = {};
@@ -102,6 +120,7 @@ export class EffectControllerProvider implements GenericControllerProvider<Effec
         return {
             immediatelyPendingEffects: [],
             activePassiveEffects: [],
+            scheduledDelayedEffects: [],
             nextEffectId: 0,
         };
     }
@@ -128,6 +147,46 @@ export class EffectController extends GlobalController<EffectState, EffectContro
     }
 
     /**
+     * Schedule an effect to be applied on a future turn phase.
+     *
+     * @param sourcePlayer The player who scheduled the effect
+     * @param effectName Display name for the effect
+     * @param effects Array of effects to apply later
+     * @param context Context for the effects
+     * @param delayTurns Number of turns to wait before the effect can trigger
+     * @param targetPlayer Which player relative to the source player should receive the delayed trigger
+     * @param phase The future turn phase that should fire the effect
+     * @param createdTurn The turn number when the effect was created
+     * @returns The ID of the newly scheduled effect
+     */
+    public scheduleDelayedEffect(
+        sourcePlayer: number,
+        effectName: string,
+        effects: Effect[],
+        context: EffectContext,
+        delayTurns: number,
+        targetPlayer: 'self' | 'opponent',
+        phase: 'start-of-turn' | 'end-of-turn',
+        createdTurn: number,
+    ): string {
+        const id = `delayed-effect-${this.state.nextEffectId++}`;
+
+        this.state.scheduledDelayedEffects.push({
+            id,
+            sourcePlayer,
+            effectName,
+            effects,
+            context,
+            createdTurn,
+            dueTurn: createdTurn + delayTurns,
+            targetPlayer,
+            phase,
+        });
+
+        return id;
+    }
+
+    /**
      * Pop the next pending effect from the queue.
      * Returns undefined if the queue is empty.
      * 
@@ -144,6 +203,41 @@ export class EffectController extends GlobalController<EffectState, EffectContro
      */
     public hasPendingEffects(): boolean {
         return this.state.immediatelyPendingEffects.length > 0;
+    }
+
+    /**
+     * Apply all future effects that are due for the current player and phase.
+     *
+     * @param controllers The game controllers
+     * @param phase The current turn phase being processed
+     */
+    public processDueDelayedEffects(
+        controllers: Controllers,
+        phase: 'start-of-turn' | 'end-of-turn',
+    ): void {
+        const currentTurn = controllers.turnCounter.getTurnNumber();
+        const currentPlayer = controllers.turn.get();
+        const readyEffects = this.state.scheduledDelayedEffects.filter(effect => {
+            const targetPlayer = effect.targetPlayer === 'self'
+                ? effect.sourcePlayer
+                : (effect.sourcePlayer + 1) % controllers.players.count;
+
+            return effect.phase === phase
+                && effect.dueTurn <= currentTurn
+                && targetPlayer === currentPlayer;
+        });
+
+        if (readyEffects.length === 0) {
+            return;
+        }
+
+        this.state.scheduledDelayedEffects = this.state.scheduledDelayedEffects.filter(effect => {
+            return !readyEffects.some(ready => ready.id === effect.id);
+        });
+
+        for (const effect of readyEffects) {
+            this.pushPendingEffect(effect.effects, effect.context);
+        }
     }
 
     /**
