@@ -444,8 +444,8 @@ describe('Count Effect Value', () => {
                 ),
             });
 
-            // Should count discard pile (3 creatures + 1 supporter played = 4)
-            expect(state.field.creatures[0][0].damageTaken).to.equal(26, 'Should heal 4 HP (4 cards in discard)');
+            // Played supporter is finalized to discard after effects, so only pre-existing discard cards are counted.
+            expect(state.field.creatures[0][0].damageTaken).to.equal(27, 'Should heal 3 HP (3 cards in discard)');
         });
     });
 

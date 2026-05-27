@@ -347,6 +347,19 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
         },
         merge: (controllers: Controllers, sourceHandler: number, message: PlayCardResponseMessage) => {
             controllers.waiting.removePosition(sourceHandler);
+
+            const finalizeTrainerCard = (card: GameCard | undefined, contextDestination: 'discard' | 'hand' | undefined) => {
+                if (!card) {
+                    return;
+                }
+
+                if (contextDestination === 'hand') {
+                    controllers.hand.getHand(sourceHandler).push(card);
+                    return;
+                }
+
+                controllers.discard.discardCard(sourceHandler, card);
+            };
             
             // Use playCard to handle card removal properly and preserve instanceId
             const hand = controllers.hand.getHand(sourceHandler);
@@ -354,13 +367,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             let cardInstanceId: string | undefined;
             let playedCard: GameCard | undefined;
             if (cardIndex !== -1) {
-                if (message.cardType === 'supporter' || message.cardType === 'item') {
-                    // For supporters and items, play and discard in one operation
-                    playedCard = controllers.hand.playCardAndDiscard(sourceHandler, cardIndex);
-                } else {
-                    // For creatures and tools, just play (they go to field/attached)
-                    playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
-                }
+                // Play card from hand. Trainer cards are finalized to discard/hand after effects resolve.
+                playedCard = controllers.hand.playCard(sourceHandler, cardIndex);
                 cardInstanceId = playedCard?.instanceId;
             }
             
@@ -437,6 +445,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the supporter effects
                 EffectQueueProcessor.processQueue(controllers);
+                finalizeTrainerCard(playedCard, context.playedCardFinalDestination);
             } else if (message.cardType === 'item') {
                 // Apply item effects
                 const itemData = controllers.cardRepository.getItem(message.templateId);
@@ -460,6 +469,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Process any effects that were triggered by the item effects
                 EffectQueueProcessor.processQueue(controllers);
+                finalizeTrainerCard(playedCard, context.playedCardFinalDestination);
             } else if (message.cardType === 'tool') {
                 // Attach tool to target creature
                 const toolData = controllers.cardRepository.getTool(message.templateId);

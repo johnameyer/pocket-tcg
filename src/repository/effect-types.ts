@@ -404,6 +404,15 @@ export type DelayedEffect<TContextualRefs extends string = string> = {
 };
 
 /**
+ * Represents an effect that sets where the currently played trainer card should go
+ * after its effects resolve.
+ */
+export type SetPlayedCardDestinationEffect = {
+    type: 'set-played-card-destination';
+    destination: 'discard' | 'hand';
+};
+
+/**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
  *
@@ -431,7 +440,8 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | RemoveFieldCardEffect<TContextualRefs>
     | PullEvolutionEffect<TContextualRefs>
     | ConditionalDelegationEffect<TContextualRefs>
-    | ChoiceDelegationEffect<TContextualRefs>;
+    | ChoiceDelegationEffect<TContextualRefs>
+    | SetPlayedCardDestinationEffect;
 
 /**
  * Represents an effect that prevents playing specific card types.
