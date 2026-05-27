@@ -12,6 +12,8 @@ type BaseEffectContext = {
     sourceInstanceId?: string;
     /** Optional instance ID of the tool that owns this effect, used for tool passive effect cleanup */
     sourceToolInstanceId?: string;
+    /** Optional final destination for the currently resolving played trainer card */
+    playedCardFinalDestination?: 'discard' | 'hand';
 };
 
 // Attack effect context - has attacker and defender info
@@ -105,6 +107,7 @@ export class EffectContextFactory {
             sourcePlayer,
             effectName,
             cardType,
+            playedCardFinalDestination: 'discard',
         };
     }
 
