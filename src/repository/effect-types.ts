@@ -196,6 +196,15 @@ export type DamageReductionEffect = {
     type: 'damage-reduction';
     amount: EffectValue;
     damageSource: FieldTargetCriteria;
+    /**
+     * Resolve the damage source to a specific contextual creature instance at registration time.
+     * Useful for "the Defending Pokemon" style effects.
+     */
+    damageSourceContextReference?: 'defender' | 'attacker';
+    /**
+     * Runtime-populated instance lock resolved from `damageSourceContextReference`.
+     */
+    resolvedDamageSourceInstanceId?: string;
     target: FieldTargetCriteria;
     duration: Duration;
 };
@@ -428,6 +437,15 @@ export type PreventPlayingEffect = {
 export type PreventAttackEffect = {
     type: 'prevent-attack';
     target: FieldTargetCriteria;
+    /**
+     * Resolve the prevented attacker to a specific contextual creature instance at registration time.
+     * Useful for "the Defending Pokemon" style effects.
+     */
+    targetContextReference?: 'defender' | 'attacker';
+    /**
+     * Runtime-populated instance lock resolved from `targetContextReference`.
+     */
+    resolvedTargetInstanceId?: string;
     duration: Duration;
 };
 

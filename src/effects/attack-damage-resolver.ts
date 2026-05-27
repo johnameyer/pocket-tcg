@@ -262,6 +262,9 @@ export class AttackDamageResolver {
         if (!FieldTargetCriteriaFilter.matchesContextual(reduction.target, targetCreature, 0, defendingPlayerId, reductionSourcePlayer, controllers.cardRepository.cardRepository)) {
             return false;
         }
+        if (reduction.resolvedDamageSourceInstanceId && sourceCreature.instanceId !== reduction.resolvedDamageSourceInstanceId) {
+            return false;
+        }
         return FieldTargetCriteriaFilter.matchesContextual(reduction.damageSource, sourceCreature, 0, attackingPlayerId, reductionSourcePlayer, controllers.cardRepository.cardRepository);
     }
     
@@ -272,7 +275,7 @@ export class AttackDamageResolver {
         prevention: { sourcePlayer: number; effectName: string },
         sourcecreature: FieldCard | undefined,
         controllers: Controllers,
-        context: EffectContext,
+        _context: EffectContext,
     ): boolean {
         if (!sourcecreature) {
             return false; 

@@ -261,14 +261,20 @@ export class PassiveEffectMatcher {
         if (!creature) {
             return false;
         }
-        return preventEffects.some(passiveEffect => FieldTargetCriteriaFilter.matchesContextual(
-            passiveEffect.effect.target,
-            creature,
-            fieldIndex,
-            playerId,
-            passiveEffect.sourcePlayer,
-            controllers.cardRepository.cardRepository,
-        ));
+        return preventEffects.some(passiveEffect => {
+            const effect = passiveEffect.effect;
+            if (effect.resolvedTargetInstanceId && creature.instanceId !== effect.resolvedTargetInstanceId) {
+                return false;
+            }
+            return FieldTargetCriteriaFilter.matchesContextual(
+                effect.target,
+                creature,
+                fieldIndex,
+                playerId,
+                passiveEffect.sourcePlayer,
+                controllers.cardRepository.cardRepository,
+            );
+        });
     }
 
     static getModifiedAttackEnergyRequirements(
