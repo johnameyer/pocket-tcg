@@ -95,6 +95,15 @@ export class CardCriteriaFilter {
         try {
             const creatureData = cardRepository.getCreature(fieldCard.templateId);
 
+            // Check name condition
+            if (criteria.name !== undefined && criteria.name.length > 0) {
+                const normalizedCreatureName = creatureData.name.toLowerCase();
+                const normalizedCriteriaNames = criteria.name.map(name => name.toLowerCase());
+                if (!normalizedCriteriaNames.includes(normalizedCreatureName)) {
+                    return false;
+                }
+            }
+
             // Check stage condition
             if (criteria.stage !== undefined) {
                 const actualStage = this.calculateStage(creatureData, cardRepository);
