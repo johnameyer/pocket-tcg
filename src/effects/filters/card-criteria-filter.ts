@@ -155,6 +155,20 @@ export class CardCriteriaFilter {
                         return false;
                     }
                 }
+
+                if (criteria.attributes.future !== undefined) {
+                    const isFuture = creatureData.attributes?.future || false;
+                    if (criteria.attributes.future !== isFuture) {
+                        return false;
+                    }
+                }
+
+                if (criteria.attributes.ancient !== undefined) {
+                    const isAncient = creatureData.attributes?.ancient || false;
+                    if (criteria.attributes.ancient !== isAncient) {
+                        return false;
+                    }
+                }
             }
 
             // Check previousStageName condition
