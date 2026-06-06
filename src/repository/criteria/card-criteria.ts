@@ -46,6 +46,8 @@ export type CreatureCardCriteria = {
         ex?: boolean;
         mega?: boolean;
         ultraBeast?: boolean;
+        future?: boolean;
+        ancient?: boolean;
     };
 };
 

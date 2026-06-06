@@ -501,5 +501,46 @@ describe('FieldTargetCriteriaFilter', () => {
             expect(result[0].fieldIndex).to.equal(0);
             expect(result[1].fieldIndex).to.equal(2);
         });
+
+        it('should filter by card name for in-play creatures', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const tank = { templateId: 'tank-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ basic, evolution, tank ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { name: [ 'Evolution Creature' ] }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(1);
+        });
+
+        it('should filter by card name case-insensitively for in-play creatures', () => {
+            const cardRepository = new MockCardRepository();
+            const handlerData = HandlerDataBuilder.default();
+
+            const basic = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const evolution = { templateId: 'evolution-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ basic, evolution ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { cardCriteria: { name: [ 'evolution creature' ] }}},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].fieldIndex).to.equal(1);
+        });
     });
 });

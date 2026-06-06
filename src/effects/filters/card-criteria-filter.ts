@@ -95,6 +95,15 @@ export class CardCriteriaFilter {
         try {
             const creatureData = cardRepository.getCreature(fieldCard.templateId);
 
+            // Check name condition
+            if (criteria.name !== undefined && criteria.name.length > 0) {
+                const normalizedCreatureName = creatureData.name.toLowerCase();
+                const normalizedCriteriaNames = criteria.name.map(name => name.toLowerCase());
+                if (!normalizedCriteriaNames.includes(normalizedCreatureName)) {
+                    return false;
+                }
+            }
+
             // Check stage condition
             if (criteria.stage !== undefined) {
                 const actualStage = this.calculateStage(creatureData, cardRepository);
@@ -143,6 +152,20 @@ export class CardCriteriaFilter {
                 if (criteria.attributes.ultraBeast !== undefined) {
                     const isUltraBeast = creatureData.attributes?.ultraBeast || false;
                     if (criteria.attributes.ultraBeast !== isUltraBeast) {
+                        return false;
+                    }
+                }
+
+                if (criteria.attributes.future !== undefined) {
+                    const isFuture = creatureData.attributes?.future || false;
+                    if (criteria.attributes.future !== isFuture) {
+                        return false;
+                    }
+                }
+
+                if (criteria.attributes.ancient !== undefined) {
+                    const isAncient = creatureData.attributes?.ancient || false;
+                    if (criteria.attributes.ancient !== isAncient) {
                         return false;
                     }
                 }

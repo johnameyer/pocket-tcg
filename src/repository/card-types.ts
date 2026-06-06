@@ -135,6 +135,8 @@ export type CreatureData = {
         ex?: boolean;
         mega?: boolean;
         ultraBeast?: boolean;
+        future?: boolean;
+        ancient?: boolean;
     };
 };
 
