@@ -356,6 +356,22 @@ export type ChoiceDelegationEffect<TContextualRefs extends string = string> = {
 };
 
 /**
+ * Represents an effect that schedules other effects for a future turn phase.
+ * @property {string} type - Always 'delayed' to identify this effect type
+ * @property {number} delayTurns - How many turns to wait before the effect can trigger
+ * @property {'self' | 'opponent'} targetPlayer - Which player relative to the source player should receive the delayed trigger
+ * @property {'start-of-turn' | 'end-of-turn'} phase - Which phase should fire the delayed effect
+ * @property {Effect[]} effects - The effects to apply once the trigger is reached
+ */
+export type DelayedEffect<TContextualRefs extends string = string> = {
+    type: 'delayed';
+    delayTurns: number;
+    targetPlayer: 'self' | 'opponent';
+    phase: 'start-of-turn' | 'end-of-turn';
+    effects: Effect<TContextualRefs>[];
+};
+
+/**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
  *
@@ -590,7 +606,10 @@ export type RegisterPassiveEffect = {
  *  `Effect<'defender'>`  — only 'defender' ref (attack effects)
  *  `Effect<'attacker'>`  — only 'attacker' ref (damaged / before-knockout triggers)
  */
-export type Effect<TContextualRefs extends string = string> = ImmediateEffect<TContextualRefs> | RegisterPassiveEffect;
+export type Effect<TContextualRefs extends string = string> =
+    | ImmediateEffect<TContextualRefs>
+    | DelayedEffect<TContextualRefs>
+    | RegisterPassiveEffect;
 
 /**
  * Represents an effect that requires target selection before it can be applied.

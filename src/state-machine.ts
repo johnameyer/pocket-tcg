@@ -531,6 +531,9 @@ const gameTurn = loop<Controllers>({
                 })() : undefined;
                 
                 controllers.players.message(currentPlayer, new TurnSummaryMessage(myActiveInfo, opponentActiveInfo, myBenchInfo, opponentBenchInfo, handCards, drawnCardName));
+
+                controllers.effects.processDueDelayedEffects(controllers, 'start-of-turn');
+                EffectQueueProcessor.processQueue(controllers);
                 
                 // Trigger start-of-turn effects for active card (after draw)
                 if (myActive) {
@@ -617,6 +620,8 @@ const gameTurn = loop<Controllers>({
                 
                 // Process end-of-turn status effect checks for current player
                 const endOfTurnResult = controllers.statusEffects.processEndOfTurnChecks(currentPlayer);
+
+                controllers.effects.processDueDelayedEffects(controllers, 'end-of-turn');
                 
                 // Process any effects that were triggered during the checkup phase
                 EffectQueueProcessor.processQueue(controllers);
