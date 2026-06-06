@@ -134,6 +134,39 @@ describe('Retreat Cost Modification Effect', () => {
                     },
                 }],
             },
+            'reduce-if-low-cost-creature': {
+                templateId: 'reduce-if-low-cost-creature',
+                name: 'Reduce If Low Cost Creature',
+                effects: [{
+                    type: 'passive',
+                    modifier: {
+                        type: 'retreat-cost-modification',
+                        operation: 'decrease',
+                        amount: {
+                            type: 'comparison',
+                            left: {
+                                type: 'count',
+                                countType: 'field',
+                                criteria: {
+                                    player: 'self',
+                                    location: 'field',
+                                    fieldCriteria: {
+                                        cardCriteria: {
+                                            name: [ 'Low Cost Creature' ],
+                                        },
+                                    },
+                                },
+                            },
+                            operator: '>',
+                            right: { type: 'constant', value: 0 },
+                            trueValue: { type: 'constant', value: 99 },
+                            falseValue: { type: 'constant', value: 0 },
+                        },
+                        target: { player: 'self', location: 'field', position: 'active' },
+                        duration: { type: 'until-end-of-turn' },
+                    },
+                }],
+            },
         },
     });
 
@@ -144,6 +177,7 @@ describe('Retreat Cost Modification Effect', () => {
     const increaseSelf = { templateId: 'increase-self', type: 'item' as const };
     const reduceItem = { templateId: 'reduce-item', type: 'item' as const };
     const reduceActive = { templateId: 'reduce-active', type: 'item' as const };
+    const reduceIfLowCostCreature = { templateId: 'reduce-if-low-cost-creature', type: 'item' as const };
 
     it('should increase retreat cost by 1 (basic operation)', () => {
         const { state, getExecutedCount } = runTestGame({
@@ -409,6 +443,23 @@ describe('Retreat Cost Modification Effect', () => {
 
             expect(getExecutedCount()).to.equal(2, 'Should have played item and retreated');
             expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('low-cost-creature', 'Should have retreated with targeted reduction');
+        });
+
+        it('should support dynamic retreat cost reduction amounts', () => {
+            const { state, getExecutedCount } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('reduce-if-low-cost-creature', 'item'),
+                    new RetreatResponseMessage(0),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'high-cost-creature', [ 'low-cost-creature' ]),
+                    StateBuilder.withHand(0, [ reduceIfLowCostCreature ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(2, 'Should retreat with dynamic reduction to zero cost');
+            expect(getCurrentTemplateId(state.field.creatures[0][0])).to.equal('low-cost-creature');
         });
     });
 });

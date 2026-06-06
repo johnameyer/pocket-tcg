@@ -3,8 +3,8 @@ import { PassiveEffect } from '../controllers/effect-controller.js';
 import { PreventDamageEffect } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
-import { getEffectValue } from './effect-utils.js';
 import { EffectContextFactory } from './effect-context.js';
+import { getEffectValue } from './effect-utils.js';
 
 /**
  * Utility class for finding and filtering applicable passive effects.
