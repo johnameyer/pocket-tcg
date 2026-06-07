@@ -215,26 +215,6 @@ export class PassiveEffectMatcher {
         return Math.max(0, effectiveRetreatCost);
     }
 
-    static getApplicableEvolutionTimingEffects(
-        controllers: Controllers,
-        playerId: number,
-        fieldIndex: number,
-    ): PassiveEffect[] {
-        const allEffects = controllers.effects.getPassiveEffectsByType('evolution-timing');
-        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
-        if (!creature) {
-            return [];
-        }
-        return allEffects.filter(effect => FieldTargetCriteriaFilter.matchesContextual(
-            effect.effect.target,
-            creature,
-            fieldIndex,
-            playerId,
-            effect.sourcePlayer,
-            controllers.cardRepository.cardRepository,
-        ));
-    }
-
     /**
      * Check if energy attachment is prevented for a specific creature.
      * 
@@ -281,20 +261,14 @@ export class PassiveEffectMatcher {
         if (!creature) {
             return false;
         }
-        return preventEffects.some(passiveEffect => {
-            const effect = passiveEffect.effect;
-            if (effect.resolvedTargetInstanceId && creature.instanceId !== effect.resolvedTargetInstanceId) {
-                return false;
-            }
-            return FieldTargetCriteriaFilter.matchesContextual(
-                effect.target,
-                creature,
-                fieldIndex,
-                playerId,
-                passiveEffect.sourcePlayer,
-                controllers.cardRepository.cardRepository,
-            );
-        });
+        return preventEffects.some(passiveEffect => FieldTargetCriteriaFilter.matchesContextual(
+            passiveEffect.effect.target,
+            creature,
+            fieldIndex,
+            playerId,
+            passiveEffect.sourcePlayer,
+            controllers.cardRepository.cardRepository,
+        ));
     }
 
     static getModifiedAttackEnergyRequirements(

@@ -118,8 +118,15 @@ export class AttackDamageResolver {
         const defendingPlayer = 1 - currentPlayer;
         const damageReductionEffects = controllers.effects.getPassiveEffectsByType('damage-reduction');
         for (const passiveEffect of damageReductionEffects) {
-            // Only apply reductions from the defending player
-            if (passiveEffect.sourcePlayer !== defendingPlayer) {
+            if (!this.shouldApplyDamageReduction(
+                passiveEffect.effect,
+                passiveEffect.sourcePlayer,
+                playercreature,
+                targetcreature,
+                currentPlayer,
+                defendingPlayer,
+                controllers,
+            )) {
                 continue;
             }
             
@@ -253,9 +260,6 @@ export class AttackDamageResolver {
             return false;
         }
         if (!FieldTargetCriteriaFilter.matchesContextual(reduction.target, targetCreature, 0, defendingPlayerId, reductionSourcePlayer, controllers.cardRepository.cardRepository)) {
-            return false;
-        }
-        if (reduction.resolvedDamageSourceInstanceId && sourceCreature.instanceId !== reduction.resolvedDamageSourceInstanceId) {
             return false;
         }
         return FieldTargetCriteriaFilter.matchesContextual(reduction.damageSource, sourceCreature, 0, attackingPlayerId, reductionSourcePlayer, controllers.cardRepository.cardRepository);
