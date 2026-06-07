@@ -50,6 +50,7 @@ export class EnergyAttachEffectHandler extends AbstractEffectHandler<EnergyAttac
     apply(controllers: Controllers, effect: EnergyAttachEffect, context: EffectContext): void {
         const amount = getEffectValue(effect.amount, controllers, context);
         const energyType = effect.energyType;
+        const source = effect.source ?? 'energy-zone';
 
         if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || 'undefined'}`);
@@ -84,16 +85,22 @@ export class EnergyAttachEffectHandler extends AbstractEffectHandler<EnergyAttac
             
             const creatureName = targetCreature.data.name;
             
-            const success = controllers.energy.attachSpecificEnergyToInstance(
-                fieldInstanceId, 
-                energyType, 
-                amount,
-            );
+            const success = source === 'discard'
+                ? controllers.energy.attachEnergyFromDiscard(
+                    context.sourcePlayer,
+                    fieldInstanceId,
+                    { [energyType]: amount },
+                )
+                : controllers.energy.attachSpecificEnergyToInstance(
+                    fieldInstanceId,
+                    energyType,
+                    amount,
+                );
             
             if (success) {
                 controllers.players.messageAll({
                     type: 'status',
-                    components: [ `${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}!` ],
+                    components: [ `${context.effectName} attached ${amount} ${energyType} energy to ${creatureName}${source === 'discard' ? ' from discard' : ''}!` ],
                 });
                 
                 TriggerProcessor.processEnergyAttachment(
