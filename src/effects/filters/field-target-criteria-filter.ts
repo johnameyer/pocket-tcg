@@ -118,6 +118,50 @@ export class FieldTargetCriteriaFilter {
      * @param attachedTools Optional map of tools by instance ID
      * @returns True if the creature matches the criteria, false otherwise
      */
+    /**
+     * Checks whether a single creature matches a FieldTargetCriteria in the context of a passive
+     * effect — resolving 'self'/'opponent' relative to the effect's source player.
+     *
+     * @param criteria The criteria to evaluate
+     * @param creature The creature to check
+     * @param fieldIndex The creature's field position (0 = active, 1+ = bench)
+     * @param creaturePlayerId The player ID that owns the creature
+     * @param effectSourcePlayer The player ID that owns the effect (for resolving 'self'/'opponent')
+     * @param cardRepository Card repository for card-attribute lookups
+     */
+    static matchesContextual(
+        criteria: FieldTargetCriteria,
+        creature: FieldCard,
+        fieldIndex: number,
+        creaturePlayerId: number,
+        effectSourcePlayer: number,
+        cardRepository: CardRepository,
+    ): boolean {
+        if (criteria.player !== undefined) {
+            const expectedPlayerId = criteria.player === 'self' ? effectSourcePlayer : 1 - effectSourcePlayer;
+            if (expectedPlayerId !== creaturePlayerId) {
+                return false;
+            }
+        }
+
+        if (criteria.position === 'active' && fieldIndex !== 0) {
+            return false;
+        }
+        if (criteria.position === 'bench' && fieldIndex === 0) {
+            return false;
+        }
+
+        if (criteria.fieldCriteria && !this.evaluateFieldCriteria(
+            criteria.fieldCriteria,
+            creature,
+            cardRepository,
+        )) {
+            return false;
+        }
+
+        return true;
+    }
+
     static matchesFieldCriteria(
         criteria: FieldCriteria,
         card: FieldCard,

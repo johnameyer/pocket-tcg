@@ -1,7 +1,7 @@
 import { Controllers } from '../controllers/controllers.js';
 import { CreatureAttack } from '../repository/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
-import { DamageBoostEffect } from '../repository/effect-types.js';
+import { DamageBoostEffect, DamageReductionEffect } from '../repository/effect-types.js';
 import { EffectContext, EffectContextFactory } from './effect-context.js';
 import { getEffectValue } from './effect-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
@@ -95,8 +95,7 @@ export class AttackDamageResolver {
         const damageBoostEffects = controllers.effects.getPassiveEffectsByType('damage-boost');
         for (const passiveEffect of damageBoostEffects) {
             const boost = passiveEffect.effect;
-            // Check if this boost should apply to the current target using its damageSource criteria
-            if (this.shouldApplyDamageBoost(boost, targetcreature, controllers)) {
+            if (this.shouldApplyDamageBoost(boost, passiveEffect.sourcePlayer, playercreature, currentPlayer, targetcreature, targetId, controllers)) {
                 const amount = typeof boost.amount === 'object' && 'value' in boost.amount ? boost.amount.value : 0;
                 totalDamage += amount;
             }
@@ -119,8 +118,15 @@ export class AttackDamageResolver {
         const defendingPlayer = 1 - currentPlayer;
         const damageReductionEffects = controllers.effects.getPassiveEffectsByType('damage-reduction');
         for (const passiveEffect of damageReductionEffects) {
-            // Only apply reductions from the defending player
-            if (passiveEffect.sourcePlayer !== defendingPlayer) {
+            if (!this.shouldApplyDamageReduction(
+                passiveEffect.effect,
+                passiveEffect.sourcePlayer,
+                playercreature,
+                targetcreature,
+                currentPlayer,
+                defendingPlayer,
+                controllers,
+            )) {
                 continue;
             }
             
@@ -224,38 +230,39 @@ export class AttackDamageResolver {
      */
     private static shouldApplyDamageBoost(
         boost: DamageBoostEffect,
-        targetcreature: FieldCard | undefined,
+        boostSourcePlayer: number,
+        sourceCreature: FieldCard | undefined,
+        attackingPlayerId: number,
+        targetCreature: FieldCard | undefined,
+        defendingPlayerId: number,
         controllers: Controllers,
     ): boolean {
-        if (!targetcreature) {
-            return false; 
-        }
-        
-        // Check if the target matches the target criteria
-        const targetCriteria = boost.target;
-        if (targetCriteria?.fieldCriteria && !FieldTargetCriteriaFilter.matchesFieldCriteria(
-            targetCriteria.fieldCriteria,
-            targetcreature,
-            controllers.cardRepository.cardRepository,
-        )) {
+        if (!sourceCreature || !targetCreature) {
             return false;
         }
-        
-        /*
-         * Use proper criteria-based evaluation for damageSource
-         * damageSource specifies which attacker's moves get the boost
-         */
-        const fieldCriteria = boost.damageSource.fieldCriteria;
-        if (!fieldCriteria) {
-            // No criteria means it applies to all attacks
-            return true;
+        return FieldTargetCriteriaFilter.matchesContextual(boost.damageSource, sourceCreature, 0, attackingPlayerId, boostSourcePlayer, controllers.cardRepository.cardRepository)
+            && FieldTargetCriteriaFilter.matchesContextual(boost.target, targetCreature, 0, defendingPlayerId, boostSourcePlayer, controllers.cardRepository.cardRepository);
+    }
+
+    private static shouldApplyDamageReduction(
+        reduction: DamageReductionEffect,
+        reductionSourcePlayer: number,
+        sourceCreature: FieldCard | undefined,
+        targetCreature: FieldCard | undefined,
+        attackingPlayerId: number,
+        defendingPlayerId: number,
+        controllers: Controllers,
+    ): boolean {
+        if (!sourceCreature || !targetCreature) {
+            return false;
         }
-        
-        return FieldTargetCriteriaFilter.matchesFieldCriteria(
-            fieldCriteria,
-            targetcreature,
-            controllers.cardRepository.cardRepository,
-        );
+        if (reductionSourcePlayer !== defendingPlayerId) {
+            return false;
+        }
+        if (!FieldTargetCriteriaFilter.matchesContextual(reduction.target, targetCreature, 0, defendingPlayerId, reductionSourcePlayer, controllers.cardRepository.cardRepository)) {
+            return false;
+        }
+        return FieldTargetCriteriaFilter.matchesContextual(reduction.damageSource, sourceCreature, 0, attackingPlayerId, reductionSourcePlayer, controllers.cardRepository.cardRepository);
     }
     
     /**

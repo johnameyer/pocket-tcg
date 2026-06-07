@@ -96,6 +96,96 @@ describe('Damage Reduction Effect', () => {
                     },
                 ],
             },
+            'criteria-defensive-creature': {
+                templateId: 'criteria-defensive-creature',
+                name: 'Criteria Defensive Creature',
+                maxHp: 100,
+                type: 'metal',
+                weakness: 'water',
+                retreatCost: 3,
+                attacks: [{ name: 'Steel Strike', damage: 30, energyRequirements: [{ type: 'metal', amount: 2 }] }],
+                ability: {
+                    name: 'Weight Armor',
+                    trigger: { type: 'passive' },
+                    effects: [{
+                        type: 'passive',
+                        modifier: {
+                            type: 'damage-reduction',
+                            amount: { type: 'constant', value: 20 },
+                            damageSource: { player: 'opponent' },
+                            target: {
+                                player: 'self',
+                                position: 'active',
+                                fieldCriteria: { cardCriteria: { retreatCost: { min: 3 }}},
+                            },
+                            duration: { type: 'while-in-play' },
+                        },
+                    }],
+                },
+            },
+            'criteria-defensive-creature-low': {
+                templateId: 'criteria-defensive-creature-low',
+                name: 'Criteria Defensive Creature Low',
+                maxHp: 100,
+                type: 'metal',
+                weakness: 'water',
+                retreatCost: 2,
+                attacks: [{ name: 'Steel Strike', damage: 30, energyRequirements: [{ type: 'metal', amount: 2 }] }],
+                ability: {
+                    name: 'Weight Armor',
+                    trigger: { type: 'passive' },
+                    effects: [{
+                        type: 'passive',
+                        modifier: {
+                            type: 'damage-reduction',
+                            amount: { type: 'constant', value: 20 },
+                            damageSource: { player: 'opponent' },
+                            target: {
+                                player: 'self',
+                                position: 'active',
+                                fieldCriteria: { cardCriteria: { retreatCost: { min: 3 }}},
+                            },
+                            duration: { type: 'while-in-play' },
+                        },
+                    }],
+                },
+            },
+            'source-filter-defender': {
+                templateId: 'source-filter-defender',
+                name: 'Source Filter Defender',
+                maxHp: 100,
+                type: 'metal',
+                weakness: 'water',
+                retreatCost: 2,
+                attacks: [{ name: 'Guard Hit', damage: 20, energyRequirements: [{ type: 'metal', amount: 1 }] }],
+                ability: {
+                    name: 'Ex Shield',
+                    trigger: { type: 'passive' },
+                    effects: [{
+                        type: 'passive',
+                        modifier: {
+                            type: 'damage-reduction',
+                            amount: { type: 'constant', value: 20 },
+                            damageSource: {
+                                player: 'opponent',
+                                fieldCriteria: { cardCriteria: { attributes: { ex: true }}},
+                            },
+                            target: { player: 'self', position: 'active' },
+                            duration: { type: 'while-in-play' },
+                        },
+                    }],
+                },
+            },
+            'ex-attacker': {
+                templateId: 'ex-attacker',
+                name: 'EX Attacker',
+                maxHp: 130,
+                type: 'fighting',
+                weakness: 'psychic',
+                retreatCost: 2,
+                attributes: { ex: true },
+                attacks: [{ name: 'Ex Punch', damage: 60, energyRequirements: [{ type: 'fighting', amount: 2 }] }],
+            },
         },
     });
 
@@ -176,5 +266,65 @@ describe('Damage Reduction Effect', () => {
 
         expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
         expect(state.field.creatures[1][0].damageTaken).to.equal(130, 'Should deal 130 damage (150 base - 20 reduction)');
+    });
+
+    it('should apply reduction only when target card criteria match', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [ new AttackResponseMessage(0) ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'high-hp-creature'),
+                StateBuilder.withCreatures(1, 'criteria-defensive-creature'),
+                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
+        expect(state.field.creatures[1][0].damageTaken).to.equal(40, 'Should apply reduction when defender matches retreatCost criteria');
+    });
+
+    it('should not apply reduction when target card criteria do not match', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [ new AttackResponseMessage(0) ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'high-hp-creature'),
+                StateBuilder.withCreatures(1, 'criteria-defensive-creature-low'),
+                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
+        expect(state.field.creatures[1][0].damageTaken).to.equal(60, 'Should not reduce when defender fails retreatCost criteria');
+    });
+
+    it('should apply reduction only when damage source criteria match', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [ new AttackResponseMessage(0) ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'ex-attacker'),
+                StateBuilder.withCreatures(1, 'source-filter-defender'),
+                StateBuilder.withEnergy('ex-attacker-0', { fighting: 2 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
+        expect(state.field.creatures[1][0].damageTaken).to.equal(40, 'Should reduce damage from EX attackers');
+    });
+
+    it('should not apply reduction when damage source criteria do not match', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [ new AttackResponseMessage(0) ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'high-hp-creature'),
+                StateBuilder.withCreatures(1, 'source-filter-defender'),
+                StateBuilder.withEnergy('high-hp-creature-0', { fighting: 2 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(1, 'Should have executed attack');
+        expect(state.field.creatures[1][0].damageTaken).to.equal(60, 'Should not reduce damage from non-EX attackers');
     });
 });
