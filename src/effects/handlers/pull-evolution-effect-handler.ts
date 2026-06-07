@@ -6,6 +6,9 @@ import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
+import { GameCard } from '../../controllers/card-types.js';
+import { CardCriteriaFilter } from '../filters/card-criteria-filter.js';
+import { satisfiesEvolutionRestrictions } from '../restrictions/evolution-restrictions.js';
 
 /**
  * Handler for pull evolution effects that pull an evolution from deck and immediately evolve the target.
@@ -34,6 +37,14 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
     canApply(handlerData: HandlerData, effect: PullEvolutionEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         // If there's no target, we can't apply the effect
         if (!effect.target) {
+            return false;
+        }
+
+        if (!effect.skipRestrictions && !satisfiesEvolutionRestrictions(effect.restrictions, {
+            isBasicCreature: true,
+            isFirstTurn: handlerData.energy.isAbsoluteFirstTurn || handlerData.turnCounter.turnNumber <= 1,
+            playedThisTurn: false,
+        })) {
             return false;
         }
         
@@ -71,17 +82,85 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
             if (!targetCreature) {
                 continue;
             }
-            
-            // Get the creature data for messaging
-            const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
-            
-            // TODO: Implement actual pull evolution functionality
+
+            const targetTemplateId = targetCreature.templateId;
+            const targetData = controllers.cardRepository.getCreature(targetTemplateId);
+            const currentTurn = controllers.turnCounter.getTurnNumber();
+            const sourceDeck = controllers.deck.getDeck(context.sourcePlayer);
+            const selectedEvolution = this.findMatchingEvolutionInDeck(
+                sourceDeck,
+                targetTemplateId,
+                effect,
+                controllers.cardRepository.cardRepository,
+                (count) => controllers.random.pickIndex(count),
+            );
+            if (!selectedEvolution) {
+                continue;
+            }
+
+            if (!effect.skipRestrictions && !satisfiesEvolutionRestrictions(effect.restrictions, {
+                isBasicCreature: !targetData.previousStageName,
+                isFirstTurn: controllers.energy.isFirstTurnRestricted() || currentTurn <= 1,
+                playedThisTurn: targetCreature.turnPlayed === currentTurn,
+            })) {
+                continue;
+            }
+
+            // Remove the selected evolution card from deck before evolving.
+            const selectedIndex = sourceDeck.findIndex((card) => card.instanceId === selectedEvolution.instanceId);
+            if (selectedIndex === -1) {
+                continue;
+            }
+            sourceDeck.splice(selectedIndex, 1);
+
+            const evolved = fieldIndex === 0
+                ? controllers.field.evolveActiveCard(playerId, selectedEvolution.templateId, selectedEvolution.instanceId, currentTurn)
+                : controllers.field.evolveBenchedCard(playerId, fieldIndex - 1, selectedEvolution.templateId, selectedEvolution.instanceId, currentTurn);
+            if (!evolved) {
+                continue;
+            }
+
+            const baseData = controllers.cardRepository.getCreature(targetTemplateId);
+            const evolutionData = controllers.cardRepository.getCreature(selectedEvolution.templateId);
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} would pull and evolve ${creatureData.name} (not fully implemented)!` ],
+                components: [ `${context.effectName} evolved ${baseData.name} into ${evolutionData.name}!` ],
             });
         }
     }
+
+    private findMatchingEvolutionInDeck(
+        deck: GameCard[],
+        targetTemplateId: string,
+        effect: PullEvolutionEffect,
+        cardRepository: CardRepository,
+        pickRandomIndex: (count: number) => number,
+    ): GameCard | undefined {
+        const targetData = cardRepository.getCreature(targetTemplateId);
+        const candidates = deck.filter((card): card is GameCard & { type: 'creature' } => {
+            if (card.type !== 'creature') {
+                return false;
+            }
+
+            const candidateData = cardRepository.getCreature(card.templateId);
+            if (!candidateData.previousStageName || candidateData.previousStageName !== targetData.name) {
+                return false;
+            }
+
+            if (!effect.evolutionCriteria) {
+                return true;
+            }
+            return CardCriteriaFilter.filter([ card ], effect.evolutionCriteria, cardRepository).length > 0;
+        });
+
+        if (candidates.length === 0) {
+            return undefined;
+        }
+
+        const selectedIndex = pickRandomIndex(candidates.length);
+        return candidates[selectedIndex];
+    }
+
 }
 
 export const pullEvolutionEffectHandler = new PullEvolutionEffectHandler();

@@ -629,6 +629,25 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.position < 1 || message.position > benchedCards.length;
                     
                 }),
+                EventHandler.validate('Evolution turn restriction', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
+                    const currentTurn = controllers.turnCounter.getTurnNumber();
+
+                    // Neither player can evolve on their first turn.
+                    if (currentTurn <= 1) {
+                        return new Error('Cannot evolve on first turn');
+                    }
+
+                    const targetCard = controllers.field.state.creatures[source]?.[message.position];
+                    if (!targetCard) {
+                        return undefined;
+                    }
+
+                    if (targetCard.turnLastPlayed !== undefined && targetCard.turnLastPlayed >= currentTurn) {
+                        return new Error('Cannot evolve creature on the same turn it was played');
+                    }
+
+                    return undefined;
+                }),
                 EventHandler.validate('Creature already evolved this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     let targetCard;
                     if (message.position === 0) {

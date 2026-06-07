@@ -26,7 +26,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: [ 'basic-creature-only' ],
+                restrictions: { basicCreatureOnly: true },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -45,7 +45,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: [ 'basic-creature-only' ],
+                restrictions: { basicCreatureOnly: true },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -61,7 +61,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: [ 'basic-creature-only' ],
+                restrictions: { basicCreatureOnly: true },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -83,7 +83,7 @@ describe('Evolution Acceleration Effect', () => {
                 type: 'evolution-acceleration',
                 target: { type: 'fixed', player: 'self', position: 'active' },
                 skipStages: 1,
-                restrictions: [ 'basic-creature-only' ],
+                restrictions: { basicCreatureOnly: true },
             };
 
             const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
@@ -138,7 +138,7 @@ describe('Evolution Acceleration Effect', () => {
                     type: 'evolution-acceleration',
                     target: { type: 'fixed', player: 'self', position: 'active' },
                     skipStages: 1,
-                    restrictions: [ 'basic-creature-only' ],
+                    restrictions: { basicCreatureOnly: true },
                 }],
             },
             'choice-acceleration-item': {
@@ -148,7 +148,7 @@ describe('Evolution Acceleration Effect', () => {
                     type: 'evolution-acceleration',
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field' }},
                     skipStages: 1,
-                    restrictions: [],
+                    restrictions: {},
                 }],
             },
             'double-acceleration-item': {
@@ -158,7 +158,7 @@ describe('Evolution Acceleration Effect', () => {
                     type: 'evolution-acceleration',
                     target: { type: 'fixed', player: 'self', position: 'active' },
                     skipStages: 2,
-                    restrictions: [ 'basic-creature-only' ],
+                    restrictions: { basicCreatureOnly: true },
                 }],
             },
         },
