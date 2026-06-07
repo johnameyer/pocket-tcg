@@ -3,6 +3,8 @@ import { PassiveEffect } from '../controllers/effect-controller.js';
 import { PreventDamageEffect } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
+import { getEffectValue } from './effect-utils.js';
+import { EffectContextFactory } from './effect-context.js';
 
 /**
  * Utility class for finding and filtering applicable passive effects.
@@ -184,48 +186,53 @@ export class PassiveEffectMatcher {
         for (const passiveEffect of modificationEffects) {
             const effect = passiveEffect.effect;
             
-            /*
-             * Check if this effect applies to the target player
-             * If no player specified, effect applies to both players (e.g., stadium)
-             */
-            if (effect.target.player !== undefined) {
-                const effectAppliesToThisPlayer = (effect.target.player === 'self' && passiveEffect.sourcePlayer === playerId)
-                                                   || (effect.target.player === 'opponent' && passiveEffect.sourcePlayer !== playerId);
-                if (!effectAppliesToThisPlayer) {
-                    continue;
-                }
-            }
-            
-            // Check if this effect applies to the field position
-            if (effect.target.position) {
-                const isActive = fieldIndex === 0;
-                const positionMatches = (effect.target.position === 'active' && isActive)
-                                        || (effect.target.position === 'bench' && !isActive);
-                if (!positionMatches) {
-                    continue;
-                }
-            }
-            
-            // Check field criteria (hasDamage, hasEnergy, cardCriteria)
-            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
-                effect.target.fieldCriteria || {},
+            if (!FieldTargetCriteriaFilter.matchesContextual(
+                effect.target,
                 creature,
+                fieldIndex,
+                playerId,
+                passiveEffect.sourcePlayer,
                 controllers.cardRepository.cardRepository,
-                handlerData.energy?.attachedEnergyByInstance,
+            )) {
+                continue;
+            }
+
+            const context = EffectContextFactory.createAbilityContext(
+                passiveEffect.sourcePlayer,
+                passiveEffect.effectName,
+                creature.instanceId,
+                fieldIndex,
             );
-            
-            if (matchesCriteria) {
-                const amount = typeof effect.amount === 'object' && 'value' in effect.amount ? effect.amount.value : 0;
-                if (effect.operation === 'decrease') {
-                    effectiveRetreatCost -= amount;
-                } else {
-                    effectiveRetreatCost += amount;
-                }
+            const amount = getEffectValue(effect.amount, controllers, context);
+            if (effect.operation === 'decrease') {
+                effectiveRetreatCost -= amount;
+            } else {
+                effectiveRetreatCost += amount;
             }
         }
         
         // Retreat cost cannot be negative
         return Math.max(0, effectiveRetreatCost);
+    }
+
+    static getApplicableEvolutionTimingEffects(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+    ): PassiveEffect[] {
+        const allEffects = controllers.effects.getPassiveEffectsByType('evolution-timing');
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return [];
+        }
+        return allEffects.filter(effect => FieldTargetCriteriaFilter.matchesContextual(
+            effect.effect.target,
+            creature,
+            fieldIndex,
+            playerId,
+            effect.sourcePlayer,
+            controllers.cardRepository.cardRepository,
+        ));
     }
 
     /**
@@ -242,50 +249,18 @@ export class PassiveEffectMatcher {
         fieldIndex: number,
     ): boolean {
         const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-energy-attachment');
-        
         const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
         if (!creature) {
             return false;
         }
-        
-        // Create a handler data view for criteria matching
-        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
-        
-        for (const passiveEffect of preventEffects) {
-            const effect = passiveEffect.effect;
-            // Check if this effect applies to the creature
-            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
-                effect.target.fieldCriteria || {},
-                creature,
-                controllers.cardRepository.cardRepository,
-                handlerData.energy?.attachedEnergyByInstance,
-            );
-            
-            
-            if (matchesCriteria) {
-                // Also check player and position criteria
-                if (effect.target.player) {
-                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
-                        : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
-                    if (targetPlayer !== playerId) {
-                        continue;
-                    }
-                }
-                
-                if (effect.target.position) {
-                    const isActive = fieldIndex === 0;
-                    if (effect.target.position === 'active' && !isActive) {
-                        continue;
-                    }
-                    if (effect.target.position === 'bench' && isActive) {
-                        continue;
-                    }
-                }
-                
-                return true;
-            }
-        }
-        return false;
+        return preventEffects.some(passiveEffect => FieldTargetCriteriaFilter.matchesContextual(
+            passiveEffect.effect.target,
+            creature,
+            fieldIndex,
+            playerId,
+            passiveEffect.sourcePlayer,
+            controllers.cardRepository.cardRepository,
+        ));
     }
 
     /**
@@ -302,49 +277,24 @@ export class PassiveEffectMatcher {
         fieldIndex: number,
     ): boolean {
         const preventEffects = controllers.effects.getPassiveEffectsByType('prevent-attack');
-        
         const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
         if (!creature) {
             return false;
         }
-        
-        // Create a handler data view for criteria matching
-        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
-        
-        for (const passiveEffect of preventEffects) {
+        return preventEffects.some(passiveEffect => {
             const effect = passiveEffect.effect;
-            // Check if this effect applies to the creature
-            const matchesCriteria = FieldTargetCriteriaFilter.matchesFieldCriteria(
-                effect.target.fieldCriteria || {},
-                creature,
-                controllers.cardRepository.cardRepository,
-                handlerData.energy?.attachedEnergyByInstance,
-            );
-            
-            if (matchesCriteria) {
-                // Also check player and position criteria
-                if (effect.target.player) {
-                    const targetPlayer = effect.target.player === 'self' ? passiveEffect.sourcePlayer 
-                        : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
-                    if (targetPlayer !== playerId) {
-                        continue;
-                    }
-                }
-                
-                if (effect.target.position) {
-                    const isActive = fieldIndex === 0;
-                    if (effect.target.position === 'active' && !isActive) {
-                        continue;
-                    }
-                    if (effect.target.position === 'bench' && isActive) {
-                        continue;
-                    }
-                }
-                
-                return true;
+            if (effect.resolvedTargetInstanceId && creature.instanceId !== effect.resolvedTargetInstanceId) {
+                return false;
             }
-        }
-        return false;
+            return FieldTargetCriteriaFilter.matchesContextual(
+                effect.target,
+                creature,
+                fieldIndex,
+                playerId,
+                passiveEffect.sourcePlayer,
+                controllers.cardRepository.cardRepository,
+            );
+        });
     }
 
     static getModifiedAttackEnergyRequirements(
