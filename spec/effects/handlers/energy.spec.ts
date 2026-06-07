@@ -287,6 +287,74 @@ describe('Energy Effect', () => {
         expect(opponentActiveEnergy.fire || 0).to.equal(0, 'Should discard all available fire energy');
     });
 
+    it('should attach energy from discard when source is discard', () => {
+        const testRepository = new MockCardRepository({
+            items: {
+                'discard-attach-item': {
+                    templateId: 'discard-attach-item',
+                    name: 'Discard Attach Item',
+                    effects: [{
+                        type: 'energy-attach',
+                        source: 'discard',
+                        energyType: 'fire',
+                        amount: { type: 'constant', value: 1 },
+                        target: { type: 'fixed', player: 'self', position: 'active' },
+                    }],
+                },
+            },
+        });
+
+        const { state } = runTestGame({
+            actions: [ new PlayCardResponseMessage('discard-attach-item', 'item') ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [{ templateId: 'discard-attach-item', type: 'item' }]),
+                (gameState) => {
+                    gameState.energy.discardedEnergy[0].fire = 2;
+                },
+            ),
+        });
+
+        const attached = state.energy.attachedEnergyByInstance['basic-creature-0'];
+        expect(attached.fire).to.equal(1, 'Should attach one fire energy from discard');
+        expect(state.energy.discardedEnergy[0].fire).to.equal(1, 'Should consume one fire energy from discarded pool');
+    });
+
+    it('should not attach from discard when discarded pool lacks the requested type', () => {
+        const testRepository = new MockCardRepository({
+            items: {
+                'discard-attach-item': {
+                    templateId: 'discard-attach-item',
+                    name: 'Discard Attach Item',
+                    effects: [{
+                        type: 'energy-attach',
+                        source: 'discard',
+                        energyType: 'fire',
+                        amount: { type: 'constant', value: 1 },
+                        target: { type: 'fixed', player: 'self', position: 'active' },
+                    }],
+                },
+            },
+        });
+
+        const { state } = runTestGame({
+            actions: [ new PlayCardResponseMessage('discard-attach-item', 'item') ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [{ templateId: 'discard-attach-item', type: 'item' }]),
+                (gameState) => {
+                    gameState.energy.discardedEnergy[0].water = 1;
+                },
+            ),
+        });
+
+        const attached = state.energy.attachedEnergyByInstance['basic-creature-0'] || {};
+        expect(attached.fire || 0).to.equal(0, 'Should not attach fire when discarded fire energy is unavailable');
+        expect(state.energy.discardedEnergy[0].water).to.equal(1, 'Unrelated discarded energy should remain untouched');
+    });
+
     describe('Energy Discard Tracking', () => {
         it('should track discarded energy from discard effects', () => {
             const testRepository = new MockCardRepository({

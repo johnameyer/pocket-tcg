@@ -73,6 +73,7 @@ export type EnergyAttachEffect<TContextualRefs extends string = string> = {
     energyType: AttachableEnergyType;
     amount: EffectValue;
     target: FieldTarget<TContextualRefs>;
+    source?: 'energy-zone' | 'discard';
 };
 
 /**
