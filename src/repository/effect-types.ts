@@ -17,6 +17,12 @@ export type TriggerType = 'on-play' | 'on-attack' | 'on-damage' | 'on-knockout' 
  */
 export type StatusCondition = 'sleep' | 'burn' | 'confusion' | 'paralysis' | 'poison';
 
+export type EvolutionRestrictions = {
+    basicCreatureOnly?: boolean;
+    notFirstTurn?: boolean;
+    notPlayedThisTurn?: boolean;
+};
+
 /**
  * Represents an effect that modifies a creature's HP (healing or damage).
  * @property {string} type - Always 'hp' to identify this effect type
@@ -219,15 +225,15 @@ export type RetreatPreventionEffect = {
  * @property {string} type - Always 'evolution-acceleration' to identify this effect type
  * @property {FieldTarget} target - The creature to evolve
  * @property {number} skipStages - The number of evolution stages to skip
- * @property {string[]} [restrictions] - Optional restrictions on which creatures can use this effect
- * @example { type: 'evolution-acceleration', target: { type: 'fixed', player: 'self', position: 'active' }, skipStages: 1, restrictions: ['basic-creature-only'] }
+ * @property {EvolutionRestrictions} [restrictions] - Optional map-based restrictions for evolution usage
+ * @example { type: 'evolution-acceleration', target: { type: 'fixed', player: 'self', position: 'active' }, skipStages: 1, restrictions: { basicCreatureOnly: true } }
  * // Your active basic creature can evolve skipping 1 stage
  */
 export type EvolutionAccelerationEffect<TContextualRefs extends string = string> = {
     type: 'evolution-acceleration';
     target: FieldTarget<TContextualRefs>;
     skipStages: number;
-    restrictions?: string[];
+    restrictions?: EvolutionRestrictions;
 };
 
 /**
@@ -241,6 +247,22 @@ export type EvolutionFlexibilityEffect = {
     type: 'evolution-flexibility';
     target: string;
     baseForm: string;
+    duration: Duration;
+};
+
+/**
+ * Represents an effect that relaxes evolution timing restrictions.
+ * @property {string} type - Always 'evolution-timing' to identify this effect type
+ * @property {FieldTargetCriteria} target - Which creatures can evolve earlier
+ * @property {boolean} [allowFirstTurn] - Whether the target can evolve on the first turn
+ * @property {boolean} [allowPlayedThisTurn] - Whether the target can evolve on the turn it was played
+ * @property {Duration} duration - How long the permission persists
+ */
+export type EvolutionTimingEffect = {
+    type: 'evolution-timing';
+    target: FieldTargetCriteria;
+    allowFirstTurn?: boolean;
+    allowPlayedThisTurn?: boolean;
     duration: Duration;
 };
 
@@ -557,6 +579,7 @@ export type PullEvolutionEffect<TContextualRefs extends string = string> = {
     target: FieldTarget<TContextualRefs>;
     evolutionCriteria?: CardCriteria;
     skipRestrictions?: boolean;
+    restrictions?: EvolutionRestrictions;
 };
 
 
@@ -570,6 +593,7 @@ export type ModifierEffect =
     | DamageReductionEffect
     | RetreatPreventionEffect
     | EvolutionFlexibilityEffect
+    | EvolutionTimingEffect
     | DamageBoostEffect
     | HpBonusEffect
     | RetreatCostModificationEffect

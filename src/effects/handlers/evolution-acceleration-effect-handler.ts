@@ -8,6 +8,7 @@ import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 import { GameCard } from '../../controllers/card-types.js';
 import { getCurrentTemplateId } from '../../utils/field-card-utils.js';
+import { satisfiesEvolutionRestrictions } from '../restrictions/evolution-restrictions.js';
 
 /**
  * Handler for evolution acceleration effects that allow evolving a creature directly
@@ -43,16 +44,6 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
                 return false;
             }
             
-            // Check restrictions - for now, only basic-creature-only is supported
-            if (effect.restrictions && effect.restrictions.includes('basic-creature-only')) {
-                const currentData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
-                const isBasicCreature = !currentData.previousStageName;
-                
-                if (!isBasicCreature) {
-                    return false;
-                }
-            }
-            
             // Check if there's a valid Stage 2 evolution in hand
             const hand = handlerData.hand.hand;
             const targetCreatureData = cardRepository.getCreature(getCurrentTemplateId(targetCreature));
@@ -73,7 +64,15 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             });
             
             // Card cannot be played if there's no valid Stage 2 evolution
-            return hasValidEvolution;
+            if (!hasValidEvolution) {
+                return false;
+            }
+
+            return satisfiesEvolutionRestrictions(effect.restrictions, {
+                isBasicCreature: !targetCreatureData.previousStageName,
+                isFirstTurn: handlerData.energy.isAbsoluteFirstTurn || currentTurn <= 1,
+                playedThisTurn: targetCreature.turnLastPlayed === currentTurn,
+            });
         }
         
         /*
@@ -141,6 +140,14 @@ export class EvolutionAccelerationEffectHandler extends AbstractEffectHandler<Ev
             const stage2Evolution = this.findStage2Evolution(controllers, hand, targetCreature.templateId);
             
             if (!stage2Evolution) {
+                continue;
+            }
+
+            if (!satisfiesEvolutionRestrictions(effect.restrictions, {
+                isBasicCreature,
+                isFirstTurn: controllers.energy.isFirstTurnRestricted() || currentTurn <= 1,
+                playedThisTurn: targetCreature.turnPlayed === currentTurn,
+            })) {
                 continue;
             }
             
