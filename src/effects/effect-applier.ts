@@ -12,6 +12,7 @@ import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handle
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver, EnergyOption, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { EffectQueueProcessor } from './effect-queue-processor.js';
 
 export class EffectApplier {
     /**
@@ -33,7 +34,8 @@ export class EffectApplier {
         // Create HandlerData view for validation
         const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
 
-        for (const effect of effects) {
+        for (let effectIndex = 0; effectIndex < effects.length; effectIndex++) {
+            const effect = effects[effectIndex];
             // Skip undefined/null effects
             if (!effect || !effect.type) {
                 continue;
@@ -51,18 +53,25 @@ export class EffectApplier {
                 continue;
             }
 
+            const continuationEffects = effect.type === 'choice-delegation' && effectIndex < effects.length - 1
+                ? effects.slice(effectIndex + 1)
+                : undefined;
+
             // Get resolution requirements from handler
             const requirements = handler.getResolutionRequirements(effect);
 
             // Handle resolution for all requirements
-            const resolvedEffect = this.resolveEffectRequirements(effect, requirements, controllers, context);
+            const effectContext = continuationEffects && continuationEffects.length > 0
+                ? { ...context, selectionContinuationEffects: continuationEffects }
+                : context;
+            const resolvedEffect = this.resolveEffectRequirements(effect, requirements, controllers, effectContext);
             if (!resolvedEffect) {
                 // Pending selection or no valid targets
                 return;
             }
 
             // Apply effect directly - handlers are responsible for their own multi-target logic
-            handler.apply(controllers, resolvedEffect, context);
+            handler.apply(controllers, resolvedEffect, effectContext);
 
             /*
              * Stop processing further effects if a pending selection was set up by the handler.
@@ -122,6 +131,7 @@ export class EffectApplier {
                         selectionType: 'energy',
                         effect,
                         originalContext: context,
+                        continuationEffects: context.selectionContinuationEffects,
                         playerId: context.sourcePlayer,
                         count: 1,
                         availableEnergy: resolution.availableTargets,
@@ -186,7 +196,7 @@ export class EffectApplier {
      */
     private static convertSingleResolutionToResolvedTarget(
         resolution: SingleTargetResolutionResult,
-        context: EffectContext,
+        _context: EffectContext,
     ): ResolvedFieldTarget | undefined {
         switch (resolution.type) {
             case 'resolved':
@@ -221,7 +231,7 @@ export class EffectApplier {
      */
     private static convertResolutionToResolvedTargets(
         resolution: TargetResolutionResult,
-        context: EffectContext,
+        _context: EffectContext,
     ): ResolvedFieldTarget {
         switch (resolution.type) {
             case 'resolved':
@@ -271,7 +281,10 @@ export class EffectApplier {
      * @param targetCreatureIndex The selected target creature index
      */
     static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingFieldSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
-        const { effect, originalContext, selectionType = 'target' } = pendingSelection;
+        const { effect, originalContext, selectionType: _selectionType = 'target' } = pendingSelection;
+        const context = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
+            ? { ...originalContext, selectionContinuationEffects: pendingSelection.continuationEffects }
+            : originalContext;
 
         /*
          * Target validation is now handled at the event handler level
@@ -352,6 +365,7 @@ export class EffectApplier {
                     selectionType: 'field',
                     effect: resolvedEffect,
                     originalContext,
+                    continuationEffects: originalContext.selectionContinuationEffects,
                     count: 1,
                     availableTargets: nextAvailableTargets,
                 };
@@ -361,8 +375,18 @@ export class EffectApplier {
         }
         
         // All targets are resolved, apply the effect
-        handler.apply(controllers, resolvedEffect, originalContext);
-        
+        handler.apply(controllers, resolvedEffect, context);
+
+        if (controllers.turnState.getPendingSelection()) {
+            return true;
+        }
+
+        if (pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0) {
+            controllers.effects.pushPendingEffect(pendingSelection.continuationEffects, originalContext);
+            EffectQueueProcessor.processQueue(controllers);
+            return !!controllers.turnState.getPendingSelection();
+        }
+
         return false; // Indicate that no new pending selection was set up
     }
 
@@ -451,6 +475,9 @@ export class EffectApplier {
         selectedCardTemplateIds: string[],
     ): void {
         const { effect, originalContext, availableCards } = pendingSelection;
+        const context = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
+            ? { ...originalContext, selectionContinuationEffects: pendingSelection.continuationEffects }
+            : originalContext;
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
 
         if (!handler?.resumeWithCardSelection) {
@@ -468,7 +495,12 @@ export class EffectApplier {
             return remaining.splice(idx, 1)[0];
         }).filter((card): card is GameCard => card !== undefined);
 
-        handler.resumeWithCardSelection(controllers, effect, selectedCards, originalContext);
+        handler.resumeWithCardSelection(controllers, effect, selectedCards, context);
+
+        if (!controllers.turnState.getPendingSelection() && pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0) {
+            controllers.effects.pushPendingEffect(pendingSelection.continuationEffects, originalContext);
+            EffectQueueProcessor.processQueue(controllers);
+        }
     }
 
     /**
@@ -486,6 +518,9 @@ export class EffectApplier {
         selectedTargets: Array<{ playerId: number; fieldIndex: number }>,
     ): void {
         const { effect, originalContext, availableEnergy } = pendingSelection;
+        const context = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
+            ? { ...originalContext, selectionContinuationEffects: pendingSelection.continuationEffects }
+            : originalContext;
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
 
         if (!handler) {
@@ -526,6 +561,11 @@ export class EffectApplier {
             }
         }
 
-        handler.apply(controllers, resolvedEffect, originalContext);
+        handler.apply(controllers, resolvedEffect, context);
+
+        if (!controllers.turnState.getPendingSelection() && pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0) {
+            controllers.effects.pushPendingEffect(pendingSelection.continuationEffects, originalContext);
+            EffectQueueProcessor.processQueue(controllers);
+        }
     }
 }

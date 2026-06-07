@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
+import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
@@ -226,6 +227,64 @@ describe('Conditional Delegation Effect', () => {
             });
 
             expect(state.hand[0].length).to.equal(2, 'Should draw 2 cards when condition is always 1');
+        });
+    });
+
+    describe('conditional effect with target selection in true branch', () => {
+        const testRepository = new MockCardRepository({
+            creatures: {
+                'lightning-bench': {
+                    templateId: 'lightning-bench',
+                    name: 'Lightning Bench',
+                    maxHp: 70,
+                    type: 'lightning',
+                    retreatCost: 1,
+                    attacks: [{ name: 'Spark', damage: 10, energyRequirements: [{ type: 'lightning', amount: 1 }] }],
+                },
+            },
+            items: {
+                'electric-generator-like': {
+                    templateId: 'electric-generator-like',
+                    name: 'Electric Generator Like',
+                    effects: [{
+                        type: 'conditional-delegation',
+                        condition: { type: 'coin-flip', headsValue: 1, tailsValue: 0 },
+                        trueEffects: [{
+                            type: 'energy-attach',
+                            energyType: 'lightning',
+                            amount: { type: 'constant', value: 1 },
+                            target: {
+                                type: 'single-choice',
+                                chooser: 'self',
+                                criteria: {
+                                    player: 'self',
+                                    location: 'field',
+                                    position: 'bench',
+                                    fieldCriteria: { cardCriteria: { isType: 'lightning' }},
+                                },
+                            },
+                        }],
+                        falseEffects: [],
+                    }],
+                },
+            },
+        });
+
+        it('should resolve the true branch and then request a field target', () => {
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('electric-generator-like', 'item'),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 2 }]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'lightning-bench', 'lightning-bench' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'electric-generator-like', type: 'item' }]),
+                    StateBuilder.withMockedCoinFlips([ true ]),
+                ),
+            });
+
+            expect(state.energy.attachedEnergyByInstance['lightning-bench-0-1']?.lightning).to.equal(1, 'Should attach Lightning Energy to the selected bench Pokemon');
         });
     });
 });

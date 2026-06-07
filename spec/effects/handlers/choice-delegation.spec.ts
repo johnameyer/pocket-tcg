@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { SelectChoiceResponseMessage } from '../../../src/messages/response/select-choice-response-message.js';
+import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
@@ -149,6 +150,132 @@ describe('Choice Delegation Effect', () => {
             expect(state.field.creatures[1][0].damageTaken).to.equal(10, 'Should deal only poison tick damage, not attack damage');
             expect(state.statusEffects.activeStatusEffects[1]).to.have.length(1, 'Should apply a status');
             expect(state.statusEffects.activeStatusEffects[1][0].type).to.equal('poison', 'Should apply poison');
+        });
+    });
+
+    describe('wrapped choice continuation', () => {
+        it('should continue resolving effects after a choice branch', () => {
+            const testRepository = new MockCardRepository({
+                supporters: {
+                    'wrapped-choice-supporter': {
+                        templateId: 'wrapped-choice-supporter',
+                        name: 'Wrapped Choice Supporter',
+                        effects: [
+                            {
+                                type: 'choice-delegation',
+                                options: [
+                                    {
+                                        name: 'Draw 2',
+                                        effects: [{
+                                            type: 'draw',
+                                            amount: { type: 'constant', value: 2 },
+                                        }],
+                                    },
+                                    {
+                                        name: 'Heal 20',
+                                        effects: [{
+                                            type: 'hp',
+                                            amount: { type: 'constant', value: 20 },
+                                            target: { type: 'fixed', player: 'self', position: 'active' },
+                                            operation: 'heal',
+                                        }],
+                                    },
+                                ],
+                            },
+                            {
+                                type: 'draw',
+                                amount: { type: 'constant', value: 1 },
+                            },
+                        ],
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('wrapped-choice-supporter', 'supporter'),
+                    new SelectChoiceResponseMessage([ 'Draw 2' ]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'wrapped-choice-supporter', type: 'supporter' }]),
+                    StateBuilder.withDeck(0, Array(6).fill({ templateId: 'basic-creature', type: 'creature' })),
+                ),
+            });
+
+            expect(state.hand[0].length).to.equal(3, 'Should resolve selected branch and then continue with trailing effects');
+        });
+
+        it('should continue after a selected branch that requires target selection', () => {
+            const testRepository = new MockCardRepository({
+                creatures: {
+                    'lightning-bench': {
+                        templateId: 'lightning-bench',
+                        name: 'Lightning Bench',
+                        maxHp: 70,
+                        type: 'lightning',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Spark', damage: 10, energyRequirements: [{ type: 'lightning', amount: 1 }] }],
+                    },
+                },
+                items: {
+                    'wrapped-choice-item': {
+                        templateId: 'wrapped-choice-item',
+                        name: 'Wrapped Choice Item',
+                        effects: [
+                            {
+                                type: 'choice-delegation',
+                                options: [
+                                    {
+                                        name: 'Attach Lightning',
+                                        effects: [{
+                                            type: 'energy-attach',
+                                            energyType: 'lightning',
+                                            amount: { type: 'constant', value: 1 },
+                                            target: {
+                                                type: 'single-choice',
+                                                chooser: 'self',
+                                                criteria: {
+                                                    player: 'self',
+                                                    location: 'field',
+                                                    position: 'bench',
+                                                    fieldCriteria: { cardCriteria: { isType: 'lightning' }},
+                                                },
+                                            },
+                                        }],
+                                    },
+                                    {
+                                        name: 'Do Nothing',
+                                        effects: [],
+                                    },
+                                ],
+                            },
+                            {
+                                type: 'draw',
+                                amount: { type: 'constant', value: 1 },
+                            },
+                        ],
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('wrapped-choice-item', 'item'),
+                    new SelectChoiceResponseMessage([ 'Attach Lightning' ]),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 2 }]),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature', [ 'lightning-bench', 'lightning-bench' ]),
+                    StateBuilder.withHand(0, [{ templateId: 'wrapped-choice-item', type: 'item' }]),
+                    StateBuilder.withDeck(0, Array(2).fill({ templateId: 'basic-creature', type: 'creature' })),
+                ),
+            });
+
+            expect(state.energy.attachedEnergyByInstance['lightning-bench-0-1']?.lightning).to.equal(1, 'Should resolve selected target in wrapped choice branch');
+            expect(state.hand[0].length).to.equal(1, 'Should continue and resolve trailing draw effect after target selection');
         });
     });
 });

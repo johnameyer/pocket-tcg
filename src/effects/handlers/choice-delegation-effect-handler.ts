@@ -22,6 +22,7 @@ export class ChoiceDelegationEffectHandler extends AbstractEffectHandler<ChoiceD
             selectionType: 'choice',
             effect,
             originalContext: context,
+            continuationEffects: context.selectionContinuationEffects,
             choices: effect.options.map(option => ({ name: option.name, value: option.name })),
             count: 1,
         });
