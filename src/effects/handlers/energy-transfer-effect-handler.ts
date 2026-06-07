@@ -5,9 +5,10 @@ import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
-import { EnergyTargetResolver } from '../target-resolvers/energy-target-resolver.js';
+import { EnergyTargetResolver, ResolvedMultiEnergyTarget } from '../target-resolvers/energy-target-resolver.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
-import { getCurrentInstanceId } from '../../utils/field-card-utils.js';
+import { EnergyTarget } from '../../repository/targets/energy-target.js';
+import { ResolvedFieldTarget } from '../../repository/targets/field-target.js';
 
 /**
  * Handler for energy transfer effects that move energy from one field card to another.
@@ -16,19 +17,18 @@ import { getCurrentInstanceId } from '../../utils/field-card-utils.js';
 export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTransferEffect> {
     /**
      * Get the resolution requirements for an energy transfer effect.
-     * Returns empty because EnergyTarget wraps FieldTarget in a nested structure,
-     * and the framework's property setter doesn't support nested paths.
-     * Resolution is handled manually in apply().
+     * Source uses EnergyTargetResolver (for source creature + energy choice),
+     * then target uses FieldTargetResolver for destination creature.
      * 
      * @param effect The energy transfer effect to get resolution requirements for
-     * @returns Empty array - resolution is handled manually in apply()
+     * @returns Resolution requirements for source and target
      */
     getResolutionRequirements(effect: EnergyTransferEffect): ResolutionRequirement[] {
-        /*
-         * Manual resolution in apply() because source.fieldTarget is a nested property
-         * that the framework's resolvedEffect[targetProperty] = value doesn't support
-         */
-        return [];
+        return [
+            // @ts-ignore - EnergyTarget is handled by EffectApplier's EnergyTargetResolver path
+            { targetProperty: 'source', target: effect.source as EnergyTarget, required: true },
+            { targetProperty: 'target', target: effect.target, required: true },
+        ];
     }
     
     /**
@@ -51,29 +51,18 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
     }
     
     apply(controllers: Controllers, effect: EnergyTransferEffect, context: EffectContext): void {
-        // Manually handle target selection for both source.fieldTarget and target
-        if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, effect.source.fieldTarget)) {
-            return; // Pending selection for source
+        const resolvedSource = effect.source as ResolvedMultiEnergyTarget | EnergyTarget;
+        if (resolvedSource.type !== 'resolved-multi' || resolvedSource.targets.length === 0) {
+            throw new Error(`Expected resolved-multi source, got ${resolvedSource?.type || 'undefined'}`);
         }
 
-        if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, effect.target)) {
-            return; // Pending selection for target
+        const resolvedTarget = effect.target as ResolvedFieldTarget;
+        if (resolvedTarget.type !== 'resolved' || resolvedTarget.targets.length === 0) {
+            throw new Error(`Expected resolved target, got ${resolvedTarget?.type || 'undefined'}`);
         }
 
-        // Resolve source.fieldTarget
-        const sourceFieldResolution = FieldTargetResolver.resolveTarget(effect.source.fieldTarget, controllers, context);
-        if (sourceFieldResolution.type !== 'resolved' || sourceFieldResolution.targets.length === 0) {
-            throw new Error('Expected resolved source field target');
-        }
-
-        // Resolve target
-        const targetResolution = FieldTargetResolver.resolveTarget(effect.target, controllers, context);
-        if (targetResolution.type !== 'resolved' || targetResolution.targets.length === 0) {
-            throw new Error('Expected resolved target field target');
-        }
-
-        const sourceFieldTarget = sourceFieldResolution.targets[0];
-        const targetFieldTarget = targetResolution.targets[0];
+        const sourceFieldTarget = resolvedSource.targets[0];
+        const targetFieldTarget = resolvedTarget.targets[0];
 
         // Get the source creature
         const sourceCreature = controllers.field.getRawCardByPosition(sourceFieldTarget.playerId, sourceFieldTarget.fieldIndex);
@@ -97,30 +86,21 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
             return;
         }
 
-        const sourceInstanceId = getCurrentInstanceId(sourceCreature);
-        const targetInstanceId = getCurrentInstanceId(targetCreature);
+        const sourceInstanceId = controllers.field.getFieldInstanceId(sourceFieldTarget.playerId, sourceFieldTarget.fieldIndex);
+        const targetInstanceId = controllers.field.getFieldInstanceId(targetFieldTarget.playerId, targetFieldTarget.fieldIndex);
 
-        // Get attached energy and filter by criteria
-        const attachedEnergy = controllers.energy.getAttachedEnergyByInstance(sourceInstanceId);
-        const energyTypes = effect.source.criteria?.energyTypes;
-        const count = effect.source.count;
+        if (!sourceInstanceId || !targetInstanceId) {
+            controllers.players.messageAll({
+                type: 'status',
+                components: [ `${context.effectName} could not resolve transfer targets!` ],
+            });
+            return;
+        }
 
-        // Determine which energy types to transfer
-        const typesToTransfer = energyTypes && energyTypes.length > 0 
-            ? energyTypes 
-            : Object.keys(attachedEnergy).filter(type => attachedEnergy[type as AttachableEnergyType] > 0) as AttachableEnergyType[];
-
+        const selectedEnergy = resolvedSource.targets[0].energy;
         let transferred = 0;
-        let remainingCount = count;
-
-        // Transfer energy of specified types
-        for (const energyType of typesToTransfer) {
-            if (remainingCount <= 0) {
-                break;
-            }
-
-            const available = attachedEnergy[energyType] || 0;
-            const toTransfer = Math.min(available, remainingCount);
+        for (const [ energyType, amount ] of Object.entries(selectedEnergy) as Array<[ AttachableEnergyType, number ]>) {
+            const toTransfer = amount || 0;
 
             if (toTransfer > 0 && controllers.energy.transferEnergyBetweenInstances(
                 sourceInstanceId,
@@ -129,7 +109,6 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
                 toTransfer,
             )) {
                 transferred += toTransfer;
-                remainingCount -= toTransfer;
             }
         }
 
