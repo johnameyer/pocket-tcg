@@ -7,7 +7,6 @@ import { CardRepository } from '../../repository/card-repository.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
 import { EnergyTargetResolver, ResolvedMultiEnergyTarget } from '../target-resolvers/energy-target-resolver.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
-import { EnergyTarget } from '../../repository/targets/energy-target.js';
 import { ResolvedFieldTarget } from '../../repository/targets/field-target.js';
 
 /**
@@ -25,8 +24,7 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
      */
     getResolutionRequirements(effect: EnergyTransferEffect): ResolutionRequirement[] {
         return [
-            // @ts-ignore - EnergyTarget is handled by EffectApplier's EnergyTargetResolver path
-            { targetProperty: 'source', target: effect.source as EnergyTarget, required: true },
+            { targetProperty: 'source', target: effect.source, required: true },
             { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
@@ -51,7 +49,7 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
     }
     
     apply(controllers: Controllers, effect: EnergyTransferEffect, context: EffectContext): void {
-        const resolvedSource = effect.source as ResolvedMultiEnergyTarget | EnergyTarget;
+        const resolvedSource = effect.source as unknown as ResolvedMultiEnergyTarget;
         if (resolvedSource.type !== 'resolved-multi' || resolvedSource.targets.length === 0) {
             throw new Error(`Expected resolved-multi source, got ${resolvedSource?.type || 'undefined'}`);
         }
@@ -100,15 +98,13 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         const selectedEnergy = resolvedSource.targets[0].energy;
         let transferred = 0;
         for (const [ energyType, amount ] of Object.entries(selectedEnergy) as Array<[ AttachableEnergyType, number ]>) {
-            const toTransfer = amount || 0;
-
-            if (toTransfer > 0 && controllers.energy.transferEnergyBetweenInstances(
+            if (amount > 0 && controllers.energy.transferEnergyBetweenInstances(
                 sourceInstanceId,
                 targetInstanceId,
                 energyType,
-                toTransfer,
+                amount,
             )) {
-                transferred += toTransfer;
+                transferred += amount;
             }
         }
 

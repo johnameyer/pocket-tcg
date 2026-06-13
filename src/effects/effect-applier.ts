@@ -8,7 +8,7 @@ import { CardRepository } from '../repository/card-repository.js';
 import { GameCard } from '../controllers/card-types.js';
 import { EffectContext } from './effect-context.js';
 import { PendingCardSelection, PendingEnergySelection, PendingFieldSelection } from './pending-selection-types.js';
-import { ResolutionRequirement, EffectHandler } from './interfaces/effect-handler-interface.js';
+import { ResolutionRequirement, EffectHandler, isEnergyResolutionTarget } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver, EnergyOption, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
@@ -415,7 +415,10 @@ export class EffectApplier {
         // If there are requirements, check if all required targets are available
         if (requirements.length > 0) {
             for (const requirement of requirements) {
-                if (requirement.required && !FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
+                const isAvailable = isEnergyResolutionTarget(requirement.target)
+                    ? EnergyTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)
+                    : FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository);
+                if (requirement.required && !isAvailable) {
                     return false;
                 }
             }
@@ -451,7 +454,10 @@ export class EffectApplier {
         
         // Check if any target requires selection
         for (const requirement of requirements) {
-            if (FieldTargetResolver.requiresTargetSelection(requirement.target, context)) {
+            const innerTarget = isEnergyResolutionTarget(requirement.target)
+                ? requirement.target.fieldTarget
+                : requirement.target;
+            if (FieldTargetResolver.requiresTargetSelection(innerTarget, context)) {
                 return true;
             }
         }
