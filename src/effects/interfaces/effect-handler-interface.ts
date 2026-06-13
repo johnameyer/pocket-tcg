@@ -2,6 +2,7 @@ import { Controllers } from '../../controllers/controllers.js';
 import { HandlerData } from '../../game-handler.js';
 import { Effect, ModifierEffect } from '../../repository/effect-types.js';
 import { FieldTarget } from '../../repository/targets/field-target.js';
+import { EnergyTarget } from '../../repository/targets/energy-target.js';
 import { EffectContext } from '../effect-context.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { GameCard } from '../../controllers/card-types.js';
@@ -18,12 +19,16 @@ export type EffectHandlerMap = {
  * Represents a requirement for resolving a target property in an effect.
  * This separates what needs resolution from how to resolve it.
  */
+export function isEnergyResolutionTarget(target: FieldTarget | EnergyTarget): target is EnergyTarget {
+    return 'fieldTarget' in target && 'count' in target;
+}
+
 export interface ResolutionRequirement {
     /** The property name on the effect object that contains the target */
     targetProperty: string;
     
     /** The target to resolve */
-    target: FieldTarget;
+    target: FieldTarget | EnergyTarget;
     
     /** Whether this target is required for the effect to proceed */
     required: boolean;

@@ -5,7 +5,8 @@ import { EffectContextFactory } from './effect-context.js';
 import { EffectContext } from './effect-context.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver } from './target-resolvers/field-target-resolver.js';
-import { EffectHandler } from './interfaces/effect-handler-interface.js';
+import { EnergyTargetResolver } from './target-resolvers/energy-target-resolver.js';
+import { EffectHandler, isEnergyResolutionTarget } from './interfaces/effect-handler-interface.js';
 
 export class EffectValidator {
     /**
@@ -72,7 +73,10 @@ export class EffectValidator {
         // If there are requirements, check if all required targets are available
         if (requirements.length > 0) {
             for (const requirement of requirements) {
-                if (requirement.required && !FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)) {
+                const isAvailable = isEnergyResolutionTarget(requirement.target)
+                    ? EnergyTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)
+                    : FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository);
+                if (requirement.required && !isAvailable) {
                     return false;
                 }
             }
