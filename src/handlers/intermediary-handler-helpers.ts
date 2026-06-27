@@ -5,7 +5,7 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { ActionValidator } from '../effects/action-validator.js';
-import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage } from '../messages/response/index.js';
+import { AttackResponseMessage, PlayCardResponseMessage, EndTurnResponseMessage, EvolveResponseMessage, AttachEnergyResponseMessage, UseAbilityResponseMessage, UseStadiumResponseMessage } from '../messages/response/index.js';
 import { GameCard } from '../controllers/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
@@ -657,6 +657,17 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
         }
     });
     
+    // Check if active stadium has a usable triggered effect
+    if (ActionValidator.canUseStadium(handlerData, cardRepository, currentPlayer)) {
+        const activeStadium = handlerData.stadium?.activeStadium;
+        if (activeStadium) {
+            const stadiumData = cardRepository.getStadium(activeStadium.templateId);
+            if (stadiumData?.trigger) {
+                actionOptions.push({ name: `Use Stadium (${stadiumData.name})`, value: 'use-stadium' });
+            }
+        }
+    }
+
     // Check if energy can be attached
     if (ActionValidator.canAttachEnergy(handlerData, cardRepository, currentPlayer)) {
         actionOptions.push({ name: 'Attach Energy', value: 'attachEnergy' });
@@ -688,6 +699,8 @@ export async function handleAction(cardRepository: CardRepository, intermediary:
         await handleAttachEnergy(cardRepository, intermediary, handlerData, responsesQueue);
     } else if (actionType === 'retreat') {
         await handleRetreat(cardRepository, intermediary, handlerData, responsesQueue);
+    } else if (actionType === 'use-stadium') {
+        responsesQueue.push(new UseStadiumResponseMessage());
     } else if (actionType.startsWith('ability-')) {
         await handleAbility(cardRepository, intermediary, handlerData, responsesQueue, actionType);
     } else if (actionType === 'endTurn') {

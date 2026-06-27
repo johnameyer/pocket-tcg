@@ -501,8 +501,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     stadiumData.name,
                 ));
                 
-                // Apply stadium effects through the effect handler
-                if (stadiumData.effects) {
+                // Apply passive stadium effects at play time (triggered effects fire via use-stadium-response)
+                if (!stadiumData.trigger && stadiumData.effects.length > 0) {
                     const stadiumContext = EffectContextFactory.createCardContext(sourceHandler, stadiumData.name, 'stadium');
                     stadiumContext.sourceInstanceId = cardInstanceId;
                     EffectApplier.applyEffects(stadiumData.effects, controllers, stadiumContext);
@@ -895,7 +895,63 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     EffectQueueProcessor.processQueue(controllers);
                 }
             }
-            
+
+
+        },
+    },
+    'use-stadium-response': {
+        canRespond: EventHandler.isTurn('turn'),
+        validateEvent: {
+            validators: [
+                EventHandler.validate('Cannot use stadium - no stadium in play', (controllers: Controllers) => {
+                    return !controllers.stadium.getActiveStadium();
+                }),
+                EventHandler.validate('Cannot use stadium - no trigger', (controllers: Controllers) => {
+                    const activeStadium = controllers.stadium.getActiveStadium();
+                    if (!activeStadium) {
+                        return true; 
+                    }
+                    const stadiumData = controllers.cardRepository.getStadium(activeStadium.templateId);
+                    return !stadiumData.trigger;
+                }),
+                EventHandler.validate('Cannot use stadium - already used this turn', (controllers: Controllers) => {
+                    const activeStadium = controllers.stadium.getActiveStadium();
+                    if (!activeStadium) {
+                        return false; 
+                    }
+                    const stadiumData = controllers.cardRepository.getStadium(activeStadium.templateId);
+                    const trigger = stadiumData.trigger;
+                    if (!trigger || trigger.type !== 'manual' || trigger.unlimited) {
+                        return false; 
+                    }
+                    return controllers.turnState.hasAbilityBeenUsedThisTurn(activeStadium.instanceId, stadiumData.name);
+                }),
+            ],
+            fallback: (controllers: Controllers, source: number) => {
+                controllers.waiting.removePosition(source);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional fallback to discard invalid event and end turn - framework pattern
+                return undefined as any;
+            },
+        },
+        merge: (controllers: Controllers, sourceHandler: number) => {
+            controllers.waiting.removePosition(sourceHandler);
+
+            const activeStadium = controllers.stadium.getActiveStadium();
+            if (!activeStadium) {
+                return; 
+            }
+
+            const stadiumData = controllers.cardRepository.getStadium(activeStadium.templateId);
+
+            if (stadiumData.trigger && stadiumData.effects.length > 0) {
+                if (stadiumData.trigger.type === 'manual' && !stadiumData.trigger.unlimited) {
+                    controllers.turnState.markAbilityUsed(activeStadium.instanceId, stadiumData.name);
+                }
+
+                const context = EffectContextFactory.createCardContext(sourceHandler, stadiumData.name, 'stadium');
+                EffectApplier.applyEffects(stadiumData.effects, controllers, context);
+                EffectQueueProcessor.processQueue(controllers);
+            }
         },
     },
     'retreat-response': {

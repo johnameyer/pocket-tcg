@@ -7,6 +7,7 @@ export * from './end-turn-response-message.js';
 export * from './attach-energy-response-message.js';
 export * from './select-target-response-message.js';
 export * from './use-ability-response-message.js';
+export * from './use-stadium-response-message.js';
 export * from './retreat-response-message.js';
 export * from './select-energy-response-message.js';
 export * from './select-card-response-message.js';

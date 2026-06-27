@@ -226,6 +226,35 @@ export class ActionValidator {
     }
     
     /**
+     * Checks if the active stadium has a usable manual effect this turn.
+     */
+    static canUseStadium(handlerData: HandlerData, cardRepository: CardRepository, playerId: number): boolean {
+        const activeStadium = handlerData.stadium?.activeStadium;
+        if (!activeStadium) {
+            return false; 
+        }
+
+        const stadiumData = cardRepository.getStadium(activeStadium.templateId);
+        if (!stadiumData) {
+            return false; 
+        }
+
+        const trigger = stadiumData.trigger;
+        if (!trigger) {
+            return false; 
+        }
+
+        if (trigger.type === 'manual' && !trigger.unlimited) {
+            const abilityKey = `${activeStadium.instanceId}-${stadiumData.name}`;
+            if (handlerData.turnState.usedAbilitiesThisTurn?.includes(abilityKey)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Checks if a creature can use an ability.
      */
     static canUseAbility(handlerData: HandlerData, cardRepository: CardRepository, playerId: number, position: number): boolean {

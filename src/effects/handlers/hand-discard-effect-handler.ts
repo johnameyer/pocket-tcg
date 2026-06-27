@@ -5,6 +5,8 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../effect-handler.
 import { getEffectValue } from '../effect-utils.js';
 import { GameCard } from '../../controllers/card-types.js';
 import { HandlerData } from '../../game-handler.js';
+import { CardCriteriaFilter } from '../filters/card-criteria-filter.js';
+import { CardRepository } from '../../repository/card-repository.js';
 
 /**
  * Handler for hand discard effects that discard cards from a player's hand.
@@ -14,15 +16,16 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
         return [];
     }
 
-    /** Returns false when the player has no cards to discard, blocking TRY_THEN gating. */
-    canApply(handlerData: HandlerData, effect: HandDiscardEffect, context: EffectContext): boolean {
+    /** Returns false when the player has no eligible cards to discard, blocking TRY_THEN gating. */
+    canApply(handlerData: HandlerData, effect: HandDiscardEffect, context: EffectContext, cardRepository: CardRepository): boolean {
         if (effect.target === 'both') {
             return true; 
         }
         if (effect.target === 'self') {
-            return handlerData.hand.hand.length > 0; 
+            const eligible = CardCriteriaFilter.filter(handlerData.hand.hand, effect.criteria, cardRepository);
+            return eligible.length > 0;
         }
-        // opponent — use sizes array (handlerData.hand.hand is scoped to sourcePlayer)
+        // opponent — criteria filtering not applied (no access to opponent hand cards here)
         return handlerData.hand.sizes[1 - context.sourcePlayer] > 0;
     }
     
@@ -36,19 +39,19 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: HandDiscardEffect, context: EffectContext): void {
-        // Handle different target types
         if (effect.target === 'both') {
-            // Apply to both players without choice (simultaneous discard)
             this.discardCards(controllers, effect, context, 0);
             this.discardCards(controllers, effect, context, 1);
         } else {
-            // Determine which player's hand to discard from
             const playerId = effect.target === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer;
             const hand = controllers.hand.getHand(playerId);
+            const eligibleCards = effect.target === 'self' && effect.criteria
+                ? CardCriteriaFilter.filter(hand, effect.criteria, controllers.cardRepository.cardRepository)
+                : [ ...hand ];
             const discardAmount = getEffectValue(effect.amount, controllers, context);
-            const actualDiscardAmount = Math.min(discardAmount, hand.length);
+            const actualDiscardAmount = Math.min(discardAmount, eligibleCards.length);
 
-            if (hand.length === 0) {
+            if (eligibleCards.length === 0) {
                 controllers.players.messageAll({
                     type: 'status',
                     components: [ `${context.effectName} has no cards to discard!` ],
@@ -56,11 +59,9 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
                 return;
             }
 
-            if (actualDiscardAmount >= hand.length) {
-                // No choice needed — discard the entire hand
-                this.discardCards(controllers, effect, context, playerId);
+            if (actualDiscardAmount >= eligibleCards.length) {
+                this.removeSelectedCards(controllers, effect, context, playerId, eligibleCards.slice(0, actualDiscardAmount));
             } else {
-                // Player must choose which cards to discard
                 controllers.turnState.setPendingSelection({
                     selectionType: 'card',
                     effect,
@@ -69,7 +70,7 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
                     playerId,
                     location: 'hand',
                     count: actualDiscardAmount,
-                    availableCards: [ ...hand ],
+                    availableCards: eligibleCards,
                     prompt: `Select ${actualDiscardAmount} card${actualDiscardAmount !== 1 ? 's' : ''} to discard:`,
                 });
             }

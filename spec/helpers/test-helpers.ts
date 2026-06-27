@@ -208,22 +208,18 @@ export function initializePassiveEffectsForTestState(
         try {
             const stadiumData = repository.getStadium(stadium.templateId);
             
-            if (stadiumData.effects) {
+            if (stadiumData.effects && !stadiumData.trigger) {
                 for (const effect of stadiumData.effects) {
-                    if (effect.type === 'passive') {
-                        // Create the passive effect entry
-                        const passiveEffect = {
-                            id: `${state.effects.nextEffectId++}`,
-                            sourcePlayer: stadium.owner,
-                            effectName: `${stadiumData.name}`,
-                            effect: effect.modifier,
-                            duration: effect.modifier.duration,
-                            createdTurn: state.turnCounter.turnNumber,
-                            cardInstanceId: stadium.instanceId, // Track which stadium instance this is tied to
-                        };
-                        
-                        state.effects.activePassiveEffects.push(passiveEffect);
-                    }
+                    const passiveEffect = {
+                        id: `${state.effects.nextEffectId++}`,
+                        sourcePlayer: stadium.owner,
+                        effectName: `${stadiumData.name}`,
+                        effect: effect.modifier,
+                        duration: effect.modifier.duration,
+                        createdTurn: state.turnCounter.turnNumber,
+                        cardInstanceId: stadium.instanceId,
+                    };
+                    state.effects.activePassiveEffects.push(passiveEffect);
                 }
             }
         } catch (e) {
