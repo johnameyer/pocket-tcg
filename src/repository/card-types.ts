@@ -1,4 +1,4 @@
-import { Effect } from './effect-types.js';
+import { Effect, RegisterPassiveEffect } from './effect-types.js';
 import { EffectValue } from './effect-value-types.js';
 
 /**
@@ -56,7 +56,9 @@ type CreatureAbilityForTrigger<T extends Trigger> = {
     name: string;
     description?: string;
     trigger: T;
-    effects: Effect<TriggerContextualRefs[T['type']]>[];
+    effects: T['type'] extends 'passive'
+        ? RegisterPassiveEffect[]
+        : Effect<TriggerContextualRefs[T['type']]>[];
 };
 
 /**
@@ -82,8 +84,7 @@ type ToolDataBase = {
 
 /** @internal ToolData variant without a trigger (passive modifier effects only) */
 type ToolDataNoTrigger = ToolDataBase & {
-    /** Passive modifier effects — no contextual refs available */
-    effects: Effect<never>[];
+    effects: RegisterPassiveEffect[];
     trigger?: undefined;
 };
 
