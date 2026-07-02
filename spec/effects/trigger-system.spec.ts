@@ -7,6 +7,7 @@ import { AttackResponseMessage } from '../../src/messages/response/attack-respon
 import { PlayCardResponseMessage } from '../../src/messages/response/play-card-response-message.js';
 import { EvolveResponseMessage } from '../../src/messages/response/evolve-response-message.js';
 import { RetreatResponseMessage } from '../../src/messages/response/retreat-response-message.js';
+import { SelectActiveCardResponseMessage } from '../../src/messages/response/select-active-card-response-message.js';
 import { MockCardRepository } from '../mock-repository.js';
 
 describe('Trigger System', () => {
@@ -514,6 +515,146 @@ describe('Trigger System', () => {
             });
 
             expect(state.field.creatures[0][0].damageTaken).to.equal(25, 'Should heal 25 HP when evolved');
+        });
+
+        it('should not trigger on-play ability during initial game setup', () => {
+            const testRepository = new MockCardRepository({
+                creatures: {
+                    'on-play-self-damage-creature': {
+                        templateId: 'on-play-self-damage-creature',
+                        name: 'On Play Self Damage Creature',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
+                        ability: {
+                            name: 'Surge',
+                            effects: [{
+                                type: 'hp',
+                                amount: { type: 'constant', value: 10 },
+                                target: { type: 'fixed', player: 'self', position: 'source' },
+                                operation: 'damage',
+                            }],
+                            trigger: { type: 'on-play' },
+                        },
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [ new EndTurnResponseMessage() ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'on-play-self-damage-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                ),
+            });
+
+            // Creature placed during setup should have 0 damage — on-play didn't fire
+            expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'on-play should not fire during initial setup');
+        });
+
+        it('should not trigger on-play ability when promoting from bench after knockout', () => {
+            const testRepository = new MockCardRepository({
+                creatures: {
+                    attacker: {
+                        templateId: 'attacker',
+                        name: 'Attacker',
+                        maxHp: 100,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Finishing Blow', damage: 60, energyRequirements: [] }],
+                    },
+                    fodder: {
+                        templateId: 'fodder',
+                        name: 'Fodder',
+                        maxHp: 60,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 10, energyRequirements: [] }],
+                    },
+                    'on-play-self-damage-creature': {
+                        templateId: 'on-play-self-damage-creature',
+                        name: 'On Play Self Damage Creature',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
+                        ability: {
+                            name: 'Surge',
+                            effects: [{
+                                type: 'hp',
+                                amount: { type: 'constant', value: 10 },
+                                target: { type: 'fixed', player: 'self', position: 'source' },
+                                operation: 'damage',
+                            }],
+                            trigger: { type: 'on-play' },
+                        },
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [
+                    new AttackResponseMessage(0),
+                    new SelectActiveCardResponseMessage(0),
+                ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'attacker'),
+                    StateBuilder.withCreatures(1, 'fodder', [ 'on-play-self-damage-creature' ]),
+                    StateBuilder.withDamage('fodder-1', 40),
+                ),
+            });
+
+            // on-play-self-damage-creature was promoted from bench after KO — on-play should not fire
+            expect(state.field.creatures[1][0].damageTaken).to.equal(0, 'on-play should not fire during bench promotion after knockout');
+        });
+
+        it('should not trigger on-play ability when promoting from bench after retreat', () => {
+            const testRepository = new MockCardRepository({
+                creatures: {
+                    retreater: {
+                        templateId: 'retreater',
+                        name: 'Retreater',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 10, energyRequirements: [] }],
+                    },
+                    'on-play-self-damage-creature': {
+                        templateId: 'on-play-self-damage-creature',
+                        name: 'On Play Self Damage Creature',
+                        maxHp: 80,
+                        type: 'colorless',
+                        retreatCost: 1,
+                        attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [] }],
+                        ability: {
+                            name: 'Surge',
+                            effects: [{
+                                type: 'hp',
+                                amount: { type: 'constant', value: 10 },
+                                target: { type: 'fixed', player: 'self', position: 'source' },
+                                operation: 'damage',
+                            }],
+                            trigger: { type: 'on-play' },
+                        },
+                    },
+                },
+            });
+
+            const { state } = runTestGame({
+                actions: [ new RetreatResponseMessage(0) ],
+                customRepository: testRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'retreater', [ 'on-play-self-damage-creature' ]),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withEnergy('retreater-0', { fire: 1 }),
+                ),
+            });
+
+            // on-play-self-damage-creature was promoted from bench via retreat — on-play should not fire
+            expect(state.field.creatures[0][0].damageTaken).to.equal(0, 'on-play should not fire during bench promotion after retreat');
         });
 
         it('should not trigger on-play ability for evolution when filterEvolution is true', () => {
