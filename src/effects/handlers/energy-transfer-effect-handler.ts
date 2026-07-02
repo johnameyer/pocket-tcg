@@ -59,56 +59,36 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
             throw new Error(`Expected resolved target, got ${resolvedTarget?.type || 'undefined'}`);
         }
 
-        const sourceFieldTarget = resolvedSource.targets[0];
         const targetFieldTarget = resolvedTarget.targets[0];
-
-        // Get the source creature
-        const sourceCreature = controllers.field.getRawCardByPosition(sourceFieldTarget.playerId, sourceFieldTarget.fieldIndex);
-        
-        if (!sourceCreature) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} source creature not found!` ],
-            });
-            return;
-        }
-
-        // Get the target creature
-        const targetCreature = controllers.field.getRawCardByPosition(targetFieldTarget.playerId, targetFieldTarget.fieldIndex);
-        
-        if (!targetCreature) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} target creature not found!` ],
-            });
-            return;
-        }
-
-        const sourceInstanceId = controllers.field.getFieldInstanceId(sourceFieldTarget.playerId, sourceFieldTarget.fieldIndex);
         const targetInstanceId = controllers.field.getFieldInstanceId(targetFieldTarget.playerId, targetFieldTarget.fieldIndex);
 
-        if (!sourceInstanceId || !targetInstanceId) {
+        if (!targetInstanceId) {
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} could not resolve transfer targets!` ],
+                components: [ `${context.effectName} could not resolve transfer target!` ],
             });
             return;
         }
 
-        const selectedEnergy = resolvedSource.targets[0].energy;
         let transferred = 0;
-        for (const [ energyType, amount ] of Object.entries(selectedEnergy) as Array<[ AttachableEnergyType, number ]>) {
-            if (amount > 0 && controllers.energy.transferEnergyBetweenInstances(
-                sourceInstanceId,
-                targetInstanceId,
-                energyType,
-                amount,
-            )) {
-                transferred += amount;
+        for (const sourceTarget of resolvedSource.targets) {
+            const sourceInstanceId = controllers.field.getFieldInstanceId(sourceTarget.playerId, sourceTarget.fieldIndex);
+            if (!sourceInstanceId) {
+                continue; 
+            }
+
+            for (const [ energyType, amount ] of Object.entries(sourceTarget.energy) as Array<[ AttachableEnergyType, number ]>) {
+                if (amount > 0 && controllers.energy.transferEnergyBetweenInstances(
+                    sourceInstanceId,
+                    targetInstanceId,
+                    energyType,
+                    amount,
+                )) {
+                    transferred += amount;
+                }
             }
         }
 
-        // Send a message about the transfer
         if (transferred > 0) {
             controllers.players.messageAll({
                 type: 'status',
