@@ -2,6 +2,9 @@ import { Controllers } from '../../controllers/controllers.js';
 import { ChoiceDelegationEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
+import { HandlerData } from '../../game-handler.js';
+import { CardRepository } from '../../repository/card-repository.js';
+import { EffectApplier } from '../effect-applier.js';
 
 /**
  * Handler for choice delegation effects.
@@ -15,6 +18,10 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 export class ChoiceDelegationEffectHandler extends AbstractEffectHandler<ChoiceDelegationEffect> {
     getResolutionRequirements(_effect: ChoiceDelegationEffect): ResolutionRequirement[] {
         return [];
+    }
+
+    canApply(handlerData: HandlerData, effect: ChoiceDelegationEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+        return effect.options.some(option => option.effects.length > 0 && option.effects.some(e => EffectApplier.canApplyEffect(e, handlerData, context, cardRepository)));
     }
 
     apply(controllers: Controllers, effect: ChoiceDelegationEffect, context: EffectContext): void {

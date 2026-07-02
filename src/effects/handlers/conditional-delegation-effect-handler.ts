@@ -3,6 +3,9 @@ import { ConditionalDelegationEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { getEffectValue } from '../effect-utils.js';
+import { HandlerData } from '../../game-handler.js';
+import { CardRepository } from '../../repository/card-repository.js';
+import { EffectApplier } from '../effect-applier.js';
 
 /**
  * Handler for conditional delegation effects.
@@ -19,6 +22,11 @@ import { getEffectValue } from '../effect-utils.js';
 export class ConditionalDelegationEffectHandler extends AbstractEffectHandler<ConditionalDelegationEffect> {
     getResolutionRequirements(_effect: ConditionalDelegationEffect): ResolutionRequirement[] {
         return [];
+    }
+
+    canApply(handlerData: HandlerData, effect: ConditionalDelegationEffect, context: EffectContext, cardRepository: CardRepository): boolean {
+        const checkBranch = (effects: ConditionalDelegationEffect['trueEffects']) => effects.length > 0 && effects.some(e => EffectApplier.canApplyEffect(e, handlerData, context, cardRepository));
+        return checkBranch(effect.trueEffects) || checkBranch(effect.falseEffects);
     }
 
     apply(controllers: Controllers, effect: ConditionalDelegationEffect, context: EffectContext): void {

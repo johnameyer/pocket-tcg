@@ -4,19 +4,26 @@ import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../effect-handler.js';
 import { getEffectValue } from '../effect-utils.js';
 import { GameCard } from '../../controllers/card-types.js';
+import { HandlerData } from '../../game-handler.js';
 
 /**
  * Handler for hand discard effects that discard cards from a player's hand.
  */
 export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardEffect> {
-    /**
-     * Hand discard effects don't have targets to resolve.
-     * 
-     * @param effect The hand discard effect
-     * @returns Empty array as hand discard effects don't have targets
-     */
-    getResolutionRequirements(effect: HandDiscardEffect): ResolutionRequirement[] {
+    getResolutionRequirements(_effect: HandDiscardEffect): ResolutionRequirement[] {
         return [];
+    }
+
+    /** Returns false when the player has no cards to discard, blocking TRY_THEN gating. */
+    canApply(handlerData: HandlerData, effect: HandDiscardEffect, context: EffectContext): boolean {
+        if (effect.target === 'both') {
+            return true; 
+        }
+        if (effect.target === 'self') {
+            return handlerData.hand.hand.length > 0; 
+        }
+        // opponent — use sizes array (handlerData.hand.hand is scoped to sourcePlayer)
+        return handlerData.hand.sizes[1 - context.sourcePlayer] > 0;
     }
     
     /**

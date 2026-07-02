@@ -21,6 +21,7 @@ import { conditionalDelegationEffectHandler } from './conditional-delegation-eff
 import { choiceDelegationEffectHandler } from './choice-delegation-effect-handler.js';
 import { passiveEffectHandler } from './passive-effect-handler.js';
 import { delayedEffectHandler } from './delayed-effect-handler.js';
+import { tryThenEffectHandler } from './try-then-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -43,6 +44,7 @@ export const effectHandlers: EffectHandlerMap = {
     'pull-evolution': pullEvolutionEffectHandler,
     'conditional-delegation': conditionalDelegationEffectHandler,
     'choice-delegation': choiceDelegationEffectHandler,
+    'try-then': tryThenEffectHandler,
     delayed: delayedEffectHandler,
     passive: passiveEffectHandler,
 };
