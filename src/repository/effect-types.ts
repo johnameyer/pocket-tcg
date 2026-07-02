@@ -136,6 +136,7 @@ export type HandDiscardEffect = {
     amount: EffectValue;
     target: PlayerTarget;
     shuffleIntoDeck?: boolean;
+    criteria?: CardCriteria;
 };
 
 /**

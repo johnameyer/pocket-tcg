@@ -176,15 +176,20 @@ export type ToolData =
     | { [K in Trigger['type']]: ToolDataWithTrigger<Extract<Trigger, { type: K }>> }[Trigger['type']];
 
 /**
- * Represents a stadium card.
- * Stadium effects have no execution context, so contextual refs are disallowed.
+ * Represents a stadium card. Follows the same discriminated-union pattern as ToolData:
+ *  - when `trigger` is absent the `effects` must be passive modifier effects.
+ *  - when `trigger` is present the `effects` fire when the active player uses the stadium.
+ *
+ * Stadium effects have no execution context, so contextual refs are always `never`.
  */
 export type StadiumData = {
     templateId: string;
     name: string;
     description?: string;
-    effects: Effect<never>[];
-};
+} & (
+    | { effects: RegisterPassiveEffect[]; trigger?: undefined }
+    | { effects: Effect<never>[]; trigger: Trigger }
+);
 
 /**
  * Union type for all card data types.
