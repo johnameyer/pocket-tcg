@@ -372,6 +372,22 @@ export type DelayedEffect<TContextualRefs extends string = string> = {
 };
 
 /**
+ * Attempts the first effect; if it can be applied, also applies the second.
+ * If the attempt cannot be applied (canApply returns false or required targets are
+ * unavailable), neither effect fires. Models card text like "Discard X. If you do, …"
+ * @property {string} type - Always 'try-then' to identify this effect type
+ * @property {Effect} attempt - The effect to attempt; gates whether `then` runs
+ * @property {Effect} then - The effect to apply only if `attempt` succeeds
+ * @example { type: 'try-then', attempt: { type: 'hand-discard', ... }, then: { type: 'hp', ... } }
+ * // Discard a card from your hand. If you do, deal damage.
+ */
+export type TryThenEffect<TContextualRefs extends string = string> = {
+    type: 'try-then';
+    attempt: Effect<TContextualRefs>;
+    then: Effect<TContextualRefs>;
+};
+
+/**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
  *
@@ -399,7 +415,8 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | RemoveFieldCardEffect<TContextualRefs>
     | PullEvolutionEffect<TContextualRefs>
     | ConditionalDelegationEffect<TContextualRefs>
-    | ChoiceDelegationEffect<TContextualRefs>;
+    | ChoiceDelegationEffect<TContextualRefs>
+    | TryThenEffect<TContextualRefs>;
 
 /**
  * Represents an effect that prevents playing specific card types.
