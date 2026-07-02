@@ -181,16 +181,17 @@ export class EnergyTargetResolver {
             if (target.random) {
                 return this.resolveAllMatchingRandomly(fieldResolution.targets, target, controllers);
             }
-            /*
-             * For all-matching without random, we need to gather energy from all matching creatures
-             * This is complex - for now, we'll require selection
-             */
-            const energyOptions: EnergyOption[] = [];
-            
+            // Non-random all-matching: collect all matching energy from every creature, up to count total
+            const results: Array<{ playerId: number; fieldIndex: number; energy: Partial<Record<AttachableEnergyType, number>> }> = [];
+            let remaining = target.count;
+
             for (const fieldTarget of fieldResolution.targets) {
+                if (remaining <= 0) {
+                    break; 
+                }
                 const creature = controllers.field.getRawCardByPosition(fieldTarget.playerId, fieldTarget.fieldIndex);
                 if (!creature) {
-                    continue;
+                    continue; 
                 }
 
                 const instanceId = getCurrentInstanceId(creature);
@@ -198,21 +199,17 @@ export class EnergyTargetResolver {
                 const availableEnergy = this.filterEnergyByCriteria(attachedEnergy, target.criteria);
 
                 if (this.getTotalEnergy(availableEnergy) > 0) {
-                    const cardData = controllers.cardRepository.getCreature(creature.templateId);
-                    energyOptions.push({
-                        playerId: fieldTarget.playerId,
-                        fieldIndex: fieldTarget.fieldIndex,
-                        availableEnergy,
-                        displayName: cardData?.name || 'Unknown',
-                    });
+                    const selected = this.selectEnergy(availableEnergy, remaining);
+                    remaining -= this.getTotalEnergy(selected);
+                    results.push({ playerId: fieldTarget.playerId, fieldIndex: fieldTarget.fieldIndex, energy: selected });
                 }
             }
 
-            if (energyOptions.length === 0) {
+            if (results.length === 0) {
                 return { type: 'no-valid-targets' };
             }
 
-            return { type: 'requires-selection', availableTargets: energyOptions };
+            return { type: 'resolved-multi', targets: results };
         }
 
         return { type: 'no-valid-targets' };
