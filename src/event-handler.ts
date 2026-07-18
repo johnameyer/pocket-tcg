@@ -406,9 +406,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     context.targetPlayerId = message.targetPlayerId;
                 }
                 if (message.targetFieldIndex !== undefined) {
-                    context.targetFieldCardIndex = message.targetFieldIndex;
+                    context.targetCreatureIndex = message.targetFieldIndex;
                 }
-                
+
                 // Set source instance ID for passive effect cleanup
                 context.sourceInstanceId = cardInstanceId;
                 
@@ -435,9 +435,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     context.targetPlayerId = message.targetPlayerId;
                 }
                 if (message.targetFieldIndex !== undefined) {
-                    context.targetFieldCardIndex = message.targetFieldIndex;
+                    context.targetCreatureIndex = message.targetFieldIndex;
                 }
-                
+
                 EffectApplier.applyEffects(itemData.effects, controllers, context);
                 
                 // Process any effects that were triggered by the item effects
@@ -859,6 +859,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     return controllers.turnState.hasAbilityBeenUsedThisTurn(fieldCard.instanceId, ability.name);
+                }),
+                EventHandler.validate('Cannot use ability - effects cannot be applied', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
+                    const handlerData = ControllerUtils.createPlayerView(controllers, source);
+                    return !ActionValidator.canUseAbility(handlerData, controllers.cardRepository, source, message.fieldCardPosition);
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {

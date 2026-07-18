@@ -2,6 +2,7 @@ import { Controllers } from '../../controllers/controllers.js';
 import { RegisterPassiveEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
+import { HandlerData } from '../../game-handler.js';
 
 /**
  * Handler for the unified passive effect type.
@@ -14,6 +15,15 @@ export class PassiveEffectHandler extends AbstractEffectHandler<RegisterPassiveE
      * @param effect The register-passive effect
      * @returns Empty array (no resolution needed)
      */
+    canApply(_handlerData: HandlerData, effect: RegisterPassiveEffect, context: EffectContext): boolean {
+        if (effect.sourcePosition && context.type === 'ability') {
+            const isActive = context.fieldPosition === 0;
+            if (effect.sourcePosition === 'active' && !isActive) return false;
+            if (effect.sourcePosition === 'bench' && isActive) return false;
+        }
+        return true;
+    }
+
     getResolutionRequirements(effect: RegisterPassiveEffect): ResolutionRequirement[] {
         return [];
     }

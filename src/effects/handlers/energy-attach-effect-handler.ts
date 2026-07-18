@@ -19,11 +19,7 @@ export class EnergyAttachEffectHandler extends AbstractEffectHandler<EnergyAttac
      * @param context Effect context
      * @returns True if the effect can be applied, false otherwise
      */
-    canApply(handlerData: HandlerData, effect: EnergyAttachEffect, context: EffectContext): boolean {
-        /*
-         * Always allow energy attach effects to be applied
-         * The effect will attach as many energy cards as possible (or none if none are available)
-         */
+    canApply(_handlerData: HandlerData, _effect: EnergyAttachEffect, _context: EffectContext): boolean {
         return true;
     }
 

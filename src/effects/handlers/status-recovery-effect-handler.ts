@@ -7,7 +7,6 @@ import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
-import { FieldCard } from '../../controllers/field-controller.js';
 import { StatusEffectType } from '../../controllers/status-effect-controller.js';
 
 /**
@@ -41,29 +40,10 @@ export class StatusRecoveryEffectHandler extends AbstractEffectHandler<StatusRec
         if (!effect.target) {
             return false;
         }
-        
-        // Check if creature has status effects that can be removed
-        const hasStatusEffectsToRemove = (creature: FieldCard, handlerData: HandlerData): boolean => {
-            /*
-             * Status effects only apply to active creature (position 0)
-             * We need to determine which player's active creature this is
-             * For now, check if any player has status effects (simplified validation)
-             */
-            const player0Effects = handlerData.statusEffects?.activeStatusEffects[0] || [];
-            const player1Effects = handlerData.statusEffects?.activeStatusEffects[1] || [];
-            
-            // If specific conditions are specified, check if any of those exist
-            if (effect.conditions && effect.conditions.length > 0) {
-                const allEffects = [ ...player0Effects, ...player1Effects ];
-                return allEffects.some(e => effect.conditions!.some(c => c === String(e.type)));
-            }
-            
-            // Otherwise, check if any status effects exist
-            return player0Effects.length > 0 || player1Effects.length > 0;
-        };
-        
-        // Use TargetResolver to check if the target is available and has status effects
-        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository, hasStatusEffectsToRemove);
+
+        // Status recovery can be applied whenever there's a valid target — the effect is a no-op when
+        // no status conditions are present, so it shouldn't block cards that pair it with other effects.
+        return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
     }
 
     /**

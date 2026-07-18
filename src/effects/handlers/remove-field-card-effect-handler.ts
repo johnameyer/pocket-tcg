@@ -66,20 +66,25 @@ export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFi
         for (const targetInfo of targets) {
             const playerId = targetInfo.playerId;
             const fieldIndex = targetInfo.fieldIndex;
-            
+
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             if (!targetCreature) {
                 continue;
             }
-            
+
             // Get the creature data for messaging
             const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
-            
-            // TODO: Implement actual card removal with tools and evolution stack
+
+            if (fieldIndex === 0) {
+                controllers.field.removeActiveCard(playerId);
+            } else {
+                controllers.field.removeBenchCard(playerId, fieldIndex - 1);
+            }
+
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} would remove ${creatureData.name} with all tools and evolutions to ${effect.destination} (not fully implemented)!` ],
+                components: [ `${context.effectName} removed ${creatureData.name} to ${effect.destination}!` ],
             });
         }
     }

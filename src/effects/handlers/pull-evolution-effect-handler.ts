@@ -65,20 +65,57 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
         for (const targetInfo of targets) {
             const playerId = targetInfo.playerId;
             const fieldIndex = targetInfo.fieldIndex;
-            
+
             // Get the target creature
             const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
             if (!targetCreature) {
                 continue;
             }
-            
-            // Get the creature data for messaging
+
             const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
-            
-            // TODO: Implement actual pull evolution functionality
+
+            // Find eligible evolution cards in the deck
+            const deck = controllers.deck.getDeck(playerId);
+            const validEvolutionTemplateIds = controllers.cardRepository.cardRepository.getEvolutionsOf(creatureData.name);
+
+            const eligibleIndices: number[] = [];
+            for (let i = 0; i < deck.length; i++) {
+                const card = deck[i];
+                if (card.type !== 'creature') continue;
+                if (!validEvolutionTemplateIds.includes(card.templateId)) continue;
+                if (effect.evolutionCriteria && 'isType' in effect.evolutionCriteria) {
+                    const evoData = controllers.cardRepository.getCreature(card.templateId);
+                    if (effect.evolutionCriteria.isType && evoData.type !== effect.evolutionCriteria.isType) continue;
+                }
+                eligibleIndices.push(i);
+            }
+
+            if (eligibleIndices.length === 0) {
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [ `${context.effectName}: No valid evolution for ${creatureData.name} found in deck!` ],
+                });
+                continue;
+            }
+
+            // Pick a random eligible card
+            const chosenIndex = eligibleIndices[Math.floor(Math.random() * eligibleIndices.length)];
+            const chosenCard = deck[chosenIndex];
+
+            // Remove it from the deck
+            deck.splice(chosenIndex, 1);
+
+            // Evolve the target creature
+            const turnNumber = controllers.turnCounter.getTurnNumber();
+            if (fieldIndex === 0) {
+                controllers.field.evolveActiveCard(playerId, chosenCard.templateId, chosenCard.instanceId, turnNumber);
+            } else {
+                controllers.field.evolveBenchedCard(playerId, fieldIndex - 1, chosenCard.templateId, chosenCard.instanceId, turnNumber);
+            }
+
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} would pull and evolve ${creatureData.name} (not fully implemented)!` ],
+                components: [ `${context.effectName} evolved ${creatureData.name} into ${chosenCard.templateId}!` ],
             });
         }
     }
