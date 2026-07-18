@@ -7,6 +7,7 @@ import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
+import { PassiveEffectMatcher } from '../passive-effect-matcher.js';
 
 /**
  * Handler for status effects that apply conditions like poison, burn, etc. to creature.
@@ -115,6 +116,15 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
         targetPlayerId: number,
         creatureName: string,
     ): void {
+        // Check if status condition is prevented by a passive effect
+        if (PassiveEffectMatcher.isStatusConditionPrevented(controllers, targetPlayerId, 0, effect.condition)) {
+            controllers.players.messageAll({
+                type: 'status',
+                components: [ `${creatureName} is protected from ${effect.condition}!` ],
+            });
+            return;
+        }
+
         // TODO can we just have the message generation as a map and then send it generically / DRY controllers.players.messageAll?
         switch (effect.condition) {
             case 'poison':

@@ -215,10 +215,10 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
             this.state.attachedEnergyByInstance[instanceId] = EnergyController.emptyEnergyDict();
         }
         
-        this.state.attachedEnergyByInstance[instanceId][energyType] += amount;
+        this.state.attachedEnergyByInstance[instanceId][energyType] = (this.state.attachedEnergyByInstance[instanceId][energyType] || 0) + amount;
         return true;
     }
-    
+
     // Transfer energy between card instances
     public transferEnergyBetweenInstances(sourceInstanceId: string, targetInstanceId: string, energyType?: AttachableEnergyType, amount: number = 1): boolean {
         const sourceEnergy = this.state.attachedEnergyByInstance[sourceInstanceId];

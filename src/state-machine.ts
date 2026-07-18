@@ -5,6 +5,7 @@ import { EffectQueueProcessor } from './effects/effect-queue-processor.js';
 import { CreatureData } from './repository/card-types.js';
 import { isPendingEnergySelection, isPendingCardSelection } from './effects/pending-selection-types.js';
 import { TriggerProcessor } from './effects/trigger-processor.js';
+import { PassiveEffectMatcher } from './effects/passive-effect-matcher.js';
 
 // Helper function to calculate points awarded for knocking out a creature
 const calculateKnockoutPoints = (creatureData: CreatureData): number => {
@@ -588,6 +589,13 @@ const gameTurn = loop<Controllers>({
                 // Process any effects that were triggered during the checkup phase
                 EffectQueueProcessor.processQueue(controllers);
                 
+                // Clear status conditions on creatures protected by status-prevention passives
+                for (let playerId = 0; playerId < 2; playerId++) {
+                    if (PassiveEffectMatcher.isStatusConditionPrevented(controllers, playerId, 0)) {
+                        controllers.statusEffects.clearAllStatusEffects(playerId);
+                    }
+                }
+
                 // Process between-turn damage for both players
                 for (let playerId = 0; playerId < 2; playerId++) {
                     const damageResult = controllers.statusEffects.processBetweenTurnEffects(playerId);

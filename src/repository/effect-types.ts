@@ -608,6 +608,8 @@ export type ModifierEffect =
 export type RegisterPassiveEffect = {
     type: 'passive';
     modifier: ModifierEffect;
+    /** If set, this passive only registers when the source creature is in the specified position. */
+    sourcePosition?: 'active' | 'bench';
 };
 
 /**

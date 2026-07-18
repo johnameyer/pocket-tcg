@@ -1,6 +1,6 @@
 import { Controllers } from '../controllers/controllers.js';
 import { PassiveEffect } from '../controllers/effect-controller.js';
-import { PreventDamageEffect } from '../repository/effect-types.js';
+import { PreventDamageEffect, StatusCondition } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 import { getEffectValue } from './effect-utils.js';
@@ -269,6 +269,48 @@ export class PassiveEffectMatcher {
             passiveEffect.sourcePlayer,
             controllers.cardRepository.cardRepository,
         ));
+    }
+
+    static isStatusConditionPrevented(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        condition?: string,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('status-prevention');
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+        const attachedEnergy = handlerData.energy?.attachedEnergyByInstance;
+        const attachedTools = handlerData.tools?.attachedTools;
+        return preventEffects.some(passiveEffect => {
+            const target = passiveEffect.effect.target;
+            // Check player match
+            if (target.player !== undefined) {
+                const expectedPlayer = target.player === 'self' ? passiveEffect.sourcePlayer : 1 - passiveEffect.sourcePlayer;
+                if (expectedPlayer !== playerId) return false;
+            }
+            // Check position match
+            if (target.position === 'active' && fieldIndex !== 0) return false;
+            if (target.position === 'bench' && fieldIndex === 0) return false;
+            // Check field criteria (with energy/tools data)
+            if (target.fieldCriteria && !FieldTargetCriteriaFilter.matchesFieldCriteria(
+                target.fieldCriteria,
+                creature,
+                controllers.cardRepository.cardRepository,
+                attachedEnergy,
+                attachedTools,
+            )) {
+                return false;
+            }
+            // If conditions specified, only prevent those conditions
+            if (passiveEffect.effect.conditions && condition) {
+                return passiveEffect.effect.conditions.includes(condition as StatusCondition);
+            }
+            return true;
+        });
     }
 
     static getModifiedAttackEnergyRequirements(

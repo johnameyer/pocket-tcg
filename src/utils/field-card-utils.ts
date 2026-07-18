@@ -6,10 +6,8 @@ import { FieldCard } from '../controllers/field-controller.js';
  */
 export function getCurrentInstanceId(card: FieldCard | InstancedFieldCard): string {
     if ('evolutionStack' in card) {
-        // InstancedFieldCard - get from top of evolution stack
         return card.evolutionStack[card.evolutionStack.length - 1].instanceId;
     }
-    // FieldCard - direct access
     return card.instanceId;
 }
 
@@ -18,10 +16,8 @@ export function getCurrentInstanceId(card: FieldCard | InstancedFieldCard): stri
  */
 export function getCurrentTemplateId(card: FieldCard | InstancedFieldCard): string {
     if ('evolutionStack' in card) {
-        // InstancedFieldCard - get from top of evolution stack
         return card.evolutionStack[card.evolutionStack.length - 1].templateId;
     }
-    // FieldCard - direct access
     return card.templateId;
 }
 
@@ -33,7 +29,6 @@ export function getFieldInstanceId(card: FieldCard | InstancedFieldCard): string
     if ('evolutionStack' in card) {
         return card.fieldInstanceId;
     }
-    // For FieldCard (backward compatibility), use the card's instanceId
     return card.instanceId;
 }
 
@@ -43,10 +38,8 @@ export function getFieldInstanceId(card: FieldCard | InstancedFieldCard): string
  */
 export function getOriginalInstanceId(card: FieldCard | InstancedFieldCard): string {
     if ('evolutionStack' in card) {
-        // InstancedFieldCard - get from bottom of evolution stack
         return card.evolutionStack[0].instanceId;
     }
-    // FieldCard - same as current
     return card.instanceId;
 }
 

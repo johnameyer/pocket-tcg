@@ -269,11 +269,12 @@ export class ActionValidator {
         }
         
         const ability = creatureData.ability;
-        
+
         if (ability.effects && ability.effects.length > 0) {
-            return EffectValidator.canApplyCardEffects(ability.effects, handlerData, playerId, `${creatureData.name}'s ${ability.name}`, undefined, cardRepository);
+            const context = EffectContextFactory.createAbilityContext(playerId, `${creatureData.name}'s ${ability.name}`, getFieldInstanceId(creature), position);
+            return ability.effects.every(effect => EffectValidator.canApplyEffect(effect, handlerData, context, cardRepository));
         }
-        
+
         return true;
     }
 }
