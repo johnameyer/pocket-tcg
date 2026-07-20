@@ -21,7 +21,7 @@ export class DefaultBotHandler extends GameHandler {
 
         // 1. Attach energy if available
         if (handlerData.energy) {
-            const hasCurrentEnergy = handlerData.energy.currentEnergy[currentPlayer] !== null;
+            const hasCurrentEnergy = handlerData.energy.currentEnergy[currentPlayer] != null;
             if (hasCurrentEnergy && !handlerData.energy.isAbsoluteFirstTurn) {
                 responsesQueue.push(new AttachEnergyResponseMessage(0));
                 return;
