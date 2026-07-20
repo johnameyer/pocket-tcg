@@ -656,8 +656,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     
                     if (targetCard) {
                         const evolutionData = controllers.cardRepository.getCreature(message.evolutionTemplateId);
-                        const currentData = controllers.cardRepository.getCreature(getCurrentTemplateId(targetCard));
-                        const isValidEvolution = evolutionData.previousStageName === currentData.name;
+                        const currentTemplateId = getCurrentTemplateId(targetCard);
+                        const currentData = controllers.cardRepository.getCreature(currentTemplateId);
+                        const isValidEvolution = evolutionData.previousStageName === currentData.name
+                            || evolutionData.previousStageName === currentTemplateId;
                         return !isValidEvolution;
                     }
                     return true;

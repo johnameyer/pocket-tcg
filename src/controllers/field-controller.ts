@@ -59,6 +59,10 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
 }
 
 export class FieldController extends GlobalController<FieldState, FieldDependencies> {
+    getFor(_position?: number) {
+        return this.state;
+    }
+
     validate() {
         if (!Array.isArray(this.state.creatures)) {
             throw new Error('Shape of object is wrong');

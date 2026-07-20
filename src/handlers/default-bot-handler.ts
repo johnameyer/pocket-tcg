@@ -5,6 +5,7 @@ import { ResponseMessage } from '../messages/response-message.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { getCurrentTemplateId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { isPendingEnergySelection, isPendingCardSelection, isPendingChoiceSelection, isPendingFieldSelection } from '../effects/pending-selection-types.js';
+import { ActionValidator } from '../effects/action-validator.js';
 
 export class DefaultBotHandler extends GameHandler {
     private cardRepository: CardRepository;
@@ -16,111 +17,112 @@ export class DefaultBotHandler extends GameHandler {
     
     handleAction(handlerData: HandlerData, responsesQueue: HandlerResponsesQueue<ResponseMessage>): void {
         const currentPlayer = handlerData.turn;
-        
-        // Get the player's hand
         const hand = handlerData.hand.hand;
-        
-        // First try to play a creature card to the bench if possible
-        const creatureCards = hand.filter(card => card.type === 'creature');
-        const benchSize = handlerData.field.creatures[currentPlayer].length;
-        
-        if (creatureCards.length > 0 && benchSize < 3) {
-            const cardIndex = hand.findIndex(card => card.type === 'creature');
-            const card = hand[cardIndex];
-            responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'creature'));
-            return;
-        }
-        
-        if (!handlerData.turnState.supporterPlayedThisTurn) {
-            const supporterCards = hand.filter(card => card.type === 'supporter');
-            
-            if (supporterCards.length > 0) {
-                const cardIndex = hand.findIndex(card => card.type === 'supporter');
-                const card = hand[cardIndex];
-                responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'supporter'));
-                return;
-            }
-        }
-        
-        const itemCards = hand.filter(card => card.type === 'item');
-        
-        if (itemCards.length > 0) {
-            const cardIndex = hand.findIndex(card => card.type === 'item');
-            const card = hand[cardIndex];
-            responsesQueue.push(new PlayCardResponseMessage(card.templateId, 'item', currentPlayer, 0));
-            return;
-        }
-        
-        // Try to evolve active creature if possible
-        if (handlerData.field.canEvolveActive && (handlerData.field.canEvolveActive as boolean[])[currentPlayer]) {
-            const activeCreature = handlerData.field.creatures[currentPlayer][0]; // Get active creature at position 0
-            const activeCreatureData = this.cardRepository.getCreature(getCurrentTemplateId(activeCreature));
-            const allCreatures = this.cardRepository.getAllCreatureIds();
-            const evolution = allCreatures.find((id: string) => {
-                const data = this.cardRepository.getCreature(id);
-                return data?.previousStageName === activeCreatureData.name;
-            });
-            
-            if (evolution) {
-                responsesQueue.push(new EvolveResponseMessage(evolution, 0));
-                return;
-            }
-        }
-        
-        // Try to attach energy if available and not first turn restricted
+
+        // 1. Attach energy if available
         if (handlerData.energy) {
-            const isFirstTurnRestricted = handlerData.energy.isAbsoluteFirstTurn;
             const hasCurrentEnergy = handlerData.energy.currentEnergy[currentPlayer] !== null;
-            
-            if (hasCurrentEnergy && !isFirstTurnRestricted) {
+            if (hasCurrentEnergy && !handlerData.energy.isAbsoluteFirstTurn) {
                 responsesQueue.push(new AttachEnergyResponseMessage(0));
                 return;
             }
         }
-        
-        // Try to attack if we have sufficient energy
-        const activeCard = handlerData.field.creatures[currentPlayer][0]; // Get active card at position 0
+
+        // 2. Attack if ready
+        const activeCard = handlerData.field.creatures[currentPlayer]?.[0];
         if (activeCard && handlerData.energy) {
             const creatureData = this.cardRepository.getCreature(getCurrentTemplateId(activeCard));
             const attack = creatureData?.attacks[0];
-            
             if (attack) {
-                // Use the new energy system - attachedEnergyByInstance
                 const instanceId = getCurrentInstanceId(activeCard);
-                const attachedEnergy = handlerData.energy.attachedEnergyByInstance?.[instanceId];
-                
-                if (attachedEnergy) {
-                    // Calculate total energy
-                    const totalEnergy = Object.values(attachedEnergy).reduce((sum: number, count: unknown) => sum + (typeof count === 'number' ? count : 0), 0);
-                    
-                    // Check if we can use the attack
-                    let canAttack = true;
-                    for (const requirement of attack.energyRequirements) {
-                        if (requirement.type === 'any' || requirement.type === 'colorless') {
-                            if (totalEnergy < requirement.amount) {
-                                canAttack = false;
-                                break;
-                            }
-                        } else {
-                            // Count specific energy type
-                            const energyCount = attachedEnergy[requirement.type as keyof typeof attachedEnergy];
-                            const typeCount = typeof energyCount === 'number' ? energyCount : 0;
-                            if (typeCount < requirement.amount) {
-                                canAttack = false;
-                                break;
-                            }
-                        }
+                const attachedEnergy = handlerData.energy.attachedEnergyByInstance?.[instanceId] ?? {};
+                const totalEnergy = Object.values(attachedEnergy).reduce((sum: number, count: unknown) => sum + (typeof count === 'number' ? count : 0), 0);
+                let canAttack = true;
+                for (const requirement of attack.energyRequirements) {
+                    if (requirement.type === 'any' || requirement.type === 'colorless') {
+                        if (totalEnergy < requirement.amount) { canAttack = false; break; }
+                    } else {
+                        const typeCount = typeof attachedEnergy[requirement.type as keyof typeof attachedEnergy] === 'number'
+                            ? attachedEnergy[requirement.type as keyof typeof attachedEnergy] as number : 0;
+                        if (typeCount < requirement.amount) { canAttack = false; break; }
                     }
-                    
-                    if (canAttack) {
-                        responsesQueue.push(new AttackResponseMessage(0));
-                        return;
-                    }
+                }
+                if (canAttack) {
+                    responsesQueue.push(new AttackResponseMessage(0));
+                    return;
                 }
             }
         }
-        
-        // End turn if no valid actions
+
+        // 3. Bench basic creatures (validated)
+        const benchCreature = hand.find(card =>
+            card.type === 'creature' && ActionValidator.canPlayCard(handlerData, this.cardRepository, card.templateId, currentPlayer),
+        );
+        if (benchCreature) {
+            responsesQueue.push(new PlayCardResponseMessage(benchCreature.templateId, 'creature'));
+            return;
+        }
+
+        // 4. Evolve all field positions
+        const fieldCreatures = handlerData.field.creatures[currentPlayer] ?? [];
+        for (let pos = 0; pos < fieldCreatures.length; pos++) {
+            const creature = fieldCreatures[pos];
+            if (!creature) continue;
+            if (!ActionValidator.canEvolveCreature(handlerData, this.cardRepository, currentPlayer, pos)) continue;
+            const currentTemplateId = getCurrentTemplateId(creature);
+            const creatureData = this.cardRepository.getCreature(currentTemplateId);
+            const evolutionCard = hand.find(card => {
+                try {
+                    const data = this.cardRepository.getCreature(card.templateId);
+                    return data?.previousStageName === creatureData.name || data?.previousStageName === currentTemplateId;
+                } catch { return false; }
+            });
+            if (evolutionCard) {
+                responsesQueue.push(new EvolveResponseMessage(evolutionCard.templateId, pos));
+                return;
+            }
+        }
+
+        // 5. Play supporter (validated)
+        const supporterCard = hand.find(card =>
+            card.type === 'supporter' && ActionValidator.canPlayCard(handlerData, this.cardRepository, card.templateId, currentPlayer),
+        );
+        if (supporterCard) {
+            responsesQueue.push(new PlayCardResponseMessage(supporterCard.templateId, 'supporter'));
+            return;
+        }
+
+        // 6. Play item (validated)
+        const itemCard = hand.find(card =>
+            card.type === 'item' && ActionValidator.canPlayCard(handlerData, this.cardRepository, card.templateId, currentPlayer),
+        );
+        if (itemCard) {
+            responsesQueue.push(new PlayCardResponseMessage(itemCard.templateId, 'item', currentPlayer, 0));
+            return;
+        }
+
+        // 7. Attach tool to first creature without one
+        const toolCard = hand.find(card =>
+            card.type === 'tool' && ActionValidator.canPlayCard(handlerData, this.cardRepository, card.templateId, currentPlayer),
+        );
+        if (toolCard) {
+            const attachedTools = (handlerData as any).tools?.attachedTools ?? {};
+            const targetPos = fieldCreatures.findIndex(c => c?.fieldInstanceId && !attachedTools[c.fieldInstanceId]);
+            if (targetPos !== -1) {
+                responsesQueue.push(new PlayCardResponseMessage(toolCard.templateId, 'tool', currentPlayer, targetPos));
+                return;
+            }
+        }
+
+        // 8. Play stadium (validated)
+        const stadiumCard = hand.find(card =>
+            card.type === 'stadium' && ActionValidator.canPlayCard(handlerData, this.cardRepository, card.templateId, currentPlayer),
+        );
+        if (stadiumCard) {
+            responsesQueue.push(new PlayCardResponseMessage(stadiumCard.templateId, 'stadium'));
+            return;
+        }
+
         responsesQueue.push(new EndTurnResponseMessage());
     }
     

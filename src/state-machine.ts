@@ -711,7 +711,11 @@ export const stateMachine = game<Controllers>(
                     controllers.turn.next();
                 }
             },
-            afterAll: () => { },
+            afterAll: (controllers: Controllers) => {
+                // Reset turn to player 0 so the first game turn starts correctly
+                // (setup loop ends with turn=1 after player 1 finishes setup)
+                controllers.turn.set(0);
+            },
         }),
         
         // Main game turns

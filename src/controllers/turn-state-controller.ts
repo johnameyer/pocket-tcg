@@ -36,6 +36,10 @@ export class TurnStateControllerProvider implements GenericControllerProvider<Tu
 }
 
 export class TurnStateController extends GlobalController<TurnStateData, TurnStateDependencies> {
+    getFor(_position?: number) {
+        return this.state;
+    }
+
     validate() {
         return true;
     }

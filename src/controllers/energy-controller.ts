@@ -113,6 +113,10 @@ export class EnergyController extends GlobalController<EnergyState, EnergyDepend
         return currentEnergy ? [ currentEnergy ] : [];
     }
 
+    getFor(_position?: number) {
+        return this.state;
+    }
+
     validate() {
         if (!Array.isArray(this.state.currentEnergy)) {
             throw new Error('Shape of object is wrong');

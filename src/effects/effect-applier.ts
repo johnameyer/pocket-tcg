@@ -1,7 +1,7 @@
 import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
-import { ResolvedFieldTarget } from '../repository/targets/field-target.js';
+import { FieldTarget, ResolvedFieldTarget, SingleFieldTarget } from '../repository/targets/field-target.js';
 import { EnergyTarget } from '../repository/targets/energy-target.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
@@ -563,7 +563,15 @@ export class EffectApplier {
                     ...resolvedEffect,
                     [requirement.targetProperty]: resolvedEnergy,
                 };
-                break;
+            } else if (target && typeof target === 'object' && (target as { type?: string }).type === 'fixed') {
+                // Resolve fixed field targets before apply() so handler receives 'resolved' type
+                const resolution = FieldTargetResolver.resolveSingleTarget(target as SingleFieldTarget, controllers, context);
+                if (resolution && resolution.type === 'resolved') {
+                    resolvedEffect = {
+                        ...resolvedEffect,
+                        [requirement.targetProperty]: resolution,
+                    };
+                }
             }
         }
 

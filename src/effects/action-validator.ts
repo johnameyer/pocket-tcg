@@ -26,11 +26,12 @@ export class ActionValidator {
             return false; 
         }
         
-        const creatureData = cardRepository.getCreature(getCurrentTemplateId(creature));
+        const currentTemplateId = getCurrentTemplateId(creature);
+        const creatureData = cardRepository.getCreature(currentTemplateId);
         const allCreatures = cardRepository.getAllCreatureIds();
         return allCreatures.some(id => {
             const data = cardRepository.getCreature(id);
-            return data.previousStageName === creatureData.name;
+            return data.previousStageName === creatureData.name || data.previousStageName === currentTemplateId;
         });
     }
     
@@ -142,6 +143,8 @@ export class ActionValidator {
                 return this.canPlaySupporterCard(handlerData, cardRepository, cardId, playerId);
             case 'stadium':
                 return this.canPlayStadiumCard(handlerData, cardRepository, cardId, playerId);
+            case 'tool':
+                return this.canPlayToolCard(handlerData, cardId, playerId);
             default:
                 return false;
         }
@@ -225,6 +228,18 @@ export class ActionValidator {
         return true;
     }
     
+    /**
+     * Checks if a tool card can be played (requires a creature on field without a tool).
+     */
+    private static canPlayToolCard(handlerData: HandlerData, cardId: string, playerId: number): boolean {
+        const creatures = handlerData.field?.creatures?.[playerId] ?? [];
+        const attachedTools = (handlerData as any).tools?.attachedTools ?? {};
+        return creatures.some(creature => {
+            const fid = creature?.fieldInstanceId;
+            return fid && !attachedTools[fid];
+        });
+    }
+
     /**
      * Checks if the active stadium has a usable manual effect this turn.
      */
