@@ -390,12 +390,12 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
                 if (position === 0) { // Active FieldCard
                     fieldCardOptions.push({
                         name: `${currentData?.name} → ${evolutionData?.name} (Active)`,
-                        value: { evolutionId: evolution, isActive: true },
+                        value: { evolutionTemplateId: evolution, isActive: true },
                     });
                 } else { // Bench FieldCard
                     fieldCardOptions.push({
                         name: `${currentData?.name} → ${evolutionData?.name} (Bench)`,
-                        value: { evolutionId: evolution, isActive: false, benchIndex: position - 1 },
+                        value: { evolutionTemplateId: evolution, isActive: false, benchIndex: position - 1 },
                     });
                 }
             }
@@ -416,7 +416,7 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
         choices: fieldCardOptions,
     });
     
-    const selection = (await received)[0] as { evolutionId: string; isActive: boolean; benchIndex?: number } | null;
+    const selection = (await received)[0] as { evolutionTemplateId: string; isActive: boolean; benchIndex?: number } | null;
     
     if (!selection) {
         await handleAction(cardRepository, intermediary, handlerData, responsesQueue);
@@ -426,7 +426,7 @@ export async function handleEvolve(cardRepository: CardRepository, intermediary:
     // Calculate position: 0 for active, 1+ for bench
     const position = selection.isActive ? 0 : (selection.benchIndex! + 1);
     
-    responsesQueue.push(new EvolveResponseMessage(selection.evolutionId, position));
+    responsesQueue.push(new EvolveResponseMessage(selection.evolutionTemplateId, position));
 }
 
 /**
