@@ -619,7 +619,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             validators: [
                 EventHandler.validate('Evolution card not in hand', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     const hand = controllers.hand.getHand(source);
-                    return !hand.some(card => card.templateId === message.evolutionId);
+                    return !hand.some(card => card.templateId === message.evolutionTemplateId);
                 }),
                 EventHandler.validate('Invalid evolution target', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     if (message.position === 0) {
@@ -655,11 +655,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     }
                     
                     if (targetCard) {
-                        const evolutionData = controllers.cardRepository.getCreature(message.evolutionId);
+                        const evolutionData = controllers.cardRepository.getCreature(message.evolutionTemplateId);
                         const currentData = controllers.cardRepository.getCreature(getCurrentTemplateId(targetCard));
-                        
                         const isValidEvolution = evolutionData.previousStageName === currentData.name;
-                        
                         return !isValidEvolution;
                     }
                     return true;
@@ -675,7 +673,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             controllers.waiting.removePosition(sourceHandler);
             
             const hand = controllers.hand.getHand(sourceHandler);
-            const evolutionCardIndex = hand.findIndex(card => card.templateId === message.evolutionId);
+            const evolutionCardIndex = hand.findIndex(card => card.templateId === message.evolutionTemplateId);
             if (evolutionCardIndex === -1) {
                 return; 
             }
@@ -702,7 +700,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         controllers.effects.clearEffectsForInstance(fieldInstanceId);
                     }
                 }
-                controllers.field.evolveActiveCard(sourceHandler, message.evolutionId, evolutionInstanceId, turnNumber);
+                controllers.field.evolveActiveCard(sourceHandler, message.evolutionTemplateId, evolutionInstanceId, turnNumber);
                 
                 // Trigger on-play effects for the evolved creature (as evolution)
                 const evolvedCard = controllers.field.getCardByPosition(sourceHandler, 0);
@@ -733,7 +731,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                         controllers.effects.clearEffectsForInstance(fieldInstanceId);
                     }
                 }
-                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionId, evolutionInstanceId, turnNumber);
+                controllers.field.evolveBenchedCard(sourceHandler, message.position - 1, message.evolutionTemplateId, evolutionInstanceId, turnNumber);
                 
                 // Trigger on-play effects for the evolved creature (as evolution)
                 const benchCards = controllers.field.getCards(sourceHandler);
@@ -752,7 +750,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 }
             }
             
-            const { name } = controllers.cardRepository.getCreature(message.evolutionId);
+            const { name } = controllers.cardRepository.getCreature(message.evolutionTemplateId);
             controllers.players.messageAll(new EvolutionMessage(
                 'Previous Form',
                 name,
