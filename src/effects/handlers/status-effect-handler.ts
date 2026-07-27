@@ -7,6 +7,7 @@ import { getCreatureFromTarget } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
+import { PassiveEffectMatcher } from '../passive-effect-matcher.js';
 
 /**
  * Handler for status effects that apply conditions like poison, burn, etc. to creature.
@@ -82,7 +83,16 @@ export class StatusEffectHandler extends AbstractEffectHandler<StatusEffect> {
             // Get the creature data - will throw an error if not found
             const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
             const creatureName = creatureData.name;
-            
+
+            // Check if the status condition is prevented by a passive effect (e.g. Flower Shield)
+            if (PassiveEffectMatcher.isStatusConditionPrevented(controllers, playerId, fieldIndex, effect.condition)) {
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [ `${context.effectName} was prevented on ${creatureName}!` ],
+                });
+                continue;
+            }
+
             // Apply the appropriate status effect
             this.applyStatusToTarget(controllers, effect, context, playerId, creatureName);
         }
