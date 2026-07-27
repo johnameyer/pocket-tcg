@@ -2,7 +2,7 @@ import { HandlerData } from '../game-handler.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { EnergyController, AttachableEnergyType } from '../controllers/energy-controller.js';
 import { StatusEffect } from '../controllers/status-effect-controller.js';
-import { getCurrentTemplateId, getFieldInstanceId } from '../utils/field-card-utils.js';
+import { getCurrentTemplateId, getFieldInstanceId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { EffectValidator } from './effect-validator.js';
 import { EffectContextFactory } from './effect-context.js';
 
@@ -269,11 +269,15 @@ export class ActionValidator {
         }
         
         const ability = creatureData.ability;
-        
+
         if (ability.effects && ability.effects.length > 0) {
-            return EffectValidator.canApplyCardEffects(ability.effects, handlerData, playerId, `${creatureData.name}'s ${ability.name}`, undefined, cardRepository);
+            const effectName = `${creatureData.name}'s ${ability.name}`;
+            const instanceId = getCurrentInstanceId(creature);
+            // Use an ability context so that 'source' position resolves correctly to this field position.
+            const context = EffectContextFactory.createAbilityContext(playerId, effectName, instanceId, position);
+            return ability.effects.some(effect => EffectValidator.canApplyEffect(effect, handlerData, context, cardRepository));
         }
-        
+
         return true;
     }
 }
