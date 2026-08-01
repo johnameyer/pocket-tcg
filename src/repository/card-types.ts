@@ -10,7 +10,10 @@ export type OperationType = 'heal' | 'damage' | 'attach' | 'discard';
  * Represents a trigger condition that determines when an effect should activate.
  */
 export type Trigger =
-    | { type: 'manual', unlimited: boolean }
+    // TODO: requiredPosition is a first pass at position-gating manual abilities. Consider
+    // whether this belongs on the trigger, as an effect precondition, or as a broader
+    // "activation condition" system that could apply to on-play, on-attack, etc. as well.
+    | { type: 'manual', unlimited: boolean, requiredPosition?: 'active' | 'bench' }
     | { type: 'end-of-turn', ownTurnOnly?: boolean, firstTurnOnly?: boolean }
     | { type: 'damaged', position?: string }
     | { type: 'passive' }
