@@ -23,6 +23,7 @@ import { passiveEffectHandler } from './passive-effect-handler.js';
 import { delayedEffectHandler } from './delayed-effect-handler.js';
 import { tryThenEffectHandler } from './try-then-effect-handler.js';
 import { peekAndPullEffectHandler } from './peek-and-pull-effect-handler.js';
+import { moveDamageEffectHandler } from './move-damage-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -32,6 +33,7 @@ export const effectHandlers: EffectHandlerMap = {
     'energy-discard': energyDiscardEffectHandler,
     search: searchEffectHandler,
     'peek-and-pull': peekAndPullEffectHandler,
+    'move-damage': moveDamageEffectHandler,
     shuffle: shuffleEffectHandler,
     'hand-discard': handDiscardEffectHandler,
     switch: switchEffectHandler,
