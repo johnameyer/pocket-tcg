@@ -22,7 +22,7 @@ import { choiceDelegationEffectHandler } from './choice-delegation-effect-handle
 import { passiveEffectHandler } from './passive-effect-handler.js';
 import { delayedEffectHandler } from './delayed-effect-handler.js';
 import { tryThenEffectHandler } from './try-then-effect-handler.js';
-import { peekTopEffectHandler } from './peek-top-effect-handler.js';
+import { peekAndPullEffectHandler } from './peek-and-pull-effect-handler.js';
 
 export const effectHandlers: EffectHandlerMap = {
     hp: hpEffectHandler,
@@ -31,7 +31,7 @@ export const effectHandlers: EffectHandlerMap = {
     'energy-attach': energyAttachEffectHandler,
     'energy-discard': energyDiscardEffectHandler,
     search: searchEffectHandler,
-    'peek-top': peekTopEffectHandler,
+    'peek-and-pull': peekAndPullEffectHandler,
     shuffle: shuffleEffectHandler,
     'hand-discard': handDiscardEffectHandler,
     switch: switchEffectHandler,

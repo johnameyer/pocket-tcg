@@ -109,10 +109,10 @@ export type SearchEffect = {
 /**
  * Represents an effect that reveals the top N cards of a deck, moves all matching into hand,
  * and shuffles the rest back.
- * @example { type: 'peek-top', n: 4, criteria: { cardType: 'item' }, destination: 'hand' }
+ * @example { type: 'peek-and-pull', n: 4, criteria: { cardType: 'item' }, destination: 'hand' }
  */
-export type PeekTopEffect = {
-    type: 'peek-top';
+export type PeekAndPullEffect = {
+    type: 'peek-and-pull';
     /** Number of cards to look at from the top of the deck */
     n: number;
     /** Criteria to filter which cards are kept */
@@ -417,7 +417,7 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | EnergyAttachEffect<TContextualRefs>
     | EnergyDiscardEffect<TContextualRefs>
     | SearchEffect
-    | PeekTopEffect
+    | PeekAndPullEffect
     | ShuffleEffect
     | HandDiscardEffect
     | SwitchEffect<TContextualRefs>

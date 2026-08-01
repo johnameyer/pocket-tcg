@@ -4,17 +4,17 @@ import { EvolveResponseMessage } from '../../../src/messages/response/evolve-res
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
-import { PeekTopEffectHandler } from '../../../src/effects/handlers/peek-top-effect-handler.js';
+import { PeekAndPullEffectHandler } from '../../../src/effects/handlers/peek-and-pull-effect-handler.js';
 import { EffectContextFactory } from '../../../src/effects/effect-context.js';
-import { PeekTopEffect } from '../../../src/repository/effect-types.js';
+import { PeekAndPullEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
 describe('Peek Top Effect', () => {
     describe('canApply', () => {
-        const handler = new PeekTopEffectHandler();
+        const handler = new PeekAndPullEffectHandler();
 
-        const effect: PeekTopEffect = {
-            type: 'peek-top',
+        const effect: PeekAndPullEffect = {
+            type: 'peek-and-pull',
             n: 4,
             criteria: { cardType: 'item' },
             destination: 'hand',
@@ -84,7 +84,7 @@ describe('Peek Top Effect', () => {
                     description: 'Once during your turn, when you play this Pokemon from your hand to evolve 1 of your Pokemon, you may look at the top 4 cards of your deck and put all Item cards you find there into your hand.',
                     trigger: { type: 'on-play' },
                     effects: [{
-                        type: 'peek-top',
+                        type: 'peek-and-pull',
                         n: 4,
                         criteria: { cardType: 'item' },
                         destination: 'hand',
@@ -98,7 +98,7 @@ describe('Peek Top Effect', () => {
                 name: 'Item Peek Supporter',
                 description: 'Look at the top 4 cards of your deck. Put all Item cards you find there into your hand.',
                 effects: [{
-                    type: 'peek-top',
+                    type: 'peek-and-pull',
                     n: 4,
                     criteria: { cardType: 'item' },
                     destination: 'hand',
@@ -109,7 +109,7 @@ describe('Peek Top Effect', () => {
                 name: 'Tool Peek Supporter',
                 description: 'Look at the top 4 cards of your deck. Put all Tool cards you find there into your hand.',
                 effects: [{
-                    type: 'peek-top',
+                    type: 'peek-and-pull',
                     n: 4,
                     criteria: { cardType: 'tool' },
                     destination: 'hand',
@@ -120,7 +120,7 @@ describe('Peek Top Effect', () => {
                 name: 'Stage 1 Peek Supporter',
                 description: 'Look at the top 4 cards of your deck. Put all Stage 1 Pokemon you find there into your hand.',
                 effects: [{
-                    type: 'peek-top',
+                    type: 'peek-and-pull',
                     n: 4,
                     criteria: { cardType: 'creature', stage: 1 },
                     destination: 'hand',
@@ -131,7 +131,7 @@ describe('Peek Top Effect', () => {
                 name: 'Attack Peek Supporter',
                 description: 'Look at the top 4 cards of your deck. Put all Pokemon with the Special Move attack into your hand.',
                 effects: [{
-                    type: 'peek-top',
+                    type: 'peek-and-pull',
                     n: 4,
                     criteria: { cardType: 'creature', hasAttack: 'Special Move' },
                     destination: 'hand',

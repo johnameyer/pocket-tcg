@@ -1,20 +1,20 @@
 import { Controllers } from '../../controllers/controllers.js';
-import { PeekTopEffect } from '../../repository/effect-types.js';
+import { PeekAndPullEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 import { CardCriteriaFilter } from '../filters/card-criteria-filter.js';
 import { HandlerData } from '../../game-handler.js';
 
-export class PeekTopEffectHandler extends AbstractEffectHandler<PeekTopEffect> {
-    getResolutionRequirements(_effect: PeekTopEffect): ResolutionRequirement[] {
+export class PeekAndPullEffectHandler extends AbstractEffectHandler<PeekAndPullEffect> {
+    getResolutionRequirements(_effect: PeekAndPullEffect): ResolutionRequirement[] {
         return [];
     }
 
-    canApply(handlerData: HandlerData, _effect: PeekTopEffect, context: EffectContext): boolean {
+    canApply(handlerData: HandlerData, _effect: PeekAndPullEffect, context: EffectContext): boolean {
         return handlerData.deck.sizes[context.sourcePlayer] > 0;
     }
 
-    apply(controllers: Controllers, effect: PeekTopEffect, context: EffectContext): void {
+    apply(controllers: Controllers, effect: PeekAndPullEffect, context: EffectContext): void {
         const playerId = context.sourcePlayer;
         const deck = controllers.deck.getDeck(playerId);
         const topCards = deck.slice(-effect.n);
@@ -49,4 +49,4 @@ export class PeekTopEffectHandler extends AbstractEffectHandler<PeekTopEffect> {
     }
 }
 
-export const peekTopEffectHandler = new PeekTopEffectHandler();
+export const peekAndPullEffectHandler = new PeekAndPullEffectHandler();
