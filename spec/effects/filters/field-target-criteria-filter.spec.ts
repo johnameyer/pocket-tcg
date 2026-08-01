@@ -586,7 +586,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasAbility: true }},
+                { fieldCriteria: { cardCriteria: { hasAbility: true }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -604,7 +604,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasAbility: false }},
+                { fieldCriteria: { cardCriteria: { hasAbility: false }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -623,7 +623,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasAbility: 'Torrent' }},
+                { fieldCriteria: { cardCriteria: { hasAbility: 'Torrent' }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -634,7 +634,7 @@ describe('FieldTargetCriteriaFilter', () => {
         });
     });
 
-    describe('hasMove criteria', () => {
+    describe('hasAttack criteria', () => {
         const sharedMoveName = 'Pack Strike';
         const cardRepository = new MockCardRepository({
             creatures: {
@@ -659,7 +659,7 @@ describe('FieldTargetCriteriaFilter', () => {
             },
         });
 
-        it('should match creatures that have any of the given attack names when hasMove is an array', () => {
+        it('should match creatures that have any of the given attack names when hasAttack is an array', () => {
             const handlerData = HandlerDataBuilder.default();
             const withShared = { templateId: 'creature-with-shared-move', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
             const withOther = { templateId: 'creature-with-other-move', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
@@ -667,7 +667,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasMove: [ sharedMoveName, 'Tackle' ] }},
+                { fieldCriteria: { cardCriteria: { hasAttack: [ sharedMoveName, 'Tackle' ] }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -676,7 +676,7 @@ describe('FieldTargetCriteriaFilter', () => {
             expect(result.length).to.equal(2);
         });
 
-        it('should match creatures whose attack name matches exactly when hasMove is a string', () => {
+        it('should match creatures whose attack name matches exactly when hasAttack is a string', () => {
             const handlerData = HandlerDataBuilder.default();
             const withShared = { templateId: 'creature-with-shared-move', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
             const withOther = { templateId: 'creature-with-other-move', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
@@ -684,7 +684,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasMove: sharedMoveName }},
+                { fieldCriteria: { cardCriteria: { hasAttack: sharedMoveName }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -694,14 +694,14 @@ describe('FieldTargetCriteriaFilter', () => {
             expect(result[0].card.templateId).to.equal('creature-with-shared-move');
         });
 
-        it('should not match creatures whose attack name does not match when hasMove is a string', () => {
+        it('should not match creatures whose attack name does not match when hasAttack is a string', () => {
             const handlerData = HandlerDataBuilder.default();
             const withOther = { templateId: 'creature-with-other-move', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
             const field = [ withOther ];
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasMove: sharedMoveName }},
+                { fieldCriteria: { cardCriteria: { hasAttack: sharedMoveName }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -752,7 +752,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasName: 'Alpha' }},
+                { fieldCriteria: { cardCriteria: { hasName: 'Alpha' }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -771,7 +771,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasName: [ 'Alpha', 'Gamma' ] }},
+                { fieldCriteria: { cardCriteria: { hasName: [ 'Alpha', 'Gamma' ] }}},
                 handlerData,
                 cardRepository,
                 0,
@@ -788,7 +788,7 @@ describe('FieldTargetCriteriaFilter', () => {
 
             const result = FieldTargetCriteriaFilter.filter(
                 field as unknown as (FieldCard | undefined)[],
-                { fieldCriteria: { hasName: [ 'Alpha', 'Gamma' ] }},
+                { fieldCriteria: { cardCriteria: { hasName: [ 'Alpha', 'Gamma' ] }}},
                 handlerData,
                 cardRepository,
                 0,

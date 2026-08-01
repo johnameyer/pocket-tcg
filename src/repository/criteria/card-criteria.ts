@@ -36,12 +36,18 @@ export type ItemCardCriteria = BaseCardCriteria & {
  * Used for filtering creatures by their card properties in any location.
  */
 export type CreatureCardCriteria = {
-    name?: string[]; 
+    name?: string[];
     stage?: NumberFilter;
     maxHp?: NumberFilter;
     retreatCost?: NumberFilter;
     previousStageName?: string;
     isType?: AttachableEnergyType;
+    /** true = has any Ability, false = has none, string = Ability name matches exactly */
+    hasAbility?: boolean | string;
+    /** string or array of strings — creature must have a move with that exact name */
+    hasAttack?: string | string[];
+    /** string or array of strings — creature name must match at least one */
+    hasName?: string | string[];
     attributes?: {
         ex?: boolean;
         mega?: boolean;
