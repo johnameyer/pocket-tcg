@@ -25,7 +25,7 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                 destination: 'hand',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Search', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -43,7 +43,7 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                 destination: 'hand',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Search', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Search', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -61,7 +61,7 @@ describe('CardTargetResolver (via SearchEffectHandler)', () => {
                 destination: 'hand',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Search', 'supporter');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Search', 'supporter');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

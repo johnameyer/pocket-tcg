@@ -23,7 +23,7 @@ describe('Pull Evolution Effect', () => {
                 evolutionCriteria: { cardType: 'creature', stage: 2 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Pull Evolution', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -39,7 +39,7 @@ describe('Pull Evolution Effect', () => {
                 target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Pull Evolution', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -55,7 +55,7 @@ describe('Pull Evolution Effect', () => {
                 target: undefined as unknown as FieldTarget,
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Pull Evolution', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Pull Evolution', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

@@ -52,13 +52,13 @@ export class TriggerProcessor {
 
     /**
      * Returns game-level sources (stadium) whose trigger type matches.
-     * Consistent with getMatchingEffects — caller builds context via createCardContext.
+     * Consistent with getMatchingEffects — caller builds context via createCardPlayedContext.
      */
     private static getMatchingGameEffects<T extends Trigger['type']>(
         controllers: Controllers,
         currentPlayer: number,
         triggerType: T,
-    ): { effects: Effect[]; context: ReturnType<typeof EffectContextFactory.createCardContext> }[] {
+    ): { effects: Effect[]; context: ReturnType<typeof EffectContextFactory.createCardPlayedContext> }[] {
         const activeStadium = controllers.stadium.getActiveStadium();
         if (!activeStadium) {
             return [];
@@ -67,10 +67,9 @@ export class TriggerProcessor {
         if (!stadiumData?.effects?.length || stadiumData.trigger?.type !== triggerType) {
             return [];
         }
-        return [{
-            effects: stadiumData.effects,
-            context: EffectContextFactory.createCardContext(currentPlayer, stadiumData.name, 'stadium'),
-        }];
+        const context = EffectContextFactory.createCardPlayedContext(currentPlayer, stadiumData.name, 'stadium');
+        context.sourceInstanceId = activeStadium.instanceId;
+        return [{ effects: stadiumData.effects, context }];
     }
 
     static processWhenDamaged(

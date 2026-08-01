@@ -22,7 +22,7 @@ describe('Draw Effect', () => {
                 amount: { type: 'constant', value: 3 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Draw', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.true;
@@ -38,7 +38,7 @@ describe('Draw Effect', () => {
                 amount: { type: 'constant', value: 3 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Draw', 'item');
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.false;

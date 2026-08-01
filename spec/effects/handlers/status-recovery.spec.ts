@@ -26,7 +26,7 @@ describe('Status Recovery Effect', () => {
                 target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -43,7 +43,7 @@ describe('Status Recovery Effect', () => {
                 target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -59,7 +59,7 @@ describe('Status Recovery Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Status Recovery', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Status Recovery', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

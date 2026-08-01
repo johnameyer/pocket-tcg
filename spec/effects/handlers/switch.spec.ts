@@ -27,7 +27,7 @@ describe('Switch Effect', () => {
                 switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Switch', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -44,7 +44,7 @@ describe('Switch Effect', () => {
                 switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Switch', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -63,7 +63,7 @@ describe('Switch Effect', () => {
                 switchWith: undefined as any,
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Switch', 'item');
+            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Switch', 'item');
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

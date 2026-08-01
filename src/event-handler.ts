@@ -399,7 +399,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     message.templateId,
                     supporterData.name,
                 ));
-                const context = EffectContextFactory.createCardContext(sourceHandler, supporterData.name, 'supporter');
+                const context = EffectContextFactory.createCardPlayedContext(sourceHandler, supporterData.name, 'supporter');
                 
                 // Add target information if provided
                 if (message.targetPlayerId !== undefined) {
@@ -428,7 +428,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     message.templateId,
                     itemData.name,
                 ));
-                const context = EffectContextFactory.createCardContext(sourceHandler, itemData.name, 'item');
+                const context = EffectContextFactory.createCardPlayedContext(sourceHandler, itemData.name, 'item');
                 
                 // Add target information if provided
                 if (message.targetPlayerId !== undefined) {
@@ -471,7 +471,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Apply tool effects through the effect handler
                     // Use targetPlayerId as sourcePlayer so 'self'/'opponent' targets resolve correctly
                     if (toolData.effects) {
-                        const toolContext = EffectContextFactory.createCardContext(targetPlayerId, toolData.name, 'tool');
+                        const toolContext = EffectContextFactory.createCardPlayedContext(targetPlayerId, toolData.name, 'tool');
                         toolContext.sourceInstanceId = rawTargetCard.fieldInstanceId;
                         toolContext.sourceToolInstanceId = toolInstanceId;
                         EffectApplier.applyEffects(toolData.effects, controllers, toolContext);
@@ -503,7 +503,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Apply passive stadium effects at play time (triggered effects fire via use-stadium-response)
                 if (!stadiumData.trigger && stadiumData.effects.length > 0) {
-                    const stadiumContext = EffectContextFactory.createCardContext(sourceHandler, stadiumData.name, 'stadium');
+                    const stadiumContext = EffectContextFactory.createCardPlayedContext(sourceHandler, stadiumData.name, 'stadium');
                     stadiumContext.sourceInstanceId = cardInstanceId;
                     EffectApplier.applyEffects(stadiumData.effects, controllers, stadiumContext);
                 }
@@ -950,7 +950,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers.turnState.markAbilityUsed(activeStadium.instanceId, stadiumData.name);
                 }
 
-                const context = EffectContextFactory.createCardContext(sourceHandler, stadiumData.name, 'stadium');
+                const context = EffectContextFactory.createCardPlayedContext(sourceHandler, stadiumData.name, 'stadium');
                 EffectApplier.applyEffects(stadiumData.effects, controllers, context);
                 EffectQueueProcessor.processQueue(controllers);
             }

@@ -171,7 +171,7 @@ export class ActionValidator {
         }
         
         if (itemData.effects && itemData.effects.length > 0) {
-            const context = EffectContextFactory.createCardContext(playerId, itemData.name, 'item');
+            const context = EffectContextFactory.createCardPlayedContext(playerId, itemData.name, 'item');
             
             return EffectValidator.canApplyCardEffects(itemData.effects, handlerData, playerId, itemData.name, 'item', cardRepository);
         }

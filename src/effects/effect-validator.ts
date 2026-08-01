@@ -13,7 +13,7 @@ export class EffectValidator {
      * Check if any effect in the array can be applied using HandlerData
      */
     static canApplyAnyEffect(effects: Effect[], handlerData: HandlerData, sourcePlayer: number, effectName: string, cardRepository?: CardRepository): boolean {
-        const context = EffectContextFactory.createCardContext(sourcePlayer, effectName, 'item');
+        const context = EffectContextFactory.createCardPlayedContext(sourcePlayer, effectName, 'item');
         return effects.some(effect => this.canApplyEffect(effect, handlerData, context, cardRepository!));
     }
 
@@ -21,7 +21,7 @@ export class EffectValidator {
      * Check if all effects in the array can be applied using HandlerData
      */
     static canApplyAllEffects(effects: Effect[], handlerData: HandlerData, sourcePlayer: number, effectName: string, cardType: 'supporter' | 'item' = 'item', cardRepository?: CardRepository): boolean {
-        const context = EffectContextFactory.createCardContext(sourcePlayer, effectName, cardType);
+        const context = EffectContextFactory.createCardPlayedContext(sourcePlayer, effectName, cardType);
         
         // If no repository provided, assume effects can be applied (for test scenarios)
         if (!cardRepository) {
