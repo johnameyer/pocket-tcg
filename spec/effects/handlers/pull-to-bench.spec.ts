@@ -28,7 +28,7 @@ const testRepository = new MockCardRepository({
                     damage: 0,
                     energyRequirements: [],
                     effects: [
-                        { type: 'pull-to-bench', criteria: { name: ['Bench Puller'] }, count: 1 },
+                        { type: 'pull-to-bench', criteria: { name: [ 'Bench Puller' ] }, count: 1 },
                     ],
                 },
             ],
@@ -46,7 +46,7 @@ const testRepository = new MockCardRepository({
                     damage: 0,
                     energyRequirements: [],
                     effects: [
-                        { type: 'pull-to-bench', criteria: { name: ['Multi Bench Puller', 'Bench Puller'] }, count: 3 },
+                        { type: 'pull-to-bench', criteria: { name: [ 'Multi Bench Puller', 'Bench Puller' ] }, count: 3 },
                     ],
                 },
             ],
@@ -87,12 +87,12 @@ const c = (templateId: string) => ({ templateId });
 describe('Bench From Deck Effect', () => {
     it('should place a matching creature from deck onto the bench', () => {
         const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'bench-puller'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withDeck(0, [c('bench-puller'), c('bench-puller'), c('basic-creature')]),
+                StateBuilder.withDeck(0, [ c('bench-puller'), c('bench-puller'), c('basic-creature') ]),
             ),
         });
 
@@ -102,12 +102,12 @@ describe('Bench From Deck Effect', () => {
 
     it('should do nothing when no matching creatures exist in deck', () => {
         const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'bench-puller'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withDeck(0, [c('basic-creature'), c('basic-creature')]),
+                StateBuilder.withDeck(0, [ c('basic-creature'), c('basic-creature') ]),
             ),
         });
 
@@ -116,7 +116,7 @@ describe('Bench From Deck Effect', () => {
 
     it('should place up to count creatures from matching pool', () => {
         const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'multi-bench-puller'),
@@ -135,12 +135,12 @@ describe('Bench From Deck Effect', () => {
 
     it('should not exceed bench capacity', () => {
         const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
-                StateBuilder.withCreatures(0, 'multi-bench-puller', ['bench-puller', 'bench-puller', 'bench-puller']),
+                StateBuilder.withCreatures(0, 'multi-bench-puller', [ 'bench-puller', 'bench-puller', 'bench-puller' ]),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withDeck(0, [c('multi-bench-puller'), c('bench-puller'), c('bench-puller')]),
+                StateBuilder.withDeck(0, [ c('multi-bench-puller'), c('bench-puller'), c('bench-puller') ]),
             ),
         });
 
@@ -149,12 +149,12 @@ describe('Bench From Deck Effect', () => {
 
     it('should filter by stage — only place basic creatures', () => {
         const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-puller'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withDeck(0, [c('stage1-creature'), c('basic-creature'), c('stage1-creature')]),
+                StateBuilder.withDeck(0, [ c('stage1-creature'), c('basic-creature'), c('stage1-creature') ]),
             ),
         });
 
@@ -164,12 +164,12 @@ describe('Bench From Deck Effect', () => {
 
     it('should remove the placed card from the deck', () => {
         const { state } = runTestGame({
-            actions: [new AttackResponseMessage(0)],
+            actions: [ new AttackResponseMessage(0) ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'bench-puller'),
                 StateBuilder.withCreatures(1, 'basic-creature'),
-                StateBuilder.withDeck(0, [c('bench-puller'), c('basic-creature')]),
+                StateBuilder.withDeck(0, [ c('bench-puller'), c('basic-creature') ]),
             ),
         });
 

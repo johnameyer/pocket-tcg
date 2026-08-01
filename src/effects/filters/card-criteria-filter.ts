@@ -57,7 +57,9 @@ export class CardCriteriaFilter {
             }
 
             if (criteria.cardType === 'creature') {
-                if (card.type !== 'creature') return false;
+                if (card.type !== 'creature') {
+                    return false; 
+                }
                 return this.matchesCreatureCriteria(card, criteria, cardRepository);
             }
 
