@@ -4,7 +4,6 @@ import { EnergyController, AttachableEnergyType } from '../controllers/energy-co
 import { StatusEffect } from '../controllers/status-effect-controller.js';
 import { getCurrentTemplateId, getFieldInstanceId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { EffectValidator } from './effect-validator.js';
-import { EffectContextFactory } from './effect-context.js';
 
 /**
  * ActionValidator provides HandlerData-based validation methods for game actions.
@@ -171,8 +170,6 @@ export class ActionValidator {
         }
         
         if (itemData.effects && itemData.effects.length > 0) {
-            const context = EffectContextFactory.createCardPlayedContext(playerId, itemData.name, 'item');
-            
             return EffectValidator.canApplyCardEffects(itemData.effects, handlerData, playerId, itemData.name, 'item', cardRepository);
         }
         

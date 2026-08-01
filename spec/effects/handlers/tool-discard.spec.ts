@@ -5,7 +5,7 @@ import { MockCardRepository } from '../../mock-repository.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 import { ToolDiscardEffectHandler } from '../../../src/effects/handlers/tool-discard-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { ToolDiscardEffect } from '../../../src/repository/effect-types.js';
 import { getFieldInstanceId } from '../../../src/utils/field-card-utils.js';
 
@@ -28,7 +28,7 @@ describe('Tool Discard Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Tool Discard', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -45,7 +45,7 @@ describe('Tool Discard Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Tool Discard', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -61,7 +61,7 @@ describe('Tool Discard Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Tool Discard', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Tool Discard', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

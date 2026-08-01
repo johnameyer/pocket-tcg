@@ -6,7 +6,7 @@ import { SelectCardResponseMessage } from '../../../src/messages/response/select
 import { MockCardRepository } from '../../mock-repository.js';
 import { GameCard } from '../../../src/controllers/card-types.js';
 import { ShuffleEffectHandler } from '../../../src/effects/handlers/shuffle-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { ShuffleEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -24,7 +24,7 @@ describe('Shuffle Effect', () => {
                 target: 'self',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Shuffle', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.true;
@@ -40,7 +40,7 @@ describe('Shuffle Effect', () => {
                 target: 'opponent',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Shuffle', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Shuffle', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.true;

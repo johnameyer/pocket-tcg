@@ -5,7 +5,7 @@ import { PlayCardResponseMessage } from '../../../src/messages/response/play-car
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { HpEffectHandler } from '../../../src/effects/handlers/hp-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { HpEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -27,7 +27,7 @@ describe('HP Effect', () => {
                 operation: 'heal',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Heal', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Heal', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -46,7 +46,7 @@ describe('HP Effect', () => {
                 operation: 'heal',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Heal', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Heal', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -65,7 +65,7 @@ describe('HP Effect', () => {
                 operation: 'damage',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Damage', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Damage', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -83,7 +83,7 @@ describe('HP Effect', () => {
                 operation: 'damage',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Damage', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Damage', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

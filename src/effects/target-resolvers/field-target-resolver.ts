@@ -6,7 +6,7 @@ import { HandlerData } from '../../game-handler.js';
 import { FieldCard } from '../../controllers/field-controller.js';
 import { ControllerUtils } from '../../utils/controller-utils.js';
 import { toFieldCard, getCurrentInstanceId } from '../../utils/field-card-utils.js';
-import { EffectContext } from '../effect-context.js';
+import { EffectContext, isTriggerContext } from '../effect-context.js';
 import { FieldTargetCriteriaFilter } from '../filters/field-target-criteria-filter.js';
 
 /**
@@ -150,12 +150,12 @@ export class FieldTargetResolver {
                 } else if (context.type === 'attack') {
                     // Attacks are always from active creature
                     fieldIndex = 0;
-                } else if (context.type === 'trigger') {
+                } else if (isTriggerContext(context)) {
                     // For triggers, find the field position of the creature that has the trigger
                     const allCreatures = controllers.field.getCards(playerId) || [];
-                    fieldIndex = allCreatures.findIndex(creature => creature?.instanceId === context.creatureInstanceId);
+                    fieldIndex = allCreatures.findIndex(creature => creature?.instanceId === context.sourceInstanceId);
                     if (fieldIndex === -1) {
-                        throw new Error(`Trigger source creature not found: ${context.creatureInstanceId}`);
+                        throw new Error(`Trigger source creature not found: ${context.sourceInstanceId}`);
                     }
                 } else {
                     throw new Error(`Source targeting not supported for context type: ${context.type}`);
@@ -407,24 +407,24 @@ export class FieldTargetResolver {
             if (context.type === 'attack') {
                 return target.reference === 'defender' || target.reference === 'attacker';
             }
-            if (context.type === 'trigger') {
+            if (isTriggerContext(context)) {
                 if (target.reference === 'attacker') {
-                    return context.triggerType === 'damaged'
-                        || (context.triggerType === 'before-knockout' && context.attackerInstanceId !== undefined);
+                    return context.type === 'damaged-trigger'
+                        || (context.type === 'before-knockout-trigger' && context.attackerInstanceId !== undefined);
                 }
                 if (target.reference === 'defender') {
-                    return context.triggerType === 'on-attack'; 
+                    return context.type === 'on-attack-trigger';
                 }
                 if (target.reference === 'trigger-target') {
-                    return context.triggerType === 'energy-attachment'; 
+                    return context.type === 'energy-attachment-trigger';
                 }
             }
             return false;
         }
-        
+
         return true; // Other target types don't need validation
     }
-    
+
     /**
      * Check if a target has any valid creature (default behavior).
      */
@@ -474,21 +474,21 @@ export class FieldTargetResolver {
             if (context.type === 'attack') {
                 return target.reference === 'defender' || target.reference === 'attacker';
             }
-            if (context.type === 'trigger') {
+            if (isTriggerContext(context)) {
                 if (target.reference === 'attacker') {
-                    return context.triggerType === 'damaged'
-                        || (context.triggerType === 'before-knockout' && context.attackerInstanceId !== undefined);
+                    return context.type === 'damaged-trigger'
+                        || (context.type === 'before-knockout-trigger' && context.attackerInstanceId !== undefined);
                 }
                 if (target.reference === 'defender') {
-                    return context.triggerType === 'on-attack'; 
+                    return context.type === 'on-attack-trigger';
                 }
                 if (target.reference === 'trigger-target') {
-                    return context.triggerType === 'energy-attachment'; 
+                    return context.type === 'energy-attachment-trigger';
                 }
             }
             return false;
         }
-        
+
         return true;
     }
     
@@ -513,12 +513,12 @@ export class FieldTargetResolver {
             } else if (context.type === 'attack') {
                 // Attacks are always from active creature
                 fieldIndex = 0;
-            } else if (context.type === 'trigger') {
+            } else if (isTriggerContext(context)) {
                 // For triggers, find the field position of the creature that has the trigger
                 const allCreatures = handlerData.field.creatures[playerId] || [];
-                fieldIndex = allCreatures.findIndex(creature => creature && getCurrentInstanceId(creature) === context.creatureInstanceId);
+                fieldIndex = allCreatures.findIndex(creature => creature && getCurrentInstanceId(creature) === context.sourceInstanceId);
                 if (fieldIndex === -1) {
-                    throw new Error(`Trigger source creature not found: ${context.creatureInstanceId}`);
+                    throw new Error(`Trigger source creature not found: ${context.sourceInstanceId}`);
                 }
             } else {
                 throw new Error(`Source targeting not supported for context type: ${context.type}`);
@@ -648,7 +648,7 @@ export class FieldTargetResolver {
                     }
                     return { type: 'resolved', targets: [{ playerId: context.defenderPlayerId, fieldIndex }] };
                 }
-                if (context.type === 'trigger' && context.triggerType === 'on-attack') {
+                if (context.type === 'on-attack-trigger') {
                     const { defenderInstanceId, defenderPlayerId } = context;
                     const fieldCards = controllers.field.getCards(defenderPlayerId) ?? [];
                     const fieldIndex = fieldCards.findIndex(c => c?.instanceId === defenderInstanceId);
@@ -669,7 +669,7 @@ export class FieldTargetResolver {
                     }
                     return { type: 'resolved', targets: [{ playerId: context.sourcePlayer, fieldIndex }] };
                 }
-                if (context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')) {
+                if (context.type === 'damaged-trigger' || context.type === 'before-knockout-trigger') {
                     const attackerInstanceId = context.attackerInstanceId;
                     const attackerPlayerId = context.attackerPlayerId;
                     if (!attackerInstanceId || attackerPlayerId === undefined) {
@@ -685,7 +685,7 @@ export class FieldTargetResolver {
                 throw new Error('Contextual target \'attacker\' is only valid in attack or \'damaged\'/\'before-knockout\' trigger context');
             }
             case 'trigger-target': {
-                if (context.type !== 'trigger' || context.triggerType !== 'energy-attachment') {
+                if (context.type !== 'energy-attachment-trigger') {
                     throw new Error('Contextual target \'trigger-target\' is only valid in \'energy-attachment\' trigger context');
                 }
                 const { triggerTargetInstanceId, triggerTargetPlayerId } = context;

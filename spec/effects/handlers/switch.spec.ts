@@ -6,7 +6,7 @@ import { SelectTargetResponseMessage } from '../../../src/messages/response/sele
 import { MockCardRepository } from '../../mock-repository.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 import { SwitchEffectHandler } from '../../../src/effects/handlers/switch-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { SwitchEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -27,7 +27,7 @@ describe('Switch Effect', () => {
                 switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Switch', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Switch', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -44,7 +44,7 @@ describe('Switch Effect', () => {
                 switchWith: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Switch', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Switch', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -63,7 +63,7 @@ describe('Switch Effect', () => {
                 switchWith: undefined as any,
             };
 
-            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Switch', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Switch', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

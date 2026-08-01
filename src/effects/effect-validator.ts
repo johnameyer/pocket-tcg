@@ -1,8 +1,7 @@
 import { HandlerData } from '../game-handler.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { Effect } from '../repository/effect-types.js';
-import { EffectContextFactory } from './effect-context.js';
-import { EffectContext } from './effect-context.js';
+import { EffectContext, CardPlayedEffectContext } from './effect-context.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver } from './target-resolvers/energy-target-resolver.js';
@@ -13,7 +12,7 @@ export class EffectValidator {
      * Check if any effect in the array can be applied using HandlerData
      */
     static canApplyAnyEffect(effects: Effect[], handlerData: HandlerData, sourcePlayer: number, effectName: string, cardRepository?: CardRepository): boolean {
-        const context = EffectContextFactory.createCardPlayedContext(sourcePlayer, effectName, 'item');
+        const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer, effectName, cardType: 'item' };
         return effects.some(effect => this.canApplyEffect(effect, handlerData, context, cardRepository!));
     }
 
@@ -21,7 +20,7 @@ export class EffectValidator {
      * Check if all effects in the array can be applied using HandlerData
      */
     static canApplyAllEffects(effects: Effect[], handlerData: HandlerData, sourcePlayer: number, effectName: string, cardType: 'supporter' | 'item' = 'item', cardRepository?: CardRepository): boolean {
-        const context = EffectContextFactory.createCardPlayedContext(sourcePlayer, effectName, cardType);
+        const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer, effectName, cardType: cardType ?? 'item' };
         
         // If no repository provided, assume effects can be applied (for test scenarios)
         if (!cardRepository) {

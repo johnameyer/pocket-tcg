@@ -95,10 +95,7 @@ export type OnRetreatTriggerEffectContext = BaseTriggerContext & {
     type: 'on-retreat-trigger';
 };
 
-export type EffectContext =
-    | AttackEffectContext
-    | AbilityEffectContext
-    | CardPlayedEffectContext
+export type TriggerEffectContext =
     | DamagedTriggerEffectContext
     | BeforeKnockoutTriggerEffectContext
     | OnAttackTriggerEffectContext
@@ -108,3 +105,13 @@ export type EffectContext =
     | OnPlayTriggerEffectContext
     | OnCheckupTriggerEffectContext
     | OnRetreatTriggerEffectContext;
+
+export type EffectContext =
+    | AttackEffectContext
+    | AbilityEffectContext
+    | CardPlayedEffectContext
+    | TriggerEffectContext;
+
+export function isTriggerContext(context: EffectContext): context is TriggerEffectContext {
+    return context.type.endsWith('-trigger');
+}

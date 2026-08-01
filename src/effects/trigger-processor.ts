@@ -1,12 +1,24 @@
 import { Controllers } from '../controllers/controllers.js';
 import { Effect } from '../repository/effect-types.js';
 import { Trigger } from '../repository/card-types.js';
-import { EffectContextFactory } from './effect-context.js';
+import {
+    DamagedTriggerEffectContext,
+    BeforeKnockoutTriggerEffectContext,
+    OnAttackTriggerEffectContext,
+    EnergyAttachmentTriggerEffectContext,
+    EndOfTurnTriggerEffectContext,
+    StartOfTurnTriggerEffectContext,
+    OnPlayTriggerEffectContext,
+    OnCheckupTriggerEffectContext,
+    OnRetreatTriggerEffectContext,
+} from './effect-context.js';
 
 type MatchingEffect<T extends Trigger['type']> = {
     effects: Effect[];
     name: string;
     trigger: Extract<Trigger, { type: T }>;
+    sourceInstanceId: string;
+    sourceToolInstanceId?: string;
 };
 
 /**
@@ -34,6 +46,8 @@ export class TriggerProcessor {
                     trigger: toolData.trigger as Extract<Trigger, { type: T }>,
                     effects: toolData.effects,
                     name: toolData.name,
+                    sourceInstanceId: creatureInstanceId,
+                    sourceToolInstanceId: tool.instanceId,
                 });
             }
         }
@@ -44,21 +58,18 @@ export class TriggerProcessor {
                 trigger: creatureData.ability.trigger as Extract<Trigger, { type: T }>,
                 effects: creatureData.ability.effects,
                 name: `${creatureData.name}'s ${creatureData.ability.name}`,
+                sourceInstanceId: creatureInstanceId,
             });
         }
 
         return matches;
     }
 
-    /**
-     * Returns game-level sources (stadium) whose trigger type matches.
-     * Consistent with getMatchingEffects — caller builds context via createCardPlayedContext.
-     */
-    private static getMatchingGameEffects<T extends Trigger['type']>(
+    private static getMatchingStadiumEffects<T extends Trigger['type']>(
         controllers: Controllers,
         currentPlayer: number,
         triggerType: T,
-    ): { effects: Effect[]; context: ReturnType<typeof EffectContextFactory.createCardPlayedContext> }[] {
+    ): MatchingEffect<T>[] {
         const activeStadium = controllers.stadium.getActiveStadium();
         if (!activeStadium) {
             return [];
@@ -67,9 +78,12 @@ export class TriggerProcessor {
         if (!stadiumData?.effects?.length || stadiumData.trigger?.type !== triggerType) {
             return [];
         }
-        const context = EffectContextFactory.createCardPlayedContext(currentPlayer, stadiumData.name, 'stadium');
-        context.sourceInstanceId = activeStadium.instanceId;
-        return [{ effects: stadiumData.effects, context }];
+        return [{
+            trigger: stadiumData.trigger as Extract<Trigger, { type: T }>,
+            effects: stadiumData.effects,
+            name: stadiumData.name,
+            sourceInstanceId: activeStadium.instanceId,
+        }];
     }
 
     static processWhenDamaged(
@@ -81,11 +95,9 @@ export class TriggerProcessor {
         attackerInstanceId?: string,
         attackerPlayerId?: number,
     ): void {
-        for (const { effects, name } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'damaged')) {
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId,
-                { triggerType: 'damaged', damage: damageAmount, attackerInstanceId, attackerPlayerId },
-            ));
+        for (const { effects, name, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'damaged')) {
+            const context: DamagedTriggerEffectContext = { type: 'damaged-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId, damage: damageAmount, attackerInstanceId, attackerPlayerId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
     }
 
@@ -101,14 +113,12 @@ export class TriggerProcessor {
                 if (!card) {
                     continue;
                 }
-                for (const { effects, name, trigger } of this.getMatchingEffects(controllers, card.instanceId, card.templateId, 'energy-attachment')) {
+                for (const { effects, name, trigger, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, card.instanceId, card.templateId, 'energy-attachment')) {
                     if (trigger.energyType && trigger.energyType !== energyType) {
                         continue;
                     }
-                    controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                        playerId, name, card.instanceId,
-                        { triggerType: 'energy-attachment', energyType, triggerTargetInstanceId, triggerTargetPlayerId },
-                    ));
+                    const context: EnergyAttachmentTriggerEffectContext = { type: 'energy-attachment-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId, energyType, triggerTargetInstanceId, triggerTargetPlayerId };
+                    controllers.effects.pushPendingEffect(effects, context);
                 }
             }
         }
@@ -121,18 +131,18 @@ export class TriggerProcessor {
         creatureCardId: string,
     ): void {
         const currentPlayer = controllers.turn.get();
-        for (const { effects, name, trigger } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'end-of-turn')) {
+        for (const { effects, name, trigger, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'end-of-turn')) {
             if (trigger.ownTurnOnly && playerId !== currentPlayer) {
                 continue;
             }
             if (trigger.firstTurnOnly && controllers.turnCounter.getTurnNumber() !== 0) {
                 continue;
             }
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId, { triggerType: 'end-of-turn' },
-            ));
+            const context: EndOfTurnTriggerEffectContext = { type: 'end-of-turn-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
-        for (const { effects, context } of this.getMatchingGameEffects(controllers, currentPlayer, 'end-of-turn')) {
+        for (const { effects, name, sourceInstanceId } of this.getMatchingStadiumEffects(controllers, currentPlayer, 'end-of-turn')) {
+            const context: EndOfTurnTriggerEffectContext = { type: 'end-of-turn-trigger', sourcePlayer: currentPlayer, effectName: name, sourceInstanceId };
             controllers.effects.pushPendingEffect(effects, context);
         }
     }
@@ -144,15 +154,15 @@ export class TriggerProcessor {
         creatureCardId: string,
     ): void {
         const currentPlayer = controllers.turn.get();
-        for (const { effects, name, trigger } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'start-of-turn')) {
+        for (const { effects, name, trigger, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'start-of-turn')) {
             if (trigger.ownTurnOnly && playerId !== currentPlayer) {
                 continue;
             }
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId, { triggerType: 'start-of-turn' },
-            ));
+            const context: StartOfTurnTriggerEffectContext = { type: 'start-of-turn-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
-        for (const { effects, context } of this.getMatchingGameEffects(controllers, currentPlayer, 'start-of-turn')) {
+        for (const { effects, name, sourceInstanceId } of this.getMatchingStadiumEffects(controllers, currentPlayer, 'start-of-turn')) {
+            const context: StartOfTurnTriggerEffectContext = { type: 'start-of-turn-trigger', sourcePlayer: currentPlayer, effectName: name, sourceInstanceId };
             controllers.effects.pushPendingEffect(effects, context);
         }
     }
@@ -164,13 +174,12 @@ export class TriggerProcessor {
         creatureCardId: string,
         isEvolution: boolean,
     ): void {
-        for (const { effects, name, trigger } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-play')) {
+        for (const { effects, name, trigger, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-play')) {
             if (trigger.filterEvolution && isEvolution) {
                 continue;
             }
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId, { triggerType: 'on-play' },
-            ));
+            const context: OnPlayTriggerEffectContext = { type: 'on-play-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
     }
 
@@ -182,11 +191,9 @@ export class TriggerProcessor {
         defenderInstanceId: string,
         defenderPlayerId: number,
     ): void {
-        for (const { effects, name } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-attack')) {
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId,
-                { triggerType: 'on-attack', defenderInstanceId, defenderPlayerId },
-            ));
+        for (const { effects, name, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-attack')) {
+            const context: OnAttackTriggerEffectContext = { type: 'on-attack-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId, defenderInstanceId, defenderPlayerId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
     }
 
@@ -198,11 +205,9 @@ export class TriggerProcessor {
         attackerInstanceId?: string,
         attackerPlayerId?: number,
     ): void {
-        for (const { effects, name } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'before-knockout')) {
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId,
-                { triggerType: 'before-knockout', attackerInstanceId, attackerPlayerId },
-            ));
+        for (const { effects, name, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'before-knockout')) {
+            const context: BeforeKnockoutTriggerEffectContext = { type: 'before-knockout-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId, attackerInstanceId, attackerPlayerId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
     }
 
@@ -213,15 +218,15 @@ export class TriggerProcessor {
         creatureCardId: string,
     ): void {
         const currentPlayer = controllers.turn.get();
-        for (const { effects, name, trigger } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-checkup')) {
+        for (const { effects, name, trigger, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-checkup')) {
             if (trigger.ownTurnOnly && playerId !== currentPlayer) {
                 continue;
             }
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId, { triggerType: 'on-checkup' },
-            ));
+            const context: OnCheckupTriggerEffectContext = { type: 'on-checkup-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
-        for (const { effects, context } of this.getMatchingGameEffects(controllers, currentPlayer, 'on-checkup')) {
+        for (const { effects, name, sourceInstanceId } of this.getMatchingStadiumEffects(controllers, currentPlayer, 'on-checkup')) {
+            const context: OnCheckupTriggerEffectContext = { type: 'on-checkup-trigger', sourcePlayer: currentPlayer, effectName: name, sourceInstanceId };
             controllers.effects.pushPendingEffect(effects, context);
         }
     }
@@ -232,10 +237,9 @@ export class TriggerProcessor {
         creatureInstanceId: string,
         creatureCardId: string,
     ): void {
-        for (const { effects, name } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-retreat')) {
-            controllers.effects.pushPendingEffect(effects, EffectContextFactory.createTriggerContext(
-                playerId, name, creatureInstanceId, { triggerType: 'on-retreat' },
-            ));
+        for (const { effects, name, sourceInstanceId, sourceToolInstanceId } of this.getMatchingEffects(controllers, creatureInstanceId, creatureCardId, 'on-retreat')) {
+            const context: OnRetreatTriggerEffectContext = { type: 'on-retreat-trigger', sourcePlayer: playerId, effectName: name, sourceInstanceId, sourceToolInstanceId };
+            controllers.effects.pushPendingEffect(effects, context);
         }
     }
 }

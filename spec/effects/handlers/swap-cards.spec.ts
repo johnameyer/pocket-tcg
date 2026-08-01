@@ -5,7 +5,7 @@ import { MockCardRepository } from '../../mock-repository.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 import { SwapCardsEffectHandler } from '../../../src/effects/handlers/swap-cards-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { SwapCardsEffect } from '../../../src/repository/effect-types.js';
 
 describe('Swap Cards Effect', () => {
@@ -25,7 +25,7 @@ describe('Swap Cards Effect', () => {
                 drawAmount: { type: 'constant', value: 1 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Swap Cards', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -43,7 +43,7 @@ describe('Swap Cards Effect', () => {
                 drawAmount: { type: 'constant', value: 1 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Swap Cards', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             // Should return true because player can draw cards
@@ -62,7 +62,7 @@ describe('Swap Cards Effect', () => {
                 drawAmount: { type: 'constant', value: 1 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Swap Cards', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             // Should still return true because player can discard cards
@@ -81,7 +81,7 @@ describe('Swap Cards Effect', () => {
                 drawAmount: { type: 'constant', value: 1 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Swap Cards', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Swap Cards', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

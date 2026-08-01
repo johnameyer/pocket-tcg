@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { TriggerProcessor } from '../../src/effects/trigger-processor.js';
-import { EffectContext } from '../../src/effects/effect-context.js';
+import { EndOfTurnTriggerEffectContext } from '../../src/effects/effect-context.js';
 import { Effect } from '../../src/repository/effect-types.js';
 import { Controllers } from '../../src/controllers/controllers.js';
 import { MockCardRepository } from '../mock-repository.js';
@@ -11,7 +11,7 @@ import { MockCardRepository } from '../mock-repository.js';
 // We stub only the controllers that TriggerProcessor.processEndOfTurn accesses,
 // allowing direct invocation and queue inspection without running the full game.
 
-type PushedEntry = { effects: Effect[]; context: EffectContext };
+type PushedEntry = { effects: Effect[]; context: EndOfTurnTriggerEffectContext };
 
 function buildMinimalControllers(overrides: {
     repository: MockCardRepository;
@@ -45,8 +45,8 @@ function buildMinimalControllers(overrides: {
             getTurnNumber: () => overrides.turnNumber ?? 2,
         },
         effects: {
-            pushPendingEffect: (effects: Effect[], context: EffectContext) => {
-                pushed.push({ effects, context });
+            pushPendingEffect: (effects: Effect[], context: unknown) => {
+                pushed.push({ effects, context: context as EndOfTurnTriggerEffectContext });
             },
         },
         stadium: {
@@ -250,8 +250,7 @@ describe('TriggerProcessor context fields (passive-effect cleanup)', () => {
 
             expect(pushed).to.have.length(1, 'expected exactly one pending effect (stadium)');
             const ctx = pushed[0].context;
-            // CURRENTLY FAILING: current code uses createCardPlayedContext → type: 'trainer'
-            expect(ctx.type, 'stadium trigger context type should be "trigger", not "trainer"').to.equal('trigger');
+            expect(ctx.type, 'stadium trigger context type should be "end-of-turn-trigger"').to.equal('end-of-turn-trigger');
         });
 
         it('should set sourceInstanceId to the stadium\'s instanceId', () => {

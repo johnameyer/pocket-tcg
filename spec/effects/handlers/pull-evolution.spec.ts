@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 import { PullEvolutionEffectHandler } from '../../../src/effects/handlers/pull-evolution-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { PullEvolutionEffect } from '../../../src/repository/effect-types.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { FieldTarget } from '../../../src/index.js';
@@ -23,7 +23,7 @@ describe('Pull Evolution Effect', () => {
                 evolutionCriteria: { cardType: 'creature', stage: 2 },
             };
 
-            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Pull Evolution', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Pull Evolution', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -39,7 +39,7 @@ describe('Pull Evolution Effect', () => {
                 target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Pull Evolution', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Pull Evolution', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -55,7 +55,7 @@ describe('Pull Evolution Effect', () => {
                 target: undefined as unknown as FieldTarget,
             };
 
-            const context = EffectContextFactory.createCardPlayedContext(0, 'Test Pull Evolution', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Pull Evolution', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

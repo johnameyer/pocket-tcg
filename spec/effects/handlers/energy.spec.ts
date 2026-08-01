@@ -6,7 +6,7 @@ import { AttackResponseMessage } from '../../../src/messages/response/attack-res
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary, EnergyState } from '../../../src/controllers/energy-controller.js';
 import { EnergyAttachEffectHandler } from '../../../src/effects/handlers/energy-attach-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { EnergyAttachEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -31,7 +31,7 @@ describe('Energy Effect', () => {
                 target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Energy', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.true;
@@ -50,7 +50,7 @@ describe('Energy Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Energy Discard', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.true;
@@ -69,7 +69,7 @@ describe('Energy Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Energy Discard', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Energy Discard', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             // Energy effects always return true - even if there's no energy to discard
@@ -88,7 +88,7 @@ describe('Energy Effect', () => {
                 target: { type: 'fixed', player: 'self', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Energy', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Energy', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             // Energy effects always return true - target validation happens during apply
