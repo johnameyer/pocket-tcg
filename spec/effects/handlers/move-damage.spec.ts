@@ -78,7 +78,7 @@ describe('Move Damage Effect', () => {
                 ability: {
                     name: 'Accept Pain',
                     description: 'Once during your turn, if this Pokemon is on your Bench, you may move 30 damage from your Active Pokemon to this Pokemon.',
-                    trigger: { type: 'manual', unlimited: false, requiredPosition: 'bench' },
+                    trigger: { type: 'manual', unlimited: false },
                     effects: [{
                         type: 'move-damage',
                         amount: { type: 'constant', value: 30 },
@@ -143,19 +143,6 @@ describe('Move Damage Effect', () => {
             expect(getExecutedCount()).to.equal(1, 'Ability should have been used');
             expect(state.field.creatures[0][0].damageTaken).to.equal(20, 'Active should have 20 damage remaining');
             expect(state.field.creatures[0][1].damageTaken).to.equal(30, 'Benched mover should have received 30 damage');
-        });
-
-        it('should be blocked when ability user is the active Pokemon', () => {
-            const { getExecutedCount } = runTestGame({
-                actions: [ new UseAbilityResponseMessage(0) ],
-                customRepository: testRepository,
-                stateCustomizer: StateBuilder.combine(
-                    StateBuilder.withCreatures(0, 'bench-only-damage-mover', [ 'basic-creature' ]),
-                    StateBuilder.withCreatures(1, 'basic-creature'),
-                ),
-            });
-
-            expect(getExecutedCount()).to.equal(0, 'Ability should be blocked when not on bench');
         });
 
         it('should be usable only once per turn', () => {

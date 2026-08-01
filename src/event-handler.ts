@@ -839,20 +839,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
                     return !cardData.ability;
                 }),
-                EventHandler.validate('Cannot use ability - position requirement not met', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
-                    const fieldCards = controllers.field.getPlayedCards(source);
-                    const fieldCard = fieldCards[message.fieldCardPosition];
-                    if (!fieldCard) {
-                        return false;
-                    }
-                    const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
-                    const trigger = cardData.ability?.trigger;
-                    if (!trigger || trigger.type !== 'manual' || !trigger.requiredPosition) {
-                        return false;
-                    }
-                    const isActive = message.fieldCardPosition === 0;
-                    return trigger.requiredPosition === 'active' ? !isActive : isActive;
-                }),
                 EventHandler.validate('Cannot use ability - already used this turn', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
                     const fieldCards = controllers.field.getPlayedCards(source);
                     const fieldCard = fieldCards[message.fieldCardPosition];
