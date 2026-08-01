@@ -5,7 +5,7 @@ import { CardTarget } from './targets/card-target.js';
 import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
 import { EnergyTarget } from './targets/energy-target.js';
-import { CardCriteria } from './criteria/card-criteria.js';
+import { CardCriteria, CreatureCardCriteria } from './criteria/card-criteria.js';
 
 /**
  * Represents when an effect can be triggered.
@@ -416,6 +416,20 @@ export type TryThenEffect<TContextualRefs extends string = string> = {
 };
 
 /**
+ * Represents an effect that places random matching creatures from deck onto the bench.
+ * @property {string} type - Always 'pull-to-bench' to identify this effect type
+ * @property {CreatureCardCriteria} criteria - Criteria for which creatures to pull
+ * @property {number} count - Maximum number of creatures to place on bench
+ * @example { type: 'pull-to-bench', criteria: { stage: 0 }, count: 1 }
+ * // Put 1 random basic Pokémon from your deck onto your bench
+ */
+export type PullToBenchEffect = {
+    type: 'pull-to-bench';
+    criteria: CreatureCardCriteria;
+    count: number;
+};
+
+/**
  * Immediate effects that are resolved immediately and don't persist over time.
  * These effects typically modify game state directly (e.g., draw cards, deal damage).
  *
@@ -446,7 +460,8 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | PullEvolutionEffect<TContextualRefs>
     | ConditionalDelegationEffect<TContextualRefs>
     | ChoiceDelegationEffect<TContextualRefs>
-    | TryThenEffect<TContextualRefs>;
+    | TryThenEffect<TContextualRefs>
+    | PullToBenchEffect;
 
 /**
  * Represents an effect that prevents playing specific card types.

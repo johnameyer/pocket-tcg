@@ -131,7 +131,8 @@ export function getEffectValue(effectValue: EffectValue, controllers: Controller
         const multiplierValue = getEffectValue(effectValue.multiplier, controllers, context);
         return baseValue * multiplierValue;
     } else if (effectValue.type === 'coin-flip') {
-        const flipCount = effectValue.flipCount ?? 1;
+        const rawFlipCount = effectValue.flipCount ?? 1;
+        const flipCount = typeof rawFlipCount === 'number' ? rawFlipCount : getEffectValue(rawFlipCount, controllers, context);
         let total = 0;
         for (let i = 0; i < flipCount; i++) {
             const isHeads = controllers.coinFlip.performCoinFlip();

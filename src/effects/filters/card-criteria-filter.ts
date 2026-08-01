@@ -56,11 +56,8 @@ export class CardCriteriaFilter {
                 return card.type === 'item' || card.type === 'supporter';
             }
 
-            // For creature cards, also apply any creature-specific criteria
             if (criteria.cardType === 'creature') {
-                if (card.type !== 'creature') {
-                    return false;
-                }
+                if (card.type !== 'creature') return false;
                 return this.matchesCreatureCriteria(card, criteria, cardRepository);
             }
 
