@@ -3,7 +3,7 @@ import { TriggerType, Effect } from '../repository/effect-types.js';
 // Base context shared by all effect call sites
 type BaseEffectContext = {
     sourcePlayer: number;
-    effectName: string;
+    effectName: string; // TODO: consider removing from TriggerEffectContext (trigger name varies per source; also two .includes() flag checks in attack-damage-resolver/field-target-resolver need replacing first)
     targetPlayerId?: number;
     targetCreatureIndex?: number;
     /** Optional effects to resume after a wrapped choice/selection chain completes */
