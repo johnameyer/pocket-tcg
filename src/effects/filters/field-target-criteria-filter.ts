@@ -240,6 +240,41 @@ export class FieldTargetCriteriaFilter {
             }
         }
 
+        // Check hasAbility condition
+        if (criteria.hasAbility !== undefined) {
+            const creatureData = cardRepository.getCreature(card.templateId);
+            const ability = creatureData?.ability;
+            const matches = typeof criteria.hasAbility === 'string'
+                ? ability?.name === criteria.hasAbility
+                : !!ability === criteria.hasAbility;
+            if (!matches) {
+                return false;
+            }
+        }
+
+        // Check hasMove condition
+        if (criteria.hasMove !== undefined) {
+            const creatureData = cardRepository.getCreature(card.templateId);
+            const attacks = creatureData?.attacks ?? [];
+            const names = Array.isArray(criteria.hasMove) ? criteria.hasMove : [ criteria.hasMove ];
+            const matches = names.some(n => attacks.some(a => a.name === n));
+            if (!matches) {
+                return false;
+            }
+        }
+
+        // Check hasName condition
+        if (criteria.hasName !== undefined) {
+            const creatureData = cardRepository.getCreature(card.templateId);
+            const name = creatureData?.name ?? '';
+            const matches = Array.isArray(criteria.hasName)
+                ? criteria.hasName.includes(name)
+                : name === criteria.hasName;
+            if (!matches) {
+                return false;
+            }
+        }
+
         // Check hasStatusCondition
         if (criteria.hasStatusCondition !== undefined && criteria.hasStatusCondition.length > 0) {
             // Status conditions only apply to the active creature (fieldIndex 0)

@@ -543,4 +543,258 @@ describe('FieldTargetCriteriaFilter', () => {
             expect(result[0].fieldIndex).to.equal(1);
         });
     });
+
+    describe('hasAbility criteria', () => {
+        const cardRepository = new MockCardRepository({
+            creatures: {
+                'creature-with-ability': {
+                    templateId: 'creature-with-ability',
+                    name: 'Creature With Ability',
+                    maxHp: 80,
+                    type: 'psychic',
+                    weakness: 'darkness',
+                    retreatCost: 1,
+                    attacks: [{ name: 'Psi Bolt', damage: 30, energyRequirements: [{ type: 'psychic', amount: 1 }] }],
+                    ability: {
+                        name: 'Mind Guard',
+                        trigger: { type: 'passive' },
+                        effects: [],
+                    },
+                },
+                'creature-with-named-ability': {
+                    templateId: 'creature-with-named-ability',
+                    name: 'Creature With Named Ability',
+                    maxHp: 70,
+                    type: 'water',
+                    weakness: 'lightning',
+                    retreatCost: 1,
+                    attacks: [{ name: 'Splash', damage: 10, energyRequirements: [{ type: 'water', amount: 1 }] }],
+                    ability: {
+                        name: 'Torrent',
+                        trigger: { type: 'passive' },
+                        effects: [],
+                    },
+                },
+            },
+        });
+
+        it('should match creatures that have any ability when hasAbility is true', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const withAbility = { templateId: 'creature-with-ability', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const withoutAbility = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ withAbility, withoutAbility ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasAbility: true }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].card.templateId).to.equal('creature-with-ability');
+        });
+
+        it('should match creatures with no ability when hasAbility is false', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const withAbility = { templateId: 'creature-with-ability', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const withoutAbility = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ withAbility, withoutAbility ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasAbility: false }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].card.templateId).to.equal('basic-creature');
+        });
+
+        it('should match creatures whose ability name matches exactly when hasAbility is a string', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const withAbility = { templateId: 'creature-with-ability', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const withNamedAbility = { templateId: 'creature-with-named-ability', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const withoutAbility = { templateId: 'basic-creature', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ withAbility, withNamedAbility, withoutAbility ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasAbility: 'Torrent' }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].card.templateId).to.equal('creature-with-named-ability');
+        });
+    });
+
+    describe('hasMove criteria', () => {
+        const sharedMoveName = 'Pack Strike';
+        const cardRepository = new MockCardRepository({
+            creatures: {
+                'creature-with-shared-move': {
+                    templateId: 'creature-with-shared-move',
+                    name: 'Creature With Shared Move',
+                    maxHp: 60,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [{ name: sharedMoveName, damage: 20, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
+                },
+                'creature-with-other-move': {
+                    templateId: 'creature-with-other-move',
+                    name: 'Creature With Other Move',
+                    maxHp: 60,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [{ name: 'Tackle', damage: 10, energyRequirements: [{ type: 'colorless', amount: 1 }] }],
+                },
+            },
+        });
+
+        it('should match creatures that have any of the given attack names when hasMove is an array', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const withShared = { templateId: 'creature-with-shared-move', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const withOther = { templateId: 'creature-with-other-move', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ withShared, withOther ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasMove: [ sharedMoveName, 'Tackle' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+        });
+
+        it('should match creatures whose attack name matches exactly when hasMove is a string', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const withShared = { templateId: 'creature-with-shared-move', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const withOther = { templateId: 'creature-with-other-move', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ withShared, withOther ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasMove: sharedMoveName }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].card.templateId).to.equal('creature-with-shared-move');
+        });
+
+        it('should not match creatures whose attack name does not match when hasMove is a string', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const withOther = { templateId: 'creature-with-other-move', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const field = [ withOther ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasMove: sharedMoveName }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(0);
+        });
+    });
+
+    describe('hasName criteria', () => {
+        const cardRepository = new MockCardRepository({
+            creatures: {
+                'creature-alpha': {
+                    templateId: 'creature-alpha',
+                    name: 'Alpha',
+                    maxHp: 60,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [],
+                },
+                'creature-beta': {
+                    templateId: 'creature-beta',
+                    name: 'Beta',
+                    maxHp: 60,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [],
+                },
+                'creature-gamma': {
+                    templateId: 'creature-gamma',
+                    name: 'Gamma',
+                    maxHp: 60,
+                    type: 'colorless',
+                    weakness: 'fighting',
+                    retreatCost: 1,
+                    attacks: [],
+                },
+            },
+        });
+
+        it('should match a creature whose name equals the given string', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const alpha = { templateId: 'creature-alpha', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const beta = { templateId: 'creature-beta', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const field = [ alpha, beta ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasName: 'Alpha' }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(1);
+            expect(result[0].card.templateId).to.equal('creature-alpha');
+        });
+
+        it('should match creatures whose name is in the given array', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const alpha = { templateId: 'creature-alpha', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const beta = { templateId: 'creature-beta', type: 'creature' as const, instanceId: '2', damageTaken: 0 };
+            const gamma = { templateId: 'creature-gamma', type: 'creature' as const, instanceId: '3', damageTaken: 0 };
+            const field = [ alpha, beta, gamma ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasName: [ 'Alpha', 'Gamma' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(2);
+            expect(result.map(r => r.card.templateId)).to.include.members([ 'creature-alpha', 'creature-gamma' ]);
+        });
+
+        it('should not match creatures whose name is not in the given array', () => {
+            const handlerData = HandlerDataBuilder.default();
+            const beta = { templateId: 'creature-beta', type: 'creature' as const, instanceId: '1', damageTaken: 0 };
+            const field = [ beta ];
+
+            const result = FieldTargetCriteriaFilter.filter(
+                field as unknown as (FieldCard | undefined)[],
+                { fieldCriteria: { hasName: [ 'Alpha', 'Gamma' ] }},
+                handlerData,
+                cardRepository,
+                0,
+            );
+
+            expect(result.length).to.equal(0);
+        });
+    });
 });
