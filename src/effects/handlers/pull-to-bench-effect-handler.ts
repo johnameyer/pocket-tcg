@@ -28,12 +28,14 @@ export class PullToBenchEffectHandler extends AbstractEffectHandler<PullToBenchE
             return;
         }
 
-        const shuffled = [...matching].sort(() => Math.random() - 0.5);
+        const shuffled = [ ...matching ].sort(() => Math.random() - 0.5);
         const toPlace = shuffled.slice(0, effect.count);
 
         for (const card of toPlace) {
             const deckIndex = deck.indexOf(card);
-            if (deckIndex === -1) continue;
+            if (deckIndex === -1) {
+                continue;
+            }
 
             const placed = controllers.field.addToBench(playerId, card.templateId);
             if (placed) {
