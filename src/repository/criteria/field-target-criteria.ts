@@ -18,12 +18,6 @@ export type FieldCriteria = {
     hasEnergy?: Partial<Record<AttachableEnergyType, number>>;
     hasTool?: boolean;
     hasStatusCondition?: StatusCondition[];
-    /** true = has any Ability, false = has none, string = Ability name matches exactly */
-    hasAbility?: boolean | string;
-    /** string or array of strings — creature must have a move with that exact name */
-    hasMove?: string | string[];
-    /** string or array of strings — creature name must match at least one */
-    hasName?: string | string[];
 };
 
 /**

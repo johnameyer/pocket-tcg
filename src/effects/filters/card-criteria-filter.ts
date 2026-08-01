@@ -56,12 +56,20 @@ export class CardCriteriaFilter {
                 return card.type === 'item' || card.type === 'supporter';
             }
 
+            // For creature cards, also apply any creature-specific criteria
+            if (criteria.cardType === 'creature') {
+                if (card.type !== 'creature') {
+                    return false;
+                }
+                return this.matchesCreatureCriteria(card, criteria, cardRepository);
+            }
+
             // For specific card types, check exact match
             return card.type === criteria.cardType;
         }
 
         // Handle creature criteria
-        if ('isType' in criteria || 'stage' in criteria || 'maxHp' in criteria || 'retreatCost' in criteria || 'previousStageName' in criteria || 'attributes' in criteria) {
+        if ('isType' in criteria || 'stage' in criteria || 'maxHp' in criteria || 'retreatCost' in criteria || 'previousStageName' in criteria || 'attributes' in criteria || 'hasAbility' in criteria || 'hasAttack' in criteria || 'hasName' in criteria) {
             return this.matchesCreatureCriteria(card, criteria, cardRepository);
         }
 
@@ -174,6 +182,37 @@ export class CardCriteriaFilter {
             // Check previousStageName condition
             if (criteria.previousStageName !== undefined) {
                 if (!creatureData.previousStageName || creatureData.previousStageName.toLowerCase() !== criteria.previousStageName.toLowerCase()) {
+                    return false;
+                }
+            }
+
+            // Check hasAbility condition
+            if (criteria.hasAbility !== undefined) {
+                const ability = creatureData.ability;
+                const matches = typeof criteria.hasAbility === 'string'
+                    ? ability?.name === criteria.hasAbility
+                    : !!ability === criteria.hasAbility;
+                if (!matches) {
+                    return false;
+                }
+            }
+
+            // Check hasAttack condition
+            if (criteria.hasAttack !== undefined) {
+                const attacks = creatureData.attacks ?? [];
+                const names = Array.isArray(criteria.hasAttack) ? criteria.hasAttack : [ criteria.hasAttack ];
+                if (!names.some(n => attacks.some(a => a.name === n))) {
+                    return false;
+                }
+            }
+
+            // Check hasName condition
+            if (criteria.hasName !== undefined) {
+                const name = creatureData.name ?? '';
+                const matches = Array.isArray(criteria.hasName)
+                    ? criteria.hasName.includes(name)
+                    : name === criteria.hasName;
+                if (!matches) {
                     return false;
                 }
             }
