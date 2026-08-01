@@ -121,6 +121,19 @@ export type PeekAndPullEffect = {
 };
 
 /**
+ * Represents an effect that moves damage counters from one creature to another.
+ * @example { type: 'move-damage', amount: { type: 'constant', value: 30 }, from: { type: 'fixed', player: 'self', position: 'active' }, to: { type: 'fixed', player: 'self', position: 'source' } }
+ * @example { type: 'move-damage', amount: 'all', from: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', fieldCriteria: { hasDamage: true } } }, to: { type: 'fixed', player: 'self', position: 'source' } }
+ */
+export type MoveDamageEffect<TContextualRefs extends string = string> = {
+    type: 'move-damage';
+    /** Amount of damage to move, or 'all' to move all damage from the source */
+    amount: EffectValue | 'all';
+    from: FieldTarget<TContextualRefs>;
+    to: FieldTarget<TContextualRefs>;
+};
+
+/**
  * Represents an effect that shuffles deck or hand.
  * @property {string} type - Always 'shuffle' to identify this effect type
  * @property {PlayerTarget} target - The player whose deck/hand to shuffle
@@ -418,6 +431,7 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | EnergyDiscardEffect<TContextualRefs>
     | SearchEffect
     | PeekAndPullEffect
+    | MoveDamageEffect<TContextualRefs>
     | ShuffleEffect
     | HandDiscardEffect
     | SwitchEffect<TContextualRefs>
