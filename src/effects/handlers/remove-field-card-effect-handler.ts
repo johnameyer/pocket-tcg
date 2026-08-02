@@ -2,7 +2,7 @@ import { Controllers } from '../../controllers/controllers.js';
 import { RemoveFieldCardEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
-import { getCreatureFromTarget } from '../effect-utils.js';
+import { getFieldInstanceId } from '../../utils/field-card-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
@@ -10,11 +10,14 @@ import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.j
 /**
  * Handler for remove field card effects that remove field cards to deck, hand, or discard.
  * Always includes all attached tools and evolution stack.
+ *
+ * Currently only `discard` destination is implemented. `hand` and `deck` destinations
+ * will be added in a follow-on branch (fix/remove-field-card-improvements).
  */
 export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFieldCardEffect> {
     /**
      * Get the resolution requirements for a remove field card effect.
-     * 
+     *
      * @param effect The remove field card effect to get resolution requirements for
      * @returns Array of resolution requirements
      */
@@ -23,10 +26,10 @@ export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFi
             { targetProperty: 'target', target: effect.target, required: true },
         ];
     }
-    
+
     /**
      * Optional validation method to check if a remove field card effect can be applied.
-     * 
+     *
      * @param handlerData Handler data view
      * @param effect The remove field card effect to validate
      * @param context Effect context
@@ -37,7 +40,7 @@ export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFi
         if (!effect.target) {
             return false;
         }
-        
+
         // Use TargetResolver to check if the target is available
         return FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
     }
@@ -45,41 +48,77 @@ export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFi
     /**
      * Apply a fully resolved remove field card effect.
      * This is called after all targets have been resolved.
-     * 
+     *
+     * Currently only the `discard` destination is supported. Calling with `hand` or
+     * `deck` will throw a "not yet implemented" error.
+     *
      * @param controllers Game controllers
      * @param effect The remove field card effect to apply (with resolved targets)
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: RemoveFieldCardEffect, context: EffectContext): void {
+        if (effect.destination !== 'discard') {
+            throw new Error(`remove-field-card destination "${effect.destination}" is not yet implemented`);
+        }
+
         if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
-        
+
         // Get resolved targets directly
         const targets = effect.target.targets;
-        
+
         if (targets.length === 0) {
             throw new Error(`${context.effectName} resolved to no valid targets`);
         }
-        
+
         // Process each target
         for (const targetInfo of targets) {
             const playerId = targetInfo.playerId;
             const fieldIndex = targetInfo.fieldIndex;
-            
-            // Get the target creature
-            const targetCreature = getCreatureFromTarget(controllers, playerId, fieldIndex);
-            if (!targetCreature) {
+
+            // Get the InstancedFieldCard directly (needed for evolution stack / tool cleanup)
+            const instancedCard = controllers.field.getInstancedCardByPosition(playerId, fieldIndex);
+            if (!instancedCard) {
                 continue;
             }
-            
-            // Get the creature data for messaging
-            const creatureData = controllers.cardRepository.getCreature(targetCreature.templateId);
-            
-            // TODO: Implement actual card removal with tools and evolution stack
+
+            const fieldInstanceId = getFieldInstanceId(instancedCard);
+
+            // 1. Remove all energy from the instance
+            controllers.energy.removeAllEnergyFromInstance(playerId, fieldInstanceId);
+
+            // 2. Clear passive effects tied to this instance
+            controllers.effects.clearEffectsForInstance(fieldInstanceId);
+
+            // 3. Handle attached tool: clear its effects, discard it, then detach
+            const attachedTool = controllers.tools.getAttachedTool(fieldInstanceId);
+            if (attachedTool) {
+                controllers.effects.clearEffectsForInstance(attachedTool.instanceId);
+                controllers.discard.discardCard(playerId, {
+                    templateId: attachedTool.templateId,
+                    instanceId: attachedTool.instanceId,
+                    type: 'tool',
+                });
+                controllers.tools.detachTool(fieldInstanceId);
+            }
+
+            // 4. Remove from field without auto-discarding (we handle discard ourselves)
+            const removedCard = controllers.field.removeFieldCardWithoutDiscard(playerId, fieldIndex);
+            if (!removedCard) {
+                continue;
+            }
+
+            // 5. Discard the field card (handles evolution stack automatically)
+            controllers.discard.discardFieldCard(playerId, removedCard);
+
+            // Message players
+            const creatureData = controllers.cardRepository.getCreature(
+                removedCard.evolutionStack[removedCard.evolutionStack.length - 1].templateId,
+            );
             controllers.players.messageAll({
                 type: 'status',
-                components: [ `${context.effectName} would remove ${creatureData.name} with all tools and evolutions to ${effect.destination} (not fully implemented)!` ],
+                components: [ `${context.effectName} discards ${creatureData.name} with all tools and evolutions!` ],
             });
         }
     }

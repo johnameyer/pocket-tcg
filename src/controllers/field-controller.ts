@@ -102,6 +102,22 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         }
     }
 
+    // Get the raw InstancedFieldCard at a specific position for a player
+    public getInstancedCardByPosition(playerId: number, position: number): InstancedFieldCard | undefined {
+        return this.state.creatures[playerId]?.[position];
+    }
+
+    // Remove a field card at a specific position without auto-discarding it
+    // Returns the removed card, or undefined if nothing was there
+    public removeFieldCardWithoutDiscard(playerId: number, position: number): InstancedFieldCard | undefined {
+        const creatures = this.state.creatures[playerId];
+        if (!creatures || position < 0 || position >= creatures.length) {
+            return undefined;
+        }
+        const [ removed ] = creatures.splice(position, 1);
+        return removed;
+    }
+
     // Get the card at a specific position for a player
     public getCardByPosition(playerId: number, position: number): EnrichedFieldCard | undefined {
         const card = this.state.creatures[playerId]?.[position];
