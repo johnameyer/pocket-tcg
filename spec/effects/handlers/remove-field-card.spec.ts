@@ -147,7 +147,7 @@ describe('Remove Field Card Effect', () => {
             // Both cards in the stack should appear in the discard pile
             expect(state.discard[1]).to.have.length(2);
             const discardedIds = state.discard[1].map(c => c.templateId).sort();
-            expect(discardedIds).to.deep.equal(['basic-creature', 'evolution-creature'].sort());
+            expect(discardedIds).to.deep.equal([ 'basic-creature', 'evolution-creature' ].sort());
         });
 
         it('should remove all energy from the discarded creature', () => {
@@ -196,7 +196,7 @@ describe('Remove Field Card Effect', () => {
     });
 
     describe('apply — unimplemented destinations', () => {
-        for (const dest of ['hand', 'deck'] as const) {
+        for (const dest of [ 'hand', 'deck' ] as const) {
             it(`should throw "not yet implemented" for destination "${dest}"`, () => {
                 const testRepository = new MockCardRepository({
                     items: {

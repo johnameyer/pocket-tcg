@@ -114,7 +114,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         if (!creatures || position < 0 || position >= creatures.length) {
             return undefined;
         }
-        const [removed] = creatures.splice(position, 1);
+        const [ removed ] = creatures.splice(position, 1);
         return removed;
     }
 
