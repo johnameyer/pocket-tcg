@@ -29,13 +29,25 @@ function buildMinimalControllers(overrides: {
         },
         cardRepository: {
             getTool: (templateId: string) => {
-                try { return repo.getTool(templateId); } catch { return undefined; }
+                try {
+                    return repo.getTool(templateId); 
+                } catch {
+                    return undefined; 
+                }
             },
             getCreature: (templateId: string) => {
-                try { return repo.getCreature(templateId); } catch { return undefined; }
+                try {
+                    return repo.getCreature(templateId); 
+                } catch {
+                    return undefined; 
+                }
             },
             getStadium: (templateId: string) => {
-                try { return repo.getStadium(templateId); } catch { return undefined; }
+                try {
+                    return repo.getStadium(templateId); 
+                } catch {
+                    return undefined; 
+                }
             },
         },
         turn: {
@@ -112,10 +124,9 @@ describe('TriggerProcessor context fields (passive-effect cleanup)', () => {
 
             const { controllers, pushed } = buildMinimalControllers({
                 repository: repo,
-                getAttachedTool: (id) =>
-                    id === creatureInstanceId
-                        ? { templateId: TOOL_ID, instanceId: toolInstanceId }
-                        : null,
+                getAttachedTool: (id) => id === creatureInstanceId
+                    ? { templateId: TOOL_ID, instanceId: toolInstanceId }
+                    : null,
             });
 
             TriggerProcessor.processEndOfTurn(controllers, 0, creatureInstanceId, CREATURE_ID);
@@ -132,10 +143,9 @@ describe('TriggerProcessor context fields (passive-effect cleanup)', () => {
 
             const { controllers, pushed } = buildMinimalControllers({
                 repository: repo,
-                getAttachedTool: (id) =>
-                    id === creatureInstanceId
-                        ? { templateId: TOOL_ID, instanceId: 'tool-inst-1' }
-                        : null,
+                getAttachedTool: (id) => id === creatureInstanceId
+                    ? { templateId: TOOL_ID, instanceId: 'tool-inst-1' }
+                    : null,
             });
 
             TriggerProcessor.processEndOfTurn(controllers, 0, creatureInstanceId, CREATURE_ID);
