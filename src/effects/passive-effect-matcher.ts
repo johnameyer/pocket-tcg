@@ -340,4 +340,74 @@ export class PassiveEffectMatcher {
             amount: Math.max(0, req.amount + (totalModifier.all || 0)),
         }));
     }
+
+    /**
+     * Check if a status condition is prevented for a specific player's active creature.
+     * Queries all active 'status-prevention' passive effects and checks if any matches.
+     *
+     * @param controllers Game controllers
+     * @param playerId The player ID whose active creature is being checked
+     * @param fieldIndex The field position to check (0 = active, others are bench)
+     * @param condition Optional specific condition to check; if omitted checks for any prevention
+     * @returns True if the status condition is prevented for that creature
+     */
+    static isStatusConditionPrevented(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        condition?: string,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('status-prevention');
+        if (preventEffects.length === 0) {
+            return false;
+        }
+
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+
+        const handlerData = ControllerUtils.createPlayerView(controllers, playerId);
+
+        return preventEffects.some(passiveEffect => {
+            const eff = passiveEffect.effect;
+            // Check player criteria
+            if (eff.target.player) {
+                const expectedPlayerId = eff.target.player === 'self'
+                    ? passiveEffect.sourcePlayer
+                    : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                if (expectedPlayerId !== playerId) {
+                    return false;
+                }
+            }
+            // Check position criteria
+            if (eff.target.position) {
+                const isActive = fieldIndex === 0;
+                if (eff.target.position === 'active' && !isActive) {
+                    return false;
+                }
+                if (eff.target.position === 'bench' && isActive) {
+                    return false;
+                }
+            }
+            // Check field criteria (including hasEnergy)
+            if (eff.target.fieldCriteria) {
+                if (!FieldTargetCriteriaFilter.matchesFieldCriteria(
+                    eff.target.fieldCriteria,
+                    controllers.field.getCardByPosition(playerId, fieldIndex)!,
+                    controllers.cardRepository.cardRepository,
+                    handlerData.energy?.attachedEnergyByInstance,
+                )) {
+                    return false;
+                }
+            }
+            // Check specific condition if provided
+            if (condition && eff.conditions && eff.conditions.length > 0) {
+                if (!eff.conditions.includes(condition as Parameters<typeof eff.conditions.includes>[0])) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
 }
