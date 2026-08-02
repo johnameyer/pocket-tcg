@@ -55,7 +55,6 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
             const evolutionIndex = this.findEvolutionIndex(
                 deck,
                 targetData.name,
-                targetCreature.templateId,
                 effect.evolutionCriteria as CreatureCardCriteria | undefined,
                 controllers.cardRepository.cardRepository,
             );
@@ -86,10 +85,9 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
         }
     }
 
-    private findEvolutionIndex(
+    findEvolutionIndex(
         deck: GameCard[],
         targetName: string,
-        targetTemplateId: string,
         evolutionCriteria: CreatureCardCriteria | undefined,
         cardRepository: CardRepository,
     ): number {
@@ -103,9 +101,8 @@ export class PullEvolutionEffectHandler extends AbstractEffectHandler<PullEvolut
             } catch {
                 return false;
             }
-            // Must be a direct evolution of the target (matching by name or templateId)
-            if (cardData.previousStageName !== targetName
-                && cardData.previousStageName !== targetTemplateId) {
+            // Must be a direct evolution of the target (matching by name)
+            if (cardData.previousStageName !== targetName) {
                 return false;
             }
             // Apply additional evolution criteria if specified (e.g. isType: 'water')

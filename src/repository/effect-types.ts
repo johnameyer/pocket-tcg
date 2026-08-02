@@ -617,7 +617,7 @@ export type RemoveFieldCardEffect<TContextualRefs extends string = string> = {
 export type PullEvolutionEffect<TContextualRefs extends string = string> = {
     type: 'pull-evolution';
     target: FieldTarget<TContextualRefs>;
-    evolutionCriteria?: CreatureCardCriteria;
+    evolutionCriteria?: CardCriteria;
     skipRestrictions?: boolean;
 };
 
