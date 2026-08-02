@@ -31,12 +31,13 @@ export type MultiplicationValue = {
 
 /**
  * Represents a value that depends on coin flip results.
+ * flipCount may be a fixed number or a dynamic EffectValue evaluated at resolution time.
  */
 export type CoinFlipValue = {
     type: 'coin-flip';
     headsValue: number;
     tailsValue: number;
-    flipCount?: number;
+    flipCount?: number | EffectValue;
 };
 
 /**
