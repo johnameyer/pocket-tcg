@@ -271,6 +271,61 @@ export class PassiveEffectMatcher {
         ));
     }
 
+    /**
+     * Check if a status condition is prevented for a specific creature.
+     *
+     * @param controllers Game controllers
+     * @param playerId The player ID of the target creature
+     * @param fieldIndex The field position of the target creature
+     * @param condition Optional specific condition to check; if omitted, returns true if any prevention applies
+     * @returns True if the status condition is prevented for this creature
+     */
+    static isStatusConditionPrevented(
+        controllers: Controllers,
+        playerId: number,
+        fieldIndex: number,
+        condition?: string,
+    ): boolean {
+        const preventEffects = controllers.effects.getPassiveEffectsByType('status-prevention');
+        const creature = controllers.field.getRawCardByPosition(playerId, fieldIndex);
+        if (!creature) {
+            return false;
+        }
+        return preventEffects.some(passiveEffect => {
+            const effect = passiveEffect.effect;
+
+            // Check player criteria
+            if (effect.target.player !== undefined) {
+                const targetPlayer = effect.target.player === 'self'
+                    ? passiveEffect.sourcePlayer
+                    : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
+                if (targetPlayer !== playerId) {
+                    return false;
+                }
+            }
+
+            // Check position criteria
+            if (effect.target.position !== undefined) {
+                const isActive = fieldIndex === 0;
+                if (effect.target.position === 'active' && !isActive) {
+                    return false;
+                }
+                if (effect.target.position === 'bench' && isActive) {
+                    return false;
+                }
+            }
+
+            // Check specific condition if provided
+            if (condition !== undefined && effect.conditions !== undefined) {
+                if (!effect.conditions.includes(condition as never)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
     static getModifiedAttackEnergyRequirements(
         controllers: Controllers,
         playerId: number,
