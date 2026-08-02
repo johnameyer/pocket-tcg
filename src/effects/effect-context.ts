@@ -1,20 +1,26 @@
-import { TriggerType, Effect } from '../repository/effect-types.js';
+import { Effect } from '../repository/effect-types.js';
 
 // Base context shared by all effect call sites
 type BaseEffectContext = {
     sourcePlayer: number;
-    effectName: string;
+    effectName: string; // TODO: consider removing from trigger contexts (name varies per source; two .includes() flag checks in attack-damage-resolver/field-target-resolver need replacing first)
     targetPlayerId?: number;
     targetCreatureIndex?: number;
     /** Optional effects to resume after a wrapped choice/selection chain completes */
     selectionContinuationEffects?: Effect[];
-    /** Optional instance ID of the card that owns this effect, used for passive effect cleanup */
-    sourceInstanceId?: string;
-    /** Optional instance ID of the tool that owns this effect, used for tool passive effect cleanup */
+    // sourceInstanceId and sourceToolInstanceId are NOT on the base type — each context type
+    // that needs them declares them directly
+};
+
+// Shared base for all auto-triggered effect contexts
+type BaseTriggerContext = BaseEffectContext & {
+    /** Creature field instanceId (for creature/tool triggers) or stadium instanceId (for game triggers) */
+    sourceInstanceId: string;
+    /** Set when the trigger fires from a tool rather than an ability */
     sourceToolInstanceId?: string;
 };
 
-// Attack effect context - has attacker and defender info
+// Attack effect context
 export type AttackEffectContext = BaseEffectContext & {
     type: 'attack';
     attackerInstanceId: string;
@@ -23,103 +29,89 @@ export type AttackEffectContext = BaseEffectContext & {
     resolvedDamage?: number;
 };
 
-// Ability effect context - has creature position info
+// Ability effect context
 export type AbilityEffectContext = BaseEffectContext & {
     type: 'ability';
     creatureInstanceId: string;
     fieldPosition: number; // 0 = active, 1+ = bench
+    sourceInstanceId?: string;
 };
 
-// Card effect context - for trainer cards (supporter, item) and played cards (tool, stadium)
-export type CardEffectContext = BaseEffectContext & {
-    type: 'trainer';
+// Card played effect context - for any card played from hand (supporter, item, tool, stadium)
+export type CardPlayedEffectContext = BaseEffectContext & {
+    type: 'card-played';
     cardType: 'supporter' | 'item' | 'tool' | 'stadium';
+    /** Instance ID of the card (or creature) this effect is registered against, used for passive effect cleanup */
+    sourceInstanceId?: string;
+    /** Instance ID of the tool specifically, used for tool passive effect cleanup */
+    sourceToolInstanceId?: string;
 };
 
-/**
- * Contextual data for trigger effects, discriminated on `triggerType`.
- * Each variant carries only the data relevant to that trigger type.
- */
-export type TriggerContextData =
-    | { triggerType: 'damaged'; damage: number; attackerInstanceId?: string; attackerPlayerId?: number }
-    | { triggerType: 'before-knockout'; attackerInstanceId?: string; attackerPlayerId?: number }
-    | { triggerType: 'on-attack'; defenderInstanceId: string; defenderPlayerId: number }
-    | { triggerType: 'energy-attachment'; energyType: string; triggerTargetInstanceId: string; triggerTargetPlayerId: number }
-    | { triggerType: Exclude<TriggerType, 'damaged' | 'before-knockout' | 'on-attack' | 'energy-attachment'> };
+// Trigger effect contexts — one per trigger event type
 
-// Trigger effect context - for automatic triggers
-export type TriggerEffectContext = BaseEffectContext & {
-    type: 'trigger';
-    creatureInstanceId: string;
-} & TriggerContextData;
+export type DamagedTriggerEffectContext = BaseTriggerContext & {
+    type: 'damaged-trigger';
+    damage: number;
+    attackerInstanceId?: string;
+    attackerPlayerId?: number;
+};
+
+export type BeforeKnockoutTriggerEffectContext = BaseTriggerContext & {
+    type: 'before-knockout-trigger';
+    attackerInstanceId?: string;
+    attackerPlayerId?: number;
+};
+
+export type OnAttackTriggerEffectContext = BaseTriggerContext & {
+    type: 'on-attack-trigger';
+    defenderInstanceId: string;
+    defenderPlayerId: number;
+};
+
+export type EnergyAttachmentTriggerEffectContext = BaseTriggerContext & {
+    type: 'energy-attachment-trigger';
+    energyType: string;
+    triggerTargetInstanceId: string;
+    triggerTargetPlayerId: number;
+};
+
+export type EndOfTurnTriggerEffectContext = BaseTriggerContext & {
+    type: 'end-of-turn-trigger';
+};
+
+export type StartOfTurnTriggerEffectContext = BaseTriggerContext & {
+    type: 'start-of-turn-trigger';
+};
+
+export type OnPlayTriggerEffectContext = BaseTriggerContext & {
+    type: 'on-play-trigger';
+};
+
+export type OnCheckupTriggerEffectContext = BaseTriggerContext & {
+    type: 'on-checkup-trigger';
+};
+
+export type OnRetreatTriggerEffectContext = BaseTriggerContext & {
+    type: 'on-retreat-trigger';
+};
+
+export type TriggerEffectContext =
+    | DamagedTriggerEffectContext
+    | BeforeKnockoutTriggerEffectContext
+    | OnAttackTriggerEffectContext
+    | EnergyAttachmentTriggerEffectContext
+    | EndOfTurnTriggerEffectContext
+    | StartOfTurnTriggerEffectContext
+    | OnPlayTriggerEffectContext
+    | OnCheckupTriggerEffectContext
+    | OnRetreatTriggerEffectContext;
 
 export type EffectContext =
-    | AttackEffectContext 
-    | AbilityEffectContext 
-    | CardEffectContext 
+    | AttackEffectContext
+    | AbilityEffectContext
+    | CardPlayedEffectContext
     | TriggerEffectContext;
 
-// Helper to create contexts for different call sites
-export class EffectContextFactory {
-    static createAttackContext(
-        sourcePlayer: number,
-        effectName: string,
-        attackerInstanceId: string,
-        defenderInstanceId: string,
-        defenderPlayerId: number,
-        resolvedDamage?: number,
-    ): AttackEffectContext {
-        return {
-            type: 'attack',
-            sourcePlayer,
-            effectName,
-            attackerInstanceId,
-            defenderInstanceId,
-            defenderPlayerId,
-            resolvedDamage,
-        };
-    }
-
-    static createAbilityContext(
-        sourcePlayer: number,
-        effectName: string,
-        creatureInstanceId: string,
-        fieldPosition: number,
-    ): AbilityEffectContext {
-        return {
-            type: 'ability',
-            sourcePlayer,
-            effectName,
-            creatureInstanceId,
-            fieldPosition,
-        };
-    }
-
-    static createCardContext(
-        sourcePlayer: number,
-        effectName: string,
-        cardType: 'supporter' | 'item' | 'tool' | 'stadium',
-    ): CardEffectContext {
-        return {
-            type: 'trainer',
-            sourcePlayer,
-            effectName,
-            cardType,
-        };
-    }
-
-    static createTriggerContext(
-        sourcePlayer: number,
-        effectName: string,
-        creatureInstanceId: string,
-        triggerData: TriggerContextData,
-    ): TriggerEffectContext {
-        return {
-            type: 'trigger',
-            sourcePlayer,
-            effectName,
-            creatureInstanceId,
-            ...triggerData,
-        };
-    }
+export function isTriggerContext(context: EffectContext): context is TriggerEffectContext {
+    return context.type.endsWith('-trigger');
 }

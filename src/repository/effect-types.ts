@@ -6,11 +6,9 @@ import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
 import { EnergyTarget } from './targets/energy-target.js';
 import { CardCriteria, CreatureCardCriteria } from './criteria/card-criteria.js';
+import { Trigger } from './card-types.js';
 
-/**
- * Represents when an effect can be triggered.
- */
-export type TriggerType = 'on-play' | 'on-attack' | 'on-damage' | 'on-knockout' | 'between-turns' | 'on-evolve' | 'damaged' | 'end-of-turn' | 'energy-attachment' | 'manual' | 'start-of-turn' | 'before-knockout' | 'on-checkup' | 'on-retreat';
+export type TriggerType = Trigger['type'];
 
 /**
  * Represents status conditions that can be applied to creatures.

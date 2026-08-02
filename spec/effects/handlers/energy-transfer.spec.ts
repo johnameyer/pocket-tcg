@@ -5,7 +5,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyTransferEffectHandler } from '../../../src/effects/handlers/energy-transfer-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { EnergyTransferEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -35,7 +35,7 @@ describe('Energy Transfer Effect', () => {
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Transfer', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -62,7 +62,7 @@ describe('Energy Transfer Effect', () => {
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Transfer', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -88,7 +88,7 @@ describe('Energy Transfer Effect', () => {
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Transfer', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Transfer', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

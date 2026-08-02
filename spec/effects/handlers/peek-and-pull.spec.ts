@@ -5,7 +5,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { PeekAndPullEffectHandler } from '../../../src/effects/handlers/peek-and-pull-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { PeekAndPullEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -22,13 +22,13 @@ describe('Peek Top Effect', () => {
 
         it('should return true when deck has cards', () => {
             const handlerData = HandlerDataBuilder.default(HandlerDataBuilder.withDeck(5));
-            const context = EffectContextFactory.createCardContext(0, 'Test Peek', 'supporter');
+            const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: 0, effectName: 'Test Peek', cardType: 'supporter' };
             expect(handler.canApply(handlerData, effect, context)).to.be.true;
         });
 
         it('should return false when deck is empty', () => {
             const handlerData = HandlerDataBuilder.default(HandlerDataBuilder.withDeck(0));
-            const context = EffectContextFactory.createCardContext(0, 'Test Peek', 'supporter');
+            const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: 0, effectName: 'Test Peek', cardType: 'supporter' };
             expect(handler.canApply(handlerData, effect, context)).to.be.false;
         });
     });

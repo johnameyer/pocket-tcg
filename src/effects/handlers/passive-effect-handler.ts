@@ -1,6 +1,6 @@
 import { Controllers } from '../../controllers/controllers.js';
 import { RegisterPassiveEffect } from '../../repository/effect-types.js';
-import { EffectContext } from '../effect-context.js';
+import { EffectContext, isTriggerContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
 
 /**
@@ -26,14 +26,16 @@ export class PassiveEffectHandler extends AbstractEffectHandler<RegisterPassiveE
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: RegisterPassiveEffect, context: EffectContext): void {
+        const sourceInstanceId = context.type !== 'attack' ? context.sourceInstanceId : undefined;
+        const sourceToolInstanceId = (context.type === 'card-played' || isTriggerContext(context)) ? context.sourceToolInstanceId : undefined;
         controllers.effects.registerPassiveEffect(
             context.sourcePlayer,
             context.effectName,
             effect.modifier,
             effect.modifier.duration,
             controllers.turnCounter.getTurnNumber(),
-            context.sourceInstanceId,
-            context.sourceToolInstanceId,
+            sourceInstanceId,
+            sourceToolInstanceId,
         );
 
         controllers.players.messageAll({

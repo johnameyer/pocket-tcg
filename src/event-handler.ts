@@ -6,7 +6,7 @@ import { SelectActiveCardResponseMessage, SetupCompleteResponseMessage, EvolveRe
 import { AttackResultMessage, EvolutionMessage, CreaturePlayedMessage, ItemPlayedMessage, SupporterPlayedMessage, ToolPlayedMessage, StadiumPlayedMessage } from './messages/status/index.js';
 import { GameCard } from './controllers/card-types.js';
 import { EffectApplier } from './effects/effect-applier.js';
-import { EffectContextFactory } from './effects/effect-context.js';
+import { AttackEffectContext, AbilityEffectContext, CardPlayedEffectContext } from './effects/effect-context.js';
 import { TriggerProcessor } from './effects/trigger-processor.js';
 import { AttachableEnergyType } from './controllers/energy-controller.js';
 import { AttackDamageResolver } from './effects/attack-damage-resolver.js';
@@ -190,13 +190,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             // Process all non-damage boost attack effects AFTER the attack
             if (attack.effects) {
                 const effectName = `${playerCard.templateId}'s ${attack.name}`;
-                const context = EffectContextFactory.createAttackContext(
-                    sourceHandler,
-                    effectName,
-                    playerCard.instanceId,
-                    targetCard.instanceId,
-                    targetId,
-                );
+                const context: AttackEffectContext = { type: 'attack', sourcePlayer: sourceHandler, effectName, attackerInstanceId: playerCard.instanceId, defenderInstanceId: targetCard.instanceId, defenderPlayerId: targetId };
                 
                 // Apply all attack effects (no damage boost effects to filter)
                 if (attack.effects && attack.effects.length > 0) {
@@ -377,13 +371,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 if (creatureData.ability && creatureData.ability.trigger?.type === 'passive' && creatureData.ability.effects) {
                     if (justPlayedCard) {
                         const fieldPosition = controllers.field.getCards(sourceHandler).findIndex(c => c?.instanceId === justPlayedCard.instanceId);
-                        const abilityContext = EffectContextFactory.createAbilityContext(
-                            sourceHandler,
-                            `${creatureData.name}'s ${creatureData.ability.name}`,
-                            justPlayedCard.instanceId,
-                            fieldPosition >= 0 ? fieldPosition : 0,
-                        );
-                        abilityContext.sourceInstanceId = justPlayedCard.instanceId;
+                        const abilityContext: AbilityEffectContext = { type: 'ability', sourcePlayer: sourceHandler, effectName: `${creatureData.name}'s ${creatureData.ability.name}`, creatureInstanceId: justPlayedCard.instanceId, fieldPosition: fieldPosition >= 0 ? fieldPosition : 0, sourceInstanceId: justPlayedCard.instanceId };
                         EffectApplier.applyEffects(creatureData.ability.effects, controllers, abilityContext);
                         EffectQueueProcessor.processQueue(controllers);
                     }
@@ -399,8 +387,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     message.templateId,
                     supporterData.name,
                 ));
-                const context = EffectContextFactory.createCardContext(sourceHandler, supporterData.name, 'supporter');
-                
+                const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: sourceHandler, effectName: supporterData.name, cardType: 'supporter', sourceInstanceId: cardInstanceId };
+
                 // Add target information if provided
                 if (message.targetPlayerId !== undefined) {
                     context.targetPlayerId = message.targetPlayerId;
@@ -408,9 +396,6 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 if (message.targetFieldIndex !== undefined) {
                     context.targetFieldCardIndex = message.targetFieldIndex;
                 }
-                
-                // Set source instance ID for passive effect cleanup
-                context.sourceInstanceId = cardInstanceId;
                 
                 // Apply all effects (passive and instant) through the effect handler
                 if (supporterData.effects) {
@@ -428,8 +413,8 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     message.templateId,
                     itemData.name,
                 ));
-                const context = EffectContextFactory.createCardContext(sourceHandler, itemData.name, 'item');
-                
+                const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: sourceHandler, effectName: itemData.name, cardType: 'item' };
+
                 // Add target information if provided
                 if (message.targetPlayerId !== undefined) {
                     context.targetPlayerId = message.targetPlayerId;
@@ -471,9 +456,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Apply tool effects through the effect handler
                     // Use targetPlayerId as sourcePlayer so 'self'/'opponent' targets resolve correctly
                     if (toolData.effects) {
-                        const toolContext = EffectContextFactory.createCardContext(targetPlayerId, toolData.name, 'tool');
-                        toolContext.sourceInstanceId = rawTargetCard.fieldInstanceId;
-                        toolContext.sourceToolInstanceId = toolInstanceId;
+                        const toolContext: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: targetPlayerId, effectName: toolData.name, cardType: 'tool', sourceInstanceId: rawTargetCard.fieldInstanceId, sourceToolInstanceId: toolInstanceId };
                         EffectApplier.applyEffects(toolData.effects, controllers, toolContext);
                         EffectQueueProcessor.processQueue(controllers);
                     }
@@ -503,8 +486,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 
                 // Apply passive stadium effects at play time (triggered effects fire via use-stadium-response)
                 if (!stadiumData.trigger && stadiumData.effects.length > 0) {
-                    const stadiumContext = EffectContextFactory.createCardContext(sourceHandler, stadiumData.name, 'stadium');
-                    stadiumContext.sourceInstanceId = cardInstanceId;
+                    const stadiumContext: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: sourceHandler, effectName: stadiumData.name, cardType: 'stadium', sourceInstanceId: cardInstanceId };
                     EffectApplier.applyEffects(stadiumData.effects, controllers, stadiumContext);
                 }
                 
@@ -884,12 +866,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers.turnState.markAbilityUsed(fieldCard.instanceId, ability.name);
                     
                     const effectName = `${cardData.name}'s ${ability.name}`;
-                    const context = EffectContextFactory.createAbilityContext(
-                        sourceHandler,
-                        effectName,
-                        fieldCard.instanceId,
-                        message.fieldCardPosition,
-                    );
+                    const context: AbilityEffectContext = { type: 'ability', sourcePlayer: sourceHandler, effectName, creatureInstanceId: fieldCard.instanceId, fieldPosition: message.fieldCardPosition };
                     
                     EffectApplier.applyEffects(ability.effects, controllers, context);
                     
@@ -950,7 +927,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     controllers.turnState.markAbilityUsed(activeStadium.instanceId, stadiumData.name);
                 }
 
-                const context = EffectContextFactory.createCardContext(sourceHandler, stadiumData.name, 'stadium');
+                const context: CardPlayedEffectContext = { type: 'card-played', sourcePlayer: sourceHandler, effectName: stadiumData.name, cardType: 'stadium', sourceInstanceId: activeStadium.instanceId };
                 EffectApplier.applyEffects(stadiumData.effects, controllers, context);
                 EffectQueueProcessor.processQueue(controllers);
             }

@@ -4,7 +4,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { DrawEffectHandler } from '../../../src/effects/handlers/draw-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { DrawEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -22,7 +22,7 @@ describe('Draw Effect', () => {
                 amount: { type: 'constant', value: 3 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Draw', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.true;
@@ -38,7 +38,7 @@ describe('Draw Effect', () => {
                 amount: { type: 'constant', value: 3 },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Draw', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Draw', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context);
             
             expect(result).to.be.false;

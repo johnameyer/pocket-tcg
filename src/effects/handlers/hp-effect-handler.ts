@@ -252,11 +252,11 @@ export class HpEffectHandler extends AbstractEffectHandler<HpEffect> {
              * Pass attacker info from context when available so 'attacker' contextual refs resolve.
              */
             const attackerInstanceId = context.type === 'attack' ? context.attackerInstanceId
-                : context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')
+                : (context.type === 'damaged-trigger' || context.type === 'before-knockout-trigger')
                     ? context.attackerInstanceId
                     : undefined;
             const attackerPlayerId = context.type === 'attack' ? context.sourcePlayer
-                : context.type === 'trigger' && (context.triggerType === 'damaged' || context.triggerType === 'before-knockout')
+                : (context.type === 'damaged-trigger' || context.type === 'before-knockout-trigger')
                     ? context.attackerPlayerId
                     : undefined;
             TriggerProcessor.processWhenDamaged(

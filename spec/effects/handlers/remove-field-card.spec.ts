@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 import { RemoveFieldCardEffectHandler } from '../../../src/effects/handlers/remove-field-card-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { RemoveFieldCardEffect } from '../../../src/repository/effect-types.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { FieldTarget } from '../../../src/index.js';
@@ -26,7 +26,7 @@ describe('Remove Field Card Effect', () => {
                 destination: 'hand',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Remove Field Card', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Remove Field Card', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
 
             expect(result).to.be.true;
@@ -43,7 +43,7 @@ describe('Remove Field Card Effect', () => {
                 destination: 'hand',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Remove Field Card', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Remove Field Card', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
 
             expect(result).to.be.false;
@@ -61,7 +61,7 @@ describe('Remove Field Card Effect', () => {
                 destination: 'hand',
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Remove Field Card', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Remove Field Card', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
 
             expect(result).to.be.false;

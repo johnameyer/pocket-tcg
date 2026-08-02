@@ -6,7 +6,7 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { getCurrentTemplateId } from '../../../src/utils/field-card-utils.js';
 import { EvolutionAccelerationEffectHandler } from '../../../src/effects/handlers/evolution-acceleration-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { EvolutionAccelerationEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -29,7 +29,7 @@ describe('Evolution Acceleration Effect', () => {
                 restrictions: [ 'basic-creature-only' ],
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Acceleration', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
             expect(result).to.be.true;
@@ -48,7 +48,7 @@ describe('Evolution Acceleration Effect', () => {
                 restrictions: [ 'basic-creature-only' ],
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Acceleration', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
             expect(result).to.be.false;
@@ -64,7 +64,7 @@ describe('Evolution Acceleration Effect', () => {
                 restrictions: [ 'basic-creature-only' ],
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Acceleration', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
             expect(result).to.be.false;
@@ -86,7 +86,7 @@ describe('Evolution Acceleration Effect', () => {
                 restrictions: [ 'basic-creature-only' ],
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Acceleration', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Acceleration', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, testRepository);
             
             expect(result).to.be.false;

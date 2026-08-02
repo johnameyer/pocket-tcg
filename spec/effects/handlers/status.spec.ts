@@ -4,7 +4,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { StatusEffectHandler } from '../../../src/effects/handlers/status-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { CardPlayedEffectContext } from '../../../src/effects/effect-context.js';
 import { StatusEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -25,7 +25,7 @@ describe('Status Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Status', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.true;
@@ -42,7 +42,7 @@ describe('Status Effect', () => {
                 target: { type: 'fixed', player: 'opponent', position: 'active' },
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Status', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;
@@ -60,7 +60,7 @@ describe('Status Effect', () => {
                 target: { type: 'single-choice', chooser: 'self', criteria: { player: 'opponent', location: 'field', position: 'bench' }},
             };
 
-            const context = EffectContextFactory.createCardContext(0, 'Test Status', 'item');
+            const context = { type: 'card-played' as const, sourcePlayer: 0, effectName: 'Test Status', cardType: 'item' } as CardPlayedEffectContext;
             const result = handler.canApply(handlerData, effect, context, mockRepository);
             
             expect(result).to.be.false;

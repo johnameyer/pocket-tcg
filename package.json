@@ -21,7 +21,7 @@
   },
   "bin": "./dist/start.js",
   "scripts": {
-    "lint": "eslint '**/*.ts' --fix",
+    "lint": "eslint '**/*.ts'",
     "build": "tsc && find dist/ -name \\*.js -exec sed -i -e '1s|#!/usr/bin/env ts-node|#!/usr/bin/env node|' \\{\\} \\;",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "madge": "pnpm dlx madge --circular --extensions ts ./src",

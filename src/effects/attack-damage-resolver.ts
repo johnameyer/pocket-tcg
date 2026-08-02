@@ -2,7 +2,7 @@ import { Controllers } from '../controllers/controllers.js';
 import { CreatureAttack } from '../repository/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { DamageBoostEffect, DamageReductionEffect } from '../repository/effect-types.js';
-import { EffectContext, EffectContextFactory } from './effect-context.js';
+import { EffectContext, AttackEffectContext } from './effect-context.js';
 import { getEffectValue } from './effect-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 import { PassiveEffectMatcher } from './passive-effect-matcher.js';
@@ -63,13 +63,14 @@ export class AttackDamageResolver {
         if (!targetCreatureForContext) {
             throw new Error(`No active creature found for player ${targetId} during attack`);
         }
-        const context = EffectContextFactory.createAttackContext(
-            currentPlayer,
-            `${creatureData.name}'s ${attack.name}`,
-            playercreature.instanceId,
-            targetCreatureForContext.instanceId,
-            targetId,
-        );
+        const context: AttackEffectContext = {
+            type: 'attack',
+            sourcePlayer: currentPlayer,
+            effectName: `${creatureData.name}'s ${attack.name}`,
+            attackerInstanceId: playercreature.instanceId,
+            defenderInstanceId: targetCreatureForContext.instanceId,
+            defenderPlayerId: targetId,
+        };
         
         // Calculate base damage
         let baseDamage: number;
@@ -131,17 +132,7 @@ export class AttackDamageResolver {
             }
             
             const reduction = passiveEffect.effect;
-            /*
-             * Create minimal context for effect value resolution
-             * We use the passive effect's stored context information
-             */
-            const reductionContext = EffectContextFactory.createAbilityContext(
-                passiveEffect.sourcePlayer,
-                passiveEffect.effectName,
-                '', // creatureInstanceId - not needed for point-based values
-                0, // fieldPosition - not needed for point-based values
-            );
-            const amount = getEffectValue(reduction.amount, controllers, reductionContext);
+            const amount = getEffectValue(reduction.amount, controllers, { ...context, sourcePlayer: passiveEffect.sourcePlayer });
             totalDamage = Math.max(0, totalDamage - amount);
         }
         

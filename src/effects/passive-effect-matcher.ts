@@ -4,7 +4,7 @@ import { PreventDamageEffect } from '../repository/effect-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 import { getEffectValue } from './effect-utils.js';
-import { EffectContextFactory } from './effect-context.js';
+import { AbilityEffectContext } from './effect-context.js';
 
 /**
  * Utility class for finding and filtering applicable passive effects.
@@ -197,12 +197,13 @@ export class PassiveEffectMatcher {
                 continue;
             }
 
-            const context = EffectContextFactory.createAbilityContext(
-                passiveEffect.sourcePlayer,
-                passiveEffect.effectName,
-                creature.instanceId,
-                fieldIndex,
-            );
+            const context: AbilityEffectContext = {
+                type: 'ability',
+                sourcePlayer: passiveEffect.sourcePlayer,
+                effectName: passiveEffect.effectName,
+                creatureInstanceId: creature.instanceId,
+                fieldPosition: fieldIndex,
+            };
             const amount = getEffectValue(effect.amount, controllers, context);
             if (effect.operation === 'decrease') {
                 effectiveRetreatCost -= amount;
