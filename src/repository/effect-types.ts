@@ -609,7 +609,7 @@ export type RemoveFieldCardEffect<TContextualRefs extends string = string> = {
  * Represents an effect that pulls an evolution from deck and immediately evolves the target.
  * @property {string} type - Always 'pull-evolution' to identify this effect type
  * @property {FieldTarget} target - The creature(s) to evolve
- * @property {CardCriteria} [evolutionCriteria] - Criteria for the evolution to pull
+ * @property {CreatureCardCriteria} [evolutionCriteria] - Criteria for the evolution to pull
  * @property {boolean} [skipRestrictions] - If true, skips normal evolution restrictions
  * @example { type: 'pull-evolution', target: { type: 'fixed', player: 'self', position: 'active' }, evolutionCriteria: { cardType: 'creature', stage: 2 } }
  * // Pull a stage 2 evolution from deck and evolve your active creature

@@ -79,6 +79,96 @@ describe('Pull Evolution Effect', () => {
         });
     });
 
-    // Note: Full implementation tests would go here
-    // Currently, the handler only displays messages without actual implementation
+    describe('findEvolutionIndex', () => {
+        const handler = new PullEvolutionEffectHandler();
+
+        const testRepository = new MockCardRepository({
+            creatures: {
+                'basic-fire': {
+                    templateId: 'basic-fire',
+                    name: 'Basic Fire',
+                    maxHp: 60,
+                    type: 'fire',
+                    weakness: 'water',
+                    retreatCost: 1,
+                    attacks: [],
+                },
+                'fire-evolution': {
+                    templateId: 'fire-evolution',
+                    name: 'Fire Evolution',
+                    maxHp: 100,
+                    type: 'fire',
+                    weakness: 'water',
+                    retreatCost: 2,
+                    previousStageName: 'Basic Fire',
+                    attacks: [],
+                },
+                'water-evolution': {
+                    templateId: 'water-evolution',
+                    name: 'Water Evolution',
+                    maxHp: 100,
+                    type: 'water',
+                    weakness: 'grass',
+                    retreatCost: 2,
+                    previousStageName: 'Basic Fire',
+                    attacks: [],
+                },
+            },
+        });
+
+        const makeCreatureCard = (templateId: string, idx: number) => ({
+            instanceId: `${templateId}-${idx}`,
+            templateId,
+            type: 'creature' as const,
+        });
+
+        const makeItemCard = (templateId: string, idx: number) => ({
+            instanceId: `${templateId}-${idx}`,
+            templateId,
+            type: 'item' as const,
+        });
+
+        it('should find an evolution card by previousStageName', () => {
+            const deck = [
+                makeCreatureCard('basic-fire', 0),
+                makeCreatureCard('fire-evolution', 1),
+            ];
+            const result = handler.findEvolutionIndex(deck, 'Basic Fire', undefined, testRepository);
+            expect(result).to.equal(1);
+        });
+
+        it('should return -1 when no evolution matches previousStageName', () => {
+            const deck = [
+                makeCreatureCard('basic-fire', 0),
+            ];
+            const result = handler.findEvolutionIndex(deck, 'Basic Fire', undefined, testRepository);
+            expect(result).to.equal(-1);
+        });
+
+        it('should skip non-creature cards in the deck', () => {
+            const deck = [
+                makeItemCard('basic-item', 0),
+                makeCreatureCard('fire-evolution', 1),
+            ];
+            const result = handler.findEvolutionIndex(deck, 'Basic Fire', undefined, testRepository);
+            expect(result).to.equal(1);
+        });
+
+        it('should respect evolutionCriteria when filtering', () => {
+            const deck = [
+                makeCreatureCard('fire-evolution', 0),
+                makeCreatureCard('water-evolution', 1),
+            ];
+            const result = handler.findEvolutionIndex(deck, 'Basic Fire', { isType: 'water' }, testRepository);
+            expect(result).to.equal(1);
+        });
+
+        it('should return -1 when evolutionCriteria filters out all matches', () => {
+            const deck = [
+                makeCreatureCard('fire-evolution', 0),
+            ];
+            const result = handler.findEvolutionIndex(deck, 'Basic Fire', { isType: 'water' }, testRepository);
+            expect(result).to.equal(-1);
+        });
+    });
 });
