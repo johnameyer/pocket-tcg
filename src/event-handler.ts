@@ -843,20 +843,24 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     const fieldCards = controllers.field.getPlayedCards(source);
                     const fieldCard = fieldCards[message.fieldCardPosition];
                     if (!fieldCard) {
-                        return false; 
+                        return false;
                     }
                     const cardData = controllers.cardRepository.getCreature(fieldCard.templateId);
                     const ability = cardData.ability;
                     if (!ability) {
-                        return false; 
+                        return false;
                     }
-                    
+
                     // Allow unlimited abilities to be used multiple times
                     if (ability.trigger?.unlimited) {
                         return false;
                     }
-                    
+
                     return controllers.turnState.hasAbilityBeenUsedThisTurn(fieldCard.instanceId, ability.name);
+                }),
+                EventHandler.validate('Cannot use ability - effects cannot be applied', (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
+                    const handlerData = ControllerUtils.createPlayerView(controllers, source);
+                    return !ActionValidator.canUseAbility(handlerData, controllers.cardRepository.cardRepository, source, message.fieldCardPosition);
                 }),
             ],
             fallback: (controllers: Controllers, source: number, message: UseAbilityResponseMessage) => {
