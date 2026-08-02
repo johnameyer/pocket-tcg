@@ -375,7 +375,7 @@ export class PassiveEffectMatcher {
             if (eff.target.player) {
                 const expectedPlayerId = eff.target.player === 'self'
                     ? passiveEffect.sourcePlayer
-                    : 1 - passiveEffect.sourcePlayer;
+                    : (passiveEffect.sourcePlayer + 1) % controllers.players.count;
                 if (expectedPlayerId !== playerId) {
                     return false;
                 }
