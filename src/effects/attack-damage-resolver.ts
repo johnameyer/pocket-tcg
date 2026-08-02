@@ -2,7 +2,7 @@ import { Controllers } from '../controllers/controllers.js';
 import { CreatureAttack } from '../repository/card-types.js';
 import { FieldCard } from '../controllers/field-controller.js';
 import { DamageBoostEffect, DamageReductionEffect } from '../repository/effect-types.js';
-import { EffectContext, AttackEffectContext, AbilityEffectContext } from './effect-context.js';
+import { EffectContext, AttackEffectContext } from './effect-context.js';
 import { getEffectValue } from './effect-utils.js';
 import { FieldTargetCriteriaFilter } from './filters/field-target-criteria-filter.js';
 import { PassiveEffectMatcher } from './passive-effect-matcher.js';
@@ -132,18 +132,7 @@ export class AttackDamageResolver {
             }
             
             const reduction = passiveEffect.effect;
-            /*
-             * Create minimal context for effect value resolution
-             * We use the passive effect's stored context information
-             */
-            const reductionContext: AbilityEffectContext = {
-                type: 'ability',
-                sourcePlayer: passiveEffect.sourcePlayer,
-                effectName: passiveEffect.effectName,
-                creatureInstanceId: '', // not needed for point-based values
-                fieldPosition: 0,       // not needed for point-based values
-            };
-            const amount = getEffectValue(reduction.amount, controllers, reductionContext);
+            const amount = getEffectValue(reduction.amount, controllers, { ...context, sourcePlayer: passiveEffect.sourcePlayer });
             totalDamage = Math.max(0, totalDamage - amount);
         }
         

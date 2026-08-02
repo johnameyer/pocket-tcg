@@ -4,6 +4,7 @@ import { EnergyController, AttachableEnergyType } from '../controllers/energy-co
 import { StatusEffect } from '../controllers/status-effect-controller.js';
 import { getCurrentTemplateId, getFieldInstanceId, getCurrentInstanceId } from '../utils/field-card-utils.js';
 import { EffectValidator } from './effect-validator.js';
+import { AbilityEffectContext } from './effect-context.js';
 
 /**
  * ActionValidator provides HandlerData-based validation methods for game actions.
@@ -271,7 +272,7 @@ export class ActionValidator {
             const effectName = `${creatureData.name}'s ${ability.name}`;
             const instanceId = getCurrentInstanceId(creature);
             // Use an ability context so that 'source' position resolves correctly to this field position.
-            const context = EffectContextFactory.createAbilityContext(playerId, effectName, instanceId, position);
+            const context: AbilityEffectContext = { type: 'ability', sourcePlayer: playerId, effectName, creatureInstanceId: instanceId, fieldPosition: position };
             return ability.effects.some(effect => EffectValidator.canApplyEffect(effect, handlerData, context, cardRepository));
         }
 

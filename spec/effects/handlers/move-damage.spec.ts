@@ -4,7 +4,7 @@ import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { MoveDamageEffectHandler } from '../../../src/effects/handlers/move-damage-effect-handler.js';
-import { EffectContextFactory } from '../../../src/effects/effect-context.js';
+import { AbilityEffectContext } from '../../../src/effects/effect-context.js';
 import { MoveDamageEffect } from '../../../src/repository/effect-types.js';
 import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 
@@ -24,7 +24,7 @@ describe('Move Damage Effect', () => {
                 HandlerDataBuilder.withCreatures(0, 'basic-creature'),
                 HandlerDataBuilder.withCreatures(1, 'basic-creature'),
             );
-            const context = EffectContextFactory.createAbilityContext(0, 'Test', 'inst-0', 1);
+            const context: AbilityEffectContext = { type: 'ability', sourcePlayer: 0, effectName: 'Test', creatureInstanceId: 'inst-0', fieldPosition: 1 };
             const mockRepository = new MockCardRepository();
             expect(handler.canApply(handlerData, effect, context, mockRepository)).to.be.true;
         });
