@@ -9,6 +9,7 @@ import { EnergyController } from './energy-controller.js';
 import { StatusEffectController } from './status-effect-controller.js';
 import { DiscardController } from './discard-controller.js';
 import { EffectController } from './effect-controller.js';
+import { TurnCounterController } from './turn-counter-controller.js';
 
 export type FieldCard = {
     instanceId: string; // Unique instance ID for this specific card copy
@@ -29,7 +30,7 @@ export type FieldState = {
     canEvolveActive?: boolean[];
 };
 
-type FieldDependencies = { 
+type FieldDependencies = {
     players: GenericHandlerController<ResponseMessage, GameHandlerParams & SystemHandlerParams>,
     cardRepository: CardRepositoryController,
     tools: ToolController,
@@ -37,6 +38,7 @@ type FieldDependencies = {
     statusEffects: StatusEffectController,
     discard: DiscardController,
     effects: EffectController,
+    turnCounter: TurnCounterController,
 };
 
 export class FieldControllerProvider implements GenericControllerProvider<FieldState, FieldDependencies, FieldController> {
@@ -54,7 +56,7 @@ export class FieldControllerProvider implements GenericControllerProvider<FieldS
     }
 
     dependencies() {
-        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true, effects: true } as const;
+        return { players: true, cardRepository: true, tools: true, energy: true, statusEffects: true, discard: true, effects: true, turnCounter: true } as const;
     }
 }
 
@@ -444,7 +446,7 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         this.state.creatures[playerId].push(createInstancedFieldCard(
             cardInstanceId,
             templateId,
-            0,
+            this.controllers.turnCounter.getTurnNumber(),
         ));
         
         return true;
