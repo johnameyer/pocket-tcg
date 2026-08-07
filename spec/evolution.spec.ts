@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { EvolveResponseMessage } from '../src/messages/response/evolve-response-message.js';
+import { PlayCardResponseMessage } from '../src/messages/response/play-card-response-message.js';
 import { RetreatResponseMessage } from '../src/messages/response/retreat-response-message.js';
 import { getCurrentTemplateId } from '../src/utils/field-card-utils.js';
 import { StatusEffectType } from '../src/controllers/status-effect-controller.js';
@@ -65,6 +66,57 @@ describe('Evolution Mechanics', () => {
         expect(benchedCard.evolutionStack[0].templateId).to.equal('basic-creature', 'First form should be basic-creature');
         expect(benchedCard.evolutionStack[1].templateId).to.equal('evolution-creature', 'Second form should be evolution-creature');
         expect(getCurrentTemplateId(benchedCard)).to.equal('evolution-creature', 'Current form should be evolved');
+    });
+
+    it('should stamp turnLastPlayed with current turn when playing to bench', () => {
+        const { state } = runTestGame({
+            actions: [ new PlayCardResponseMessage('basic-creature', 'creature') ],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'high-hp-creature'),
+                StateBuilder.withHand(0, [{ templateId: 'basic-creature', type: 'creature' }]),
+            ),
+        });
+
+        const benchCard = state.field.creatures[0][1];
+        expect(benchCard).to.exist;
+        expect(benchCard.turnLastPlayed).to.equal(state.turnCounter.turnNumber, 'turnLastPlayed should match the turn the card was played');
+    });
+
+    it('should prevent evolving a creature played this turn', () => {
+        // Simulate a creature that was played on the current turn (turnLastPlayed === current turn)
+        const { state } = runTestGame({
+            actions: [ new EvolveResponseMessage('evolution-creature', 1) ],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]),
+                StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                // Set turnLastPlayed to the current turn (2) to simulate a same-turn play
+                (s) => {
+                    s.field.creatures[0][1].turnLastPlayed = s.turnCounter.turnNumber; 
+                },
+            ),
+        });
+
+        const benchCard = state.field.creatures[0][1];
+        expect(getCurrentTemplateId(benchCard)).to.equal('basic-creature', 'Bench card played this turn should not be evolvable');
+        expect(state.hand[0].some(c => c.templateId === 'evolution-creature')).to.be.true;
+    });
+
+    it('should allow evolving a creature played on a prior turn', () => {
+        const { state } = runTestGame({
+            actions: [ new EvolveResponseMessage('evolution-creature', 1) ],
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'high-hp-creature', [ 'basic-creature' ]),
+                StateBuilder.withHand(0, [{ templateId: 'evolution-creature', type: 'creature' }]),
+                // turnLastPlayed < current turn (2), so evolution should be allowed
+                (s) => {
+                    s.field.creatures[0][1].turnLastPlayed = 1; 
+                },
+            ),
+        });
+
+        const benchCard = state.field.creatures[0][1];
+        expect(getCurrentTemplateId(benchCard)).to.equal('evolution-creature', 'Bench card played last turn should be evolvable');
+        expect(state.hand[0].length).to.equal(0, 'Evolution card should have been played');
     });
 
     it('should prevent evolution on first turn', () => {

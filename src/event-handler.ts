@@ -611,6 +611,16 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     return message.position < 1 || message.position > benchedCards.length;
                     
                 }),
+                EventHandler.validate('Cannot evolve creature played this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
+                    const creature = controllers.field.state.creatures[source][message.position];
+                    if (!creature) {
+                        return undefined;
+                    }
+                    const currentTurn = controllers.turnCounter.getTurnNumber();
+                    return (currentTurn > 1 && creature.turnLastPlayed !== undefined && creature.turnLastPlayed >= currentTurn)
+                        ? new Error('Cannot evolve creature played this turn')
+                        : undefined;
+                }),
                 EventHandler.validate('Creature already evolved this turn', (controllers: Controllers, source: number, message: EvolveResponseMessage) => {
                     let targetCard;
                     if (message.position === 0) {
@@ -618,7 +628,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     } else {
                         targetCard = controllers.field.state.creatures[source][message.position];
                     }
-                    
+
                     if (targetCard) {
                         // Check evolution using the original instance ID (first in evolution stack)
                         const originalInstanceId = targetCard.evolutionStack[0]?.instanceId;
@@ -665,7 +675,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             const evolutionInstanceId = evolutionCard?.instanceId;
             
             // Get the current turn number (default to 0 if not available)
-            const turnNumber = controllers.turnCounter?.getTurn?.() ?? 0;
+            const turnNumber = controllers.turnCounter.getTurnNumber();
             
             if (message.position === 0) {
                 const targetCard = controllers.field.getCardByPosition(sourceHandler, 0);
