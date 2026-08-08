@@ -180,10 +180,11 @@ export class DefaultBotHandler extends GameHandler {
         }
         
         const count = pendingSelection.count || 1;
-        // Select the first N available energy options (creature-level)
+        // Select the first N available energy options (creature- or type-level)
         const selectedTargets = pendingSelection.availableEnergy.slice(0, count).map(opt => ({
             playerId: opt.playerId,
             fieldIndex: opt.fieldIndex,
+            energyType: opt.energyType,
         }));
         responsesQueue.push(new SelectEnergyResponseMessage(selectedTargets));
     }

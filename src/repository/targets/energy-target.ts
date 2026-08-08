@@ -31,7 +31,20 @@ export type FieldEnergyTarget<TContextualRefs extends string = string> = {
 };
 
 /**
- * Union type for all energy target types.
- * Currently only includes field-based energy targeting.
+ * Represents an energy target sourced from a player's discard pile (no field creature involved).
+ * If the matching energy in the discard pile spans more than one type, the resolver will
+ * prompt the player to choose which type to take (see EnergyTargetResolver).
  */
-export type EnergyTarget<TContextualRefs extends string = string> = FieldEnergyTarget<TContextualRefs>;
+export type DiscardEnergyTarget = {
+    type: 'discard';
+    /** Criteria for which energy types to target; omit for any type */
+    criteria?: EnergyCriteria;
+    /** Number of energy to target */
+    count: number;
+};
+
+/**
+ * Union type for all energy target types: field-based (energy already attached to a creature)
+ * or discard-based (energy sitting in the player's discard pile).
+ */
+export type EnergyTarget<TContextualRefs extends string = string> = FieldEnergyTarget<TContextualRefs> | DiscardEnergyTarget;

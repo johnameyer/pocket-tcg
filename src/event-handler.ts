@@ -1078,7 +1078,26 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     if (!pendingSelection || !isPendingFieldSelection(pendingSelection)) {
                         return true; // No pending field selection - validation fails
                     }
-                    
+
+                    // Validate the number of selected targets is within the required range
+                    const minTargets = pendingSelection.minTargets ?? pendingSelection.count;
+                    const maxTargets = pendingSelection.maxTargets ?? pendingSelection.count;
+                    if (message.targets.length < minTargets || message.targets.length > maxTargets) {
+                        return true; // Wrong number of targets selected
+                    }
+
+                    // Validate no target was selected more than once (unless repeats are explicitly allowed)
+                    if (!pendingSelection.allowRepeats) {
+                        const seen = new Set<string>();
+                        for (const target of message.targets) {
+                            const key = `${target.playerId}:${target.fieldIndex}`;
+                            if (seen.has(key)) {
+                                return true; // Duplicate target selected
+                            }
+                            seen.add(key);
+                        }
+                    }
+
                     // Validate every selected target is in the pre-computed available targets list
                     for (const target of message.targets) {
                         const found = pendingSelection.availableTargets.find(
@@ -1088,7 +1107,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                             return true; // Selected target not in available options
                         }
                     }
-                    
+
                     return false; // Valid selection
                 }),
             ],
@@ -1109,8 +1128,7 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                 const hasNewPendingSelection = EffectApplier.resumeEffectWithSelection(
                     controllers,
                     pendingSelection,
-                    message.targetPlayerId,
-                    message.targetCreatureIndex,
+                    message.targets,
                 );
                 
                 // Only clear pending selection if we didn't set up a new one
@@ -1140,10 +1158,10 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
                     // Validate every selected target is in the available energy list
                     for (const sel of message.selectedTargets) {
                         const found = pendingSelection.availableEnergy.find(
-                            opt => opt.playerId === sel.playerId && opt.fieldIndex === sel.fieldIndex,
+                            opt => opt.playerId === sel.playerId && opt.fieldIndex === sel.fieldIndex && opt.energyType === sel.energyType,
                         );
                         if (!found) {
-                            return true; // Selected creature is not in the available options
+                            return true; // Selected option is not in the available options
                         }
                     }
                     

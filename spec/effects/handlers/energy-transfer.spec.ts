@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
+import { SelectEnergyResponseMessage } from '../../../src/messages/response/select-energy-response-message.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { MockCardRepository } from '../../mock-repository.js';
@@ -191,6 +192,20 @@ describe('Energy Transfer Effect', () => {
                     target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
                 }],
             },
+            'multi-target-transfer-supporter': {
+                templateId: 'multi-target-transfer-supporter',
+                name: 'Multi Target Transfer Supporter',
+                effects: [{
+                    type: 'energy-transfer',
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'fixed', player: 'self', position: 'active' },
+                        criteria: { energyTypes: [ 'lightning' ] },
+                        count: 2,
+                    },
+                    target: { type: 'multi-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }, count: 2 },
+                }],
+            },
         },
     });
 
@@ -284,8 +299,12 @@ describe('Energy Transfer Effect', () => {
     });
 
     it('should handle multiple energy types (any energy)', () => {
+        // 2 matching types present but only 1 requested: player must choose which type to take.
         const { state, getExecutedCount } = runTestGame({
-            actions: [ new PlayCardResponseMessage('any-energy-transfer-supporter', 'supporter') ],
+            actions: [
+                new PlayCardResponseMessage('any-energy-transfer-supporter', 'supporter'),
+                new SelectEnergyResponseMessage([{ playerId: 0, fieldIndex: 0, energyType: 'lightning' }]),
+            ],
             customRepository: testRepository,
             stateCustomizer: StateBuilder.combine(
                 StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
@@ -294,10 +313,9 @@ describe('Energy Transfer Effect', () => {
             ),
         });
 
-        expect(getExecutedCount()).to.equal(1, 'Should have executed any energy transfer supporter');
-        
+        expect(getExecutedCount()).to.equal(2, 'Should have executed any energy transfer supporter and the energy type choice');
+
         const energyState = state.energy;
-        // Should transfer the first available energy type from the effect's energyTypes array (lightning in this case)
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].lightning).to.equal(0, 'Active should have no lightning energy remaining');
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].psychic).to.equal(1, 'Active should keep psychic energy');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].lightning).to.equal(1, 'Bench should have gained 1 lightning energy');
@@ -319,6 +337,59 @@ describe('Energy Transfer Effect', () => {
         const energyState = state.energy;
         expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(0, 'Active should have no fire energy remaining');
         expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(1, 'Bench should have gained only 1 fire energy (capped)');
+    });
+
+    it('should move 1 energy each to 2 chosen benched creatures (multi-choice destination)', () => {
+        /*
+         * Deliberately 3 bench creatures (more than the 2 needed) so this remains a real choice -
+         * with exactly 2 available for count:2 the resolver now auto-resolves without prompting
+         * (see "auto-resolves without prompting..." below), which is correct but would make this
+         * particular test a no-op for the SelectTargetResponseMessage step.
+         */
+        const multiTargetTransferSupporter = { templateId: 'multi-target-transfer-supporter', type: 'supporter' as const };
+        const { state, getExecutedCount } = runTestGame({
+            actions: [
+                new PlayCardResponseMessage('multi-target-transfer-supporter', 'supporter'),
+                new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }, { playerId: 0, fieldIndex: 2 }]),
+            ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature', 'high-hp-creature', 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ multiTargetTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { lightning: 2 }),
+                StateBuilder.withEnergy('high-hp-creature-0-2', {}),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(2, 'Should have executed the supporter and the bench selection');
+
+        const energyState = state.energy;
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].lightning).to.equal(0, 'Active should have no lightning energy remaining');
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].lightning).to.equal(1, 'First bench creature should have gained 1 lightning energy');
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-1'].lightning).to.equal(1, 'Second bench creature should have gained 1 lightning energy');
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-2'].lightning).to.equal(0, 'Unselected third bench creature should be untouched');
+    });
+
+    it('auto-resolves without prompting when exactly 2 benched creatures exist for a count:2 destination', () => {
+        const multiTargetTransferSupporter = { templateId: 'multi-target-transfer-supporter', type: 'supporter' as const };
+        const { state, getExecutedCount } = runTestGame({
+            actions: [
+                new PlayCardResponseMessage('multi-target-transfer-supporter', 'supporter'),
+            ],
+            customRepository: testRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature', 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ multiTargetTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0', { lightning: 2 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(1, 'No real choice with exactly 2 valid targets for count:2 - should auto-resolve');
+
+        const energyState = state.energy;
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].lightning).to.equal(0);
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].lightning).to.equal(1);
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-1'].lightning).to.equal(1);
     });
 
     it('should fail when source has no required energy type', () => {
@@ -489,5 +560,161 @@ describe('Energy Discard with Energy Targets', () => {
              * - target: field target (active) + energy filter (psychic, dark) + count (1 each)
              */
         });
+    });
+});
+
+describe('Energy Transfer from Discard Pile', () => {
+    const discardTestRepository = new MockCardRepository({
+        creatures: {
+            'basic-creature': {
+                templateId: 'basic-creature',
+                name: 'Basic Creature',
+                maxHp: 80,
+                type: 'fire',
+                weakness: 'water',
+                retreatCost: 1,
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
+            },
+        },
+        supporters: {
+            'discard-energy-supporter': {
+                templateId: 'discard-energy-supporter',
+                name: 'Discard Energy Supporter',
+                effects: [{
+                    type: 'energy-transfer',
+                    source: { type: 'discard', count: 1 },
+                    target: { type: 'fixed', player: 'self', position: 'active' },
+                }],
+            },
+        },
+    });
+    const discardEnergySupporter = { templateId: 'discard-energy-supporter', type: 'supporter' as const };
+
+    it('should auto-resolve and attach energy from discard when only one type is present', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [ new PlayCardResponseMessage('discard-energy-supporter', 'supporter') ],
+            customRepository: discardTestRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [ discardEnergySupporter ]),
+                StateBuilder.withDiscardedEnergy(0, { fire: 2 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(1, 'Should have executed without needing a type choice');
+
+        const energyState = state.energy;
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire).to.equal(1, 'Active should have gained 1 fire energy');
+        expect(energyState.discardedEnergy[0].fire).to.equal(1, 'Discard pile should have 1 fire energy remaining');
+    });
+
+    it('should prompt for a type choice when the discard pile has multiple matching types (Dragonair-style)', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [
+                new PlayCardResponseMessage('discard-energy-supporter', 'supporter'),
+                new SelectEnergyResponseMessage([{ playerId: 0, fieldIndex: -1, energyType: 'water' }]),
+            ],
+            customRepository: discardTestRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature'),
+                StateBuilder.withHand(0, [ discardEnergySupporter ]),
+                StateBuilder.withDiscardedEnergy(0, { fire: 1, water: 1 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(2, 'Should have executed the supporter and the energy type choice');
+
+        const energyState = state.energy;
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(1, 'Active should have gained 1 water energy');
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].fire ?? 0).to.equal(0, 'Active should not have gained fire energy');
+        expect(energyState.discardedEnergy[0].water).to.equal(0, 'Discard pile should have no water energy remaining');
+        expect(energyState.discardedEnergy[0].fire).to.equal(1, 'Discard pile should still have 1 fire energy');
+    });
+});
+
+describe('Energy Transfer from a Benched Creature of Choice', () => {
+    const benchChoiceRepository = new MockCardRepository({
+        creatures: {
+            'basic-creature': {
+                templateId: 'basic-creature',
+                name: 'Basic Creature',
+                maxHp: 80,
+                type: 'fire',
+                weakness: 'water',
+                retreatCost: 1,
+                attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
+            },
+            'high-hp-creature': {
+                templateId: 'high-hp-creature',
+                name: 'High HP Creature',
+                maxHp: 140,
+                type: 'water',
+                weakness: 'grass',
+                retreatCost: 2,
+                attacks: [{ name: 'Water Attack', damage: 30, energyRequirements: [{ type: 'water', amount: 2 }] }],
+            },
+        },
+        supporters: {
+            'bench-energy-transfer-supporter': {
+                templateId: 'bench-energy-transfer-supporter',
+                name: 'Bench Energy Transfer Supporter',
+                effects: [{
+                    type: 'energy-transfer',
+                    source: {
+                        type: 'field',
+                        fieldTarget: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                        criteria: { energyTypes: [ 'fire', 'water' ] },
+                        count: 1,
+                    },
+                    target: { type: 'fixed', player: 'self', position: 'active' },
+                }],
+            },
+        },
+    });
+    const benchEnergyTransferSupporter = { templateId: 'bench-energy-transfer-supporter', type: 'supporter' as const };
+
+    it('should prompt for which benched creature when multiple qualify (unaffected by the type-choice fix)', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [
+                new PlayCardResponseMessage('bench-energy-transfer-supporter', 'supporter'),
+                new SelectEnergyResponseMessage([{ playerId: 0, fieldIndex: 2 }]),
+            ],
+            customRepository: benchChoiceRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'basic-creature', 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ benchEnergyTransferSupporter ]),
+                StateBuilder.withEnergy('basic-creature-0-0', { fire: 1 }),
+                StateBuilder.withEnergy('high-hp-creature-0-1', { water: 1 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(2, 'Should have executed the supporter and the bench creature choice');
+
+        const energyState = state.energy;
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-1'].water).to.equal(0, 'Chosen bench creature should have given up its water energy');
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(1, 'Active should have gained 1 water energy');
+        expect(energyState.attachedEnergyByInstance['basic-creature-0-0'].fire).to.equal(1, 'Other bench creature should be untouched');
+    });
+
+    it('should prompt for an energy TYPE when the sole qualifying benched creature holds 2+ matching types', () => {
+        const { state, getExecutedCount } = runTestGame({
+            actions: [
+                new PlayCardResponseMessage('bench-energy-transfer-supporter', 'supporter'),
+                new SelectEnergyResponseMessage([{ playerId: 0, fieldIndex: 1, energyType: 'water' }]),
+            ],
+            customRepository: benchChoiceRepository,
+            stateCustomizer: StateBuilder.combine(
+                StateBuilder.withCreatures(0, 'basic-creature', [ 'high-hp-creature' ]),
+                StateBuilder.withHand(0, [ benchEnergyTransferSupporter ]),
+                StateBuilder.withEnergy('high-hp-creature-0-0', { fire: 1, water: 1 }),
+            ),
+        });
+
+        expect(getExecutedCount()).to.equal(2, 'Should have executed the supporter and the energy type choice');
+
+        const energyState = state.energy;
+        expect(energyState.attachedEnergyByInstance['basic-creature-0'].water).to.equal(1, 'Active should have gained 1 water energy');
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].water).to.equal(0, 'Bench creature should have given up its water energy');
+        expect(energyState.attachedEnergyByInstance['high-hp-creature-0-0'].fire).to.equal(1, 'Bench creature should keep its fire energy');
     });
 });
