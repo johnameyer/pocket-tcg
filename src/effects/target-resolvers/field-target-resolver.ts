@@ -799,12 +799,12 @@ export class FieldTargetResolver {
         }
 
         const handlerData = ControllerUtils.createPlayerView(controllers, context.sourcePlayer);
-        const creature = controllers.field.getCardByPosition(targetPlayerId, targetCreatureIndex);
-        
+        const creature = controllers.field.getInstancedCardByPosition(targetPlayerId, targetCreatureIndex);
+
         if (!creature) {
             return false; // No creature at the specified position
         }
 
-        return this.creatureMatchesCriteria(creature, target.criteria, handlerData, controllers.cardRepository.cardRepository, targetCreatureIndex);
+        return this.creatureMatchesCriteria(toFieldCard(creature), target.criteria, handlerData, controllers.cardRepository.cardRepository, targetCreatureIndex);
     }
 }
