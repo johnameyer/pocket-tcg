@@ -8,6 +8,7 @@ import { FieldTarget } from '../../../src/index.js';
 import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
+import { GameCard } from '../../../src/controllers/card-types.js';
 
 describe('Remove Field Card Effect', () => {
     describe('canApply', () => {
@@ -195,33 +196,97 @@ describe('Remove Field Card Effect', () => {
         });
     });
 
-    describe('apply — unimplemented destinations', () => {
-        for (const dest of [ 'hand', 'deck' ] as const) {
-            it(`should throw "not yet implemented" for destination "${dest}"`, () => {
-                const testRepository = new MockCardRepository({
-                    items: {
-                        [`remove-field-card-to-${dest}`]: {
-                            templateId: `remove-field-card-to-${dest}`,
-                            name: `Remove To ${dest}`,
-                            effects: [{
-                                type: 'remove-field-card',
-                                target: { type: 'fixed', player: 'opponent', position: 'active' },
-                                destination: dest,
-                            }],
-                        },
-                    },
-                });
+    describe('apply — hand destination', () => {
+        const makeHandRepository = () => new MockCardRepository({
+            items: {
+                'remove-field-card-to-hand': {
+                    templateId: 'remove-field-card-to-hand',
+                    name: 'Remove To Hand',
+                    effects: [{
+                        type: 'remove-field-card',
+                        target: { type: 'fixed', player: 'opponent', position: 'active' },
+                        destination: 'hand',
+                    }],
+                },
+            },
+        });
 
-                expect(() => runTestGame({
-                    actions: [ new PlayCardResponseMessage(`remove-field-card-to-${dest}`, 'item') ],
-                    customRepository: testRepository,
-                    stateCustomizer: StateBuilder.combine(
-                        StateBuilder.withCreatures(0, 'basic-creature'),
-                        StateBuilder.withCreatures(1, 'basic-creature'),
-                        StateBuilder.withHand(0, [{ templateId: `remove-field-card-to-${dest}`, type: 'item' }]),
-                    ),
-                })).to.throw(/not yet implemented/i);
+        it('should return the opponent active creature to their hand', () => {
+            const { state } = runTestGame({
+                actions: [ new PlayCardResponseMessage('remove-field-card-to-hand', 'item') ],
+                customRepository: makeHandRepository(),
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'remove-field-card-to-hand', type: 'item' }]),
+                ),
             });
-        }
+
+            expect(state.field.creatures[1]).to.have.length(0);
+            const handCreatures = state.hand[1].filter((c: GameCard) => c.type === 'creature');
+            expect(handCreatures).to.have.length(1);
+            expect(handCreatures[0].templateId).to.equal('basic-creature');
+        });
+
+        it('should return all cards in the evolution stack to hand', () => {
+            const { state } = runTestGame({
+                actions: [ new PlayCardResponseMessage('remove-field-card-to-hand', 'item') ],
+                customRepository: makeHandRepository(),
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'remove-field-card-to-hand', type: 'item' }]),
+                    (st) => {
+                        st.field.creatures[1][0] = {
+                            fieldInstanceId: 'basic-creature-1',
+                            damageTaken: 0,
+                            turnLastPlayed: 0,
+                            evolutionStack: [
+                                { instanceId: 'basic-creature-1', templateId: 'basic-creature' },
+                                { instanceId: 'evolution-creature-1', templateId: 'evolution-creature' },
+                            ],
+                        };
+                    },
+                ),
+            });
+
+            const handCreatures = state.hand[1].filter((c: GameCard) => c.type === 'creature');
+            expect(handCreatures).to.have.length(2);
+            const ids = handCreatures.map(c => c.templateId).sort();
+            expect(ids).to.deep.equal([ 'basic-creature', 'evolution-creature' ].sort());
+        });
+    });
+
+    describe('apply — deck destination', () => {
+        const makeDeckRepository = () => new MockCardRepository({
+            items: {
+                'remove-field-card-to-deck': {
+                    templateId: 'remove-field-card-to-deck',
+                    name: 'Remove To Deck',
+                    effects: [{
+                        type: 'remove-field-card',
+                        target: { type: 'fixed', player: 'opponent', position: 'active' },
+                        destination: 'deck',
+                    }],
+                },
+            },
+        });
+
+        it('should shuffle the opponent active creature into their deck', () => {
+            const { state } = runTestGame({
+                actions: [ new PlayCardResponseMessage('remove-field-card-to-deck', 'item') ],
+                customRepository: makeDeckRepository(),
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature'),
+                    StateBuilder.withCreatures(1, 'basic-creature'),
+                    StateBuilder.withHand(0, [{ templateId: 'remove-field-card-to-deck', type: 'item' }]),
+                ),
+            });
+
+            expect(state.field.creatures[1]).to.have.length(0);
+            const deckCreatures = state.deck[1].filter(c => c.type === 'creature');
+            expect(deckCreatures).to.have.length(1);
+            expect(deckCreatures[0].templateId).to.equal('basic-creature');
+        });
     });
 });

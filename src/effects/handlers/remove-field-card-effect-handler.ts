@@ -2,7 +2,6 @@ import { Controllers } from '../../controllers/controllers.js';
 import { RemoveFieldCardEffect } from '../../repository/effect-types.js';
 import { EffectContext } from '../effect-context.js';
 import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effect-handler-interface.js';
-import { getFieldInstanceId } from '../../utils/field-card-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
@@ -11,8 +10,17 @@ import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.j
  * Handler for remove field card effects that remove field cards to deck, hand, or discard.
  * Always includes all attached tools and evolution stack.
  *
- * Currently only `discard` destination is implemented. `hand` and `deck` destinations
- * will be added in a follow-on branch (fix/remove-field-card-improvements).
+ * When destination is 'hand':
+ *   - Each card in the evolution stack is returned as a creature GameCard to the owner's hand.
+ *   - Attached energy is discarded.
+ *   - Attached tools are discarded.
+ *   - Passive effects tied to this field slot are cleared.
+ *
+ * When destination is 'deck':
+ *   - Same as 'hand' but cards are shuffled into the deck instead.
+ *
+ * When destination is 'discard':
+ *   - Same behaviour as a knockout discard (mirrors removeActiveCard / removeBenchCard).
  */
 export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFieldCardEffect> {
     /**
@@ -49,77 +57,93 @@ export class RemoveFieldCardEffectHandler extends AbstractEffectHandler<RemoveFi
      * Apply a fully resolved remove field card effect.
      * This is called after all targets have been resolved.
      *
-     * Currently only the `discard` destination is supported. Calling with `hand` or
-     * `deck` will throw a "not yet implemented" error.
-     *
      * @param controllers Game controllers
      * @param effect The remove field card effect to apply (with resolved targets)
      * @param context Effect context
      */
     apply(controllers: Controllers, effect: RemoveFieldCardEffect, context: EffectContext): void {
-        if (effect.destination !== 'discard') {
-            throw new Error(`remove-field-card destination "${effect.destination}" is not yet implemented`);
-        }
-
         if (effect.target.type !== 'resolved') {
             throw new Error(`Expected resolved target, got ${effect.target?.type || effect.target}`);
         }
 
-        // Get resolved targets directly
         const targets = effect.target.targets;
 
         if (targets.length === 0) {
             throw new Error(`${context.effectName} resolved to no valid targets`);
         }
 
-        // Process each target
         for (const targetInfo of targets) {
-            const playerId = targetInfo.playerId;
-            const fieldIndex = targetInfo.fieldIndex;
+            const { playerId, fieldIndex } = targetInfo;
 
-            // Get the InstancedFieldCard directly (needed for evolution stack / tool cleanup)
+            // Read the full InstancedFieldCard so we can access the evolution stack
             const instancedCard = controllers.field.getInstancedCardByPosition(playerId, fieldIndex);
             if (!instancedCard) {
                 continue;
             }
 
-            const fieldInstanceId = getFieldInstanceId(instancedCard);
+            const fieldInstanceId = instancedCard.fieldInstanceId;
 
-            // 1. Remove all energy from the instance
+            // Clean up energy (always discarded regardless of destination)
             controllers.energy.removeAllEnergyFromInstance(playerId, fieldInstanceId);
 
-            // 2. Clear passive effects tied to this instance
+            // Clean up passive effects from the card's ability
             controllers.effects.clearEffectsForInstance(fieldInstanceId);
 
-            // 3. Handle attached tool: clear its effects, discard it, then detach
+            // Clean up attached tool
             const attachedTool = controllers.tools.getAttachedTool(fieldInstanceId);
             if (attachedTool) {
-                controllers.effects.clearEffectsForInstance(attachedTool.instanceId);
+                controllers.effects.clearEffectsForTool(attachedTool.instanceId, fieldInstanceId);
+                // Tools are always discarded when the creature leaves the field
                 controllers.discard.discardCard(playerId, {
-                    templateId: attachedTool.templateId,
                     instanceId: attachedTool.instanceId,
+                    templateId: attachedTool.templateId,
                     type: 'tool',
                 });
                 controllers.tools.detachTool(fieldInstanceId);
             }
 
-            // 4. Remove from field without auto-discarding (we handle discard ourselves)
-            const removedCard = controllers.field.removeFieldCardWithoutDiscard(playerId, fieldIndex);
-            if (!removedCard) {
-                continue;
+            // Remove the field card without auto-discarding
+            controllers.field.removeFieldCardWithoutDiscard(playerId, fieldIndex);
+
+            // Convert each card in the evolution stack to a GameCard for the destination
+            const gameCards = instancedCard.evolutionStack.map(stackCard => ({
+                instanceId: stackCard.instanceId,
+                templateId: stackCard.templateId,
+                type: 'creature' as const,
+            }));
+
+            // Get the name of the top-most form for messaging
+            const topCard = instancedCard.evolutionStack[instancedCard.evolutionStack.length - 1];
+            const creatureData = controllers.cardRepository.getCreature(topCard.templateId);
+
+            if (effect.destination === 'hand') {
+                // Add all evolution stack cards to the owner's hand
+                const hand = controllers.hand.getHand(playerId);
+                for (const gameCard of gameCards) {
+                    hand.push(gameCard);
+                }
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [ `${context.effectName} returned ${creatureData.name} to hand!` ],
+                });
+            } else if (effect.destination === 'deck') {
+                // Shuffle each card into the owner's deck
+                for (const gameCard of gameCards) {
+                    controllers.deck.addCard(playerId, gameCard);
+                }
+                controllers.deck.shuffle(playerId);
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [ `${context.effectName} shuffled ${creatureData.name} into the deck!` ],
+                });
+            } else {
+                // destination === 'discard'
+                controllers.discard.discardFieldCard(playerId, instancedCard);
+                controllers.players.messageAll({
+                    type: 'status',
+                    components: [ `${context.effectName} discarded ${creatureData.name}!` ],
+                });
             }
-
-            // 5. Discard the field card (handles evolution stack automatically)
-            controllers.discard.discardFieldCard(playerId, removedCard);
-
-            // Message players
-            const creatureData = controllers.cardRepository.getCreature(
-                removedCard.evolutionStack[removedCard.evolutionStack.length - 1].templateId,
-            );
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} discards ${creatureData.name} with all tools and evolutions!` ],
-            });
         }
     }
 }

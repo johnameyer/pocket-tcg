@@ -102,22 +102,6 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
         }
     }
 
-    // Get the raw InstancedFieldCard at a specific position for a player
-    public getInstancedCardByPosition(playerId: number, position: number): InstancedFieldCard | undefined {
-        return this.state.creatures[playerId]?.[position];
-    }
-
-    // Remove a field card at a specific position without auto-discarding it
-    // Returns the removed card, or undefined if nothing was there
-    public removeFieldCardWithoutDiscard(playerId: number, position: number): InstancedFieldCard | undefined {
-        const creatures = this.state.creatures[playerId];
-        if (!creatures || position < 0 || position >= creatures.length) {
-            return undefined;
-        }
-        const [ removed ] = creatures.splice(position, 1);
-        return removed;
-    }
-
     // Get the card at a specific position for a player
     public getCardByPosition(playerId: number, position: number): EnrichedFieldCard | undefined {
         const card = this.state.creatures[playerId]?.[position];
@@ -143,9 +127,40 @@ export class FieldController extends GlobalController<FieldState, FieldDependenc
     public getRawCardByPosition(playerId: number, position: number): FieldCard | undefined {
         const card = this.state.creatures[playerId]?.[position];
         if (!card) {
-            return undefined; 
+            return undefined;
         }
         return toFieldCard(card);
+    }
+
+    /**
+     * Get the raw InstancedFieldCard at a specific position, preserving the full evolution stack.
+     * Used by effect handlers that need to operate on the complete card history.
+     *
+     * @param playerId The player whose field to inspect
+     * @param position The position on the field (0 = active, 1+ = bench)
+     * @returns The InstancedFieldCard at that position, or undefined if none exists
+     */
+    public getInstancedCardByPosition(playerId: number, position: number): InstancedFieldCard | undefined {
+        return this.state.creatures[playerId]?.[position];
+    }
+
+    /**
+     * Remove a field card at a given position without discarding it.
+     * The caller is responsible for adding the returned card to the appropriate destination.
+     * Energy, tools, and passive effects are automatically cleaned up.
+     *
+     * @param playerId The player whose field card to remove
+     * @param fieldIndex The position on the field (0 = active, 1+ = bench)
+     * @returns The removed InstancedFieldCard, or undefined if no card was at that position
+     */
+    public removeFieldCardWithoutDiscard(playerId: number, fieldIndex: number): InstancedFieldCard | undefined {
+        const creatures = this.state.creatures[playerId];
+        if (!creatures || fieldIndex < 0 || fieldIndex >= creatures.length) {
+            return undefined;
+        }
+        const removedCard = creatures[fieldIndex];
+        creatures.splice(fieldIndex, 1);
+        return removedCard;
     }
 
     /*
