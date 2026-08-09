@@ -3,6 +3,7 @@ import { runTestGame } from '../../helpers/test-helpers.js';
 import { StateBuilder } from '../../helpers/state-builder.js';
 import { PlayCardResponseMessage } from '../../../src/messages/response/play-card-response-message.js';
 import { AttackResponseMessage } from '../../../src/messages/response/attack-response-message.js';
+import { SelectTargetResponseMessage } from '../../../src/messages/response/select-target-response-message.js';
 import { MockCardRepository } from '../../mock-repository.js';
 import { EnergyDictionary, EnergyState } from '../../../src/controllers/energy-controller.js';
 import { EnergyAttachEffectHandler } from '../../../src/effects/handlers/energy-attach-effect-handler.js';
@@ -14,6 +15,90 @@ import { HandlerDataBuilder } from '../../helpers/handler-data-builder.js';
 function getTotalEnergy(energyDict: EnergyDictionary): number {
     return Object.values(energyDict).reduce((sum, count) => sum + count, 0);
 }
+
+/*
+ * "Take 3 Psychic Energy ... attach it to your Psychic Pokemon in any way you like" (Card A) needs a
+ * *single* decision distributing 3 interchangeable units across chosen targets, including stacking
+ * all of them on one creature - this is the `multi-choice` + `allowRepeats` target.
+ *
+ * "Take a Fire, Water, and Lightning Energy ... attach them to your Benched Pokemon in any way you
+ * like" (Card B) has no interchangeable units (each is a distinct type), so it needs no new mechanism:
+ * three ordinary sequential `energy-attach` effects, each with its own `single-choice` target.
+ */
+const distributionTestRepository = new MockCardRepository({
+    creatures: {
+        'psychic-creature': {
+            templateId: 'psychic-creature',
+            name: 'Psychic Creature',
+            maxHp: 80,
+            type: 'psychic',
+            weakness: 'darkness',
+            retreatCost: 1,
+            attacks: [{ name: 'Psy Attack', damage: 20, energyRequirements: [{ type: 'psychic', amount: 1 }] }],
+        },
+        'basic-creature-distribution': {
+            templateId: 'basic-creature-distribution',
+            name: 'Basic Creature',
+            maxHp: 80,
+            type: 'fire',
+            weakness: 'water',
+            retreatCost: 1,
+            attacks: [{ name: 'Basic Attack', damage: 20, energyRequirements: [{ type: 'fire', amount: 1 }] }],
+        },
+    },
+    supporters: {
+        'distribute-psychic-supporter': {
+            templateId: 'distribute-psychic-supporter',
+            name: 'Distribute Psychic Supporter',
+            effects: [{
+                type: 'energy-attach',
+                energyType: 'psychic',
+                amount: { type: 'constant', value: 1 },
+                target: {
+                    type: 'multi-choice',
+                    chooser: 'self',
+                    criteria: { player: 'self', location: 'field', fieldCriteria: { cardCriteria: { isType: 'psychic' }}},
+                    count: 3,
+                    allowRepeats: true,
+                },
+            }],
+        },
+        'triple-type-supporter': {
+            templateId: 'triple-type-supporter',
+            name: 'Triple Type Supporter',
+            effects: [
+                {
+                    type: 'energy-attach',
+                    energyType: 'fire',
+                    amount: { type: 'constant', value: 1 },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                },
+                {
+                    type: 'energy-attach',
+                    energyType: 'water',
+                    amount: { type: 'constant', value: 1 },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                },
+                {
+                    type: 'energy-attach',
+                    energyType: 'lightning',
+                    amount: { type: 'constant', value: 1 },
+                    target: { type: 'single-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }},
+                },
+            ],
+        },
+        'attach-two-bench-supporter': {
+            templateId: 'attach-two-bench-supporter',
+            name: 'Attach Two Bench Supporter',
+            effects: [{
+                type: 'energy-attach',
+                energyType: 'fire',
+                amount: { type: 'constant', value: 1 },
+                target: { type: 'multi-choice', chooser: 'self', criteria: { player: 'self', location: 'field', position: 'bench' }, count: 2 },
+            }],
+        },
+    },
+});
 
 describe('Energy Effect', () => {
     describe('canApply', () => {
@@ -460,6 +545,238 @@ describe('Energy Effect', () => {
             const benchEnergy = state.energy.attachedEnergyByInstance['energy-holder-0-0'];
             expect(activeEnergy?.fire ?? 0).to.equal(0, 'fire discarded from active');
             expect(benchEnergy?.water ?? 0).to.equal(0, 'water discarded from bench');
+        });
+    });
+
+    describe('Energy Distribution (allowRepeats multi-choice)', () => {
+        const psychicSupporter = { templateId: 'distribute-psychic-supporter', type: 'supporter' as const };
+        const tripleTypeSupporter = { templateId: 'triple-type-supporter', type: 'supporter' as const };
+
+        describe('Card A - distribute 3 interchangeable energy in one selection', () => {
+            it('stacks all 3 units on a single chosen creature', () => {
+                const { state, getExecutedCount } = runTestGame({
+                    actions: [
+                        new PlayCardResponseMessage('distribute-psychic-supporter', 'supporter'),
+                        new SelectTargetResponseMessage([
+                            { playerId: 0, fieldIndex: 0 },
+                            { playerId: 0, fieldIndex: 0 },
+                            { playerId: 0, fieldIndex: 0 },
+                        ]),
+                    ],
+                    customRepository: distributionTestRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'psychic-creature', [ 'psychic-creature', 'psychic-creature' ]),
+                        StateBuilder.withHand(0, [ psychicSupporter ]),
+                        StateBuilder.withEnergy('psychic-creature-0-0', {}),
+                        StateBuilder.withEnergy('psychic-creature-0-1', {}),
+                    ),
+                });
+
+                expect(getExecutedCount()).to.equal(2, 'Should have executed the supporter and the distribution selection');
+
+                const energyState = state.energy;
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0'].psychic).to.equal(3, 'Active should have all 3 psychic energy');
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0-0'].psychic).to.equal(0);
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0-1'].psychic).to.equal(0);
+            });
+
+            it('splits 2-1 across two chosen creatures', () => {
+                const { state, getExecutedCount } = runTestGame({
+                    actions: [
+                        new PlayCardResponseMessage('distribute-psychic-supporter', 'supporter'),
+                        new SelectTargetResponseMessage([
+                            { playerId: 0, fieldIndex: 0 },
+                            { playerId: 0, fieldIndex: 0 },
+                            { playerId: 0, fieldIndex: 1 },
+                        ]),
+                    ],
+                    customRepository: distributionTestRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'psychic-creature', [ 'psychic-creature', 'psychic-creature' ]),
+                        StateBuilder.withHand(0, [ psychicSupporter ]),
+                        StateBuilder.withEnergy('psychic-creature-0-1', {}),
+                    ),
+                });
+
+                expect(getExecutedCount()).to.equal(2);
+
+                const energyState = state.energy;
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0'].psychic).to.equal(2, 'Active should have gained 2 psychic energy');
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0-0'].psychic).to.equal(1, 'First bench should have gained 1 psychic energy');
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0-1'].psychic).to.equal(0);
+            });
+
+            it('splits 1-1-1 across three distinct chosen creatures', () => {
+                const { state, getExecutedCount } = runTestGame({
+                    actions: [
+                        new PlayCardResponseMessage('distribute-psychic-supporter', 'supporter'),
+                        new SelectTargetResponseMessage([
+                            { playerId: 0, fieldIndex: 0 },
+                            { playerId: 0, fieldIndex: 1 },
+                            { playerId: 0, fieldIndex: 2 },
+                        ]),
+                    ],
+                    customRepository: distributionTestRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'psychic-creature', [ 'psychic-creature', 'psychic-creature' ]),
+                        StateBuilder.withHand(0, [ psychicSupporter ]),
+                    ),
+                });
+
+                expect(getExecutedCount()).to.equal(2);
+
+                const energyState = state.energy;
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0'].psychic).to.equal(1);
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0-0'].psychic).to.equal(1);
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0-1'].psychic).to.equal(1);
+            });
+
+            it('auto-resolves without prompting when only one Psychic Pokemon is in play', () => {
+                const { state, getExecutedCount } = runTestGame({
+                    actions: [
+                        new PlayCardResponseMessage('distribute-psychic-supporter', 'supporter'),
+                    ],
+                    customRepository: distributionTestRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'psychic-creature', [ 'basic-creature-distribution', 'basic-creature-distribution' ]),
+                        StateBuilder.withHand(0, [ psychicSupporter ]),
+                    ),
+                });
+
+                expect(getExecutedCount()).to.equal(1, 'Should auto-resolve without a separate selection action');
+
+                const energyState = state.energy;
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0'].psychic).to.equal(3, 'The lone Psychic Pokemon should get all 3 units');
+            });
+
+            it('rejects a response with more than 3 targets or a target outside the available list', () => {
+                const { state, getExecutedCount } = runTestGame({
+                    actions: [
+                        new PlayCardResponseMessage('distribute-psychic-supporter', 'supporter'),
+                        new SelectTargetResponseMessage([
+                            { playerId: 0, fieldIndex: 5 },
+                            { playerId: 0, fieldIndex: 5 },
+                            { playerId: 0, fieldIndex: 5 },
+                        ]),
+                    ],
+                    customRepository: distributionTestRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'psychic-creature', [ 'psychic-creature', 'psychic-creature' ]),
+                        StateBuilder.withHand(0, [ psychicSupporter ]),
+                        StateBuilder.withEnergy('psychic-creature-0', {}),
+                    ),
+                });
+
+                // Invalid selection is discarded by the fallback; no energy should have been attached.
+                expect(getExecutedCount()).to.equal(1);
+                const energyState = state.energy;
+                expect(energyState.attachedEnergyByInstance['psychic-creature-0'].psychic).to.equal(0);
+            });
+        });
+
+        describe('Card B - three independent single-type picks (no new mechanism needed)', () => {
+            it('lets each of the 3 sequential picks target the same or different bench creatures', () => {
+                const { state, getExecutedCount } = runTestGame({
+                    actions: [
+                        new PlayCardResponseMessage('triple-type-supporter', 'supporter'),
+                        new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]), // fire
+                        new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }]), // water -> same creature
+                        new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 2 }]), // lightning -> different creature
+                    ],
+                    customRepository: distributionTestRepository,
+                    stateCustomizer: StateBuilder.combine(
+                        StateBuilder.withCreatures(0, 'psychic-creature', [ 'basic-creature-distribution', 'basic-creature-distribution' ]),
+                        StateBuilder.withHand(0, [ tripleTypeSupporter ]),
+                    ),
+                });
+
+                expect(getExecutedCount()).to.equal(4, 'Should have executed the supporter and all 3 picks');
+
+                const energyState = state.energy;
+                expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-0'].fire).to.equal(1);
+                expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-0'].water).to.equal(1);
+                expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-1'].lightning).to.equal(1);
+            });
+        });
+    });
+
+    describe('Multi-choice auto-resolve when there is no real choice (general, not energy-specific)', () => {
+        it('auto-resolves without repeats when available options exactly equal the required count', () => {
+            const attachTwoBenchSupporter = { templateId: 'attach-two-bench-supporter', type: 'supporter' as const };
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new PlayCardResponseMessage('attach-two-bench-supporter', 'supporter') ],
+                customRepository: distributionTestRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature-distribution', [ 'basic-creature-distribution', 'basic-creature-distribution' ]), // exactly 2 bench
+                    StateBuilder.withHand(0, [ attachTwoBenchSupporter ]),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Should auto-resolve without a separate selection action');
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-0'].fire).to.equal(1);
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-1'].fire).to.equal(1);
+        });
+
+        it('still requires an explicit selection without repeats when there are more options than needed', () => {
+            const attachTwoBenchSupporter = { templateId: 'attach-two-bench-supporter', type: 'supporter' as const };
+            const { state, getExecutedCount } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('attach-two-bench-supporter', 'supporter'),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }, { playerId: 0, fieldIndex: 2 }]),
+                ],
+                customRepository: distributionTestRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature-distribution', [ 'basic-creature-distribution', 'basic-creature-distribution', 'basic-creature-distribution' ]), // 3 bench, need 2
+                    StateBuilder.withHand(0, [ attachTwoBenchSupporter ]),
+                    StateBuilder.withEnergy('basic-creature-distribution-0-2', {}),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(2, 'Should have executed the supporter and the bench selection');
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-0'].fire).to.equal(1);
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-1'].fire).to.equal(1);
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-2'].fire).to.equal(0);
+        });
+
+        it('does not crash and applies to no one without repeats when there are fewer options than needed', () => {
+            const attachTwoBenchSupporter = { templateId: 'attach-two-bench-supporter', type: 'supporter' as const };
+            const { state, getExecutedCount } = runTestGame({
+                actions: [ new PlayCardResponseMessage('attach-two-bench-supporter', 'supporter') ],
+                customRepository: distributionTestRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature-distribution', [ 'basic-creature-distribution' ]), // only 1 bench, need 2
+                    StateBuilder.withHand(0, [ attachTwoBenchSupporter ]),
+                    StateBuilder.withEnergy('basic-creature-distribution-0-0', {}),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'Supporter still resolves (as a no-op for the attach effect)');
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-0'].fire).to.equal(0);
+        });
+    });
+
+    describe('Regression: multi-choice without allowRepeats still rejects duplicate targets', () => {
+        it('discards a response that selects the same bench creature twice', () => {
+            const attachTwoBenchSupporter = { templateId: 'attach-two-bench-supporter', type: 'supporter' as const };
+            const { state, getExecutedCount } = runTestGame({
+                actions: [
+                    new PlayCardResponseMessage('attach-two-bench-supporter', 'supporter'),
+                    new SelectTargetResponseMessage([{ playerId: 0, fieldIndex: 1 }, { playerId: 0, fieldIndex: 1 }]),
+                ],
+                customRepository: distributionTestRepository,
+                stateCustomizer: StateBuilder.combine(
+                    StateBuilder.withCreatures(0, 'basic-creature-distribution', [ 'basic-creature-distribution', 'basic-creature-distribution', 'basic-creature-distribution' ]),
+                    StateBuilder.withHand(0, [ attachTwoBenchSupporter ]),
+                    StateBuilder.withEnergy('basic-creature-distribution-0-0', {}),
+                ),
+            });
+
+            expect(getExecutedCount()).to.equal(1, 'The duplicate selection is invalid and discarded by the fallback');
+            const energyState = state.energy;
+            expect(energyState.attachedEnergyByInstance['basic-creature-distribution-0-0'].fire).to.equal(0);
         });
     });
 });

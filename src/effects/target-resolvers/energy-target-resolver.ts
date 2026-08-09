@@ -1,4 +1,4 @@
-import { EnergyTarget, EnergyCriteria } from '../../repository/targets/energy-target.js';
+import { EnergyTarget, EnergyCriteria, DiscardEnergyTarget, FieldEnergyTarget } from '../../repository/targets/energy-target.js';
 import { Controllers } from '../../controllers/controllers.js';
 import { EffectContext } from '../effect-context.js';
 import { AttachableEnergyType } from '../../repository/energy-types.js';
@@ -31,7 +31,10 @@ export type ResolvedMultiEnergyTarget = {
     type: 'resolved-multi';
     targets: Array<{
         playerId: number;
+        /** -1 sentinel when location is 'discard' (no field creature) */
         fieldIndex: number;
+        /** Where this energy came from; defaults to 'field' when absent (existing callers predate discard sourcing) */
+        location?: 'field' | 'discard';
         energy: Partial<Record<AttachableEnergyType, number>>;
     }>;
 };
@@ -46,16 +49,31 @@ export type EnergyTargetResolutionResult =
 
 /**
  * Represents an energy selection option for the player.
+ *
+ * Two distinct kinds of choice are modeled with this same shape:
+ *  - "which source" (location: 'field'): player picks which creature to take energy from;
+ *    `availableEnergy` holds every matching type/amount on that creature.
+ *  - "which type" (energyType set): the source (a single creature, or the discard pile) is
+ *    already known, but it holds more than one matching energy type, so the player picks
+ *    which type to take; `availableEnergy` holds just that one type capped at the requested count.
  */
 export type EnergyOption = {
     /** Field position of the energy */
     playerId: number;
+    /** Field position of the energy; -1 sentinel when location is 'discard' (no field creature) */
     fieldIndex: number;
+    /** Where this energy is coming from */
+    location: 'field' | 'discard';
     /** Available energy that matches criteria */
     availableEnergy: Partial<Record<AttachableEnergyType, number>>;
     /** Display name for the option */
     displayName: string;
+    /** Set when this option represents choosing a specific type from an already-known single source */
+    energyType?: AttachableEnergyType;
 };
+
+/** Sentinel fieldIndex used for discard-pile-sourced EnergyOptions/resolved targets (no field creature). */
+export const DISCARD_FIELD_INDEX = -1;
 
 /**
  * Centralized class for handling energy target resolution.
@@ -79,7 +97,77 @@ export class EnergyTargetResolver {
             return { type: 'no-valid-targets' };
         }
 
+        if (target.type === 'discard') {
+            return this.resolveDiscardEnergyTarget(target, controllers, context);
+        }
+
         return this.resolveFieldEnergyTarget(target, controllers, context);
+    }
+
+    /**
+     * Resolves an energy target sourced from the player's discard pile.
+     * If the matching energy spans more than one type, this surfaces a type-choice
+     * `requires-selection` result instead of silently auto-picking a type.
+     */
+    private static resolveDiscardEnergyTarget(
+        target: DiscardEnergyTarget,
+        controllers: Controllers,
+        context: EffectContext,
+    ): EnergyTargetResolutionResult {
+        const playerId = context.sourcePlayer;
+        const discarded = controllers.energy.getDiscardedEnergy(playerId);
+        const availableEnergy = this.filterEnergyByCriteria(discarded, target.criteria);
+
+        if (this.getTotalEnergy(availableEnergy) === 0) {
+            return { type: 'no-valid-targets' };
+        }
+
+        return this.resolvePoolWithTypeChoice(
+            playerId,
+            DISCARD_FIELD_INDEX,
+            'discard',
+            'Discard pile',
+            availableEnergy,
+            target.count,
+        );
+    }
+
+    /**
+     * Resolves a known single energy pool (one creature, or the discard pile), choosing between
+     * auto-resolving (0 or 1 matching type present) and surfacing a type-choice selection
+     * (2+ matching types present).
+     */
+    private static resolvePoolWithTypeChoice(
+        playerId: number,
+        fieldIndex: number,
+        location: 'field' | 'discard',
+        displayName: string,
+        availableEnergy: Partial<Record<AttachableEnergyType, number>>,
+        count: number,
+    ): EnergyTargetResolutionResult {
+        const typesPresent = (Object.keys(availableEnergy) as AttachableEnergyType[]).filter(type => (availableEnergy[type] || 0) > 0);
+        const totalAvailable = this.getTotalEnergy(availableEnergy);
+
+        // No real choice when there's only one matching type, or when `count` takes everything anyway.
+        if (typesPresent.length <= 1 || count >= totalAvailable) {
+            const selectedEnergy = this.selectEnergy(availableEnergy, count);
+            return {
+                type: 'resolved-multi',
+                targets: [{ playerId, fieldIndex, location, energy: selectedEnergy }],
+            };
+        }
+
+        // 2+ matching types: let the player choose which type to take (up to `count` of it).
+        const typeOptions: EnergyOption[] = typesPresent.map(type => ({
+            playerId,
+            fieldIndex,
+            location,
+            energyType: type,
+            availableEnergy: { [type]: Math.min(availableEnergy[type] || 0, count) },
+            displayName: `${displayName} (${Math.min(availableEnergy[type] || 0, count)}x ${type})`,
+        }));
+
+        return { type: 'requires-selection', availableTargets: typeOptions };
     }
 
     /**
@@ -91,7 +179,7 @@ export class EnergyTargetResolver {
      * @returns Resolution result
      */
     private static resolveFieldEnergyTarget(
-        target: EnergyTarget,
+        target: FieldEnergyTarget,
         controllers: Controllers,
         context: EffectContext,
     ): EnergyTargetResolutionResult {
@@ -121,6 +209,7 @@ export class EnergyTargetResolver {
                     energyOptions.push({
                         playerId: option.playerId,
                         fieldIndex: option.fieldIndex,
+                        location: 'field',
                         availableEnergy,
                         displayName: `${option.name} (${option.position})`,
                     });
@@ -131,14 +220,10 @@ export class EnergyTargetResolver {
                 return { type: 'no-valid-targets' };
             }
 
-            // If only one option, auto-resolve it as resolved-multi
+            // If only one option, auto-resolve it (still may require a type choice on that one creature)
             if (energyOptions.length === 1) {
                 const opt = energyOptions[0];
-                const selectedEnergy = this.selectEnergy(opt.availableEnergy, target.count);
-                return {
-                    type: 'resolved-multi',
-                    targets: [{ playerId: opt.playerId, fieldIndex: opt.fieldIndex, energy: selectedEnergy }],
-                };
+                return this.resolvePoolWithTypeChoice(opt.playerId, opt.fieldIndex, 'field', opt.displayName, opt.availableEnergy, target.count);
             }
 
             return { type: 'requires-selection', availableTargets: energyOptions };
@@ -148,7 +233,7 @@ export class EnergyTargetResolver {
         if (fieldResolution.type === 'resolved' && fieldResolution.targets.length > 0) {
             const fieldTarget = fieldResolution.targets[0];
             const creature = controllers.field.getRawCardByPosition(fieldTarget.playerId, fieldTarget.fieldIndex);
-            
+
             if (!creature) {
                 return { type: 'no-valid-targets' };
             }
@@ -161,19 +246,21 @@ export class EnergyTargetResolver {
                 return { type: 'no-valid-targets' };
             }
 
-            // Select energy up to the requested count
-            const selectedEnergy = target.random
-                ? this.selectEnergyRandomly(availableEnergy, target.count, controllers)
-                : this.selectEnergy(availableEnergy, target.count);
+            // Random selection bypasses type choice by design (the whole point is non-determinism)
+            if (target.random) {
+                const selectedEnergy = this.selectEnergyRandomly(availableEnergy, target.count, controllers);
+                return {
+                    type: 'resolved-multi',
+                    targets: [{
+                        playerId: fieldTarget.playerId,
+                        fieldIndex: fieldTarget.fieldIndex,
+                        location: 'field',
+                        energy: selectedEnergy,
+                    }],
+                };
+            }
 
-            return {
-                type: 'resolved-multi',
-                targets: [{
-                    playerId: fieldTarget.playerId,
-                    fieldIndex: fieldTarget.fieldIndex,
-                    energy: selectedEnergy,
-                }],
-            };
+            return this.resolvePoolWithTypeChoice(fieldTarget.playerId, fieldTarget.fieldIndex, 'field', 'creature', availableEnergy, target.count);
         }
 
         // Handle all-matching targets
@@ -399,6 +486,15 @@ export class EnergyTargetResolver {
     ): boolean {
         if (!target) {
             return false;
+        }
+
+        if (target.type === 'discard') {
+            const discarded = handlerData.energy?.discardedEnergy?.[context.sourcePlayer];
+            if (!discarded) {
+                return false;
+            }
+            const filtered = this.filterEnergyByCriteria(discarded, target.criteria);
+            return this.getTotalEnergy(filtered) > 0;
         }
 
         // Check if field target has any creatures with matching energy

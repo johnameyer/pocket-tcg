@@ -206,7 +206,41 @@ export class FieldTargetResolver {
                 }],
             };
         }
-        
+
+        // For multi-choice targets, auto-resolve when there is exactly one possible combination
+        if (target.type === 'multi-choice') {
+            if (target.allowRepeats) {
+                // With repeats allowed, the only case with no real choice is a single available option:
+                // however many units are being placed, they all have to go to that one option.
+                if (availableTargets.length === 1) {
+                    const only = availableTargets[0];
+                    return {
+                        type: 'resolved',
+                        targets: Array.from({ length: target.count }, () => ({
+                            playerId: only.playerId,
+                            fieldIndex: only.fieldIndex,
+                        })),
+                    };
+                }
+            } else {
+                if (availableTargets.length < target.count) {
+                    // Not enough distinct options to satisfy the required count without repeats
+                    return { type: 'no-valid-targets' };
+                }
+                // Without repeats, the only case with no real choice is needing exactly as many
+                // targets as are available - there's only one way to pick all of them.
+                if (availableTargets.length === target.count) {
+                    return {
+                        type: 'resolved',
+                        targets: availableTargets.map(t => ({
+                            playerId: t.playerId,
+                            fieldIndex: t.fieldIndex,
+                        })),
+                    };
+                }
+            }
+        }
+
         // Otherwise, requires selection
         return {
             type: 'requires-selection',
@@ -756,8 +790,9 @@ export class FieldTargetResolver {
                     effect: effect,
                     originalContext: context,
                     continuationEffects: context.selectionContinuationEffects,
-                    count: 1,
+                    count: targetToUse.type === 'multi-choice' ? targetToUse.count : 1,
                     availableTargets: resolution.availableTargets,
+                    allowRepeats: targetToUse.type === 'multi-choice' ? targetToUse.allowRepeats : undefined,
                 });
                 return true;
             }

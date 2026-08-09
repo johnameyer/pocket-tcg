@@ -44,7 +44,7 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
         const sourceAvailable = EnergyTargetResolver.isTargetAvailable(effect.source, handlerData, context, cardRepository);
         // Use FieldTargetResolver to check if target is available
         const targetAvailable = FieldTargetResolver.isTargetAvailable(effect.target, handlerData, context, cardRepository);
-        
+
         return sourceAvailable && targetAvailable;
     }
     
@@ -59,32 +59,49 @@ export class EnergyTransferEffectHandler extends AbstractEffectHandler<EnergyTra
             throw new Error(`Expected resolved target, got ${resolvedTarget?.type || 'undefined'}`);
         }
 
-        const targetFieldTarget = resolvedTarget.targets[0];
-        const targetInstanceId = controllers.field.getFieldInstanceId(targetFieldTarget.playerId, targetFieldTarget.fieldIndex);
-
-        if (!targetInstanceId) {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} could not resolve transfer target!` ],
-            });
-            return;
+        // Flatten the resolved source(s) into individual 1-unit energy cards, preserving origin
+        // so each unit can be removed correctly (field creature vs. discard pile) when consumed.
+        type EnergyUnit = { energyType: AttachableEnergyType; location: 'field' | 'discard'; playerId: number; fieldIndex: number };
+        const units: EnergyUnit[] = [];
+        for (const sourceTarget of resolvedSource.targets) {
+            const location = sourceTarget.location ?? 'field';
+            for (const [ energyType, amount ] of Object.entries(sourceTarget.energy) as Array<[ AttachableEnergyType, number ]>) {
+                for (let i = 0; i < (amount || 0); i++) {
+                    units.push({ energyType, location, playerId: sourceTarget.playerId, fieldIndex: sourceTarget.fieldIndex });
+                }
+            }
         }
 
+        /*
+         * Single destination: move every sourced unit there (e.g. "move energy from X to Y").
+         * Multiple destinations: spread 1 unit to each, in order, until either the pool or the
+         * destination list is exhausted (e.g. "move 2 Lightning Energy... 1 each to 2 Benched Pokemon").
+         */
+        const unitsPerDestination = resolvedTarget.targets.length === 1 ? units.length : 1;
+
         let transferred = 0;
-        for (const sourceTarget of resolvedSource.targets) {
-            const sourceInstanceId = controllers.field.getFieldInstanceId(sourceTarget.playerId, sourceTarget.fieldIndex);
-            if (!sourceInstanceId) {
-                continue; 
+        for (const destination of resolvedTarget.targets) {
+            const destInstanceId = controllers.field.getFieldInstanceId(destination.playerId, destination.fieldIndex);
+            if (!destInstanceId) {
+                continue;
             }
 
-            for (const [ energyType, amount ] of Object.entries(sourceTarget.energy) as Array<[ AttachableEnergyType, number ]>) {
-                if (amount > 0 && controllers.energy.transferEnergyBetweenInstances(
-                    sourceInstanceId,
-                    targetInstanceId,
-                    energyType,
-                    amount,
-                )) {
-                    transferred += amount;
+            for (let i = 0; i < unitsPerDestination; i++) {
+                const unit = units.shift();
+                if (!unit) {
+                    break;
+                }
+
+                let success: boolean;
+                if (unit.location === 'discard') {
+                    success = controllers.energy.attachEnergyFromDiscard(unit.playerId, destInstanceId, { [unit.energyType]: 1 });
+                } else {
+                    const sourceInstanceId = controllers.field.getFieldInstanceId(unit.playerId, unit.fieldIndex);
+                    success = !!sourceInstanceId && controllers.energy.transferEnergyBetweenInstances(sourceInstanceId, destInstanceId, unit.energyType, 1);
+                }
+
+                if (success) {
+                    transferred += 1;
                 }
             }
         }

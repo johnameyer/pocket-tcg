@@ -43,6 +43,8 @@ export type PendingFieldSelection = BasePendingSelection & {
     maxTargets?: number;
     /** The field positions available for selection, pre-computed at selection creation time */
     availableTargets: TargetOption[];
+    /** When true, the same option may be selected more than once (a multiset selection) */
+    allowRepeats?: boolean;
 };
 
 /**

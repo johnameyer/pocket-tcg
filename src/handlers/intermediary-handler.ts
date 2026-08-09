@@ -275,7 +275,10 @@ export class IntermediaryHandler extends GameHandler {
             };
         });
         
-        const prompt = pendingSelection.prompt || `Select ${count} creature${count !== 1 ? 's' : ''} to take energy from:`;
+        const isTypeChoice = availableEnergy[0]?.energyType !== undefined;
+        const prompt = pendingSelection.prompt || (isTypeChoice
+            ? `Select ${count} energy type${count !== 1 ? 's' : ''} to take:`
+            : `Select ${count} creature${count !== 1 ? 's' : ''} to take energy from:`);
         
         if (count === 1) {
             const [ sent, received ] = this.intermediary.form({
@@ -289,6 +292,7 @@ export class IntermediaryHandler extends GameHandler {
             responsesQueue.push(new SelectEnergyResponseMessage([{
                 playerId: selectedOpt.playerId,
                 fieldIndex: selectedOpt.fieldIndex,
+                energyType: selectedOpt.energyType,
             }]));
         } else {
             const [ sent, received ] = this.intermediary.form({
@@ -307,6 +311,7 @@ export class IntermediaryHandler extends GameHandler {
             const selectedTargets = selectedIndices.map(index => ({
                 playerId: availableEnergy[index].playerId,
                 fieldIndex: availableEnergy[index].fieldIndex,
+                energyType: availableEnergy[index].energyType,
             }));
             responsesQueue.push(new SelectEnergyResponseMessage(selectedTargets));
         }

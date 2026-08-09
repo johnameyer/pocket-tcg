@@ -1,8 +1,8 @@
 import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
-import { ResolvedFieldTarget } from '../repository/targets/field-target.js';
-import { EnergyTarget } from '../repository/targets/energy-target.js';
+import { FieldTarget, ResolvedFieldTarget, SingleFieldTarget } from '../repository/targets/field-target.js';
+import { AttachableEnergyType } from '../repository/energy-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { GameCard } from '../controllers/card-types.js';
@@ -53,7 +53,16 @@ export class EffectApplier {
                 continue;
             }
 
-            const continuationEffects = effect.type === 'choice-delegation' && effectIndex < effects.length - 1
+            /*
+             * If this effect pauses on a player selection (e.g. its target needs a choice), the
+             * remaining effects in this list must ride along as continuationEffects so they resume
+             * after the selection resolves - otherwise the natural for-loop below never reaches them,
+             * since a pause returns out of this function entirely. Harmless to compute unconditionally:
+             * it's only ever consumed at the point a pending selection is actually created (see the
+             * `context.selectionContinuationEffects` reads across effect-applier.ts/field-target-resolver.ts),
+             * so effects that resolve immediately are unaffected - the for-loop just continues as before.
+             */
+            const continuationEffects = effectIndex < effects.length - 1
                 ? effects.slice(effectIndex + 1)
                 : undefined;
 
@@ -111,13 +120,13 @@ export class EffectApplier {
             let resolvedTarget: ResolvedFieldTarget | ResolvedMultiEnergyTarget | undefined;
             
             /*
-             * Check if this is an EnergyTarget (has fieldTarget, count, and type='field') or FieldTarget
-             * EnergyTarget has a 'count' property that FieldTarget doesn't have
+             * Check if this is an EnergyTarget (type 'field' or 'discard') or a FieldTarget.
+             * EnergyTarget's 'field'/'discard' discriminants never collide with FieldTarget's.
              */
-            if (target && typeof target === 'object' && 'fieldTarget' in target && 'count' in target) {
+            if (target && typeof target === 'object' && isEnergyResolutionTarget(target)) {
                 // This is an EnergyTarget - use EnergyTargetResolver
-                const energyTarget = target as unknown as EnergyTarget;
-                
+                const energyTarget = target;
+
                 /*
                  * Check if selection is needed (EnergyTargetResolver handles inner fieldTarget resolution)
                  * TODO: Implement handleTargetSelection for EnergyTargetResolver if needed
@@ -152,9 +161,11 @@ export class EffectApplier {
             } else {
                 /*
                  * This is a FieldTarget - use FieldTargetResolver
-                 * Check if this target needs selection
+                 * Check if this target needs selection. Pass resolvedEffect (not the raw effect) so
+                 * that any earlier requirement already resolved in this loop (e.g. a source that
+                 * auto-resolved before this destination needed a player choice) isn't discarded.
                  */
-                if (FieldTargetResolver.handleTargetSelection(controllers, effect, context, target)) {
+                if (FieldTargetResolver.handleTargetSelection(controllers, resolvedEffect, context, target)) {
                     return null; // Pending selection
                 }
                 
@@ -280,7 +291,7 @@ export class EffectApplier {
      * @param targetPlayerId The selected target player ID
      * @param targetCreatureIndex The selected target creature index
      */
-    static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingFieldSelection, targetPlayerId: number, targetCreatureIndex: number): boolean {
+    static resumeEffectWithSelection(controllers: Controllers, pendingSelection: PendingFieldSelection, selectedTargets: Array<{ playerId: number; fieldIndex: number }>): boolean {
         const { effect, originalContext, selectionType: _selectionType = 'target' } = pendingSelection;
         const context = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
             ? { ...originalContext, selectionContinuationEffects: pendingSelection.continuationEffects }
@@ -290,14 +301,11 @@ export class EffectApplier {
          * Target validation is now handled at the event handler level
          * If we reach here, the target is valid
          */
-        
-        // Create a resolved target from the selection
+
+        // Create a resolved target from the selection (may contain multiple targets for multi-choice selections)
         const resolvedTarget = {
             type: 'resolved' as const,
-            targets: [{
-                playerId: targetPlayerId,
-                fieldIndex: targetCreatureIndex,
-            }],
+            targets: selectedTargets,
         };
         
         /*
@@ -366,8 +374,9 @@ export class EffectApplier {
                     effect: resolvedEffect,
                     originalContext,
                     continuationEffects: originalContext.selectionContinuationEffects,
-                    count: 1,
+                    count: target.type === 'multi-choice' ? target.count : 1,
                     availableTargets: nextAvailableTargets,
+                    allowRepeats: target.type === 'multi-choice' ? target.allowRepeats : undefined,
                 };
                 controllers.turnState.setPendingSelection(pendingSelection);
                 return true; // Indicate that a new pending selection was set up
@@ -455,7 +464,7 @@ export class EffectApplier {
         // Check if any target requires selection
         for (const requirement of requirements) {
             const innerTarget = isEnergyResolutionTarget(requirement.target)
-                ? requirement.target.fieldTarget
+                ? (requirement.target.type === 'field' ? requirement.target.fieldTarget : undefined)
                 : requirement.target;
             if (FieldTargetResolver.requiresTargetSelection(innerTarget, context)) {
                 return true;
@@ -521,7 +530,7 @@ export class EffectApplier {
     static resumeEffectWithEnergySelection(
         controllers: Controllers,
         pendingSelection: PendingEnergySelection,
-        selectedTargets: Array<{ playerId: number; fieldIndex: number }>,
+        selectedTargets: Array<{ playerId: number; fieldIndex: number; energyType?: AttachableEnergyType }>,
     ): void {
         const { effect, originalContext, availableEnergy } = pendingSelection;
         const context = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
@@ -534,13 +543,17 @@ export class EffectApplier {
             return;
         }
 
-        // Build ResolvedMultiEnergyTarget from the selected EnergyOptions
+        // Build ResolvedMultiEnergyTarget from the selected EnergyOptions.
+        // Options are matched by (playerId, fieldIndex, energyType) since type-choice options
+        // (e.g. picking which energy type to take from the discard pile) can share the same
+        // playerId/fieldIndex and differ only by energyType.
         const resolvedTargets = selectedTargets
-            .map(sel => availableEnergy.find(opt => opt.playerId === sel.playerId && opt.fieldIndex === sel.fieldIndex))
+            .map(sel => availableEnergy.find(opt => opt.playerId === sel.playerId && opt.fieldIndex === sel.fieldIndex && opt.energyType === sel.energyType))
             .filter((opt): opt is EnergyOption => opt !== undefined)
             .map(opt => ({
                 playerId: opt.playerId,
                 fieldIndex: opt.fieldIndex,
+                location: opt.location,
                 energy: opt.availableEnergy,
             }));
 
@@ -556,15 +569,57 @@ export class EffectApplier {
          * Deep copy the effect to avoid modifying the original
          */
         let resolvedEffect = JSON.parse(JSON.stringify(effect));
+        // Set when another requirement (e.g. the destination field target) also needs player input;
+        // resolution is deferred to a follow-up PendingFieldSelection instead of applying immediately.
+        let pendingFieldRequirement: { targetProperty: string; target: FieldTarget } | undefined;
+
         for (const requirement of requirements) {
             const target = requirement.target;
-            if (target && typeof target === 'object' && 'fieldTarget' in target && 'count' in target) {
+            if (target && typeof target === 'object' && ((target as { type?: string }).type === 'field' || (target as { type?: string }).type === 'discard')) {
                 resolvedEffect = {
                     ...resolvedEffect,
                     [requirement.targetProperty]: resolvedEnergy,
                 };
-                break;
+            } else if (target && typeof target === 'object' && (target as { type?: string }).type === 'fixed') {
+                // Resolve fixed field targets before apply() so handler receives 'resolved' type
+                const resolution = FieldTargetResolver.resolveSingleTarget(target as SingleFieldTarget, controllers, context);
+                if (resolution && resolution.type === 'resolved') {
+                    resolvedEffect = {
+                        ...resolvedEffect,
+                        [requirement.targetProperty]: resolution,
+                    };
+                }
+            } else if (target && typeof target === 'object'
+                && ((target as FieldTarget).type === 'single-choice' || (target as FieldTarget).type === 'multi-choice' || (target as FieldTarget).type === 'all-matching')) {
+                // Another (destination) target also needs resolving now that the source is known
+                const resolution = FieldTargetResolver.resolveTarget(target as FieldTarget, controllers, context);
+                if (resolution.type === 'requires-selection') {
+                    pendingFieldRequirement = { targetProperty: requirement.targetProperty, target: target as FieldTarget };
+                } else {
+                    resolvedEffect = {
+                        ...resolvedEffect,
+                        [requirement.targetProperty]: this.convertResolutionToResolvedTargets(resolution, context),
+                    };
+                }
             }
+        }
+
+        if (pendingFieldRequirement) {
+            const resolution = FieldTargetResolver.resolveTarget(pendingFieldRequirement.target, controllers, context);
+            const nextAvailableTargets = resolution.type === 'requires-selection' ? resolution.availableTargets : [];
+            const nextCount = pendingFieldRequirement.target.type === 'multi-choice' ? pendingFieldRequirement.target.count : 1;
+            const nextAllowRepeats = pendingFieldRequirement.target.type === 'multi-choice' ? pendingFieldRequirement.target.allowRepeats : undefined;
+            const nextPendingSelection: PendingFieldSelection = {
+                selectionType: 'field',
+                effect: resolvedEffect,
+                originalContext,
+                continuationEffects: pendingSelection.continuationEffects,
+                count: nextCount,
+                availableTargets: nextAvailableTargets,
+                allowRepeats: nextAllowRepeats,
+            };
+            controllers.turnState.setPendingSelection(nextPendingSelection);
+            return;
         }
 
         handler.apply(controllers, resolvedEffect, context);

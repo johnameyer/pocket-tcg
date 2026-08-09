@@ -323,6 +323,12 @@ export class StateBuilder {
         };
     }
 
+    static withDiscardedEnergy(player: number, energyTypes: PartialEnergyDict) {
+        return (state: ControllerState<Controllers>) => {
+            state.energy.discardedEnergy[player] = { ...createEmptyEnergyDict(), ...energyTypes };
+        };
+    }
+
     static withNoEnergy(player: number) {
         return (state: ControllerState<Controllers>) => {
             // Set current energy to null (no energy available)

@@ -65,6 +65,13 @@ export type MultiChoiceFieldTarget = {
     chooser: 'self' | 'opponent';
     criteria: FieldTargetCriteria;
     count: number;
+    /**
+     * When true, the same option may be chosen more than once (a multiset of size
+     * `count` rather than `count` distinct options) — e.g. distributing several
+     * interchangeable energy units across chosen creatures in any combination,
+     * including stacking all of them on one creature.
+     */
+    allowRepeats?: boolean;
 };
 
 /**

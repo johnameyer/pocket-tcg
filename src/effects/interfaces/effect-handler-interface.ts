@@ -20,7 +20,7 @@ export type EffectHandlerMap = {
  * This separates what needs resolution from how to resolve it.
  */
 export function isEnergyResolutionTarget(target: FieldTarget | EnergyTarget): target is EnergyTarget {
-    return 'fieldTarget' in target && 'count' in target;
+    return target.type === 'field' || target.type === 'discard';
 }
 
 export interface ResolutionRequirement {
