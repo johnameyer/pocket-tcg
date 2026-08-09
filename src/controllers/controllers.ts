@@ -18,6 +18,7 @@ import { ToolControllerProvider } from './tool-controller.js';
 import { DiscardControllerProvider } from './discard-controller.js';
 import { EffectControllerProvider } from './effect-controller.js';
 import { StadiumControllerProvider } from './stadium-controller.js';
+import { KnockoutCountControllerProvider } from './knockout-count-controller.js';
 
 type TypedDefaultControllers = DefaultControllers<GameParams, typeof STANDARD_STATES, ResponseMessage, GameHandlerParams & SystemHandlerParams>;
 
@@ -40,6 +41,7 @@ export const buildProviders = (cardRepository: CardRepository) => {
         discard: new DiscardControllerProvider(),
         effects: new EffectControllerProvider(),
         stadium: new StadiumControllerProvider(),
+        knockoutCount: new KnockoutCountControllerProvider(),
     };
     return providers as Omit<ValidatedProviders<typeof providers & ControllersProviders<TypedDefaultControllers>>, DefaultControllerKeys> & {};
 };

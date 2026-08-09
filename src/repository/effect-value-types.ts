@@ -16,7 +16,7 @@ export type ConstantValue = {
  */
 export type PlayerContextResolvedValue = {
     type: 'player-context-resolved';
-    source: 'hand-size' | 'points-to-win' | 'current-points';
+    source: 'hand-size' | 'points-to-win' | 'current-points' | 'knocked-out-count';
     playerContext: 'self' | 'opponent';
 };
 
