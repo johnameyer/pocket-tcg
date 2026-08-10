@@ -1,15 +1,13 @@
 import { CardCriteria } from '../criteria/card-criteria.js';
 
 /**
- * Not to be confused with `SearchCardTarget` (`search-card-target.ts`), which is the
- * bespoke target family SearchEffect resolves for itself. `CardTarget` is for effects
- * that plug a single-card selection into the generic `ResolutionRequirement` pipeline
- * (see `CardTargetResolver` / `effect-applier.ts`), where the resolved value ends up as
- * a `ResolvedCardTarget` on the effect itself.
+ * `CardTarget` is the single target family used for all card selection - both the
+ * generic `ResolutionRequirement` pipeline (see `CardTargetResolver` / `effect-applier.ts`,
+ * used e.g. by evolution-skip) and SearchEffect's own bespoke ad-hoc resolution (which
+ * resolves candidates directly via `CardTargetResolver.getAvailableCards()` in its
+ * `apply()` rather than going through a `ResolutionRequirement`).
  */
-export type CardTargetCriteria = {
-    location: 'hand' | 'deck' | 'discard';
-} & CardCriteria;
+export type CardLocation = 'hand' | 'deck' | 'discard' | 'field';
 
 /**
  * A card target that doesn't require player selection - either every card at the
@@ -17,8 +15,9 @@ export type CardTargetCriteria = {
  */
 export type FixedCardTarget = {
     type: 'fixed';
-    location: 'hand' | 'deck' | 'discard';
-    criteria?: CardTargetCriteria;
+    player: 'self' | 'opponent';
+    location: CardLocation;
+    criteria?: CardCriteria;
 };
 
 /**
@@ -27,10 +26,20 @@ export type FixedCardTarget = {
 export type SingleChoiceCardTarget<TRef extends string = string> = {
     type: 'single-choice';
     chooser: 'self' | 'opponent';
-    criteria: CardTargetCriteria;
+    location: CardLocation;
+    criteria?: CardCriteria;
 };
 
-// TODO: add MultiChoiceCardTarget if a future effect needs to select more than one card this way
+/**
+ * A card target requiring a choice of multiple (up to `count`) cards matching `criteria`.
+ */
+export type MultiChoiceCardTarget<TRef extends string = string> = {
+    type: 'multi-choice';
+    chooser: 'self' | 'opponent';
+    location: CardLocation;
+    criteria?: CardCriteria;
+    count: number;
+};
 
 /**
  * Represents a card target that has been resolved to specific card instances.
@@ -50,4 +59,5 @@ export type ResolvedCardTarget = {
 export type CardTarget<TRef extends string = string> =
     | FixedCardTarget
     | SingleChoiceCardTarget<TRef>
+    | MultiChoiceCardTarget<TRef>
     | ResolvedCardTarget;

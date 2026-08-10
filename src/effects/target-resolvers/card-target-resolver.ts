@@ -1,4 +1,4 @@
-import { CardTarget, ResolvedCardTarget } from '../../repository/targets/card-target.js';
+import { CardTarget, CardLocation, ResolvedCardTarget } from '../../repository/targets/card-target.js';
 import { Controllers } from '../../controllers/controllers.js';
 import { EffectContext } from '../effect-context.js';
 import { GameCard } from '../../controllers/card-types.js';
@@ -22,11 +22,15 @@ export type CardTargetResolutionResult =
 export type CardCandidateFilter = (candidate: GameCard, resolved: Record<string, unknown>, controllers: Controllers) => boolean;
 
 /**
- * Resolves the `CardTarget` family (`fixed` / `single-choice` / `resolved`) used by effects
- * that plug a single-card selection into the generic ResolutionRequirement pipeline.
+ * Resolves the `CardTarget` family (`fixed` / `single-choice` / `multi-choice` / `resolved`).
  *
- * Not to be confused with `SearchCardTargetResolver`, which resolves the bespoke
- * `SearchCardTarget` family that `SearchEffect` resolves for itself.
+ * Serves two call sites:
+ *  - The generic `ResolutionRequirement` pipeline (`effect-applier.ts`'s `resolveFrom`), used
+ *    by effects like evolution-skip, via `resolveTarget()` - which returns instance-id-only
+ *    `ResolvedCardTarget`s ready to sit on the effect object.
+ *  - SearchEffect's own bespoke ad-hoc resolution (it decides for itself how many cards to
+ *    take rather than pausing on a `PendingCardSelection`), via `getAvailableCards()` - which
+ *    returns the actual matching `GameCard`s directly.
  */
 export class CardTargetResolver {
     /**
@@ -48,18 +52,7 @@ export class CardTargetResolver {
             return target;
         }
 
-        const playerId = target.type === 'single-choice'
-            ? (target.chooser === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer)
-            : context.sourcePlayer;
-
-        const criteria = target.criteria;
-        const location = target.type === 'fixed' ? target.location : target.criteria.location;
-
-        let cards = this.getCardsAtLocation(playerId, location, controllers);
-
-        if (criteria) {
-            cards = CardCriteriaFilter.filter(cards, criteria, controllers.cardRepository.cardRepository);
-        }
+        let cards = this.getAvailableCards(target, controllers, context);
 
         if (filter) {
             cards = cards.filter(card => filter(card, resolved, controllers));
@@ -73,12 +66,47 @@ export class CardTargetResolver {
             return { type: 'resolved', cards: cards.map(card => ({ instanceId: card.instanceId })) };
         }
 
+        if (target.type === 'multi-choice') {
+            if (cards.length <= target.count) {
+                return { type: 'resolved', cards: cards.map(card => ({ instanceId: card.instanceId })) };
+            }
+            return { type: 'requires-selection', availableCards: cards };
+        }
+
         // single-choice
         if (cards.length === 1) {
             return { type: 'resolved', cards: [{ instanceId: cards[0].instanceId }] };
         }
 
         return { type: 'requires-selection', availableCards: cards };
+    }
+
+    /**
+     * Resolves an unresolved `CardTarget` (`fixed` / `single-choice` / `multi-choice`) to the
+     * actual matching `GameCard`s at its location, filtered by `criteria` if given. Used
+     * directly by `SearchEffectHandler`, which decides for itself how many of the matches to
+     * take rather than going through the `ResolutionRequirement`/`PendingCardSelection` pipeline.
+     */
+    static getAvailableCards(
+        target: CardTarget,
+        controllers: Controllers,
+        context: EffectContext,
+    ): GameCard[] {
+        if (target.type === 'resolved') {
+            throw new Error('getAvailableCards does not support an already-resolved CardTarget - use resolveTarget instead');
+        }
+
+        const playerId = target.type === 'fixed'
+            ? (target.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer)
+            : (target.chooser === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer);
+
+        let cards = this.getCardsAtLocation(playerId, target.location, controllers);
+
+        if (target.criteria) {
+            cards = CardCriteriaFilter.filter(cards, target.criteria, controllers.cardRepository.cardRepository);
+        }
+
+        return cards;
     }
 
     /**
@@ -101,11 +129,11 @@ export class CardTargetResolver {
             return target.cards.length > 0;
         }
 
-        const playerId = target.type === 'single-choice'
-            ? (target.chooser === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer)
-            : context.sourcePlayer;
+        const playerId = target.type === 'fixed'
+            ? (target.player === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer)
+            : (target.chooser === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer);
         const criteria = target.criteria;
-        const location = target.type === 'fixed' ? target.location : target.criteria.location;
+        const location = target.location;
 
         const cards = this.getCardsAtLocationFromHandlerData(playerId, location, context.sourcePlayer, handlerData);
         if (cards === undefined) {
@@ -119,11 +147,11 @@ export class CardTargetResolver {
     }
 
     /**
-     * Gets available cards from a specific location (hand, deck, or discard).
+     * Gets available cards from a specific location (hand, deck, discard, or field).
      */
     static getCardsAtLocation(
         playerId: number,
-        location: 'hand' | 'deck' | 'discard',
+        location: CardLocation,
         controllers: Controllers,
     ): GameCard[] {
         switch (location) {
@@ -133,17 +161,19 @@ export class CardTargetResolver {
                 return [ ...controllers.deck.getDeck(playerId) ];
             case 'discard':
                 return [ ...controllers.discard.getDiscardPile(playerId) ];
+            case 'field':
+                return (controllers.field.getCards(playerId) ?? []).filter(card => !!card) as unknown as GameCard[];
         }
     }
 
     /**
      * Best-effort card visibility from a HandlerData view: only the acting player's own hand
      * is visible to their own HandlerData; deck contents are always hidden (public sizes only);
-     * discard piles are public knowledge.
+     * discard piles and the field are public knowledge but not modeled in HandlerData here.
      */
     private static getCardsAtLocationFromHandlerData(
         playerId: number,
-        location: 'hand' | 'deck' | 'discard',
+        location: CardLocation,
         sourcePlayer: number,
         handlerData: HandlerData,
     ): GameCard[] | undefined {
@@ -155,7 +185,7 @@ export class CardTargetResolver {
 
     private static getLocationSize(
         playerId: number,
-        location: 'hand' | 'deck' | 'discard',
+        location: CardLocation,
         handlerData: HandlerData,
     ): number {
         if (location === 'hand') {

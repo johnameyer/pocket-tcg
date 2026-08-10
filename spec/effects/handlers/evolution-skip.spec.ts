@@ -21,7 +21,8 @@ describe('Evolution Skip Effect', () => {
     const handEvolution: EvolutionSkipEffect['handEvolution'] = {
         type: 'single-choice',
         chooser: 'self',
-        criteria: { location: 'hand', cardType: 'creature' },
+        location: 'hand',
+        criteria: { cardType: 'creature' },
     };
 
     const testRepository = new MockCardRepository({

@@ -2,7 +2,7 @@ import { FieldTarget, FieldTargetCriteria } from './targets/field-target.js';
 import { EffectValue } from './effect-value-types.js';
 import { AttachableEnergyType } from './energy-types.js';
 import { CardTarget } from './targets/card-target.js';
-import { SearchCardTarget } from './targets/search-card-target.js';
+import { ChoiceTarget } from './targets/choice-target.js';
 import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
 import { EnergyTarget } from './targets/energy-target.js';
@@ -99,7 +99,7 @@ export type EnergyDiscardEffect<TContextualRefs extends string = string> = {
 export type SearchEffect = {
     type: 'search';
     /** Card(s) being sought */
-    source: SearchCardTarget;
+    source: CardTarget;
     /** Number of cards to search for */
     amount: EffectValue;
     destination: 'hand'; // CardLocation;
@@ -370,12 +370,14 @@ export type ConditionalDelegationEffect<TContextualRefs extends string = string>
  * Represents an effect that lets the player choose from multiple named options, each with different effects.
  * The player selects one option and its effects are applied.
  * @property {string} type - Always 'choice-delegation' to identify this effect type
- * @property {Array<{name: string, effects: Effect[]}>} options - The available choices
- * @example { type: 'choice-delegation', options: [{ name: 'Draw 3', effects: [{ type: 'draw', amount: { type: 'constant', value: 3 } }] }, { name: 'Heal 30', effects: [{ type: 'hp', ... }] }] }
+ * @property {ChoiceTarget} choice - The declarative choice target (names must match `options[].name`); resolved via the generic ResolutionRequirement pipeline
+ * @property {Array<{name: string, effects: Effect[]}>} options - The available choices' effects, looked up by the resolved choice's value
+ * @example { type: 'choice-delegation', choice: { type: 'single-choice', chooser: 'self', choices: [{ name: 'Draw 3', value: 'Draw 3' }, { name: 'Heal 30', value: 'Heal 30' }] }, options: [{ name: 'Draw 3', effects: [{ type: 'draw', amount: { type: 'constant', value: 3 } }] }, { name: 'Heal 30', effects: [{ type: 'hp', ... }] }] }
  * // Player chooses to either draw 3 cards or heal 30 HP
  */
 export type ChoiceDelegationEffect<TContextualRefs extends string = string> = {
     type: 'choice-delegation';
+    choice: ChoiceTarget;
     options: Array<{
         name: string;
         effects: Effect<TContextualRefs>[];

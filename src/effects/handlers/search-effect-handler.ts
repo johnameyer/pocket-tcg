@@ -5,8 +5,7 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 import { getEffectValue } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
-import { SearchCardTargetResolver } from '../target-resolvers/search-card-target-resolver.js';
-import { CardCriteriaFilter } from '../filters/card-criteria-filter.js';
+import { CardTargetResolver } from '../target-resolvers/card-target-resolver.js';
 import { GameCard } from '../../controllers/card-types.js';
 
 /**
@@ -61,27 +60,10 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
     apply(controllers: Controllers, effect: SearchEffect, context: EffectContext): void {
         // Get the amount of cards to search for
         const searchAmount = getEffectValue(effect.amount, controllers, context);
-        
-        // Resolve card target to get available cards
-        const resolution = SearchCardTargetResolver.resolve(effect.source, controllers, context);
-        
-        if (resolution.type === 'no-valid-targets') {
-            controllers.players.messageAll({
-                type: 'status',
-                components: [ `${context.effectName} found no cards to search!` ],
-            });
-            return;
-        }
-        
-        // Get available cards (may need filtering or selection)
-        let availableCards = resolution.type === 'resolved' ? resolution.cards : resolution.availableCards;
-        
-        // Filter by criteria if needed
-        if (effect.source.type !== 'fixed') {
-            const cardRepository = controllers.cardRepository.cardRepository;
-            availableCards = CardCriteriaFilter.filter(availableCards, effect.source.criteria, cardRepository);
-        }
-        
+
+        // Resolve card target to get available cards (already filtered by criteria, if any)
+        const availableCards = CardTargetResolver.getAvailableCards(effect.source, controllers, context);
+
         if (availableCards.length === 0) {
             controllers.players.messageAll({
                 type: 'status',
