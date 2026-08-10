@@ -265,7 +265,7 @@ function countCards(
     context: EffectContext,
 ): number {
     const playerId = player === 'self' ? context.sourcePlayer : (context.sourcePlayer + 1) % controllers.players.count;
-    
+
     // Use CardTargetResolver to get cards at location
     const cards = CardTargetResolver.getCardsAtLocation(playerId, location, controllers);
     

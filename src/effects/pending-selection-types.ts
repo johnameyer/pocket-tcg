@@ -1,5 +1,6 @@
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { Effect } from '../repository/effect-types.js';
+import { CardLocation } from '../repository/targets/card-target.js';
 import { GameCard } from '../controllers/card-types.js';
 import { EffectContext } from './effect-context.js';
 import { TargetOption } from './target-resolvers/field-target-resolver.js';
@@ -28,6 +29,15 @@ export type BasePendingSelection = {
     continuationEffects?: Effect[];
     /** A human-readable prompt for the selection */
     prompt?: string;
+    /**
+     * Index into the owning handler's getResolutionRequirements() array that this selection
+     * is resolving. When set, EffectApplier resumes by writing the selection into that
+     * requirement's targetProperty and continuing the generic resolution loop from the next
+     * requirement (handling any `dependsOn`/`filter` on it) instead of the legacy per-selection-type
+     * resume logic. Only set by the generic ResolutionRequirement pipeline (see effect-applier.ts);
+     * pending selections built by hand (e.g. hand-discard, choice-delegation) leave this unset.
+     */
+    resolutionIndex?: number;
 };
 
 /**
@@ -74,7 +84,7 @@ export type PendingCardSelection = BasePendingSelection & {
     /** The player whose cards to select from */
     playerId: number;
     /** Location of the cards to select from */
-    location: 'hand' | 'deck' | 'discard';
+    location: CardLocation;
     /** Number of cards to select */
     count: number;
     /** Minimum number of cards (defaults to count) */
@@ -88,7 +98,11 @@ export type PendingCardSelection = BasePendingSelection & {
 };
 
 /**
- * Pending selection from a list of named choices.
+ * Pending selection from a list of named choices. Like PendingFieldSelection/
+ * PendingEnergySelection/PendingCardSelection, this can be built by the generic
+ * ResolutionRequirement pipeline (see `ChoiceTarget`/`ChoiceTargetResolver`/
+ * `effect-applier.ts`'s `resolveFrom`) when a handler declares a `ChoiceTarget` requirement -
+ * e.g. choice-delegation-effect-handler.ts.
  */
 export type PendingChoiceSelection = BasePendingSelection & {
     selectionType: 'choice';

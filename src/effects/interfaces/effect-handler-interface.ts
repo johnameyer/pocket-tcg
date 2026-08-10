@@ -3,9 +3,12 @@ import { HandlerData } from '../../game-handler.js';
 import { Effect, ModifierEffect } from '../../repository/effect-types.js';
 import { FieldTarget } from '../../repository/targets/field-target.js';
 import { EnergyTarget } from '../../repository/targets/energy-target.js';
+import { CardTarget } from '../../repository/targets/card-target.js';
+import { ChoiceTarget } from '../../repository/targets/choice-target.js';
 import { EffectContext } from '../effect-context.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { GameCard } from '../../controllers/card-types.js';
+import { FieldCard } from '../../controllers/field-controller.js';
 
 /**
  * Type for the effect handlers record.
@@ -19,19 +22,73 @@ export type EffectHandlerMap = {
  * Represents a requirement for resolving a target property in an effect.
  * This separates what needs resolution from how to resolve it.
  */
-export function isEnergyResolutionTarget(target: FieldTarget | EnergyTarget): target is EnergyTarget {
+export function isEnergyResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget): target is EnergyTarget {
     return target.type === 'field' || target.type === 'discard';
+}
+
+/**
+ * Distinguishes the `CardTarget` family from `FieldTarget`, whose 'fixed'/'single-choice'/
+ * 'multi-choice'/'resolved' type discriminants otherwise collide with `CardTarget`'s.
+ * `CardTarget` always carries a top-level `location` (never `position`); its 'resolved'
+ * variant carries `cards` (never `targets`). This is a structural heuristic scoped to the
+ * shapes `CardTarget` actually declares - see the `dependsOn`/`filter` TODO below for why
+ * this whole mechanism is a one-off rather than a fully general system.
+ */
+export function isCardResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget): target is CardTarget {
+    if (target.type === 'resolved') {
+        return 'cards' in target;
+    }
+    return 'location' in target;
+}
+
+/**
+ * Distinguishes the `ChoiceTarget` family from `FieldTarget`/`CardTarget`, whose
+ * 'single-choice'/'resolved' type discriminants otherwise collide with `ChoiceTarget`'s.
+ * `ChoiceTarget`'s 'single-choice' variant always carries `choices` (never `criteria`); its
+ * 'resolved' variant carries `value` (never `cards`/`targets`).
+ */
+export function isChoiceResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget): target is ChoiceTarget {
+    if (target.type === 'resolved') {
+        return 'value' in target;
+    }
+    return target.type === 'single-choice' && 'choices' in target;
 }
 
 export interface ResolutionRequirement {
     /** The property name on the effect object that contains the target */
     targetProperty: string;
-    
+
     /** The target to resolve */
-    target: FieldTarget | EnergyTarget;
-    
+    target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget;
+
     /** Whether this target is required for the effect to proceed */
     required: boolean;
+
+    /**
+     * Names of other requirements' `targetProperty` values (declared earlier in the same
+     * handler's getResolutionRequirements() list) whose resolved values this requirement's
+     * `filter` needs to see. Resolution proceeds strictly in array order - a requirement
+     * can only depend on ones that come before it in the list.
+     *
+     * TODO: this closure-based dependsOn/filter mechanism is a pragmatic one-off built for
+     * evolution-skip's fieldBase -> handEvolution relationship. It is NOT a general-purpose
+     * cross-target dependency system: filter functions aren't inspectable/serializable, and
+     * this hasn't been proven out for more than one dependency edge or for cases needing
+     * bidirectional/cyclic dependencies. If a second effect needs something like this, take
+     * a fresh look at the design (e.g. a declarative criteria-based approach was also
+     * considered and rejected here for touching too much shared filter code) rather than
+     * extending this mechanism or copy-pasting the closure pattern.
+     */
+    dependsOn?: string[];
+
+    /**
+     * Optional extra per-candidate filter, run during resolution after any requirements
+     * named in `dependsOn` have already been resolved. `resolved` maps targetProperty name
+     * to that requirement's already-resolved value (a ResolvedFieldTarget/ResolvedCardTarget/
+     * ResolvedMultiEnergyTarget). Return false to exclude a candidate.
+     * See the TODO on `dependsOn` above before adding a second use of this.
+     */
+    filter?: (candidate: FieldCard | GameCard, resolved: Record<string, unknown>, controllers: Controllers) => boolean;
 }
 
 /**

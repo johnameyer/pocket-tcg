@@ -62,6 +62,21 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             if (actualDiscardAmount >= eligibleCards.length) {
                 this.removeSelectedCards(controllers, effect, context, playerId, eligibleCards.slice(0, actualDiscardAmount));
             } else {
+                /*
+                 * TODO: This still can't migrate to the declarative CardTarget requirement path
+                 * (MultiChoiceCardTarget now exists and would otherwise fit). The blocker is
+                 * `actualDiscardAmount`: it depends on `getEffectValue(effect.amount, controllers,
+                 * context)` and the live hand size, both only available via `controllers`/
+                 * `handlerData` - but `EffectHandler.getResolutionRequirements(effect)` only ever
+                 * receives the bare `effect` object (see effect-handler-interface.ts), so a
+                 * MultiChoiceCardTarget's `count` can't be computed there. Migrating would require
+                 * either widening getResolutionRequirements()'s signature to accept controllers/
+                 * handlerData (a change affecting every handler) or adding some other lazy-count
+                 * mechanism for MultiChoiceCardTarget.count - neither exists today, and no other
+                 * MultiChoice* target in the codebase sets `count` dynamically (it's always a
+                 * static number written on the target itself). Left manual until one of those
+                 * lands.
+                 */
                 controllers.turnState.setPendingSelection({
                     selectionType: 'card',
                     effect,

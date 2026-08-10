@@ -16,6 +16,7 @@ describe('Choice Delegation Effect', () => {
                     name: 'Choice Supporter',
                     effects: [{
                         type: 'choice-delegation',
+                        choice: { type: 'single-choice', chooser: 'self', choices: [{ name: 'Draw 3', value: 'Draw 3' }, { name: 'Heal 20', value: 'Heal 20' }] },
                         options: [
                             {
                                 name: 'Draw 3',
@@ -89,6 +90,7 @@ describe('Choice Delegation Effect', () => {
                         energyRequirements: [{ type: 'fire', amount: 1 }],
                         effects: [{
                             type: 'choice-delegation',
+                            choice: { type: 'single-choice', chooser: 'self', choices: [{ name: 'Deal 30', value: 'Deal 30' }, { name: 'Apply Status', value: 'Apply Status' }] },
                             options: [
                                 {
                                     name: 'Deal 30',
@@ -163,6 +165,7 @@ describe('Choice Delegation Effect', () => {
                         effects: [
                             {
                                 type: 'choice-delegation',
+                                choice: { type: 'single-choice', chooser: 'self', choices: [{ name: 'Draw 2', value: 'Draw 2' }, { name: 'Heal 20', value: 'Heal 20' }] },
                                 options: [
                                     {
                                         name: 'Draw 2',
@@ -226,6 +229,7 @@ describe('Choice Delegation Effect', () => {
                         effects: [
                             {
                                 type: 'choice-delegation',
+                                choice: { type: 'single-choice', chooser: 'self', choices: [{ name: 'Attach Lightning', value: 'Attach Lightning' }, { name: 'Do Nothing', value: 'Do Nothing' }] },
                                 options: [
                                     {
                                         name: 'Attach Lightning',

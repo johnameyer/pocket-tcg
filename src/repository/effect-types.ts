@@ -2,6 +2,7 @@ import { FieldTarget, FieldTargetCriteria } from './targets/field-target.js';
 import { EffectValue } from './effect-value-types.js';
 import { AttachableEnergyType } from './energy-types.js';
 import { CardTarget } from './targets/card-target.js';
+import { ChoiceTarget } from './targets/choice-target.js';
 import { PlayerTarget } from './targets/player-target.js';
 import { Duration } from './duration-types.js';
 import { EnergyTarget } from './targets/energy-target.js';
@@ -241,19 +242,19 @@ export type RetreatPreventionEffect = {
 };
 
 /**
- * Represents an effect that allows creatures to skip evolution stages.
- * @property {string} type - Always 'evolution-acceleration' to identify this effect type
- * @property {FieldTarget} target - The creature to evolve
- * @property {number} skipStages - The number of evolution stages to skip
- * @property {string[]} [restrictions] - Optional restrictions on which creatures can use this effect
- * @example { type: 'evolution-acceleration', target: { type: 'fixed', player: 'self', position: 'active' }, skipStages: 1, restrictions: ['basic-creature-only'] }
- * // Your active basic creature can evolve skipping 1 stage
+ * Represents an effect that lets a Basic creature evolve directly to Stage 2, skipping
+ * Stage 1, consuming a Stage 2 card from hand (a "Rare Candy"-style effect). Always
+ * self-only Basic -> Stage 2; there are no variants or restrictions to configure.
+ * @property {string} type - Always 'evolution-skip' to identify this effect type
+ * @property {FieldTarget} fieldBase - The Basic creature on the field to evolve
+ * @property {CardTarget} handEvolution - The Stage 2 card in hand consumed by the evolution
+ * @example { type: 'evolution-skip', fieldBase: { type: 'fixed', player: 'self', position: 'active' }, handEvolution: { type: 'fixed', location: 'hand' } }
+ * // Your active basic creature evolves directly to a matching Stage 2 card from hand
  */
-export type EvolutionAccelerationEffect<TContextualRefs extends string = string> = {
-    type: 'evolution-acceleration';
-    target: FieldTarget<TContextualRefs>;
-    skipStages: number;
-    restrictions?: string[];
+export type EvolutionSkipEffect<TContextualRefs extends string = string> = {
+    type: 'evolution-skip';
+    fieldBase: FieldTarget<TContextualRefs>;
+    handEvolution: CardTarget<TContextualRefs>;
 };
 
 /**
@@ -369,12 +370,14 @@ export type ConditionalDelegationEffect<TContextualRefs extends string = string>
  * Represents an effect that lets the player choose from multiple named options, each with different effects.
  * The player selects one option and its effects are applied.
  * @property {string} type - Always 'choice-delegation' to identify this effect type
- * @property {Array<{name: string, effects: Effect[]}>} options - The available choices
- * @example { type: 'choice-delegation', options: [{ name: 'Draw 3', effects: [{ type: 'draw', amount: { type: 'constant', value: 3 } }] }, { name: 'Heal 30', effects: [{ type: 'hp', ... }] }] }
+ * @property {ChoiceTarget} choice - The declarative choice target (names must match `options[].name`); resolved via the generic ResolutionRequirement pipeline
+ * @property {Array<{name: string, effects: Effect[]}>} options - The available choices' effects, looked up by the resolved choice's value
+ * @example { type: 'choice-delegation', choice: { type: 'single-choice', chooser: 'self', choices: [{ name: 'Draw 3', value: 'Draw 3' }, { name: 'Heal 30', value: 'Heal 30' }] }, options: [{ name: 'Draw 3', effects: [{ type: 'draw', amount: { type: 'constant', value: 3 } }] }, { name: 'Heal 30', effects: [{ type: 'hp', ... }] }] }
  * // Player chooses to either draw 3 cards or heal 30 HP
  */
 export type ChoiceDelegationEffect<TContextualRefs extends string = string> = {
     type: 'choice-delegation';
+    choice: ChoiceTarget;
     options: Array<{
         name: string;
         effects: Effect<TContextualRefs>[];
@@ -449,7 +452,7 @@ export type ImmediateEffect<TContextualRefs extends string = string> =
     | SwitchEffect<TContextualRefs>
     | EnergyTransferEffect<TContextualRefs>
     | CoinFlipManipulationEffect
-    | EvolutionAccelerationEffect<TContextualRefs>
+    | EvolutionSkipEffect<TContextualRefs>
     | EndTurnEffect
     | ToolDiscardEffect<TContextualRefs>
     | StatusRecoveryEffect<TContextualRefs>

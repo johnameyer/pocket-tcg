@@ -3,9 +3,11 @@ import { HandlerData } from '../../game-handler.js';
 import { TryThenEffect } from '../../repository/effect-types.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { EffectContext } from '../effect-context.js';
-import { AbstractEffectHandler, ResolutionRequirement, isEnergyResolutionTarget } from '../interfaces/effect-handler-interface.js';
+import { AbstractEffectHandler, ResolutionRequirement, isEnergyResolutionTarget, isCardResolutionTarget, isChoiceResolutionTarget } from '../interfaces/effect-handler-interface.js';
 import { FieldTargetResolver } from '../target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver } from '../target-resolvers/energy-target-resolver.js';
+import { CardTargetResolver } from '../target-resolvers/card-target-resolver.js';
+import { ChoiceTargetResolver } from '../target-resolvers/choice-target-resolver.js';
 // Imported at call-time only; safe with ESM live bindings despite the cycle
 // (effect-handlers-map → this file → effect-handlers-map).
 import { effectHandlers } from './effect-handlers-map.js';
@@ -36,7 +38,11 @@ export class TryThenEffectHandler extends AbstractEffectHandler<TryThenEffect> {
             }
             const available = isEnergyResolutionTarget(req.target)
                 ? EnergyTargetResolver.isTargetAvailable(req.target, handlerData, context, cardRepository)
-                : FieldTargetResolver.isTargetAvailable(req.target, handlerData, context, cardRepository);
+                : isCardResolutionTarget(req.target)
+                    ? CardTargetResolver.isTargetAvailable(req.target, handlerData, context, cardRepository)
+                    : isChoiceResolutionTarget(req.target)
+                        ? ChoiceTargetResolver.isTargetAvailable(req.target, handlerData)
+                        : FieldTargetResolver.isTargetAvailable(req.target, handlerData, context, cardRepository);
             if (!available) {
                 return false; 
             }
