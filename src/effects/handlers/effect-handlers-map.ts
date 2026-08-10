@@ -9,7 +9,7 @@ import { shuffleEffectHandler } from './shuffle-effect-handler.js';
 import { handDiscardEffectHandler } from './hand-discard-effect-handler.js';
 import { switchEffectHandler } from './switch-effect-handler.js';
 import { energyTransferEffectHandler } from './energy-transfer-effect-handler.js';
-import { evolutionAccelerationEffectHandler } from './evolution-acceleration-effect-handler.js';
+import { evolutionSkipEffectHandler } from './evolution-skip-effect-handler.js';
 import { endTurnEffectHandler } from './end-turn-effect-handler.js';
 import { coinFlipManipulationEffectHandler } from './coin-flip-manipulation-effect-handler.js';
 import { toolDiscardEffectHandler } from './tool-discard-effect-handler.js';
@@ -39,7 +39,7 @@ export const effectHandlers: EffectHandlerMap = {
     'hand-discard': handDiscardEffectHandler,
     switch: switchEffectHandler,
     'energy-transfer': energyTransferEffectHandler,
-    'evolution-acceleration': evolutionAccelerationEffectHandler,
+    'evolution-skip': evolutionSkipEffectHandler,
     'end-turn': endTurnEffectHandler,
     'coin-flip-manipulation': coinFlipManipulationEffectHandler,
     'tool-discard': toolDiscardEffectHandler,

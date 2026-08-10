@@ -2,16 +2,18 @@ import { Controllers } from '../controllers/controllers.js';
 import { HandlerData } from '../game-handler.js';
 import { Effect } from '../repository/effect-types.js';
 import { FieldTarget, ResolvedFieldTarget, SingleFieldTarget } from '../repository/targets/field-target.js';
+import { ResolvedCardTarget } from '../repository/targets/card-target.js';
 import { AttachableEnergyType } from '../repository/energy-types.js';
 import { ControllerUtils } from '../utils/controller-utils.js';
 import { CardRepository } from '../repository/card-repository.js';
 import { GameCard } from '../controllers/card-types.js';
 import { EffectContext } from './effect-context.js';
 import { PendingCardSelection, PendingEnergySelection, PendingFieldSelection } from './pending-selection-types.js';
-import { ResolutionRequirement, EffectHandler, isEnergyResolutionTarget } from './interfaces/effect-handler-interface.js';
+import { ResolutionRequirement, EffectHandler, isEnergyResolutionTarget, isCardResolutionTarget } from './interfaces/effect-handler-interface.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver, SingleTargetResolutionResult, TargetResolutionResult } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver, EnergyOption, ResolvedMultiEnergyTarget } from './target-resolvers/energy-target-resolver.js';
+import { CardTargetResolver } from './target-resolvers/card-target-resolver.js';
 import { EffectQueueProcessor } from './effect-queue-processor.js';
 
 export class EffectApplier {
@@ -113,15 +115,42 @@ export class EffectApplier {
          * TODO: Replace deep copy hack with proper effect cloning mechanism
          * Deep copy the effect to avoid modifying the original
          */
-        let resolvedEffect = JSON.parse(JSON.stringify(effect));
-        
-        for (const requirement of requirements) {
+        const resolvedEffect = JSON.parse(JSON.stringify(effect));
+
+        const result = this.resolveFrom(requirements, resolvedEffect, {}, 0, controllers, context);
+        return result ? result.effect : null;
+    }
+
+    /**
+     * Resolves requirements[startIndex..] in order, mutating an accumulator effect and a
+     * `resolved` map (targetProperty -> resolved value) as it goes so that later requirements'
+     * `filter` can see earlier ones via `dependsOn`. Shared by the initial resolution pass and
+     * by both selection-resume paths (`resumeEffectWithSelection` / `resumeEffectWithCardSelection`)
+     * so a chain of selections (e.g. evolution-skip's fieldBase -> handEvolution) can pause and
+     * resume mid-way without re-deriving which requirement comes next.
+     *
+     * Returns null when a pending selection was set up (caller should stop) or when a required
+     * target had no valid candidates. Otherwise returns the fully-resolved effect and resolved map.
+     */
+    private static resolveFrom(
+        requirements: ResolutionRequirement[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- resolvedEffect is a JSON.parse-produced plain object being built up property-by-property, same as the rest of this file
+        resolvedEffect: any,
+        resolved: Record<string, unknown>,
+        startIndex: number,
+        controllers: Controllers,
+        context: EffectContext,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ): { effect: any; resolved: Record<string, unknown> } | null {
+        for (let i = startIndex; i < requirements.length; i++) {
+            const requirement = requirements[i];
             const target = requirement.target;
-            let resolvedTarget: ResolvedFieldTarget | ResolvedMultiEnergyTarget | undefined;
-            
+            let resolvedTarget: ResolvedFieldTarget | ResolvedMultiEnergyTarget | ResolvedCardTarget | undefined;
+
             /*
-             * Check if this is an EnergyTarget (type 'field' or 'discard') or a FieldTarget.
-             * EnergyTarget's 'field'/'discard' discriminants never collide with FieldTarget's.
+             * Check if this is an EnergyTarget (type 'field' or 'discard'), a CardTarget, or a
+             * FieldTarget. EnergyTarget's 'field'/'discard' discriminants never collide with the
+             * others'; CardTarget vs FieldTarget is distinguished structurally by isCardResolutionTarget.
              */
             if (target && typeof target === 'object' && isEnergyResolutionTarget(target)) {
                 // This is an EnergyTarget - use EnergyTargetResolver
@@ -131,24 +160,25 @@ export class EffectApplier {
                  * Check if selection is needed (EnergyTargetResolver handles inner fieldTarget resolution)
                  * TODO: Implement handleTargetSelection for EnergyTargetResolver if needed
                  */
-                
+
                 const resolution = EnergyTargetResolver.resolveTarget(energyTarget, controllers, context);
-                
+
                 if (resolution.type === 'requires-selection') {
                     // Prompt the player to choose which creature(s) to take energy from
                     const pendingEnergySelection: PendingEnergySelection = {
                         selectionType: 'energy',
-                        effect,
+                        effect: resolvedEffect,
                         originalContext: context,
                         continuationEffects: context.selectionContinuationEffects,
                         playerId: context.sourcePlayer,
                         count: 1,
                         availableEnergy: resolution.availableTargets,
+                        resolutionIndex: i,
                     };
                     controllers.turnState.setPendingSelection(pendingEnergySelection);
                     return null;
                 }
-                
+
                 if (resolution.type === 'no-valid-targets') {
                     if (requirement.required) {
                         return null; // No valid targets for required property
@@ -157,6 +187,80 @@ export class EffectApplier {
                 } else {
                     // Resolved (always ResolvedMultiEnergyTarget)
                     resolvedTarget = resolution as ResolvedMultiEnergyTarget;
+                }
+            } else if (target && typeof target === 'object' && isCardResolutionTarget(target)) {
+                // This is a CardTarget - use CardTargetResolver, honoring dependsOn/filter if present.
+                if (target.type === 'resolved') {
+                    throw new Error('Encountered an already-resolved CardTarget in resolveFrom - resolveTarget should have returned it directly');
+                }
+                const result = CardTargetResolver.resolveTarget(target, controllers, context, requirement.filter, resolved);
+
+                if (result.type === 'requires-selection') {
+                    const playerId = target.type === 'single-choice'
+                        ? (target.chooser === 'self' ? context.sourcePlayer : 1 - context.sourcePlayer)
+                        : context.sourcePlayer;
+                    const location = target.type === 'fixed' ? target.location : target.criteria.location;
+                    const pendingCardSelection: PendingCardSelection = {
+                        selectionType: 'card',
+                        effect: resolvedEffect,
+                        originalContext: context,
+                        continuationEffects: context.selectionContinuationEffects,
+                        playerId,
+                        location,
+                        count: 1,
+                        availableCards: result.availableCards,
+                        resolutionIndex: i,
+                    };
+                    controllers.turnState.setPendingSelection(pendingCardSelection);
+                    return null;
+                }
+
+                if (result.type === 'no-valid-targets') {
+                    if (requirement.required) {
+                        return null;
+                    }
+                    resolvedTarget = undefined;
+                } else {
+                    resolvedTarget = result;
+                }
+            } else if (requirement.filter) {
+                /*
+                 * Filtered FieldTarget resolution (evolution-skip's fieldBase): candidates are
+                 * narrowed by requirement.filter before deciding auto-resolve vs. selection.
+                 * Only single-choice is supported - see the dependsOn/filter TODO on ResolutionRequirement.
+                 */
+                if (!target || target.type !== 'single-choice') {
+                    throw new Error(`Filtered field resolution requirement not supported for target type: ${target?.type}`);
+                }
+                const filterFn = requirement.filter;
+                const options = FieldTargetResolver.getAvailableTargets(target, controllers, context)
+                    .filter(option => {
+                        const raw = controllers.field.getRawCardByPosition(option.playerId, option.fieldIndex);
+                        return !!raw && filterFn(raw, resolved, controllers);
+                    });
+
+                if (options.length === 0) {
+                    if (requirement.required) {
+                        return null;
+                    }
+                    resolvedTarget = undefined;
+                } else if (options.length === 1) {
+                    resolvedTarget = {
+                        type: 'resolved',
+                        targets: [{ playerId: options[0].playerId, fieldIndex: options[0].fieldIndex }],
+                    };
+                } else {
+                    const pendingFieldSelection: PendingFieldSelection = {
+                        selectionType: 'field',
+                        effect: resolvedEffect,
+                        originalContext: context,
+                        continuationEffects: context.selectionContinuationEffects,
+                        count: 1,
+                        availableTargets: options,
+                        resolutionIndex: i,
+                    };
+                    controllers.turnState.setPendingSelection(pendingFieldSelection);
+                    return null;
                 }
             } else {
                 /*
@@ -168,7 +272,7 @@ export class EffectApplier {
                 if (FieldTargetResolver.handleTargetSelection(controllers, resolvedEffect, context, target)) {
                     return null; // Pending selection
                 }
-                
+
                 // Determine if this is a single or multi target
                 if (!target) {
                     // No target specified
@@ -182,20 +286,24 @@ export class EffectApplier {
                     const resolution = FieldTargetResolver.resolveSingleTarget(target, controllers, context);
                     resolvedTarget = this.convertSingleResolutionToResolvedTarget(resolution, context);
                 }
-                
+
                 if (!resolvedTarget && requirement.required) {
                     return null; // No valid targets for required property
                 }
             }
-            
+
             // Set resolved target on the effect using spread operator for type safety
             resolvedEffect = {
                 ...resolvedEffect,
                 [requirement.targetProperty]: resolvedTarget,
             };
+            resolved = {
+                ...resolved,
+                [requirement.targetProperty]: resolvedTarget,
+            };
         }
-        
-        return resolvedEffect;
+
+        return { effect: resolvedEffect, resolved };
     }
 
     /**
@@ -307,23 +415,27 @@ export class EffectApplier {
             type: 'resolved' as const,
             targets: selectedTargets,
         };
-        
-        /*
-         * TODO: Replace deep copy hack with proper effect cloning mechanism
-         * Create a deep copy of the effect
-         */
-        let resolvedEffect = JSON.parse(JSON.stringify(effect));
-        
+
         // Get the handler for this effect type with proper type safety
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
         if (!handler) {
             console.warn(`No handler found for effect type: ${effect.type}`);
             return false;
         }
-        
+
         // Get resolution requirements from handler
         const requirements = handler.getResolutionRequirements(effect);
-        
+
+        if (pendingSelection.resolutionIndex !== undefined) {
+            return this.resumeFromResolutionIndex(controllers, handler, requirements, effect, resolvedTarget, pendingSelection.resolutionIndex, context, originalContext, pendingSelection.continuationEffects);
+        }
+
+        /*
+         * TODO: Replace deep copy hack with proper effect cloning mechanism
+         * Create a deep copy of the effect
+         */
+        let resolvedEffect = JSON.parse(JSON.stringify(effect));
+
         // Find the first unresolved requirement that needs selection (in order)
         let targetPropertyUpdated = false;
         
@@ -332,7 +444,8 @@ export class EffectApplier {
             const target = requirement.target;
             
             // Check if this requirement is unresolved and needs selection
-            if (target && typeof target === 'object' 
+            if (target && typeof target === 'object'
+                && !isCardResolutionTarget(target)
                 && (target.type === 'single-choice' || target.type === 'multi-choice')
                 && (!currentTarget || currentTarget.type !== 'resolved')) {
                 // This is the next target that needs selection
@@ -357,7 +470,8 @@ export class EffectApplier {
             const target = requirement.target;
             
             // Check if this requirement is still unresolved and needs selection
-            if (target && typeof target === 'object' 
+            if (target && typeof target === 'object'
+                && !isCardResolutionTarget(target)
                 && (target.type === 'single-choice' || target.type === 'multi-choice')
                 && (!currentTarget || currentTarget.type !== 'resolved')) {
                 /*
@@ -400,6 +514,60 @@ export class EffectApplier {
     }
 
     /**
+     * Shared resume path for selections created by the generic ResolutionRequirement pipeline
+     * (i.e. `pendingSelection.resolutionIndex` is set - see `resolveFrom`). Writes the just-made
+     * selection into the requirement at `resolutionIndex` and continues resolving any requirements
+     * after it (which may themselves depend on it via `dependsOn`/`filter`, or need their own
+     * player selection), applying the handler once everything is resolved.
+     */
+    private static resumeFromResolutionIndex(
+        controllers: Controllers,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- handler is keyed generically across all effect types here
+        handler: EffectHandler<any>,
+        requirements: ResolutionRequirement[],
+        effect: Effect,
+        resolvedValue: ResolvedFieldTarget | ResolvedCardTarget,
+        resolutionIndex: number,
+        context: EffectContext,
+        originalContext: EffectContext,
+        continuationEffects: Effect[] | undefined,
+    ): boolean {
+        /*
+         * TODO: Replace deep copy hack with proper effect cloning mechanism
+         * Create a deep copy of the effect
+         */
+        let resolvedEffect = JSON.parse(JSON.stringify(effect));
+        resolvedEffect = {
+            ...resolvedEffect,
+            [requirements[resolutionIndex].targetProperty]: resolvedValue,
+        };
+
+        const resolved: Record<string, unknown> = {};
+        for (let j = 0; j <= resolutionIndex; j++) {
+            resolved[requirements[j].targetProperty] = resolvedEffect[requirements[j].targetProperty];
+        }
+
+        const result = this.resolveFrom(requirements, resolvedEffect, resolved, resolutionIndex + 1, controllers, context);
+        if (!result) {
+            return true; // A new pending selection was set up inside resolveFrom
+        }
+
+        handler.apply(controllers, result.effect, context);
+
+        if (controllers.turnState.getPendingSelection()) {
+            return true;
+        }
+
+        if (continuationEffects && continuationEffects.length > 0) {
+            controllers.effects.pushPendingEffect(continuationEffects, originalContext);
+            EffectQueueProcessor.processQueue(controllers);
+            return !!controllers.turnState.getPendingSelection();
+        }
+
+        return false;
+    }
+
+    /**
      * Check if an effect can be applied.
      * Updated to be HandlerData-primary for validation.
      * First checks if all required targets are available, then calls the handler's canApply method.
@@ -426,7 +594,9 @@ export class EffectApplier {
             for (const requirement of requirements) {
                 const isAvailable = isEnergyResolutionTarget(requirement.target)
                     ? EnergyTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)
-                    : FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository);
+                    : isCardResolutionTarget(requirement.target)
+                        ? CardTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)
+                        : FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository);
                 if (requirement.required && !isAvailable) {
                     return false;
                 }
@@ -463,6 +633,12 @@ export class EffectApplier {
         
         // Check if any target requires selection
         for (const requirement of requirements) {
+            if (isCardResolutionTarget(requirement.target)) {
+                if (requirement.target.type === 'single-choice') {
+                    return true;
+                }
+                continue;
+            }
             const innerTarget = isEnergyResolutionTarget(requirement.target)
                 ? (requirement.target.type === 'field' ? requirement.target.fieldTarget : undefined)
                 : requirement.target;
@@ -495,8 +671,8 @@ export class EffectApplier {
             : originalContext;
         const handler = effectHandlers[effect.type] as EffectHandler<typeof effect>;
 
-        if (!handler?.resumeWithCardSelection) {
-            console.warn(`Handler for effect type '${effect.type}' does not support card selection resume`);
+        if (!handler) {
+            console.warn(`No handler found for effect type: ${effect.type}`);
             return;
         }
 
@@ -509,6 +685,21 @@ export class EffectApplier {
             }
             return remaining.splice(idx, 1)[0];
         }).filter((card): card is GameCard => card !== undefined);
+
+        if (pendingSelection.resolutionIndex !== undefined) {
+            const requirements = handler.getResolutionRequirements(effect);
+            const resolvedCardTarget: ResolvedCardTarget = {
+                type: 'resolved',
+                cards: selectedCards.map(card => ({ instanceId: card.instanceId })),
+            };
+            this.resumeFromResolutionIndex(controllers, handler, requirements, effect, resolvedCardTarget, pendingSelection.resolutionIndex, context, originalContext, pendingSelection.continuationEffects);
+            return;
+        }
+
+        if (!handler.resumeWithCardSelection) {
+            console.warn(`Handler for effect type '${effect.type}' does not support card selection resume`);
+            return;
+        }
 
         handler.resumeWithCardSelection(controllers, effect, selectedCards, context);
 

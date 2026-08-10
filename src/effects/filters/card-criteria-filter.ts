@@ -11,7 +11,7 @@ import { NumberFilter } from './number-filter.js';
  * 
  * @example
  * // Get all hand cards, then filter by criteria
- * const allCards = CardTargetResolver.getCardsAtLocation(0, 'hand', controllers);
+ * const allCards = SearchCardTargetResolver.getCardsAtLocation(0, 'hand', controllers);
  * const filtered = CardCriteriaFilter.filter(allCards, criteria, cardRepository);
  * // Then return requires-selection with filtered cards
  */

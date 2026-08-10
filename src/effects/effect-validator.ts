@@ -5,7 +5,8 @@ import { EffectContext, CardPlayedEffectContext } from './effect-context.js';
 import { effectHandlers } from './handlers/effect-handlers-map.js';
 import { FieldTargetResolver } from './target-resolvers/field-target-resolver.js';
 import { EnergyTargetResolver } from './target-resolvers/energy-target-resolver.js';
-import { EffectHandler, isEnergyResolutionTarget } from './interfaces/effect-handler-interface.js';
+import { CardTargetResolver } from './target-resolvers/card-target-resolver.js';
+import { EffectHandler, isEnergyResolutionTarget, isCardResolutionTarget } from './interfaces/effect-handler-interface.js';
 
 export class EffectValidator {
     /**
@@ -74,7 +75,9 @@ export class EffectValidator {
             for (const requirement of requirements) {
                 const isAvailable = isEnergyResolutionTarget(requirement.target)
                     ? EnergyTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)
-                    : FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository);
+                    : isCardResolutionTarget(requirement.target)
+                        ? CardTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository)
+                        : FieldTargetResolver.isTargetAvailable(requirement.target, handlerData, context, cardRepository);
                 if (requirement.required && !isAvailable) {
                     return false;
                 }

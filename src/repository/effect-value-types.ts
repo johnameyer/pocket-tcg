@@ -1,7 +1,7 @@
 import { FieldCriteria, FieldTargetCriteria } from './criteria/field-target-criteria.js';
 import { CardCriteria } from './criteria/card-criteria.js';
 import { EnergyCriteria } from './targets/energy-target.js';
-import { CardLocation } from './targets/card-target.js';
+import { CardLocation } from './targets/search-card-target.js';
 
 /**
  * Represents a constant numeric value.

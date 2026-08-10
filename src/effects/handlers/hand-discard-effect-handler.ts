@@ -62,6 +62,14 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
             if (actualDiscardAmount >= eligibleCards.length) {
                 this.removeSelectedCards(controllers, effect, context, playerId, eligibleCards.slice(0, actualDiscardAmount));
             } else {
+                /*
+                 * TODO: This manual setPendingSelection/resumeWithCardSelection pair is now a good
+                 * candidate to migrate to the declarative CardTarget requirement path introduced for
+                 * evolution-skip (getResolutionRequirements() + CardTargetResolver), which would let
+                 * the framework build the PendingCardSelection instead. Left as-is for now - it's a
+                 * bigger, separate migration (this effect discards a variable *count* of cards chosen
+                 * together, not a single CardTarget selection).
+                 */
                 controllers.turnState.setPendingSelection({
                     selectionType: 'card',
                     effect,

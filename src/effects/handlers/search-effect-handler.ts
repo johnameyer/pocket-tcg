@@ -5,7 +5,7 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 import { getEffectValue } from '../effect-utils.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { HandlerData } from '../../game-handler.js';
-import { CardTargetResolver } from '../target-resolvers/card-target-resolver.js';
+import { SearchCardTargetResolver } from '../target-resolvers/search-card-target-resolver.js';
 import { CardCriteriaFilter } from '../filters/card-criteria-filter.js';
 import { GameCard } from '../../controllers/card-types.js';
 
@@ -63,7 +63,7 @@ export class SearchEffectHandler extends AbstractEffectHandler<SearchEffect> {
         const searchAmount = getEffectValue(effect.amount, controllers, context);
         
         // Resolve card target to get available cards
-        const resolution = CardTargetResolver.resolve(effect.source, controllers, context);
+        const resolution = SearchCardTargetResolver.resolve(effect.source, controllers, context);
         
         if (resolution.type === 'no-valid-targets') {
             controllers.players.messageAll({

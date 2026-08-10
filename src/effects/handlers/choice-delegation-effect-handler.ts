@@ -25,6 +25,8 @@ export class ChoiceDelegationEffectHandler extends AbstractEffectHandler<ChoiceD
     }
 
     apply(controllers: Controllers, effect: ChoiceDelegationEffect, context: EffectContext): void {
+        // TODO: could become declarative (like evolution-skip's CardTarget requirements) once a
+        // ChoiceTarget variant + ResolutionRequirement support exists for named-choice selection.
         controllers.turnState.setPendingSelection({
             selectionType: 'choice',
             effect,

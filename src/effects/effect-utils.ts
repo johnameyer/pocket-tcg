@@ -6,7 +6,7 @@ import { AllMatchingFieldTarget } from '../repository/targets/field-target.js';
 import { CardCriteria } from '../repository/criteria/card-criteria.js';
 import { EffectContext } from './effect-context.js';
 import { FieldTargetResolver } from './target-resolvers/field-target-resolver.js';
-import { CardTargetResolver } from './target-resolvers/card-target-resolver.js';
+import { SearchCardTargetResolver } from './target-resolvers/search-card-target-resolver.js';
 import { CardCriteriaFilter } from './filters/card-criteria-filter.js';
 
 // TODO remove
@@ -182,7 +182,7 @@ function getCountValue(countValue: EffectValue & { type: 'count' }, controllers:
         // Count energy on field cards matching criteria
         return countEnergy(countValue.fieldCriteria, countValue.energyCriteria, controllers, context);
     } else if (countValue.countType === 'card') {
-        // Count cards in hand/deck/discard matching criteria using CardTargetResolver
+        // Count cards in hand/deck/discard matching criteria using SearchCardTargetResolver
         return countCards(countValue.player, countValue.location, countValue.criteria, controllers, context);
     } else if (countValue.countType === 'damage') {
         // Count damage on a specific creature
@@ -255,7 +255,7 @@ function countEnergy(
 }
 
 /**
- * Counts cards in a specific location matching criteria using CardTargetResolver.
+ * Counts cards in a specific location matching criteria using SearchCardTargetResolver.
  */
 function countCards(
     player: 'self' | 'opponent',
@@ -266,8 +266,8 @@ function countCards(
 ): number {
     const playerId = player === 'self' ? context.sourcePlayer : (context.sourcePlayer + 1) % controllers.players.count;
     
-    // Use CardTargetResolver to get cards at location
-    const cards = CardTargetResolver.getCardsAtLocation(playerId, location, controllers);
+    // Use SearchCardTargetResolver to get cards at location
+    const cards = SearchCardTargetResolver.getCardsAtLocation(playerId, location, controllers);
     
     // Filter by criteria if provided
     if (criteria) {

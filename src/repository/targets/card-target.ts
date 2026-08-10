@@ -1,41 +1,53 @@
 import { CardCriteria } from '../criteria/card-criteria.js';
 
 /**
- * Represents location where cards can be found.
+ * Not to be confused with `SearchCardTarget` (`search-card-target.ts`), which is the
+ * bespoke target family SearchEffect resolves for itself. `CardTarget` is for effects
+ * that plug a single-card selection into the generic `ResolutionRequirement` pipeline
+ * (see `CardTargetResolver` / `effect-applier.ts`), where the resolved value ends up as
+ * a `ResolvedCardTarget` on the effect itself.
  */
-export type CardLocation = 'hand' | 'deck' | 'discard' | 'field';
+export type CardTargetCriteria = {
+    location: 'hand' | 'deck' | 'discard';
+} & CardCriteria;
 
 /**
- * Represents a fixed card target (specific location).
+ * A card target that doesn't require player selection - either every card at the
+ * location (no criteria) or, when `criteria` is given, whichever cards match it.
  */
 export type FixedCardTarget = {
     type: 'fixed';
-    player: 'self' | 'opponent';
-    location: CardLocation;
+    location: 'hand' | 'deck' | 'discard';
+    criteria?: CardTargetCriteria;
 };
 
 /**
- * Represents a card target requiring single choice.
+ * A card target requiring a single choice among cards matching `criteria`.
  */
-export type SingleChoiceCardTarget = {
+export type SingleChoiceCardTarget<TRef extends string = string> = {
     type: 'single-choice';
     chooser: 'self' | 'opponent';
-    location: CardLocation;
-    criteria?: CardCriteria;
+    criteria: CardTargetCriteria;
+};
+
+// TODO: add MultiChoiceCardTarget if a future effect needs to select more than one card this way
+
+/**
+ * Represents a card target that has been resolved to specific card instances.
+ */
+export type ResolvedCardTarget = {
+    type: 'resolved';
+    cards: Array<{ instanceId: string }>;
 };
 
 /**
- * Represents a card target requiring multiple choices.
+ * Union type representing all possible card target specifications.
+ *
+ * `TRef` is kept for API consistency with `FieldTarget<TContextualRefs>` but is
+ * currently unused within `CardTarget` itself - none of these target shapes carry a
+ * contextual reference the way `ContextualFieldTarget` does.
  */
-export type MultiChoiceCardTarget = {
-    type: 'multi-choice';
-    chooser: 'self' | 'opponent';
-    location: CardLocation;
-    criteria?: CardCriteria;
-    count: number;
-};
-
-/**
- * Union type for card targets (cards in hand, deck, discard, or field).
- */
-export type CardTarget = FixedCardTarget | SingleChoiceCardTarget | MultiChoiceCardTarget;
+export type CardTarget<TRef extends string = string> =
+    | FixedCardTarget
+    | SingleChoiceCardTarget<TRef>
+    | ResolvedCardTarget;

@@ -28,6 +28,15 @@ export type BasePendingSelection = {
     continuationEffects?: Effect[];
     /** A human-readable prompt for the selection */
     prompt?: string;
+    /**
+     * Index into the owning handler's getResolutionRequirements() array that this selection
+     * is resolving. When set, EffectApplier resumes by writing the selection into that
+     * requirement's targetProperty and continuing the generic resolution loop from the next
+     * requirement (handling any `dependsOn`/`filter` on it) instead of the legacy per-selection-type
+     * resume logic. Only set by the generic ResolutionRequirement pipeline (see effect-applier.ts);
+     * pending selections built by hand (e.g. hand-discard, choice-delegation) leave this unset.
+     */
+    resolutionIndex?: number;
 };
 
 /**
@@ -87,6 +96,13 @@ export type PendingCardSelection = BasePendingSelection & {
     availableCards: GameCard[];
 };
 
+/*
+ * TODO: Unlike PendingFieldSelection/PendingEnergySelection/PendingCardSelection (as of the
+ * evolution-skip change, card selection can also flow through the generic
+ * ResolutionRequirement pipeline when declared via a CardTarget requirement), choice selection
+ * is still hand-built by choice-delegation-effect-handler.ts calling setPendingSelection
+ * directly - there is no declarative ChoiceTarget/ResolutionRequirement support for it yet.
+ */
 /**
  * Pending selection from a list of named choices.
  */
