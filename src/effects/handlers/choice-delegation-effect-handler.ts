@@ -5,19 +5,32 @@ import { AbstractEffectHandler, ResolutionRequirement } from '../interfaces/effe
 import { HandlerData } from '../../game-handler.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { EffectApplier } from '../effect-applier.js';
+import { EffectQueueProcessor } from '../effect-queue-processor.js';
 
 /**
  * Handler for choice delegation effects.
- * Presents the player with a list of named options and sets up a pending
- * choice selection. Once the player responds, the selected option's effects
- * are enqueued by the event handler.
+ * Declares a `ChoiceTarget` requirement (`choice`) built from `options`; the generic
+ * ResolutionRequirement pipeline in effect-applier.ts resolves it - auto-resolving if
+ * there's only one option, otherwise pausing on a `PendingChoiceSelection` until the player
+ * responds. apply() only ever sees the fully-resolved choice and enqueues the matching
+ * option's effects.
  *
  * Note: This effect should be the last (or only) effect in an effects array
  * because it interrupts further effect processing until the player responds.
  */
 export class ChoiceDelegationEffectHandler extends AbstractEffectHandler<ChoiceDelegationEffect> {
-    getResolutionRequirements(_effect: ChoiceDelegationEffect): ResolutionRequirement[] {
-        return [];
+    getResolutionRequirements(effect: ChoiceDelegationEffect): ResolutionRequirement[] {
+        return [
+            {
+                targetProperty: 'choice',
+                target: {
+                    type: 'single-choice',
+                    chooser: 'self',
+                    choices: effect.options.map(option => ({ name: option.name, value: option.name })),
+                },
+                required: true,
+            },
+        ];
     }
 
     canApply(handlerData: HandlerData, effect: ChoiceDelegationEffect, context: EffectContext, cardRepository: CardRepository): boolean {
@@ -25,21 +38,26 @@ export class ChoiceDelegationEffectHandler extends AbstractEffectHandler<ChoiceD
     }
 
     apply(controllers: Controllers, effect: ChoiceDelegationEffect, context: EffectContext): void {
-        // TODO: could become declarative (like evolution-skip's CardTarget requirements) once a
-        // ChoiceTarget variant + ResolutionRequirement support exists for named-choice selection.
-        controllers.turnState.setPendingSelection({
-            selectionType: 'choice',
-            effect,
-            originalContext: context,
-            continuationEffects: context.selectionContinuationEffects,
-            choices: effect.options.map(option => ({ name: option.name, value: option.name })),
-            count: 1,
-        });
+        const { choice } = effect;
+        if (choice.type !== 'resolved') {
+            throw new Error(`Expected resolved choice, got ${choice?.type}`);
+        }
+
+        const selectedOption = effect.options.find(option => option.name === choice.value);
+        if (!selectedOption) {
+            console.warn(`Choice delegation: no option found matching selected value '${choice.value}'`);
+            return;
+        }
 
         controllers.players.messageAll({
             type: 'status',
-            components: [ `${context.effectName} asks you to choose an effect!` ],
+            components: [ `${context.effectName} chose ${selectedOption.name}!` ],
         });
+
+        if (selectedOption.effects.length > 0) {
+            controllers.effects.pushPendingEffect(selectedOption.effects, context);
+            EffectQueueProcessor.processQueue(controllers);
+        }
     }
 }
 

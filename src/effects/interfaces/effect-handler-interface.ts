@@ -4,6 +4,7 @@ import { Effect, ModifierEffect } from '../../repository/effect-types.js';
 import { FieldTarget } from '../../repository/targets/field-target.js';
 import { EnergyTarget } from '../../repository/targets/energy-target.js';
 import { CardTarget } from '../../repository/targets/card-target.js';
+import { ChoiceTarget } from '../../repository/targets/choice-target.js';
 import { EffectContext } from '../effect-context.js';
 import { CardRepository } from '../../repository/card-repository.js';
 import { GameCard } from '../../controllers/card-types.js';
@@ -21,42 +22,44 @@ export type EffectHandlerMap = {
  * Represents a requirement for resolving a target property in an effect.
  * This separates what needs resolution from how to resolve it.
  */
-export function isEnergyResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget): target is EnergyTarget {
+export function isEnergyResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget): target is EnergyTarget {
     return target.type === 'field' || target.type === 'discard';
 }
 
 /**
  * Distinguishes the `CardTarget` family from `FieldTarget`, whose 'fixed'/'single-choice'/
- * 'resolved' type discriminants otherwise collide with `CardTarget`'s. `CardTarget`'s
- * 'fixed' variant always carries a top-level `location` (never `player`); its 'resolved'
+ * 'multi-choice'/'resolved' type discriminants otherwise collide with `CardTarget`'s.
+ * `CardTarget` always carries a top-level `location` (never `position`); its 'resolved'
  * variant carries `cards` (never `targets`). This is a structural heuristic scoped to the
  * shapes `CardTarget` actually declares - see the `dependsOn`/`filter` TODO below for why
  * this whole mechanism is a one-off rather than a fully general system.
  */
-export function isCardResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget): target is CardTarget {
-    if (target.type === 'fixed') {
-        return 'location' in target && !('player' in target);
-    }
+export function isCardResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget): target is CardTarget {
     if (target.type === 'resolved') {
         return 'cards' in target;
     }
-    if (target.type === 'single-choice') {
-        // FieldTargetCriteria.location, when set, is always 'field' (required for
-        // FieldTargetResolver.getAvailableTargets to search field cards); CardTargetCriteria.location
-        // is always 'hand'/'deck'/'discard'. That distinction - not mere presence of the key - is
-        // what's unambiguous here.
-        return 'criteria' in target && 'location' in target.criteria && target.criteria.location !== 'field';
+    return 'location' in target;
+}
+
+/**
+ * Distinguishes the `ChoiceTarget` family from `FieldTarget`/`CardTarget`, whose
+ * 'single-choice'/'resolved' type discriminants otherwise collide with `ChoiceTarget`'s.
+ * `ChoiceTarget`'s 'single-choice' variant always carries `choices` (never `criteria`); its
+ * 'resolved' variant carries `value` (never `cards`/`targets`).
+ */
+export function isChoiceResolutionTarget(target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget): target is ChoiceTarget {
+    if (target.type === 'resolved') {
+        return 'value' in target;
     }
-    return false;
+    return target.type === 'single-choice' && 'choices' in target;
 }
 
 export interface ResolutionRequirement {
     /** The property name on the effect object that contains the target */
     targetProperty: string;
 
-    // TODO: also support a ChoiceTarget variant so choice-delegation-style selection can go through this same declarative pipeline.
     /** The target to resolve */
-    target: FieldTarget | EnergyTarget | CardTarget;
+    target: FieldTarget | EnergyTarget | CardTarget | ChoiceTarget;
 
     /** Whether this target is required for the effect to proceed */
     required: boolean;

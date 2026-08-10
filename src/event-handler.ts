@@ -1296,27 +1296,9 @@ export const eventHandler = buildEventHandler<Controllers, ResponseMessage>({
             
             const pendingSelection = controllers.turnState.getPendingSelection();
             
-            if (pendingSelection && isPendingChoiceSelection(pendingSelection)) {
-                const { effect, originalContext } = pendingSelection;
+            if (pendingSelection && isPendingChoiceSelection(pendingSelection) && message.choiceValues.length > 0) {
                 controllers.turnState.clearPendingSelection();
-
-                if (effect.type === 'choice-delegation' && message.choiceValues.length > 0) {
-                    const selectedValue = message.choiceValues[0];
-                    const selectedOption = effect.options.find(o => o.name === selectedValue);
-                    if (selectedOption && selectedOption.effects.length > 0) {
-                        const selectionContext = pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0
-                            ? { ...originalContext, selectionContinuationEffects: pendingSelection.continuationEffects }
-                            : originalContext;
-                        controllers.effects.pushPendingEffect(selectedOption.effects, selectionContext);
-                        EffectQueueProcessor.processQueue(controllers);
-                        if (!controllers.turnState.getPendingSelection() && pendingSelection.continuationEffects && pendingSelection.continuationEffects.length > 0) {
-                            controllers.effects.pushPendingEffect(pendingSelection.continuationEffects, originalContext);
-                            EffectQueueProcessor.processQueue(controllers);
-                        }
-                    } else if (!selectedOption) {
-                        console.warn(`Choice delegation: no option found matching selected value '${selectedValue}'`);
-                    }
-                }
+                EffectApplier.resumeEffectWithChoiceSelection(controllers, pendingSelection, message.choiceValues[0]);
             } else {
                 controllers.turnState.clearPendingSelection();
             }

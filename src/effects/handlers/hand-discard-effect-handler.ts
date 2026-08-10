@@ -63,12 +63,19 @@ export class HandDiscardEffectHandler extends AbstractEffectHandler<HandDiscardE
                 this.removeSelectedCards(controllers, effect, context, playerId, eligibleCards.slice(0, actualDiscardAmount));
             } else {
                 /*
-                 * TODO: This manual setPendingSelection/resumeWithCardSelection pair is now a good
-                 * candidate to migrate to the declarative CardTarget requirement path introduced for
-                 * evolution-skip (getResolutionRequirements() + CardTargetResolver), which would let
-                 * the framework build the PendingCardSelection instead. Left as-is for now - it's a
-                 * bigger, separate migration (this effect discards a variable *count* of cards chosen
-                 * together, not a single CardTarget selection).
+                 * TODO: This still can't migrate to the declarative CardTarget requirement path
+                 * (MultiChoiceCardTarget now exists and would otherwise fit). The blocker is
+                 * `actualDiscardAmount`: it depends on `getEffectValue(effect.amount, controllers,
+                 * context)` and the live hand size, both only available via `controllers`/
+                 * `handlerData` - but `EffectHandler.getResolutionRequirements(effect)` only ever
+                 * receives the bare `effect` object (see effect-handler-interface.ts), so a
+                 * MultiChoiceCardTarget's `count` can't be computed there. Migrating would require
+                 * either widening getResolutionRequirements()'s signature to accept controllers/
+                 * handlerData (a change affecting every handler) or adding some other lazy-count
+                 * mechanism for MultiChoiceCardTarget.count - neither exists today, and no other
+                 * MultiChoice* target in the codebase sets `count` dynamically (it's always a
+                 * static number written on the target itself). Left manual until one of those
+                 * lands.
                  */
                 controllers.turnState.setPendingSelection({
                     selectionType: 'card',
